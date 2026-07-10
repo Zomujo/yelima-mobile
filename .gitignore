@@ -55,3 +55,15 @@ android/key.properties
 
 # Secrets
 .env
+
+# Ignored scripts and logs
+CLAUDE.md
+clean_comments.py
+refactor_medication.py
+update_medications_screen.py
+firepit-log.txt
+
+# Environments
+.env
+.env.*
+
