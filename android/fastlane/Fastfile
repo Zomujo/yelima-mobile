@@ -1,0 +1,27 @@
+default_platform(:android)
+
+platform :android do
+  desc "Run tests"
+  lane :test do
+    sh("flutter test")
+  end
+
+  desc "Submit a new Staging build to Firebase App Distribution"
+  lane :deploy_staging do
+    sh("flutter build apk --flavor staging -t lib/main_dev.dart")
+    firebase_app_distribution(
+      app: ENV["FIREBASE_ANDROID_APP_ID_STAGING"],
+      apk_path: "../build/app/outputs/flutter-apk/app-staging-release.apk",
+      release_notes: "Built from CI"
+    )
+  end
+
+  desc "Deploy a new Production build to Google Play"
+  lane :deploy_production do
+    sh("flutter build appbundle --flavor prod -t lib/main_prod.dart")
+    upload_to_play_store(
+      track: 'production',
+      aab: '../build/app/outputs/bundle/prodRelease/app-prod-release.aab'
+    )
+  end
+end

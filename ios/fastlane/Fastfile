@@ -1,0 +1,27 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Run tests"
+  lane :test do
+    sh("flutter test")
+  end
+
+  desc "Push a new Staging build to TestFlight"
+  lane :deploy_staging do
+    sh("flutter build ipa --flavor staging -t lib/main_dev.dart --export-options-plist=ExportOptions.plist")
+    upload_to_testflight(
+      app_identifier: ENV["IOS_BUNDLE_ID_STAGING"],
+      ipa: "../build/ios/ipa/*.ipa",
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Push a new Production build to App Store"
+  lane :deploy_production do
+    sh("flutter build ipa --flavor prod -t lib/main_prod.dart --export-options-plist=ExportOptions.plist")
+    upload_to_app_store(
+      app_identifier: ENV["IOS_BUNDLE_ID_PROD"],
+      ipa: "../build/ios/ipa/*.ipa"
+    )
+  end
+end
