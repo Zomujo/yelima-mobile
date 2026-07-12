@@ -55,25 +55,30 @@ class UpdateService {
     showDialog(
       context: context,
       barrierDismissible: !force,
-      builder: (context) => AlertDialog(
-        title: const Text('Update Available 🚀'),
-        content: const Text(
-          'A new version of the app is available. Update now to get the latest features and improvements.',
-        ),
-        actions: [
-          if (!force)
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Later'),
-            ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              launchStore();
-            },
-            child: const Text('Update Now'),
+      builder: (context) => PopScope(
+        canPop: !force,
+        child: AlertDialog(
+          title: const Text('Update Available 🚀'),
+          content: const Text(
+            'A new version of the app is available. Update now to get the latest features and improvements.',
           ),
-        ],
+          actions: [
+            if (!force)
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Later'),
+              ),
+            ElevatedButton(
+              onPressed: () {
+                if (!force) {
+                  Navigator.pop(context);
+                }
+                launchStore();
+              },
+              child: const Text('Update Now'),
+            ),
+          ],
+        ),
       ),
     );
   }

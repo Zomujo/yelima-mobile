@@ -35,7 +35,7 @@ class APIClient {
 
     _dio.interceptors.addAll([
       LoggingInterceptor(),
-      AuthInterceptor(),
+      AuthInterceptor(dio: _dio),
       ErrorInterceptor(),
     ]);
   }
@@ -113,6 +113,12 @@ class APIClient {
 
   void _handleDioError(DioException e) {
     debugPrint('API Error: ${e.responseMessage}');
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.connectionError) {
+      throw const NetworkException('No internet connection. Please check your network and try again.');
+    }
     // Map to custom ApiException
     throw ApiException.fromDioError(e);
   }

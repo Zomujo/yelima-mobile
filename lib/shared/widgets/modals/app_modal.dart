@@ -67,7 +67,11 @@ class _OverlayModalState extends State<OverlayModal>
     super.dispose();
   }
 
+  bool _isDismissing = false;
+
   void _dismiss() async {
+    if (_isDismissing) return;
+    setState(() => _isDismissing = true);
     await _animationController.reverse();
     widget.onDismiss();
   }
@@ -78,10 +82,18 @@ class _OverlayModalState extends State<OverlayModal>
       child: AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
+        return PopScope(
+          canPop: _isDismissing,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            if (widget.isDismissible && !_isDismissing) {
+              _dismiss();
+            }
+          },
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
                 onTap: widget.isDismissible ? _dismiss : null,
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
@@ -105,6 +117,7 @@ class _OverlayModalState extends State<OverlayModal>
               ),
             ),
           ],
+        ),
         );
       },
     ),

@@ -1,30 +1,49 @@
+import 'dart:async';
 import 'package:get_it/get_it.dart';
 import 'session_lifecycle_service.dart';
 import 'fcm_token_service.dart';
 import 'notification_service.dart';
+import 'connectivity_service.dart';
 
 class FCMLifecycleHandler implements SessionLifecycleHandler {
+  StreamSubscription? _connectivitySub;
+  bool _registrationSucceeded = false;
+
   @override
   String get serviceName => 'FCMLifecycleHandler';
+
   @override
   Future<void> onSessionStarted(String userId) async {
-    // You could also check if the user profile is complete if needed, 
-    // but registering on session start is a good default.
-    // Fire and forget so we don't block session startup
-    GetIt.instance<FCMTokenService>().registerFCMToken().catchError((e) {
-      // Ignored
+    _registrationSucceeded = false;
+    _attemptRegistration();
+
+    _connectivitySub?.cancel();
+    _connectivitySub = GetIt.instance<ConnectivityService>()
+        .onConnectivityChanged
+        .listen((isConnected) {
+      if (isConnected && !_registrationSucceeded) {
+        _attemptRegistration();
+      }
     });
-    
-    NotificationService.instance.subscribeToTopic('yelima').catchError((e) {
-      // Ignored
-    });
+  }
+
+  Future<void> _attemptRegistration() async {
+    try {
+      await GetIt.instance<FCMTokenService>().registerFCMToken();
+      await NotificationService.instance.subscribeToTopic('yelima');
+      _registrationSucceeded = true;
+    } catch (e) {
+      _registrationSucceeded = false;
+    }
   }
 
   @override
   Future<void> onSessionEnded() async {
-    // We MUST await this so it completes before the Firebase Auth session is wiped.
-    // If we fire-and-forget, the auth token is wiped before the API call fires,
-    // resulting in a 401 Unauthorized. A 3-second timeout ensures logout isn't blocked on bad network.
+    _connectivitySub?.cancel();
+    _connectivitySub = null;
+    _registrationSucceeded = false;
+
+
     try {
       await GetIt.instance<FCMTokenService>()
           .deleteFCMToken()
@@ -32,7 +51,7 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     } catch (e) {
       // Ignored
     }
-    
+
     try {
       await NotificationService.instance
           .unSubscribeFromTopic('yelima')

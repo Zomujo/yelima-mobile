@@ -49,19 +49,19 @@ class AuthController extends ChangeNotifier {
         ));
         _sessionLifecycleService.endSession();
       } else {
-        _state = _state.copyWith(
+        _updateState(_state.copyWith(
           currentUser: user,
           isInitialSyncInProgress: true,
           isInitialized: false,
-        );
+        ));
+
+        await _refreshAuthAndProfile(user);
 
         GlobalAsyncLoader.hide();
         _updateState(_state.copyWith(
           isInitialSyncInProgress: false,
           isInitialized: true,
         ));
-
-        _refreshAuthAndProfile(user);
       }
     });
   }

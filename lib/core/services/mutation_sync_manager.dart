@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../api/i_remote_mutation.dart';
 import '../db/app_database.dart';
 import 'connectivity_service.dart';
 import 'session_lifecycle_service.dart';
+import '../exceptions/exceptions.dart';
 
 class MutationSyncManager implements SessionLifecycleHandler {
   final ConnectivityService _connectivityService;
@@ -93,11 +92,13 @@ class MutationSyncManager implements SessionLifecycleHandler {
           debugPrint("Session ended during sync. Aborting batch.");
           break;
         }
-        if (!await _connectivityService.isConnected) {
-          debugPrint("Lost network connection during sync. Aborting batch.");
+        final remapped = await _attemptMutation(pending);
+        if (remapped) {
+          debugPrint("ID remapped, breaking batch to refetch fresh state.");
+          // Trigger next batch asynchronously
+          Future.delayed(const Duration(milliseconds: 500), triggerSync);
           break;
         }
-        await _attemptMutation(pending);
         
         // Small delay to prevent rate-limiting when processing a large backlog
         await Future.delayed(const Duration(milliseconds: 100));
@@ -109,14 +110,12 @@ class MutationSyncManager implements SessionLifecycleHandler {
     }
   }
 
-  Future<void> _attemptMutation(PendingMutation pending) async {
+  Future<bool> _attemptMutation(PendingMutation pending) async {
     try {
       final remoteSource = _remoteSources[pending.entityType];
       if (remoteSource == null) {
-        // Not registered with this manager - leave it queued rather than
-        // poison-pilling it, since another mechanism (e.g. SyncService) may own it.
         debugPrint("No registered remote source for '${pending.entityType}', skipping for now.");
-        return;
+        return false;
       }
 
       final newServerId = await remoteSource.syncMutation(
@@ -126,7 +125,9 @@ class MutationSyncManager implements SessionLifecycleHandler {
         createdAt: pending.createdAt,
       );
 
+      bool didRemap = false;
       if (newServerId != null && newServerId != pending.entityId) {
+        didRemap = true;
         debugPrint("Remapping offline ID ${pending.entityId} to server ID $newServerId for ${pending.entityType}");
         if (pending.entityType == 'medication') {
           await _db.medicationsDao.updateMedicationId(pending.entityId, newServerId);
@@ -137,34 +138,42 @@ class MutationSyncManager implements SessionLifecycleHandler {
       
       await _db.pendingMutationsDao.removePendingMutation(pending.id);
       debugPrint("Successfully synced mutation for ${pending.entityType} (${pending.entityId})");
-    } on DioException catch (e) {
+      
+      return didRemap;
+    } on ApiException catch (e) {
       // 409 means Conflict (e.g., server rejected due to Last-Write-Wins being older)
       // 404 means the entity no longer exists on the server.
       // 400 means Bad Request
-      if (e.response?.statusCode == 409 || e.response?.statusCode == 404 || e.response?.statusCode == 400) {
+      if (e.code == '409' || e.code == '404' || e.code == '400') {
         debugPrint(
-            "Mutation ${pending.id} rejected by server (${e.response?.statusCode}). Removing from local queue.");
+            "Mutation ${pending.id} rejected by server (${e.code}). Removing from local queue.");
         await _db.pendingMutationsDao.removePendingMutation(pending.id);
-        return;
+        return false;
       }
 
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+      if (e.code == '401' || e.code == '403') {
         debugPrint(
-            "Unauthorized (${e.response?.statusCode}) during mutation sync. Aborting sync to preserve data until login.");
+            "Unauthorized (${e.code}) during mutation sync. Aborting sync to preserve data until login.");
         rethrow;
       }
 
-      if (_isConnectionError(e)) {
-        debugPrint("Connection error syncing mutation for ${pending.id}. Aborting sync.");
+      if (e.code != null && e.code!.startsWith('5')) {
+        debugPrint(
+            "Server error (${e.code}) during mutation sync. Aborting sync to preserve data until server recovers.");
         rethrow;
       }
 
-      // Handle 5xx errors or other DioExceptions as "Poison Pills"
+      // Handle other non-fatal ApiExceptions or malformed responses as "Poison Pills"
       await _handlePoisonPill(pending, e.toString());
+      return false;
       
+    } on NetworkException catch (e) {
+      debugPrint("Connection error syncing mutation for ${pending.id}. Aborting sync to try again later.");
+      rethrow;
     } catch (e) {
       debugPrint("Unexpected error syncing mutation ${pending.id}: $e");
       await _handlePoisonPill(pending, e.toString());
+      return false;
     }
   }
 
@@ -186,13 +195,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
     }
   }
 
-  bool _isConnectionError(DioException e) {
-    return e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.sendTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
-        e.type == DioExceptionType.connectionError ||
-        e.error is SocketException;
-  }
+
 
   void dispose() {
     _debounceTimer?.cancel();

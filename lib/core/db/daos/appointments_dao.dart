@@ -27,4 +27,12 @@ class AppointmentsDao extends DatabaseAccessor<AppDatabase> with _$AppointmentsD
   Future<void> clearAppointments() {
     return delete(appointments).go();
   }
+
+  Future<void> clearUpcomingAppointments() {
+    return (delete(appointments)..where((t) => t.appointmentDate.isBiggerThanValue(DateTime.now()))).go();
+  }
+
+  Future<void> clearPastAppointments() {
+    return (delete(appointments)..where((t) => t.appointmentDate.isSmallerOrEqualValue(DateTime.now()))).go();
+  }
 }

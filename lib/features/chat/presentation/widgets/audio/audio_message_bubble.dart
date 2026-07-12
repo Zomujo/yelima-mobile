@@ -148,7 +148,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     });
     
     try {
-      final directory = await getTemporaryDirectory();
+      final directory = await getApplicationDocumentsDirectory();
       final safeFileName = 'audio_${widget.audioUrl.hashCode.abs()}.m4a';
       _localPath = '${directory.path}/$safeFileName';
       

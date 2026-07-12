@@ -48,6 +48,14 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         );
         
         await db.transaction(() async {
+          if (page == 1) {
+            if (filter == 'upcoming') {
+              await db.appointmentsDao.clearUpcomingAppointments();
+            } else if (filter == 'past') {
+              await db.appointmentsDao.clearPastAppointments();
+            }
+          }
+
           for (var row in remoteData.rows) {
             await db.appointmentsDao.insertOrUpdateAppointment(AppointmentsCompanion(
               id: drift.Value(row.id),

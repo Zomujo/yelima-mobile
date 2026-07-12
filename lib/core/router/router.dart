@@ -93,6 +93,10 @@ class AppRouter {
       },
       routes: [
         GoRoute(
+          path: '/',
+          redirect: (context, state) => RoutePaths.home,
+        ),
+        GoRoute(
           path: RoutePaths.splash,
           builder: (context, state) => const SplashScreen(),
         ),

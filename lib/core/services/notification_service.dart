@@ -159,6 +159,7 @@ class NotificationService {
     } catch (e) {
       AppLogger.w(
           'NotificationService: Failed to subscribe to topic $topic: $e');
+      rethrow;
     }
   }
 
@@ -168,6 +169,7 @@ class NotificationService {
     } catch (e) {
       AppLogger.w(
           'NotificationService: Failed to unsubscribe from topic $topic: $e');
+      rethrow;
     }
   }
 

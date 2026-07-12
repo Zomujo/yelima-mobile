@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../exceptions/exceptions.dart';
 import '../api/i_remote_deletion.dart';
 import '../db/app_database.dart';
 import 'connectivity_service.dart';
@@ -39,7 +38,8 @@ class DeletionSyncManager implements SessionLifecycleHandler {
   Future<void> onSessionEnded() async {
     _isSessionActive = false;
     if (_syncTask != null) {
-      debugPrint("DeletionSyncManager: Awaiting in-flight sync task before ending session...");
+      debugPrint(
+          "DeletionSyncManager: Awaiting in-flight sync task before ending session...");
       await _syncTask;
       debugPrint("DeletionSyncManager: Sync task completed, session ending.");
     }
@@ -86,10 +86,6 @@ class DeletionSyncManager implements SessionLifecycleHandler {
           debugPrint("Session ended during sync. Aborting batch.");
           break;
         }
-        if (!await _connectivityService.isConnected) {
-          debugPrint("Lost network connection during sync. Aborting batch.");
-          break; // Stop immediately on network loss
-        }
         await _attemptDeletion(pending);
       }
     } catch (e) {
@@ -111,9 +107,9 @@ class DeletionSyncManager implements SessionLifecycleHandler {
           pendingDeletion.messageId, pendingDeletion.source);
       debugPrint(
           "Successfully synced deletion for message: ${pendingDeletion.messageId}");
-    } on DioException catch (e) {
+    } on ApiException catch (e) {
       // 404 means the message is already deleted on the server.
-      if (e.response?.statusCode == 404) {
+      if (e.code == '404') {
         debugPrint(
             "Message ${pendingDeletion.messageId} not found on server (already deleted). Removing from local queue.");
         await _db.aiChatDao.removePendingDeletion(
@@ -121,28 +117,24 @@ class DeletionSyncManager implements SessionLifecycleHandler {
         return;
       }
 
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+      if (e.code == '401' || e.code == '403') {
         debugPrint(
-            "Unauthorized (${e.response?.statusCode}) during deletion sync. Aborting sync to preserve data until login.");
+            "Unauthorized (${e.code}) during deletion sync. Aborting sync to preserve data until login.");
         rethrow;
       }
 
-      // Identify connection errors and abort immediately
-      if (_isConnectionError(e)) {
+      if (e.code != null && e.code!.startsWith('5')) {
         debugPrint(
-            "Connection error syncing deletion for ${pendingDeletion.messageId}. Aborting sync.");
+            "Server error (${e.code}) during deletion sync. Aborting sync to preserve data until server recovers.");
         rethrow;
       }
 
-      // Server side errors (5xx)
       await _handleDeletionError(e, pendingDeletion);
+    } on NetworkException {
+      debugPrint(
+          "Connection error syncing deletion for ${pendingDeletion.messageId}. Aborting sync.");
+      rethrow;
     } catch (e) {
-      if (e is SocketException) {
-        debugPrint(
-            "Network error syncing deletion for ${pendingDeletion.messageId}. Aborting sync.");
-        rethrow;
-      }
-
       if (e.toString().toLowerCase().contains('not found')) {
         debugPrint(
             "Message ${pendingDeletion.messageId} not found on server (already deleted or never sent). Removing from local queue.");
@@ -153,14 +145,6 @@ class DeletionSyncManager implements SessionLifecycleHandler {
 
       await _handleDeletionError(e, pendingDeletion);
     }
-  }
-
-  bool _isConnectionError(DioException e) {
-    return e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
-        e.type == DioExceptionType.sendTimeout ||
-        e.type == DioExceptionType.connectionError ||
-        e.error is SocketException;
   }
 
   Future<void> _handleDeletionError(

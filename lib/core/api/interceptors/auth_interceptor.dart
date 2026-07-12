@@ -6,12 +6,17 @@ import '../../utils/logger.dart';
 
 class AuthInterceptor extends Interceptor {
   final TokenManager _tokenManager;
+  final Dio _dio;
 
-  AuthInterceptor({TokenManager? tokenManager})
-      : _tokenManager = tokenManager ?? TokenManager();
+  AuthInterceptor({TokenManager? tokenManager, required Dio dio})
+      : _tokenManager = tokenManager ?? TokenManager(),
+        _dio = dio;
 
   // A Completer used to serialize concurrent token fetch operations.
   Completer<String?>? _tokenCompleter;
+
+  // A Completer to serialize concurrent token refresh operations on 401.
+  Completer<bool>? _refreshCompleter;
 
   @override
   void onRequest(
@@ -33,7 +38,8 @@ class AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
       if (err.requestOptions.extra['isRetry'] == true) {
-        AppLogger.w('AuthInterceptor: 401 Unauthorized received on RETRY. Logging out user.');
+        AppLogger.w(
+            'AuthInterceptor: 401 Unauthorized received on RETRY. Logging out user.');
         try {
           await FirebaseAuth.instance.signOut();
         } catch (e) {
@@ -42,21 +48,49 @@ class AuthInterceptor extends Interceptor {
         return handler.next(err);
       }
 
-      AppLogger.w('AuthInterceptor: 401 Unauthorized received. Attempting to force refresh token...');
+      if (_refreshCompleter != null) {
+        // Wait for the in-progress refresh
+        AppLogger.d('AuthInterceptor: Token refresh in progress, waiting...');
+        final success = await _refreshCompleter!.future;
+        if (success) {
+          final token = await _tokenManager.getAuthToken();
+          err.requestOptions.headers['Authorization'] = 'Bearer $token';
+          err.requestOptions.extra['isRetry'] = true;
+          try {
+            final response = await _dio.fetch(err.requestOptions);
+            return handler.resolve(response);
+          } catch (e) {
+            return handler.next(err);
+          }
+        } else {
+          return handler.next(err);
+        }
+      }
+
+      _refreshCompleter = Completer<bool>();
+      AppLogger.w(
+          'AuthInterceptor: 401 Unauthorized received. Attempting to force refresh token...');
       try {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           final newToken = await user.getIdToken(true);
+          _refreshCompleter!.complete(true);
+          _refreshCompleter = null;
+
           final options = err.requestOptions;
           options.headers['Authorization'] = 'Bearer $newToken';
           options.extra['isRetry'] = true;
 
-          final dio = Dio();
-          final response = await dio.fetch(options);
+          final response = await _dio.fetch(options);
           return handler.resolve(response);
+        } else {
+          _refreshCompleter!.complete(false);
+          _refreshCompleter = null;
         }
       } catch (e) {
         AppLogger.e('AuthInterceptor: Force refresh failed', e);
+        _refreshCompleter!.complete(false);
+        _refreshCompleter = null;
         try {
           await FirebaseAuth.instance.signOut();
         } catch (_) {}
