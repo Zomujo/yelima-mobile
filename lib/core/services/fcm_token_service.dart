@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../managers/token_manager.dart';
 import '../utils/logger.dart';
@@ -43,16 +44,14 @@ class FCMTokenService {
 
   Future<void> deleteFCMToken() async {
     try {
-      // Prefer the in-memory cached token — it's guaranteed to be available
-      // even after TokenManager.clearTokens() has already run.
-      // Fall back to TokenManager only if we somehow never registered.
-      final String? token;
+      String? token;
       if (_registeredToken != null) {
         token = _registeredToken;
         AppLogger.d(
             'FCMTokenService: Using in-memory cached token for deletion.');
       } else {
-        final stored = await _tokenManager.getFCMToken();
+        final prefs = await SharedPreferences.getInstance();
+        final stored = prefs.getString('cached_fcm_token');
         token = stored?.replaceAll('"', '');
       }
 

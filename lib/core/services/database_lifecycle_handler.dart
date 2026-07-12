@@ -1,6 +1,7 @@
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/core/services/session_lifecycle_service.dart';
 import 'package:yelima/core/utils/logger.dart';
+import 'package:yelima/features/chat/domain/services/audio_cache_manager.dart';
 
 class DatabaseLifecycleHandler implements SessionLifecycleHandler {
   final AppDatabase _db;
@@ -28,6 +29,7 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
         _db.userProfilesDao.clearProfiles(),
         _db.pendingMutationsDao.clearPendingMutations(),
       ]);
+      await AudioCacheManager().clearCache();
       AppLogger.i('DatabaseLifecycleHandler: SQLite data successfully wiped.');
     } catch (e) {
       AppLogger.e('DatabaseLifecycleHandler: Failed to wipe SQLite data: $e');

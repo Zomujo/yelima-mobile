@@ -24,6 +24,8 @@ class DeletionSyncManager implements SessionLifecycleHandler {
         _db = db,
         _remoteSources = remoteSources;
 
+  Future<void>? _syncTask;
+
   @override
   String get serviceName => 'Chat Deletion Sync';
 
@@ -36,6 +38,11 @@ class DeletionSyncManager implements SessionLifecycleHandler {
   @override
   Future<void> onSessionEnded() async {
     _isSessionActive = false;
+    if (_syncTask != null) {
+      debugPrint("DeletionSyncManager: Awaiting in-flight sync task before ending session...");
+      await _syncTask;
+      debugPrint("DeletionSyncManager: Sync task completed, session ending.");
+    }
   }
 
   void init() {
@@ -55,7 +62,10 @@ class DeletionSyncManager implements SessionLifecycleHandler {
     // A deletion queued by a previous user must never be sent under the next
     // user's auth token, so only sync while a session is actually active.
     if (_isSessionActive && await _connectivityService.isConnected) {
-      _syncPendingDeletions();
+      if (!_isSyncing) {
+        _syncTask = _syncPendingDeletions();
+      }
+      await _syncTask;
     }
   }
 
@@ -89,8 +99,7 @@ class DeletionSyncManager implements SessionLifecycleHandler {
     }
   }
 
-  Future<void> _attemptDeletion(PendingDeletion pendingDeletion,
-      {int retryCount = 0}) async {
+  Future<void> _attemptDeletion(PendingDeletion pendingDeletion) async {
     try {
       final remoteSource = _remoteSources[pendingDeletion.source];
       if (remoteSource == null) {
@@ -112,6 +121,12 @@ class DeletionSyncManager implements SessionLifecycleHandler {
         return;
       }
 
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        debugPrint(
+            "Unauthorized (${e.response?.statusCode}) during deletion sync. Aborting sync to preserve data until login.");
+        rethrow;
+      }
+
       // Identify connection errors and abort immediately
       if (_isConnectionError(e)) {
         debugPrint(
@@ -120,7 +135,7 @@ class DeletionSyncManager implements SessionLifecycleHandler {
       }
 
       // Server side errors (5xx)
-      await _handleDeletionError(e, pendingDeletion, retryCount);
+      await _handleDeletionError(e, pendingDeletion);
     } catch (e) {
       if (e is SocketException) {
         debugPrint(
@@ -136,7 +151,7 @@ class DeletionSyncManager implements SessionLifecycleHandler {
         return;
       }
 
-      await _handleDeletionError(e, pendingDeletion, retryCount);
+      await _handleDeletionError(e, pendingDeletion);
     }
   }
 
@@ -149,23 +164,11 @@ class DeletionSyncManager implements SessionLifecycleHandler {
   }
 
   Future<void> _handleDeletionError(
-      Object e, PendingDeletion pendingDeletion, int retryCount) async {
+      Object e, PendingDeletion pendingDeletion) async {
     debugPrint(
         "Failed to sync deletion for message: ${pendingDeletion.source}  ${pendingDeletion.messageId}. Error: $e");
-    if (!_isSessionActive) {
-      debugPrint("Session ended, dropping retry for ${pendingDeletion.messageId}.");
-      return;
-    }
-    if (retryCount < 5) {
-      // 5 retries
-      final waitSeconds =
-          (2 << retryCount); // Exponential backoff: 2, 4, 8, 16, 32 seconds
-      await Future.delayed(Duration(seconds: waitSeconds));
-      await _attemptDeletion(pendingDeletion, retryCount: retryCount + 1);
-    } else {
-      debugPrint(
-          "Max retries reached for message: ${pendingDeletion.messageId}. It will be retried on next app start or network change.");
-    }
+    // Leave in queue indefinitely. It will retry on next sync trigger.
+    debugPrint("Deletion left in local queue to retry later.");
   }
 
   void dispose() {

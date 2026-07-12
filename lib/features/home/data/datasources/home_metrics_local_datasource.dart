@@ -7,6 +7,7 @@ abstract class HomeMetricsLocalDataSource {
   Future<void> appendVitalHistory(VitalHistoryModel vital);
   Future<double?> getCachedAdherence();
   Future<void> cacheAdherence(double adherence);
+  Future<void> clearCachedAdherence();
 }
 
 class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
@@ -60,5 +61,12 @@ class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
       recordedAt: DateTime.now(),
     );
     await _database.vitalsDao.insertVitals([adherenceModel.toDrift()]);
+  }
+
+  @override
+  Future<void> clearCachedAdherence() async {
+    await (_database.delete(_database.vitalHistories)
+          ..where((t) => t.vitalType.equals('HOME_ADHERENCE_CACHE')))
+        .go();
   }
 }

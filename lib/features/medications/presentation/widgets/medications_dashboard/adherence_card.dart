@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_adherence.dart';
-import 'package:intl/intl.dart';
+import '../../../../../core/utils/app_date_formats.dart';
 
 enum DayStatus { taken, missed, future }
 
@@ -19,7 +19,7 @@ class AdherenceCard extends StatelessWidget {
     
     // We map the backend days to our DayStatus UI
     final List<Widget> dayWidgets = adherence!.days.map((dayData) {
-      final label = DateFormat('E').format(dayData.takenAt).substring(0, 1);
+      final label = AppDateFormats.dayOfWeekShort.format(dayData.takenAt).substring(0, 1);
       
       // Determine status based on taken boolean and date
       DayStatus status;

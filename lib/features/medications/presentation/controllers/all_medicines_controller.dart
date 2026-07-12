@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_history_entity.dart';
 import '../../domain/repositories/medication_repository.dart';
@@ -96,7 +96,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
   void fetchMedicationHistory(String id, {DateTime? targetMonth}) async {
     final month = targetMonth ?? DateTime.now();
     // Format as yyyy-MM-15
-    final date = DateFormat('yyyy-MM-15').format(month);
+    final date = AppDateFormats.yyyyMM15.format(month);
 
     historyStates[id] = const MedicationState(isLoading: true);
     notifyListeners();

@@ -4,7 +4,7 @@ import '../../../../../core/constants/app_decoration.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 
-import 'package:intl/intl.dart';
+import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/appointment_entity.dart';
 
 class AppointmentCard extends StatelessWidget {
@@ -29,7 +29,7 @@ class AppointmentCard extends StatelessWidget {
         ? _formatPast(appointment.appointmentDate) 
         : _formatUpcoming(appointment.appointmentDate);
     
-    final dateTime = DateFormat('EEE d MMM • HH:mm').format(appointment.appointmentDate);
+    final dateTime = AppDateFormats.appointmentCard.format(appointment.appointmentDate);
     final subtitle = 'with ${appointment.hostPersonnel.userName} • ${appointment.hostPersonnel.facility.name}';
 
     return Container(

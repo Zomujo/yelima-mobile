@@ -182,6 +182,10 @@ class ExceptionWrapper {
         return 'Wrong password provided.';
       case 'email-already-in-use':
         return 'The account already exists for that email.';
+      case 'credential-already-in-use':
+        return 'This credential is already linked to a different account.';
+      case 'user-mismatch':
+        return 'Please authenticate with the exact account linked to this profile.';
       case 'weak-password':
         return 'The password provided is too weak.';
       case 'invalid-email':

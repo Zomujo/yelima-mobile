@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/logger.dart';
-import 'session_lifecycle_service.dart';
 import 'update_service.dart';
 
 enum StartupPhase {
@@ -24,9 +22,8 @@ class StartupStatus {
 }
 
 class AppStartupService extends ValueNotifier<StartupStatus> {
-  final SessionLifecycleService _sessionService;
 
-  AppStartupService(this._sessionService)
+  AppStartupService()
       : super(StartupStatus(phase: StartupPhase.idle));
 
   Future<void> start() async {
@@ -64,23 +61,11 @@ class AppStartupService extends ValueNotifier<StartupStatus> {
             'AppStartupService: Global init exceeded snappy window'),
       );
 
-      // Auth Discovery
-      final userId = await _checkAuthentication();
-
-      if (userId != null) {
-        // Session Phase - Run in background so UI is unblocked instantly
-        _initSession(userId).catchError((e) {
-          AppLogger.e(
-              'AppStartupService: Session init failed in background', e);
-        });
-
-        value = StartupStatus(phase: StartupPhase.ready);
-      } else {
-        value = StartupStatus(phase: StartupPhase.unauthenticated);
-      }
+      // Startup is complete, let the AuthController & Router handle auth state
+      value = StartupStatus(phase: StartupPhase.ready);
     } catch (e, stack) {
       AppLogger.e('AppStartupService: Startup failure', e, stack);
-      value = StartupStatus(phase: StartupPhase.unauthenticated);
+      value = StartupStatus(phase: StartupPhase.error);
     } finally {
       stopwatch.stop();
       AppLogger.d(
@@ -103,29 +88,5 @@ class AppStartupService extends ValueNotifier<StartupStatus> {
     }
 
     AppLogger.i('AppStartupService: Global initialization complete');
-  }
-
-  /// Checks if we have an active session
-  Future<String?> _checkAuthentication() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      return user?.uid;
-    } catch (e) {
-      AppLogger.e('AppStartupService: Error checking authentication', e);
-      return null;
-    }
-  }
-
-  /// Initialized session-specific services (Profile, Feature Caches)
-  Future<void> _initSession(String userId) async {
-    value = StartupStatus(phase: StartupPhase.initializingSession);
-
-    try {
-      await _sessionService.startSession(userId);
-    } catch (e) {
-      AppLogger.e('AppStartupService: Error during session init', e);
-    }
-
-    AppLogger.i('AppStartupService: Session initialization complete');
   }
 }

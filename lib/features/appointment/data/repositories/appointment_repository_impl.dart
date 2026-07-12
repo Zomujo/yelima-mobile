@@ -118,6 +118,16 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     if (await connectivityService.isConnected) {
       try {
         final remoteData = await remoteDataSource.getNearestAppointment();
+        if (remoteData != null) {
+          await db.appointmentsDao.insertOrUpdateAppointment(AppointmentsCompanion(
+            id: drift.Value(remoteData.id),
+            title: drift.Value(remoteData.title),
+            appointmentDate: drift.Value(remoteData.appointmentDate),
+            hostPersonnelId: drift.Value(remoteData.hostPersonnel.id),
+            hostPersonnelUserName: drift.Value(remoteData.hostPersonnel.userName),
+            hostPersonnelFacilityName: drift.Value(remoteData.hostPersonnel.facility.name),
+          ));
+        }
         return Right(remoteData);
       } catch (e) {
         return _fetchLocalNearestAppointment();

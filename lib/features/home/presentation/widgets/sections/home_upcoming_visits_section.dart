@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/features/appointment/presentation/controllers/appointment_controller.dart';
@@ -36,9 +36,9 @@ class HomeUpcomingVisitsSection extends StatelessWidget {
           }
 
           final formattedDate =
-              DateFormat('MMMM d').format(nearest.appointmentDate);
+              AppDateFormats.monthDay.format(nearest.appointmentDate);
           final formattedTime =
-              DateFormat('h:mm a').format(nearest.appointmentDate);
+              AppDateFormats.timeShort.format(nearest.appointmentDate);
 
           return NextClinicVisitCard(
             date: formattedDate,

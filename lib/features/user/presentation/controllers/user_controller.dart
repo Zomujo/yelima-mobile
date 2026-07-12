@@ -247,32 +247,38 @@ class UserController extends ChangeNotifier {
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
-        final data = {
-          'conditions': conditionsPayload,
-          'hasConsented': consented,
-          'registrationStatus': RegistrationStatus.complete.name,
-          'createdAt': DateTime.now().toIso8601String(),
+        final onboardData = {
+          "firstname": _state.userEntity!.firstName ?? '',
+          "lastname": _state.userEntity!.lastName ?? '',
+          "gender": _state.userEntity!.gender?.toLowerCase() ??
+              'prefer_not_to_say',
+          "dateOfBirth":
+              _state.userEntity!.dateOfBirth?.toUtc().toIso8601String() ??
+                  DateTime.now().toUtc().toIso8601String(),
+          "age": _state.userEntity!.age ?? 0,
+          "chronicConditions":
+              conditionsPayload.map((c) => c.toLowerCase()).toList(),
         };
 
-        final result = await _repository.updateUserProfile(user.uid, data);
+        final onboardResult = await _repository.onboardUser(onboardData);
 
-        return result.fold(
-          (error) => left(error),
+        return onboardResult.fold(
+          (error) {
+            // Treat 409 Conflict as success (user already onboarded)
+            if (error.contains('409') || error.toLowerCase().contains('already exists')) {
+              return right(null);
+            }
+            return left(error);
+          },
           (_) async {
-            final onboardData = {
-              "firstname": _state.userEntity!.firstName ?? '',
-              "lastname": _state.userEntity!.lastName ?? '',
-              "gender": _state.userEntity!.gender?.toLowerCase() ??
-                  'prefer_not_to_say',
-              "dateOfBirth":
-                  _state.userEntity!.dateOfBirth?.toUtc().toIso8601String() ??
-                      DateTime.now().toUtc().toIso8601String(),
-              "age": _state.userEntity!.age ?? 0,
-              "chronicConditions":
-                  conditionsPayload.map((c) => c.toLowerCase()).toList(),
+            final data = {
+              'conditions': conditionsPayload,
+              'hasConsented': consented,
+              'registrationStatus': RegistrationStatus.complete.name,
+              'createdAt': DateTime.now().toIso8601String(),
             };
 
-            return await _repository.onboardUser(onboardData);
+            return await _repository.updateUserProfile(user.uid, data);
           },
         );
       },

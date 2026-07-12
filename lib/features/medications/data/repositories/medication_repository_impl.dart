@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/exceptions/exceptions.dart';
@@ -17,6 +18,7 @@ import '../models/medication_detail_model.dart';
 import '../models/seeded_medication_list_response_model.dart';
 import '../../../../core/db/app_database.dart';
 import 'package:drift/drift.dart' as drift;
+import '../utils/medication_isolate_parsers.dart';
 
 class MedicationRepositoryImpl implements MedicationRepository {
   final MedicationRemoteDataSource remoteDataSource;
@@ -110,16 +112,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
           .firstOrNull;
       if (fullVital != null) {
         try {
-          final Map<String, dynamic> decoded = jsonDecode(fullVital.value);
-          final rate = (decoded['rate'] as num).toDouble();
-          final daysList = (decoded['days'] as List)
-              .map((d) => AdherenceDay(
-                    id: d['id'],
-                    taken: d['taken'] == true,
-                    takenAt: DateTime.parse(d['takenAt']),
-                  ))
-              .toList();
-          return right(MedicationAdherence(rate: rate, days: daysList));
+          final adherence =
+              await Isolate.run(() => parseAdherenceJson(fullVital.value));
+          return right(adherence);
         } catch (_) {
           // Fallback to basic cache.
         }
@@ -184,12 +179,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
           .firstOrNull;
       if (countsVital != null) {
         try {
-          final decoded = jsonDecode(countsVital.value);
-          return right(MedicationCount(
-            morning: decoded['morning'] ?? 0,
-            afternoon: decoded['afternoon'] ?? 0,
-            evening: decoded['evening'] ?? 0,
-          ));
+          final count =
+              await Isolate.run(() => parseCountsJson(countsVital.value));
+          return right(count);
         } catch (_) {}
       }
 
@@ -282,18 +274,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
       if (sectionVital != null) {
         try {
-          final decoded = jsonDecode(sectionVital.value) as List;
-          final meds = decoded
-              .map((m) => MedicationEntity(
-                    id: m['id'],
-                    name: m['name'],
-                    dosage: m['dosage'],
-                    purpose: m['purpose'],
-                    toBeTakenAt: DateTime.parse(m['toBeTakenAt']).toLocal(),
-                    taken: m['taken'] == true,
-                  ))
-              .toList();
-          return right(meds);
+          final sectionEntities = await Isolate.run(
+              () => parseSectionMedicationsJson(sectionVital.value));
+          return right(sectionEntities);
         } catch (_) {}
       }
 
@@ -325,31 +308,44 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   AsyncResponse<void> confirmMedication(
       String medicationId, String section) async {
+    bool forceOffline = false;
     if (await connectivityService.isConnected) {
       try {
         await remoteDataSource.confirmMedication(medicationId, section);
         return right(null);
       } on ApiException catch (e) {
-        return left(e.message ?? 'Server error');
+        if (e.message != null && e.message!.contains('400')) {
+          return left(e.message!);
+        }
+        forceOffline = true;
       } catch (e) {
-        return left(e.toString());
+        forceOffline = true;
       }
     } else {
+      forceOffline = true;
+    }
+
+    if (forceOffline) {
       // Queue optimistic offline mutation.
       try {
-        final payload =
-            jsonEncode({'medicationId': medicationId, 'section': section});
-        await db.pendingMutationsDao.addPendingMutation(
-          PendingMutationsCompanion.insert(
-            id: const Uuid().v4(),
-            entityType: 'medication',
-            entityId: medicationId,
-            action: 'confirm',
-            payloadJson: payload,
-            createdAt: DateTime.now(),
-          ),
-        );
+        final pendingAll = await db.pendingMutationsDao.getAllPendingMutations();
+        final alreadyConfirming = pendingAll.any((p) => 
+            p.entityId == medicationId && p.action == 'confirm');
 
+        if (!alreadyConfirming) {
+          final payload =
+              jsonEncode({'medicationId': medicationId, 'section': section});
+          await db.pendingMutationsDao.addPendingMutation(
+            PendingMutationsCompanion.insert(
+              id: const Uuid().v4(),
+              entityType: 'medication',
+              entityId: medicationId,
+              action: 'confirm',
+              payloadJson: payload,
+              createdAt: DateTime.now(),
+            ),
+          );
+        }
         // Persist confirmation locally.
         await db.medicationsDao.markMedicationTaken(medicationId);
         await _markSectionCacheTaken(section, medicationId);
@@ -359,6 +355,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
         return left('Cache failure');
       }
     }
+    return left('Unexpected state');
   }
 
   Future<void> _markSectionCacheTaken(
@@ -533,20 +530,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
       if (historyVital != null) {
         try {
-          final decoded = jsonDecode(historyVital.value);
-          final logsList = (decoded['logs'] as List)
-              .map((l) => MedicationLogEntity(
-                    id: l['id'],
-                    taken: l['taken'] == true,
-                    takenAt: DateTime.parse(l['takenAt']),
-                  ))
-              .toList();
-
-          return right(MedicationHistoryEntity(
-            medicationName: decoded['medicationName'],
-            adherenceRate: decoded['adherenceRate'] as num,
-            logs: logsList,
-          ));
+          final history =
+              await Isolate.run(() => parseHistoryJson(historyVital.value));
+          return right(history);
         } catch (_) {}
       }
 
@@ -589,16 +575,24 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
   @override
   AsyncResponse<String> createMedication(CreateMedicationModel data) async {
+    bool forceOffline = false;
     if (await connectivityService.isConnected) {
       try {
         final res = await remoteDataSource.createMedication(data);
         return right(res);
       } on ApiException catch (e) {
-        return left(e.message ?? 'Server error');
+        if (e.message != null && e.message!.contains('400')) {
+          return left(e.message!);
+        }
+        forceOffline = true;
       } catch (e) {
-        return left(e.toString());
+        forceOffline = true;
       }
     } else {
+      forceOffline = true;
+    }
+
+    if (forceOffline) {
       // Queue optimistic offline mutation. for creation
       final localId = 'offline_${const Uuid().v4()}';
 
@@ -628,6 +622,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
       return right(localId);
     }
+    return left('Unexpected state');
   }
 
   @override
@@ -671,16 +666,24 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   AsyncResponse<String> updateMedication(
       String id, UpdateMedicationModel data) async {
+    bool forceOffline = false;
     if (await connectivityService.isConnected) {
       try {
         final res = await remoteDataSource.updateMedication(id, data);
         return right(res);
       } on ApiException catch (e) {
-        return left(e.message ?? 'Server error');
+        if (e.message != null && e.message!.contains('400')) {
+          return left(e.message!);
+        }
+        forceOffline = true;
       } catch (e) {
-        return left(e.toString());
+        forceOffline = true;
       }
     } else {
+      forceOffline = true;
+    }
+
+    if (forceOffline) {
       // Fetch local cache.
       final localMeds = await db.medicationsDao.getAllMedications();
       final local = localMeds.where((m) => m.id == id).firstOrNull;
@@ -712,6 +715,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
       return right(id);
     }
+    return left('Unexpected state');
   }
 
   @override

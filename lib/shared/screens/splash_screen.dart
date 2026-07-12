@@ -80,10 +80,9 @@ class _SplashScreenState extends State<SplashScreen>
     if (status.phase == StartupPhase.ready ||
         status.phase == StartupPhase.unauthenticated ||
         status.phase == StartupPhase.error) {
-      // Even on error, navigate away rather than leaving the user stranded
-      // on splash with no way out - the router's own redirect logic will
-      // send them to sign-in/registration/home based on actual auth state.
-      context.go('/home');
+      
+      final redirect = GoRouterState.of(context).uri.queryParameters['redirect'];
+      context.go(redirect ?? '/');
     }
   }
 

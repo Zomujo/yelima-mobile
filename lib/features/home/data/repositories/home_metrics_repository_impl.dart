@@ -33,26 +33,31 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
 
   @override
   AsyncResponse<HomeMetricsEntity> getHomeMetrics() async {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<HomeMetricsEntity>(
+    return ExceptionWrapper.runAsync<HomeMetricsEntity>(
       () async {
         List<VitalHistoryEntity> vitals = [];
         double? adherence;
 
         // Fetch remote vitals and adherence concurrently.
+        bool vitalsFetchFailed = false;
+        bool adherenceFetchFailed = false;
+
         final futures = await Future.wait([
-          remoteDataSource
-              .fetchVitalHistories()
-              .catchError((_) => <VitalHistoryModel>[]),
-          remoteDataSource
-              .fetchMedicationAdherence()
-              .catchError((_) => <String, dynamic>{})
+          remoteDataSource.fetchVitalHistories().catchError((_) {
+            vitalsFetchFailed = true;
+            return <VitalHistoryModel>[];
+          }),
+          remoteDataSource.fetchMedicationAdherence().catchError((_) {
+            adherenceFetchFailed = true;
+            return <String, dynamic>{};
+          })
         ]);
 
         final remoteVitals = futures[0] as List;
         final adherenceResponse = futures[1] as Map<String, dynamic>;
 
-        // Fallback to local cache if remote vitals fetch fails.
-        if (remoteVitals.isNotEmpty) {
+        // Fallback to local cache if remote vitals fetch actually failed.
+        if (!vitalsFetchFailed) {
           final models = remoteVitals.cast<VitalHistoryModel>().toList();
           await localDataSource.cacheVitalHistories(models);
           vitals = models;
@@ -60,13 +65,18 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           vitals = await localDataSource.getCachedVitalHistories();
         }
 
-        // Parse adherence data with local cache fallback.
-        final data = adherenceResponse['data'];
-        if (data is Map && data['rate'] != null) {
-          final parsed = double.tryParse(data['rate'].toString());
-          if (parsed != null) {
-            adherence = parsed > 1 ? parsed / 100 : parsed;
-            await localDataSource.cacheAdherence(adherence);
+        // Parse adherence data with local cache fallback if fetch failed.
+        if (!adherenceFetchFailed) {
+          final data = adherenceResponse['data'];
+          if (data is Map && data['rate'] != null) {
+            final parsed = double.tryParse(data['rate'].toString());
+            if (parsed != null) {
+              adherence = parsed > 1 ? parsed / 100 : parsed;
+              await localDataSource.cacheAdherence(adherence);
+            }
+          } else {
+            await localDataSource.clearCachedAdherence();
+            adherence = null;
           }
         } else {
           adherence = await localDataSource.getCachedAdherence();
@@ -74,7 +84,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
 
         return Right(HomeMetricsModel.fromVitals(vitals, adherence));
       },
-      connectivityService: connectivityService,
+      operationName: 'HomeMetricsRepositoryImpl.getHomeMetrics',
     );
   }
 

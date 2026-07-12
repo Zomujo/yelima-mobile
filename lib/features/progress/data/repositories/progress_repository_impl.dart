@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:fpdart/fpdart.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/services/connectivity_service.dart';
@@ -8,6 +9,7 @@ import '../../../../core/db/app_database.dart';
 import '../../domain/entities/vital_trends.dart';
 import '../../domain/repositories/progress_repository.dart';
 import '../datasources/progress_remote_datasource.dart';
+import '../utils/progress_isolate_parsers.dart';
 
 class ProgressRepositoryImpl implements ProgressRepository {
   final ProgressRemoteDataSource _remoteDataSource;
@@ -60,12 +62,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
           return right(result);
         } catch (_) {
           final localResult = await _fetchLocalBPTrend(dateRange);
-          return localResult.fold(
-            (l) {
-              throw ErrorException(message: l);
-            },
-            (r) => right(r),
-          );
+          return localResult;
         }
       },
       operationName: 'ProgressRepositoryImpl.getBPTrend',
@@ -79,8 +76,8 @@ class ProgressRepositoryImpl implements ProgressRepository {
       final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
 
       if (cachedVital != null) {
-        final decoded = jsonDecode(cachedVital.value);
-        return right(BPTrend.fromJson(decoded));
+        final trend = await Isolate.run(() => parseBpTrend(cachedVital.value));
+        return right(trend);
       }
       return left(
           'No offline data available for BP trend. Please connect to the internet to fetch it.');
@@ -120,12 +117,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
           return right(result);
         } catch (_) {
           final localResult = await _fetchLocalVitalTrend(vitalType, dateRange);
-          return localResult.fold(
-            (l) {
-              throw ErrorException(message: l);
-            },
-            (r) => right(r),
-          );
+          return localResult;
         }
       },
       operationName: 'ProgressRepositoryImpl.getVitalTrend',
@@ -140,8 +132,8 @@ class ProgressRepositoryImpl implements ProgressRepository {
       final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
 
       if (cachedVital != null) {
-        final decoded = jsonDecode(cachedVital.value);
-        return right(VitalTrend.fromJson(decoded));
+        final trend = await Isolate.run(() => parseVitalTrend(cachedVital.value));
+        return right(trend);
       }
       return left(
           'No offline data available for $vitalType trend. Please connect to the internet to fetch it.');

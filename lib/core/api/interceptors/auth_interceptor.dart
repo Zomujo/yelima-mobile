@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../managers/token_manager.dart';
 import '../../utils/logger.dart';
 
@@ -10,8 +11,6 @@ class AuthInterceptor extends Interceptor {
       : _tokenManager = tokenManager ?? TokenManager();
 
   // A Completer used to serialize concurrent token fetch operations.
-  // If a fetch is already in progress, new requests wait for it to finish
-  // rather than firing their own parallel fetch.
   Completer<String?>? _tokenCompleter;
 
   @override
@@ -30,12 +29,45 @@ class AuthInterceptor extends Interceptor {
     handler.next(options);
   }
 
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.response?.statusCode == 401) {
+      if (err.requestOptions.extra['isRetry'] == true) {
+        AppLogger.w('AuthInterceptor: 401 Unauthorized received on RETRY. Logging out user.');
+        try {
+          await FirebaseAuth.instance.signOut();
+        } catch (e) {
+          AppLogger.e('AuthInterceptor: Error signing out on 401', e);
+        }
+        return handler.next(err);
+      }
+
+      AppLogger.w('AuthInterceptor: 401 Unauthorized received. Attempting to force refresh token...');
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final newToken = await user.getIdToken(true);
+          final options = err.requestOptions;
+          options.headers['Authorization'] = 'Bearer $newToken';
+          options.extra['isRetry'] = true;
+
+          final dio = Dio();
+          final response = await dio.fetch(options);
+          return handler.resolve(response);
+        }
+      } catch (e) {
+        AppLogger.e('AuthInterceptor: Force refresh failed', e);
+        try {
+          await FirebaseAuth.instance.signOut();
+        } catch (_) {}
+      }
+    }
+    handler.next(err);
+  }
+
   /// Fetches a valid token, deduplicating concurrent calls via a Completer.
-  /// If a token fetch is already in progress, this method waits for it to
-  /// complete and returns the same token to all waiting callers.
   Future<String?> _getToken() async {
     if (_tokenCompleter != null && !_tokenCompleter!.isCompleted) {
-      // Another request is already fetching a token — piggyback on it.
       AppLogger.d('AuthInterceptor: token fetch in progress, waiting...');
       return _tokenCompleter!.future;
     }
@@ -46,8 +78,10 @@ class AuthInterceptor extends Interceptor {
       final token = await _tokenManager.getValidAuthToken();
       _tokenCompleter!.complete(token);
       return token;
-    } catch (e) {
-      _tokenCompleter!.completeError(e);
+    } catch (e, stackTrace) {
+      if (!_tokenCompleter!.isCompleted) {
+        _tokenCompleter!.completeError(e, stackTrace);
+      }
       rethrow;
     } finally {
       // Clear so the next request starts fresh.

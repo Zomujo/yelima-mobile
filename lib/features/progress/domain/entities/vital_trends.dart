@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:intl/intl.dart';
+import 'package:yelima/core/utils/app_date_formats.dart';
 
 class TrendLabel {
   final String main;
@@ -48,17 +48,17 @@ class BPTrend extends Equatable {
 
       if (isShortSpan) {
         // Time based (24h)
-        main = DateFormat('HH:mm').format(current);
+        main = AppDateFormats.time24h.format(current);
         if (prev == null || current.day != prev.day) {
           isBoundary = true;
-          sub = DateFormat('dd MMM').format(current).toUpperCase();
+          sub = AppDateFormats.dayMonthShort.format(current).toUpperCase();
         }
       } else {
         // Date based (Multi-day)
-        main = DateFormat('dd').format(current);
+        main = AppDateFormats.dayOnly.format(current);
         if (prev == null || current.month != prev.month) {
           isBoundary = true;
-          sub = DateFormat('MMM').format(current).toUpperCase();
+          sub = AppDateFormats.monthShort.format(current).toUpperCase();
         }
       }
 
@@ -109,16 +109,16 @@ class VitalTrend extends Equatable {
       String? sub;
 
       if (isShortSpan) {
-        main = DateFormat('HH:mm').format(current);
+        main = AppDateFormats.time24h.format(current);
         if (prev == null || current.day != prev.day) {
           isBoundary = true;
-          sub = DateFormat('dd MMM').format(current).toUpperCase();
+          sub = AppDateFormats.dayMonthShort.format(current).toUpperCase();
         }
       } else {
-        main = DateFormat('dd').format(current);
+        main = AppDateFormats.dayOnly.format(current);
         if (prev == null || current.month != prev.month) {
           isBoundary = true;
-          sub = DateFormat('MMM').format(current).toUpperCase();
+          sub = AppDateFormats.monthShort.format(current).toUpperCase();
         }
       }
 

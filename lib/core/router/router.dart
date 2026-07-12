@@ -52,35 +52,41 @@ class AppRouter {
             state.matchedLocation == RoutePaths.registration;
         final isSplashRoute = state.matchedLocation == RoutePaths.splash;
 
-        // ── Still initializing or syncing profile → hold navigation ──
-        // If we're on an auth route (sign-in/up), the GlobalAsyncLoader overlay
-        // is covering the screen — return null to stay put. Redirecting to splash
-        // here causes it to render BEHIND the semi-transparent loader overlay,
-        // which the user can see. Only send to splash if we're somewhere else.
-        if (!isInitialized || isSyncInProgress) {
-          if (isAuthRoute || isSplashRoute) return null;
-          return RoutePaths.splash;
+        final redirectParam = state.uri.queryParameters['redirect'];
+        final currentUri = state.uri.toString();
+        // Determine the original user intent. 
+        final intendedPath = redirectParam ?? 
+            (isAuthRoute || isRegistrationRoute || isSplashRoute ? null : currentUri);
+
+        String withRedirect(String path) {
+          if (intendedPath == null || intendedPath == '/') return path;
+          return '$path?redirect=${Uri.encodeComponent(intendedPath)}';
         }
 
-        // If we are on the splash screen and initialization is done,
-        // we stay on splash and let the SplashScreen widget itself trigger
-        // the navigation after its animations complete.
+        // ── Still initializing or syncing profile → hold navigation ──
+        if (!isInitialized || isSyncInProgress) {
+          if (isAuthRoute || isSplashRoute) return null;
+          return withRedirect(RoutePaths.splash);
+        }
+
         if (isSplashRoute) {
           return null;
         }
 
         if (!isAuthenticated) {
-          return isAuthRoute ? null : RoutePaths.signIn;
+          if (isAuthRoute) return null;
+          return withRedirect(RoutePaths.signIn);
         }
 
         // Authenticated users
         if (!isRegistrationComplete) {
-          return isRegistrationRoute ? null : RoutePaths.registration;
+          if (isRegistrationRoute) return null;
+          return withRedirect(RoutePaths.registration);
         }
 
         // Fully registered users shouldn't see auth or registration routes
-        if (isAuthRoute || isRegistrationRoute) {
-          return RoutePaths.home;
+        if (isAuthRoute || isRegistrationRoute || isSplashRoute) {
+          return intendedPath ?? RoutePaths.home;
         }
 
         return null;

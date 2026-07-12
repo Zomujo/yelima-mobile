@@ -74,7 +74,8 @@ class _OverlayModalState extends State<OverlayModal>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
+    return RepaintBoundary(
+      child: AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
         return Stack(
@@ -106,6 +107,7 @@ class _OverlayModalState extends State<OverlayModal>
           ],
         );
       },
+    ),
     );
   }
 

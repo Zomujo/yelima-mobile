@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/utils/app_date_formats.dart';
 
 class DateSeparator extends StatelessWidget {
   final DateTime date;
@@ -20,7 +20,7 @@ class DateSeparator extends StatelessWidget {
     } else if (messageDate == yesterday) {
       return 'Yesterday';
     } else {
-      return DateFormat('MMMM d, yyyy').format(date);
+      return AppDateFormats.monthDayYear.format(date);
     }
   }
 

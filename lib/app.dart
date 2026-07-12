@@ -4,6 +4,7 @@ import 'core/router/router.dart';
 import 'core/theme/app_theme.dart';
 import 'shared/widgets/app_startup_widget.dart';
 
+import 'core/utils/globals.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/user/presentation/controllers/user_controller.dart';
@@ -66,6 +67,7 @@ class _MyAppState extends State<MyApp> {
             Provider<VitalsDao>(create: (_) => sl()),
           ],
           child: MaterialApp.router(
+            scaffoldMessengerKey: scaffoldMessengerKey,
             routerConfig: _router,
             title: 'yelima',
             debugShowCheckedModeBanner: false,

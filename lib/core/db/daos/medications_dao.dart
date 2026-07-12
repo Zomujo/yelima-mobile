@@ -32,4 +32,9 @@ class MedicationsDao extends DatabaseAccessor<AppDatabase> with _$MedicationsDao
   Future<void> clearMedications() {
     return delete(medications).go();
   }
+
+  Future<void> updateMedicationId(String oldId, String newId) {
+    return (update(medications)..where((t) => t.id.equals(oldId)))
+        .write(MedicationsCompanion(id: Value(newId)));
+  }
 }

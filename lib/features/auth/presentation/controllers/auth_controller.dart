@@ -33,8 +33,6 @@ class AuthController extends ChangeNotifier {
   bool get isAuthLoading => _state.isAuthLoading;
   bool get isInitialSyncInProgress => _state.isInitialSyncInProgress;
 
-
-
   void _updateState(AuthState newState) {
     _state = newState;
     notifyListeners();
@@ -42,8 +40,8 @@ class AuthController extends ChangeNotifier {
 
   void _initializeAuthStateListener() {
     _authStateSubscription?.cancel();
-    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen((user) async {
-
+    _authStateSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (user == null) {
         _updateState(_state.copyWith(
           currentUser: null,
@@ -72,11 +70,13 @@ class AuthController extends ChangeNotifier {
     try {
       await user.reload();
       if (FirebaseAuth.instance.currentUser == null) {
+        _showSessionExpiredSnackbar();
         await _repository.signOut();
         return;
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'user-disabled') {
+      if (e.code == 'user-not-found' || e.code == 'user-disabled' || e.code == 'user-token-expired') {
+        _showSessionExpiredSnackbar();
         await _repository.signOut();
         return;
       }
@@ -85,17 +85,22 @@ class AuthController extends ChangeNotifier {
     await _sessionLifecycleService.startSession(user.uid);
   }
 
+  void _showSessionExpiredSnackbar() {
+    AppSnackBar.showError(null, message: 'Your session has expired or your account was disabled.');
+  }
+
   @override
   void dispose() {
     _authStateSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> signIn(BuildContext context, String email, String password) async {
+  Future<void> signIn(
+      BuildContext context, String email, String password) async {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
     GlobalAsyncLoader.show(context, message: "Signing in...");
-    
+
     final result = await _repository.signIn(email, password);
     _updateState(_state.copyWith(isAuthLoading: false));
 
@@ -104,15 +109,18 @@ class AuthController extends ChangeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {},
+      (_) {
+        GlobalAsyncLoader.hide();
+      },
     );
   }
 
-  Future<void> register(BuildContext context, String email, String password) async {
+  Future<void> register(
+      BuildContext context, String email, String password) async {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
     GlobalAsyncLoader.show(context, message: "Creating account...");
-    
+
     final result = await _repository.register(email, password);
     _updateState(_state.copyWith(isAuthLoading: false));
 
@@ -121,7 +129,9 @@ class AuthController extends ChangeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {},
+      (_) {
+        GlobalAsyncLoader.hide();
+      },
     );
   }
 
@@ -129,7 +139,7 @@ class AuthController extends ChangeNotifier {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
     GlobalAsyncLoader.show(context, message: "Continuing with Google...");
-    
+
     final result = await _repository.signInWithGoogle();
     _updateState(_state.copyWith(isAuthLoading: false));
 
@@ -138,7 +148,9 @@ class AuthController extends ChangeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {},
+      (_) {
+        GlobalAsyncLoader.hide();
+      },
     );
   }
 
@@ -146,7 +158,7 @@ class AuthController extends ChangeNotifier {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
     GlobalAsyncLoader.show(context, message: "Continuing with Apple...");
-    
+
     final result = await _repository.signInWithApple();
     _updateState(_state.copyWith(isAuthLoading: false));
 
@@ -155,11 +167,14 @@ class AuthController extends ChangeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {},
+      (_) {
+        GlobalAsyncLoader.hide();
+      },
     );
   }
 
-  Future<bool> sendPasswordResetEmail(BuildContext context, String email) async {
+  Future<bool> sendPasswordResetEmail(
+      BuildContext context, String email) async {
     GlobalAsyncLoader.show(context, message: "Sending reset link...");
     final result = await _repository.sendPasswordResetEmail(email);
     GlobalAsyncLoader.hide();
@@ -170,7 +185,8 @@ class AuthController extends ChangeNotifier {
         return false;
       },
       (_) {
-        AppSnackBar.showSuccess(context, message: 'Password reset link sent! Check your inbox.');
+        AppSnackBar.showSuccess(context,
+            message: 'Password reset link sent! Check your inbox.');
         return true;
       },
     );
@@ -179,12 +195,20 @@ class AuthController extends ChangeNotifier {
   Future<void> deleteAccount(BuildContext context, {String? password}) async {
     GlobalAsyncLoader.show(context, message: "Deleting account...");
     final result = await _repository.deleteAccount(password: password);
-    GlobalAsyncLoader.hide();
 
-    result.fold(
-      (error) => _showError(context, error),
-      (_) {
-        AppSnackBar.showSuccess(context, message: 'Account successfully deleted.');
+    await result.fold(
+      (error) async {
+        GlobalAsyncLoader.hide();
+        _showError(context, error);
+      },
+      (_) async {
+        await _sessionLifecycleService.endSession();
+        await TokenManager().clearTokens();
+        GlobalAsyncLoader.hide();
+        if (context.mounted) {
+          AppSnackBar.showSuccess(context,
+              message: 'Account successfully deleted.');
+        }
       },
     );
   }
@@ -192,10 +216,10 @@ class AuthController extends ChangeNotifier {
   Future<void> signOut(BuildContext context) async {
     GlobalAsyncLoader.show(context, message: "Signing out...");
     await _sessionLifecycleService.endSession();
-    
+
     final result = await _repository.signOut();
     await TokenManager().clearTokens();
-    
+
     GlobalAsyncLoader.hide();
 
     result.fold(
@@ -207,6 +231,12 @@ class AuthController extends ChangeNotifier {
   }
 
   void _showError(BuildContext context, String message) {
+    if (message == 'User cancelled the operation.' || 
+        message == 'Sign in cancelled' ||
+        message == 'Apple sign-in cancelled' ||
+        message == 'Re-authentication was cancelled.') {
+      return; // Silent failure for user cancellations
+    }
     AppSnackBar.showError(context, message: message);
   }
 }

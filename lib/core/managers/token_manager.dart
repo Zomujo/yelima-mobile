@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_it/get_it.dart';
 
+import '../services/fcm_token_service.dart';
 import '../utils/logger.dart';
 
 /// Manages retrieval of authentication and FCM tokens.
@@ -14,6 +17,7 @@ class TokenManager {
   static const String _fcmTokenKey = 'cached_fcm_token';
   String? _cachedAuthToken;
   String? _cachedFCMToken;
+  StreamSubscription? _tokenRefreshSubscription;
   final _firebaseMessaging = FirebaseMessaging.instance;
 
   // ---------------------------------------------------------------------------
@@ -95,12 +99,20 @@ class TokenManager {
       AppLogger.i('TokenManager: FCM token updated and saved.');
     }
 
-    // Listen for future token refreshes
-    _firebaseMessaging.onTokenRefresh.listen((newToken) async {
+    // Listen for future token refreshes — cancel any previous listener first
+    // to prevent duplicate subscription leaks across multiple sessions.
+    await _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = _firebaseMessaging.onTokenRefresh.listen((newToken) async {
       AppLogger.i('TokenManager: FCM token refreshed.');
       _cachedFCMToken = newToken;
       final p = await SharedPreferences.getInstance();
       await p.setString(_fcmTokenKey, newToken);
+      
+      try {
+        if (GetIt.instance.isRegistered<FCMTokenService>()) {
+          GetIt.instance<FCMTokenService>().registerFCMToken().catchError((_) {});
+        }
+      } catch (_) {}
     });
 
     return _cachedFCMToken;
@@ -114,6 +126,8 @@ class TokenManager {
   Future<void> clearTokens() async {
     _cachedAuthToken = null;
     _cachedFCMToken = null;
+    await _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_fcmTokenKey);
     AppLogger.d('TokenManager: All tokens cleared.');

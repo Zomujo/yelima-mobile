@@ -3,12 +3,13 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 
 import 'config/app_config.dart';
 import 'network/network_info.dart';
+import '../features/medications/data/datasources/medication_remote_mutation_source.dart';
+
 import 'api/api_client.dart';
 import 'db/app_database.dart';
 
 import 'services/connectivity_service.dart';
 import 'services/session_lifecycle_service.dart';
-import 'services/sync_service.dart';
 import 'services/app_startup_service.dart';
 import 'services/audio_player_manager.dart';
 import 'services/voice_recording_service.dart';
@@ -19,6 +20,7 @@ import 'services/fcm_lifecycle_handler.dart';
 import 'services/deletion_sync_manager.dart';
 import 'services/mutation_sync_manager.dart';
 import '../features/chat/data/datasources/ai_chat_remote_datasource.dart';
+import '../features/chat/data/datasources/ai_chat_remote_mutation_source.dart';
 
 void initCore(GetIt sl) {
   // --- Core Infrastructure ---
@@ -33,10 +35,8 @@ void initCore(GetIt sl) {
   // --- Services ---
   sl.registerLazySingleton(() => ConnectivityService());
   sl.registerLazySingleton(() => SessionLifecycleService());
-  sl.registerLazySingleton(() => SyncService(sl(), sl(), sl(), sl())
-    ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));
 
-  sl.registerLazySingleton(() => AppStartupService(sl()));
+  sl.registerLazySingleton(() => AppStartupService());
   sl.registerLazySingleton(() => NotificationService.instance);
   sl.registerLazySingleton(() => FCMTokenService(sl()));
 
@@ -66,11 +66,14 @@ void initCore(GetIt sl) {
         ..init()
         ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));
 
+  sl.registerLazySingleton(() => AiChatRemoteMutationSource(sl()));
+
   sl.registerLazySingleton(() => MutationSyncManager(
         connectivityService: sl(),
         db: sl(),
         remoteSources: {
-          // Add sources as they are migrated to the offline-first pattern
+          'medication': sl<MedicationRemoteMutationSource>(),
+          'chat': sl<AiChatRemoteMutationSource>(),
         },
       )
         ..init()

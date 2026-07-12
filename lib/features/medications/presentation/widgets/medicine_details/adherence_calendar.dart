@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../../core/utils/app_date_formats.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_history_entity.dart';
@@ -101,7 +101,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                   .map((item) => PopupMenuItem<DateTime>(
                         value: item,
                         child: AppText.bodyMedium(
-                          DateFormat('MMMM yyyy').format(item),
+                          AppDateFormats.monthYear.format(item),
                           color: const Color(0xFF1E293B),
                         ),
                       ))
@@ -112,7 +112,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     AppText.titleMedium(
-                      DateFormat('MMMM yyyy').format(_selectedMonth),
+                      AppDateFormats.monthYear.format(_selectedMonth),
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF1E293B),
                     ),

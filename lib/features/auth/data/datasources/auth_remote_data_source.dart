@@ -155,7 +155,12 @@ class AuthRemoteDataSource {
     await _firestore.collection('users').doc(user.uid).delete();
 
     /// Delete user from Firebase Auth.
-    await user.delete();
-    await _googleSignIn.signOut();
+    try {
+      await user.delete();
+      await _googleSignIn.signOut();
+    } catch (e) {
+      await signOut();
+      rethrow;
+    }
   }
 }

@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/utils/globals.dart';
 
 class AppSnackBar {
-  static void showSuccess(BuildContext context, {required String message}) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
+  static void showSuccess(BuildContext? context, {required String message}) {
+    if (context != null && !context.mounted) return;
+    
+    final messenger = context != null 
+        ? ScaffoldMessenger.of(context) 
+        : scaffoldMessengerKey.currentState;
+        
+    if (messenger == null) return;
+
+    messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
@@ -32,9 +40,16 @@ class AppSnackBar {
       );
   }
 
-  static void showError(BuildContext context, {required String message}) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
+  static void showError(BuildContext? context, {required String message}) {
+    if (context != null && !context.mounted) return;
+    
+    final messenger = context != null 
+        ? ScaffoldMessenger.of(context) 
+        : scaffoldMessengerKey.currentState;
+        
+    if (messenger == null) return;
+
+    messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(

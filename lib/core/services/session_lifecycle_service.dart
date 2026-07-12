@@ -27,6 +27,9 @@ class SessionLifecycleService {
   final SplayTreeMap<int, List<SessionLifecycleHandler>> _handlers =
       SplayTreeMap();
 
+  bool _isSessionActive = false;
+  Future<void>? _lifecycleTask;
+
   /// Registers a [handler] at the given [priority].
   /// Lower [priority] values run first.
   void register(SessionLifecycleHandler handler, {int priority = 50}) {
@@ -35,39 +38,63 @@ class SessionLifecycleService {
 
   /// Runs all handlers' [onSessionStarted] in ascending priority order.
   Future<void> startSession(String userId) async {
-    AppLogger.i('SessionLifecycleService: starting session for user $userId');
-    for (final entry in _handlers.entries) {
-      AppLogger.d(
-          'SessionLifecycleService: running onSessionStarted (priority ${entry.key})');
-      await Future.wait(
-        entry.value.map((h) async {
-          try {
-            await h.onSessionStarted(userId);
-          } catch (e) {
-            AppLogger.e(
-                'Error in onSessionStarted for handler ${h.runtimeType}: $e');
-          }
-        }),
-      );
-    }
+    // Chain onto the existing task to ensure sequential execution
+    final previousTask = _lifecycleTask ?? Future.value();
+    
+    _lifecycleTask = previousTask.then((_) async {
+      if (_isSessionActive) {
+        AppLogger.d('SessionLifecycleService: Session already active, ignoring startSession.');
+        return;
+      }
+      _isSessionActive = true;
+      AppLogger.i('SessionLifecycleService: starting session for user $userId');
+      for (final entry in _handlers.entries) {
+        AppLogger.d(
+            'SessionLifecycleService: running onSessionStarted (priority ${entry.key})');
+        await Future.wait(
+          entry.value.map((h) async {
+            try {
+              await h.onSessionStarted(userId);
+            } catch (e) {
+              AppLogger.e(
+                  'Error in onSessionStarted for handler ${h.runtimeType}: $e');
+            }
+          }),
+        );
+      }
+    });
+    
+    return _lifecycleTask;
   }
 
   /// Runs all handlers' [onSessionEnded] in descending priority order.
   Future<void> endSession() async {
-    AppLogger.i('SessionLifecycleService: ending session');
-    for (final entry in _handlers.entries.toList().reversed) {
-      AppLogger.d(
-          'SessionLifecycleService: running onSessionEnded (priority ${entry.key})');
-      await Future.wait(
-        entry.value.map((h) async {
-          try {
-            await h.onSessionEnded();
-          } catch (e) {
-            AppLogger.e(
-                'Error in onSessionEnded for handler ${h.runtimeType}: $e');
-          }
-        }),
-      );
-    }
+    // Chain onto the existing task to ensure sequential execution
+    final previousTask = _lifecycleTask ?? Future.value();
+    
+    _lifecycleTask = previousTask.then((_) async {
+      if (!_isSessionActive) {
+        AppLogger.d('SessionLifecycleService: No active session, ignoring endSession.');
+        return;
+      }
+      _isSessionActive = false;
+      AppLogger.i('SessionLifecycleService: ending session');
+      for (final entry in _handlers.entries.toList().reversed) {
+        AppLogger.d(
+            'SessionLifecycleService: running onSessionEnded (priority ${entry.key})');
+        await Future.wait(
+          entry.value.map((h) async {
+            try {
+              await h.onSessionEnded();
+            } catch (e) {
+              AppLogger.e(
+                  'Error in onSessionEnded for handler ${h.runtimeType}: $e');
+            }
+          }),
+        );
+      }
+    });
+    
+    return _lifecycleTask;
   }
 }

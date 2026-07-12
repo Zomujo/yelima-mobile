@@ -85,7 +85,8 @@ class _AppShimmerState extends State<AppShimmer>
     final highlightColor = widget.highlightColor ?? 
         (isDark ? Colors.grey[700]! : Colors.grey[100]!);
 
-    return AnimatedBuilder(
+    return RepaintBoundary(
+      child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
           return ShaderMask(
@@ -107,10 +108,11 @@ class _AppShimmerState extends State<AppShimmer>
                 transform: _SlidingGradientTransform(offset: _controller.value),
               ).createShader(bounds);
             },
-            child: RepaintBoundary(child: widget.child),
+            child: widget.child,
           );
         },
-      );
+      ),
+    );
   }
 }
 

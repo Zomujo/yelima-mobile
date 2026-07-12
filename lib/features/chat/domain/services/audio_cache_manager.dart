@@ -39,7 +39,23 @@ class AudioCacheManager {
   Future<void> clearCache() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys().where((k) => k.startsWith('audio_cache_')).toList();
+    
+    if (keys.isEmpty) return;
+    
+    final directory = await getApplicationDocumentsDirectory();
+    
     for (final key in keys) {
+      final filename = prefs.getString(key);
+      if (filename != null) {
+        try {
+          final file = File('${directory.path}/$filename');
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (_) {
+          // Ignore deletion errors for individual files
+        }
+      }
       await prefs.remove(key);
     }
   }

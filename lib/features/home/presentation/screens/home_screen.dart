@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+import 'package:yelima/core/utils/app_date_formats.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/home_header.dart';
 import '../widgets/sections/home_metrics_section.dart';
@@ -16,7 +16,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<UserController>().userEntity;
     final String greetingName = user?.firstName ?? '';
-    final String formattedDate = DateFormat('EEEE d MMMM').format(DateTime.now());
+    final String formattedDate = AppDateFormats.dayDateMonth.format(DateTime.now());
 
     return Container(
       decoration: const BoxDecoration(

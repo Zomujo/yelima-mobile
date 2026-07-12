@@ -25,6 +25,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
         _remoteSources = remoteSources;
 
   Timer? _debounceTimer;
+  Future<void>? _syncTask;
 
   @override
   String get serviceName => 'Mutation Sync';
@@ -39,6 +40,11 @@ class MutationSyncManager implements SessionLifecycleHandler {
   Future<void> onSessionEnded() async {
     _isSessionActive = false;
     _debounceTimer?.cancel();
+    if (_syncTask != null) {
+      debugPrint("MutationSyncManager: Awaiting in-flight sync task before ending session...");
+      await _syncTask;
+      debugPrint("MutationSyncManager: Sync task completed, session ending.");
+    }
   }
 
   void init() {
@@ -63,7 +69,10 @@ class MutationSyncManager implements SessionLifecycleHandler {
     // A mutation queued by a previous user must never be sent under the next
     // user's auth token, so only sync while a session is actually active.
     if (_isSessionActive && await _connectivityService.isConnected) {
-      _syncPendingMutations();
+      if (!_isSyncing) {
+        _syncTask = _syncPendingMutations();
+      }
+      await _syncTask;
     }
   }
 
@@ -110,12 +119,21 @@ class MutationSyncManager implements SessionLifecycleHandler {
         return;
       }
 
-      await remoteSource.syncMutation(
+      final newServerId = await remoteSource.syncMutation(
         entityId: pending.entityId,
         action: pending.action,
         payloadJson: pending.payloadJson,
         createdAt: pending.createdAt,
       );
+
+      if (newServerId != null && newServerId != pending.entityId) {
+        debugPrint("Remapping offline ID ${pending.entityId} to server ID $newServerId for ${pending.entityType}");
+        if (pending.entityType == 'medication') {
+          await _db.medicationsDao.updateMedicationId(pending.entityId, newServerId);
+        }
+        // Cascade to pending mutations (e.g. an update that followed the create)
+        await _db.pendingMutationsDao.updateEntityId(pending.entityId, newServerId);
+      }
       
       await _db.pendingMutationsDao.removePendingMutation(pending.id);
       debugPrint("Successfully synced mutation for ${pending.entityType} (${pending.entityId})");
@@ -128,6 +146,12 @@ class MutationSyncManager implements SessionLifecycleHandler {
             "Mutation ${pending.id} rejected by server (${e.response?.statusCode}). Removing from local queue.");
         await _db.pendingMutationsDao.removePendingMutation(pending.id);
         return;
+      }
+
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        debugPrint(
+            "Unauthorized (${e.response?.statusCode}) during mutation sync. Aborting sync to preserve data until login.");
+        rethrow;
       }
 
       if (_isConnectionError(e)) {
