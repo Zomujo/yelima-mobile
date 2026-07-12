@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/repositories/ai_chat_repository.dart';
@@ -214,7 +216,8 @@ class AiChatController extends ChangeNotifier {
 
     if (_activeSync != null) await _activeSync;
 
-    final localId = DateTime.now().millisecondsSinceEpoch.toString();
+    
+    final localId = const Uuid().v4();
     final userMsg = AiChatMessage(
       id: localId,
       sender: 'user',
@@ -287,7 +290,8 @@ class AiChatController extends ChangeNotifier {
 
     if (_activeSync != null) await _activeSync;
 
-    final localId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final localId = const Uuid().v4();
     final userMsg = AiChatMessage(
       id: localId,
       sender: 'user',
@@ -320,7 +324,7 @@ class AiChatController extends ChangeNotifier {
       ));
       _repository.saveConversations(messages);
       _triggerPendingSyncIfAny();
-    }, (botData) {
+    }, (botData) async {
       final messages = List<AiChatMessage>.from(_state.messages);
 
       final index = messages.indexWhere((m) => m.localChatId == localId);
@@ -350,6 +354,12 @@ class AiChatController extends ChangeNotifier {
         isSending: false,
       ));
       _repository.saveConversations(messages);
+      try {
+        if (!filePath.startsWith('http')) {
+          final file = File(filePath);
+          if (await file.exists()) await file.delete();
+        }
+      } catch (_) {}
       _triggerPendingSyncIfAny();
     });
   }

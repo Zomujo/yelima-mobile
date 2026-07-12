@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/utils/custom_types.dart';
@@ -100,7 +102,13 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
               DateTime.now().toUtc().toIso8601String(),
         };
 
-        await remoteDataSource.saveVitalReading(body);
+        try {
+          await remoteDataSource.saveVitalReading(body);
+        } on SocketException {
+          return left('No internet connection. Please check your network and try again.');
+        } on TimeoutException {
+          return left('No internet connection. Please check your network and try again.');
+        }
 
         final model = VitalHistoryModel(
           id: entity.id,
