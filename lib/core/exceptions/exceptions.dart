@@ -221,6 +221,67 @@ class ExceptionWrapper {
     );
   }
 
+  /// Extensible runner that returns strongly typed [ErrorException]s instead of raw strings.
+  /// Useful for Repositories that need to interrogate HTTP status codes (401, 409).
+  static Future<Either<ErrorException, T>> runAsyncWithTypedError<T>(
+    Future<Either<ErrorException, T>> Function() func, {
+    String? operationName,
+  }) async {
+    final name = operationName ?? 'AsyncOperationTyped';
+    AppLogger.log('⏳ Starting: $name...', type: LogType.debug);
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      final result = await func();
+      stopwatch.stop();
+
+      result.fold(
+        (failure) => AppLogger.log(
+          '❌ Failed: $name [${stopwatch.elapsedMilliseconds}ms]\nReason: ${failure.message}',
+          type: LogType.warning,
+        ),
+        (success) => AppLogger.log(
+          '✅ Completed: $name [${stopwatch.elapsedMilliseconds}ms]',
+          type: LogType.success,
+        ),
+      );
+
+      return result;
+    } on NetworkException catch (e) {
+      stopwatch.stop();
+      AppLogger.w('Network unavailable during $name');
+      return left(e);
+    } on PlatformException catch (e, stack) {
+      stopwatch.stop();
+      if (e.code == 'sign_in_canceled' || e.code == 'CANCELED') {
+        AppLogger.w('Sign in cancelled during $name');
+        return left(const UserCanceledException('Sign in cancelled'));
+      }
+      AppLogger.e('Platform Exception during $name', e, stack);
+      return left(ErrorException(message: e.message ?? 'A platform error occurred'));
+    } on FirebaseAuthException catch (e, stack) {
+      stopwatch.stop();
+      AppLogger.e('Firebase Auth Exception during $name (${e.code})', e, stack);
+      return left(ErrorException(message: _friendlyAuthMessage(e)));
+    } on FirebaseException catch (e, stack) {
+      stopwatch.stop();
+      if (e.code == 'unavailable' || e.code == 'network-request-failed') {
+        AppLogger.w('Network/Unavailable during $name: ${e.message}');
+        return left(const NetworkException("Service unavailable. Please check your connection."));
+      }
+      AppLogger.e('Firebase Exception during $name', e, stack);
+      return left(ErrorException(message: e.message ?? 'A Firebase error occurred'));
+    } on ErrorException catch (e, stack) {
+      stopwatch.stop();
+      AppLogger.e('Error Exception during $name', e, stack);
+      return left(e);
+    } catch (e, stack) {
+      stopwatch.stop();
+      AppLogger.e('Unhandled Exception or Error during $name', e, stack);
+      return left(ErrorException(message: e.toString()));
+    }
+  }
+
   static void runSync(void Function() func, {String? operationName}) {
     final name = operationName ?? 'SyncOperation';
     try {

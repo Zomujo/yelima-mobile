@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/repositories/medication_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
 import '../states/medications_state.dart';
+import 'dart:async';
 
 class MedicationController extends ChangeNotifier with SafeNotifier {
   final MedicationRepository repository;
+  final MutationSyncManager mutationSyncManager;
+  StreamSubscription<String>? _syncSubscription;
 
-  MedicationController({required this.repository});
+  MedicationController({required this.repository, required this.mutationSyncManager}) {
+    _initSyncListener();
+  }
 
   MedicationsState _state = const MedicationsState();
   MedicationsState get state => _state;
@@ -34,6 +40,20 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     fetchAdherence();
     fetchCounts();
     fetchMedications();
+  }
+
+  void _initSyncListener() {
+    _syncSubscription = mutationSyncManager.onMutationSynced.listen((entityType) {
+      if (entityType == 'medication') {
+        init(); // Refresh UI dynamically
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSubscription?.cancel();
+    super.dispose();
   }
 
   void setTabIndex(int index) {

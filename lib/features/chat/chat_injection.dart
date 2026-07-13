@@ -26,6 +26,7 @@ void initChat(GetIt sl) {
   sl.registerFactory(() => AiChatController(
         sl(),
         sl(),
+        sl(),
       ));
 }
 

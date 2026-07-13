@@ -48,9 +48,6 @@ class _EditProfileFormState extends State<EditProfileForm> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<EditProfileController>();
-    final gender = controller.state.gender;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -72,13 +69,18 @@ class _EditProfileFormState extends State<EditProfileForm> {
           color: Color(0xFF6A7282), // Slate 700
         ),
         const SizedBox(height: 8),
-        AppDropdown<String>(
-          value: gender,
-          hintText: 'Select gender',
-          items: const ['Male', 'Female', 'Other'],
-          itemLabelBuilder: (item) => item,
-          onChanged: (value) {
-            context.read<EditProfileController>().updateForm(gender: value);
+        Selector<EditProfileController, String?>(
+          selector: (context, controller) => controller.state.gender,
+          builder: (context, gender, child) {
+            return AppDropdown<String>(
+              value: gender,
+              hintText: 'Select gender',
+              items: const ['Male', 'Female', 'Other'],
+              itemLabelBuilder: (item) => item,
+              onChanged: (value) {
+                context.read<EditProfileController>().updateForm(gender: value);
+              },
+            );
           },
         ),
         const SizedBox(height: 24),

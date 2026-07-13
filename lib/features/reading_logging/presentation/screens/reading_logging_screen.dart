@@ -38,50 +38,47 @@ class _ReadingLoggingView extends StatelessWidget {
           children: [
             const AppHeader(title: 'Log a reading'),
             Expanded(
-              child: Consumer<ReadingLoggingController>(
-                builder: (context, controller, child) {
-                  return UnsavedChangesGuard(
-                    hasUnsavedChanges: () => controller.state.hasChanged,
-                    child: StreamBuilder<List<VitalHistory>>(
-                      stream: context.read<VitalsDao>().watchAllVitals(),
-                    builder: (context, snapshot) {
-                      final allVitals =
-                          List<VitalHistory>.from(snapshot.data ?? []);
-                      final hasHistory = allVitals.any((v) {
-                        final type = v.vitalType.toUpperCase();
-                        return !type.contains('CACHE') &&
-                            !type.contains('TREND');
-                      });
+              child: UnsavedChangesGuard(
+                hasUnsavedChanges: () => context.read<ReadingLoggingController>().state.hasChanged,
+                child: StreamBuilder<List<VitalHistory>>(
+                  stream: context.read<VitalsDao>().watchAllVitals(),
+                  builder: (context, snapshot) {
+                    final allVitals =
+                        List<VitalHistory>.from(snapshot.data ?? []);
+                    final hasHistory = allVitals.any((v) {
+                      final type = v.vitalType.toUpperCase();
+                      return !type.contains('CACHE') &&
+                          !type.contains('TREND');
+                    });
 
-                      // No history: simple non-scrollable column
-                      if (!hasHistory) {
-                        return const Padding(
-                          padding: EdgeInsets.only(
-                              left: 24, right: 24, top: 16, bottom: 40),
-                          child: SingleChildScrollView(
-                            child: ReadingLoggingForm(),
-                          ),
-                        );
-                      }
-
-                      // Has history: scrollable layout with history section below
-                      return NestedScrollView(
-                        headerSliverBuilder: (context, innerBoxIsScrolled) {
-                          return [
-                            const SliverPadding(
-                              padding: EdgeInsets.only(
-                                  left: 24, right: 24, top: 16, bottom: 40),
-                              sliver: SliverToBoxAdapter(
-                                child: ReadingLoggingForm(),
-                              ),
-                            ),
-                          ];
-                        },
-                        body: const ReadingHistorySection(),
+                    // No history: simple non-scrollable column
+                    if (!hasHistory) {
+                      return const Padding(
+                        padding: EdgeInsets.only(
+                            left: 24, right: 24, top: 16, bottom: 40),
+                        child: SingleChildScrollView(
+                          child: ReadingLoggingForm(),
+                        ),
                       );
-                    },
-                  ));
-                },
+                    }
+
+                    // Has history: scrollable layout with history section below
+                    return NestedScrollView(
+                      headerSliverBuilder: (context, innerBoxIsScrolled) {
+                        return [
+                          const SliverPadding(
+                            padding: EdgeInsets.only(
+                                left: 24, right: 24, top: 16, bottom: 40),
+                            sliver: SliverToBoxAdapter(
+                              child: ReadingLoggingForm(),
+                            ),
+                          ),
+                        ];
+                      },
+                      body: const ReadingHistorySection(),
+                    );
+                  },
+                ),
               ),
             ),
           ],

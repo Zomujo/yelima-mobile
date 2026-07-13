@@ -10,8 +10,9 @@ import '../../../../shared/utils/app_snackbar.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 import 'auth_state.dart';
+import '../../../../core/utils/safe_notifier.dart';
 
-class AuthController extends ChangeNotifier {
+class AuthController extends ChangeNotifier with SafeNotifier {
   final AuthRepository _repository;
   final SessionLifecycleService _sessionLifecycleService;
   StreamSubscription<User?>? _authStateSubscription;

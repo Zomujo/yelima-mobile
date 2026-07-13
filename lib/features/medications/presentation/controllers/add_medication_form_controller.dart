@@ -3,8 +3,9 @@ import '../../data/models/seeded_medication_model.dart';
 import '../../domain/entities/medicine_form_data.dart';
 import '../../domain/usecases/create_medication_usecase.dart';
 import '../states/add_medication_form_state.dart';
+import '../../../../core/utils/safe_notifier.dart';
 
-class AddMedicationFormController extends ChangeNotifier {
+class AddMedicationFormController extends ChangeNotifier with SafeNotifier {
   final CreateMedicationUseCase createMedicationUseCase;
 
   AddMedicationFormController({required this.createMedicationUseCase});

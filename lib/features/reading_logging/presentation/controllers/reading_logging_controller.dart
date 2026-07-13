@@ -5,8 +5,9 @@ import '../../../../core/utils/custom_types.dart';
 import '../../domain/entities/reading_form_data.dart';
 import '../../domain/usecases/save_vital_reading_usecase.dart';
 import '../states/reading_logging_state.dart';
+import '../../../../core/utils/safe_notifier.dart';
 
-class ReadingLoggingController extends ChangeNotifier {
+class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   final HomeMetricsRepository _repository;
   final SaveVitalReadingUseCase _saveVitalReadingUseCase;
 
@@ -16,22 +17,14 @@ class ReadingLoggingController extends ChangeNotifier {
   })  : _repository = repository,
         _saveVitalReadingUseCase = saveVitalReadingUseCase;
 
-  bool _isDisposed = false;
-
   ReadingLoggingState _state =
       ReadingLoggingState(selectedDate: DateTime.now());
   ReadingLoggingState get state => _state;
 
-  @override
-  void dispose() {
-    _isDisposed = true;
-    super.dispose();
-  }
-
   Future<void> init() async {
     final result = await _repository.getHomeMetrics();
 
-    if (_isDisposed) return;
+    if (isDisposed) return;
 
     result.fold(
       (_) {},
@@ -68,7 +61,7 @@ class ReadingLoggingController extends ChangeNotifier {
           sugarLevel: initialSugar ?? _state.sugarLevel,
         );
 
-        if (!_isDisposed) notifyListeners();
+        if (!isDisposed) notifyListeners();
       },
     );
   }
@@ -124,7 +117,7 @@ class ReadingLoggingController extends ChangeNotifier {
 
   AsyncResponse<void> saveReading() async {
     _state = _state.copyWith(isSaving: true);
-    if (!_isDisposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
@@ -145,7 +138,7 @@ class ReadingLoggingController extends ChangeNotifier {
       isSaving: false,
       hasChanged: response.isLeft(), // Reset hasChanged if successful
     );
-    if (!_isDisposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
 
     return response;
   }

@@ -1,6 +1,3 @@
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-
 import 'package:fpdart/fpdart.dart';
 
 import '../../../../core/utils/custom_types.dart';
@@ -16,6 +13,7 @@ import '../../../../core/services/session_lifecycle_service.dart';
 
 import '../models/ai_chat_response.dart';
 import '../../../../core/services/mutation_sync_manager.dart';
+import '../../../../core/utils/file_helper.dart';
 import 'package:get_it/get_it.dart';
 
 class PaginatedChatResult {
@@ -25,7 +23,8 @@ class PaginatedChatResult {
   PaginatedChatResult({required this.messages, required this.totalPages});
 }
 
-class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler {
+class AiChatRepositoryImpl
+    implements AiChatRepository, SessionLifecycleHandler {
   final AiChatLocalDataSource _localDataSource;
   final AiChatRemoteDataSource _remoteDataSource;
   final DeletionSyncManager _deletionSyncManager;
@@ -55,20 +54,8 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
     try {
       final localMessages = await _localDataSource.getChats();
       for (final msg in localMessages) {
-        if (msg.type == MessageType.audio && msg.audioUrl != null) {
-          if (!msg.audioUrl!.startsWith('http')) {
-            try {
-              String path = msg.audioUrl!;
-              if (!path.startsWith('/')) {
-                final directory = await getApplicationDocumentsDirectory();
-                path = '${directory.path}/$path';
-              }
-              final file = File(path);
-              if (await file.exists()) {
-                await file.delete();
-              }
-            } catch (_) {}
-          }
+        if (msg.type == MessageType.audio) {
+          await FileHelper.deleteLocalAudioFile(msg.audioUrl);
         }
       }
       await _localDataSource.clearChats();
@@ -132,17 +119,8 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
     return ExceptionWrapper.runAsync(() async {
       final chats = await _localDataSource.getChats();
       final message = chats.where((m) => m.id == id).firstOrNull;
-      if (message != null &&
-          message.type == MessageType.audio &&
-          message.audioUrl != null) {
-        if (!message.audioUrl!.startsWith('http')) {
-          try {
-            final file = File(message.audioUrl!);
-            if (await file.exists()) {
-              await file.delete();
-            }
-          } catch (_) {}
-        }
+      if (message != null && message.type == MessageType.audio) {
+        await FileHelper.deleteLocalAudioFile(message.audioUrl);
       }
 
       await _localDataSource.deleteChat(id);
@@ -161,7 +139,8 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
 
         if (!isConnected) {
           await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ?? 'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+            entityId: localChatId ??
+                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
             entityType: 'chat',
             action: 'sendMessage',
             payload: {
@@ -184,7 +163,8 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
           return right(res);
         } catch (e) {
           await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ?? 'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+            entityId: localChatId ??
+                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
             entityType: 'chat',
             action: 'sendMessage',
             payload: {
@@ -210,13 +190,14 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
     return ExceptionWrapper.runAsync<Map<String, dynamic>>(
       () async {
         final isConnected = await _connectivityService.isConnected;
-        
+
         // Edge Case 25 fix: Always store filename rather than absolute path if possible
         final filename = filePath.split('/').last;
 
         if (!isConnected) {
           await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ?? 'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+            entityId: localChatId ??
+                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
             entityType: 'chat',
             action: 'sendAudioMessage',
             payload: {
@@ -240,7 +221,8 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
           return right(res);
         } catch (e) {
           await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ?? 'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+            entityId: localChatId ??
+                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
             entityType: 'chat',
             action: 'sendAudioMessage',
             payload: {
@@ -333,10 +315,12 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
 
         for (int i = 0; i < remoteMessages.length; i++) {
           final remoteMsg = remoteMessages[i];
-          final localMsg = localMessages.where((m) => 
-            m.id == remoteMsg.id || 
-            (m.localChatId != null && m.localChatId == remoteMsg.localChatId)
-          ).firstOrNull;
+          final localMsg = localMessages
+              .where((m) =>
+                  m.id == remoteMsg.id ||
+                  (m.localChatId != null &&
+                      m.localChatId == remoteMsg.localChatId))
+              .firstOrNull;
 
           if (localMsg != null) {
             if (localMsg.type == MessageType.audio) {
@@ -360,7 +344,8 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
 
         final oldLocalMessages = localMessages.where((localMsg) {
           if (oldestRemote == null) return false;
-          if (localMsg.status == MessageStatus.failed || localMsg.status == MessageStatus.sending) {
+          if (localMsg.status == MessageStatus.failed ||
+              localMsg.status == MessageStatus.sending) {
             return false;
           }
           return localMsg.createdAt.isBefore(oldestRemote);
@@ -371,25 +356,13 @@ class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler 
         // Edge Case 26: Delete orphaned local audio files
         final idsToKeep = messagesToKeep.map((m) => m.id).toSet();
         final remoteIds = remoteMessages.map((m) => m.id).toSet();
-        
+
         for (final localMsg in localMessages) {
-          if (!idsToKeep.contains(localMsg.id) && !remoteIds.contains(localMsg.id)) {
+          if (!idsToKeep.contains(localMsg.id) &&
+              !remoteIds.contains(localMsg.id)) {
             // This message is being wiped.
-            if (localMsg.type == MessageType.audio && localMsg.audioUrl != null) {
-              if (!localMsg.audioUrl!.startsWith('http')) {
-                try {
-                  // Resolve absolute path if necessary
-                  String path = localMsg.audioUrl!;
-                  if (!path.startsWith('/')) {
-                    final directory = await getApplicationDocumentsDirectory();
-                    path = '${directory.path}/$path';
-                  }
-                  final file = File(path);
-                  if (await file.exists()) {
-                    await file.delete();
-                  }
-                } catch (_) {}
-              }
+            if (localMsg.type == MessageType.audio) {
+              await FileHelper.deleteLocalAudioFile(localMsg.audioUrl);
             }
           }
         }

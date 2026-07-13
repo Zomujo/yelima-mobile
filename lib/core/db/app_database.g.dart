@@ -2772,6 +2772,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PendingMutationsTable(this);
   late final $MedicationsTable medications = $MedicationsTable(this);
   late final $AppointmentsTable appointments = $AppointmentsTable(this);
+  late final Index idxVitalHistoriesTypeDate = Index(
+      'idx_vital_histories_type_date',
+      'CREATE INDEX idx_vital_histories_type_date ON vital_histories (vital_type, recorded_at)');
+  late final Index idxAiChatConversationsCreatedAt = Index(
+      'idx_ai_chat_conversations_created_at',
+      'CREATE INDEX idx_ai_chat_conversations_created_at ON ai_chat_conversations (created_at)');
+  late final Index idxAiChatConversationsLocalChatId = Index(
+      'idx_ai_chat_conversations_local_chat_id',
+      'CREATE INDEX idx_ai_chat_conversations_local_chat_id ON ai_chat_conversations (local_chat_id)');
+  late final Index idxPendingMutationsEntity = Index(
+      'idx_pending_mutations_entity',
+      'CREATE INDEX idx_pending_mutations_entity ON pending_mutations (entity_type, entity_id)');
+  late final Index idxAppointmentsDate = Index('idx_appointments_date',
+      'CREATE INDEX idx_appointments_date ON appointments (appointment_date)');
   late final VitalsDao vitalsDao = VitalsDao(this as AppDatabase);
   late final AiChatDao aiChatDao = AiChatDao(this as AppDatabase);
   late final UserProfilesDao userProfilesDao =
@@ -2793,7 +2807,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         userProfiles,
         pendingMutations,
         medications,
-        appointments
+        appointments,
+        idxVitalHistoriesTypeDate,
+        idxAiChatConversationsCreatedAt,
+        idxAiChatConversationsLocalChatId,
+        idxPendingMutationsEntity,
+        idxAppointmentsDate
       ];
 }
 

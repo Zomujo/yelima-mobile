@@ -3,9 +3,13 @@ import '../../domain/entities/vital_trends.dart';
 import '../../domain/repositories/progress_repository.dart';
 import 'progress_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
+import 'dart:async';
 
 class ProgressController extends ChangeNotifier with SafeNotifier {
   final ProgressRepository _repository;
+  final MutationSyncManager _mutationSyncManager;
+  StreamSubscription<String>? _syncSubscription;
 
   ProgressState<BPTrend> bpTrendState = const ProgressState();
   ProgressState<VitalTrend> glucoseTrendState = const ProgressState();
@@ -13,7 +17,24 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
   String _currentBPRange = 'today';
   String _currentGlucoseRange = 'today';
 
-  ProgressController(this._repository);
+  ProgressController(this._repository, this._mutationSyncManager) {
+    _initSyncListener();
+  }
+
+  void _initSyncListener() {
+    _syncSubscription = _mutationSyncManager.onMutationSynced.listen((entityType) {
+      if (entityType == 'vital_history') {
+        fetchBPTrend(dateRange: _currentBPRange);
+        fetchGlucoseTrend(dateRange: _currentGlucoseRange);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSubscription?.cancel();
+    super.dispose();
+  }
 
   Future<void> fetchBPTrend({String dateRange = 'today'}) async {
     _currentBPRange = dateRange;

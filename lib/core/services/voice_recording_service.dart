@@ -5,8 +5,9 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/foundation.dart';
 import '../utils/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../utils/safe_notifier.dart';
 
-class VoiceRecordingService extends ChangeNotifier {
+class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
   late RecorderController _recorderController;
   final ValueNotifier<RecorderValue> _recorderValue =
       ValueNotifier<RecorderValue>(RecorderValue());

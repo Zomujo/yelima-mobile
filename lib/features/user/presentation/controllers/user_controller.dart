@@ -10,8 +10,9 @@ import '../../domain/repositories/user_repository.dart';
 import '../../../../core/utils/custom_types.dart';
 import '../../../../core/exceptions/exceptions.dart';
 import 'user_state.dart';
+import '../../../../core/utils/safe_notifier.dart';
 
-class UserController extends ChangeNotifier {
+class UserController extends ChangeNotifier with SafeNotifier {
   final UserRepository _repository;
   StreamSubscription<User?>? _authStateSubscription;
   StreamSubscription<UserEntity?>? _userProfileSubscription;
@@ -265,7 +266,8 @@ class UserController extends ChangeNotifier {
         return await onboardResult.fold(
           (error) async {
             // Treat 409 Conflict as success (user already onboarded)
-            if (error.contains('409') || error.toLowerCase().contains('already exists')) {
+            final msg = error.message?.toLowerCase() ?? '';
+            if (msg.contains('409') || msg.contains('already exists')) {
               final data = {
                 'conditions': conditionsPayload,
                 'hasConsented': consented,
@@ -274,7 +276,7 @@ class UserController extends ChangeNotifier {
               };
               return await _repository.updateUserProfile(user.uid, data);
             }
-            return left(error);
+            return left(error.message ?? 'Failed to onboard');
           },
           (_) async {
             final data = {

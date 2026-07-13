@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
 
+@TableIndex(name: 'idx_ai_chat_conversations_created_at', columns: {#createdAt})
+@TableIndex(name: 'idx_ai_chat_conversations_local_chat_id', columns: {#localChatId})
 class AiChatConversations extends Table {
   TextColumn get id => text()();
   TextColumn get sender => text()(); // 'bot' or 'user'

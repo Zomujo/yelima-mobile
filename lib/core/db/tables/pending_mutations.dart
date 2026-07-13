@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+@TableIndex(name: 'idx_pending_mutations_entity', columns: {#entityType, #entityId})
 class PendingMutations extends Table {
   TextColumn get id => text()(); // UUID of the pending action
   TextColumn get entityType => text()(); // 'profile', 'medication', 'appointment', etc.

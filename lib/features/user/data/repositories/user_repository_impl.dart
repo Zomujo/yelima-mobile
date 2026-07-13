@@ -186,13 +186,15 @@ class UserRepositoryImpl implements UserRepository {
 
 
   @override
-  AsyncResponse<void> onboardUser(Map<String, dynamic> data) {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
+  AsyncResponseTyped<void> onboardUser(Map<String, dynamic> data) {
+    return ExceptionWrapper.runAsyncWithTypedError<void>(
       () async {
+        if (!await connectivityService.isConnected) {
+          throw const NetworkException();
+        }
         await remoteDataSource.onboardUser(data);
         return right(null);
       },
-      connectivityService: connectivityService,
       operationName: 'UserRepositoryImpl.onboardUser',
     );
   }

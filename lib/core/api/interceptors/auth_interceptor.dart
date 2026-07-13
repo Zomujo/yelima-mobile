@@ -108,9 +108,11 @@ class AuthInterceptor extends Interceptor {
         try {
           await FirebaseAuth.instance.signOut();
         } catch (_) {}
+        return handler.next(err);
       }
+    } else {
+      handler.next(err);
     }
-    handler.next(err);
   }
 
   /// Fetches a valid token, deduplicating concurrent calls via a Completer.

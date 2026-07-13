@@ -27,6 +27,6 @@ void initMedications(GetIt sl) {
       () => CreateMedicationUseCase(sl()));
 
   // Controllers
-  sl.registerFactory(() => MedicationController(repository: sl()));
+  sl.registerFactory(() => MedicationController(repository: sl(), mutationSyncManager: sl()));
   sl.registerFactory(() => AllMedicinesController(repository: sl()));
 }

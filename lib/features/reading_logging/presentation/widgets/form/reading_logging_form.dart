@@ -12,33 +12,41 @@ class ReadingLoggingForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ReadingLoggingController>(
-      builder: (context, controller, child) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ReadingTypeSelector(
-              selectedIndex: controller.state.selectedTypeIndex,
-              onTypeSelected: controller.setTypeIndex,
-            ),
-            const SizedBox(height: 24),
-            const InteractiveReadingCard(),
-            const SizedBox(height: 24),
-            ReadingDaySelector(
-              selectedDate: controller.state.selectedDate,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Selector<ReadingLoggingController, int>(
+          selector: (context, controller) => controller.state.selectedTypeIndex,
+          builder: (context, selectedTypeIndex, child) {
+            return ReadingTypeSelector(
+              selectedIndex: selectedTypeIndex,
+              onTypeSelected:
+                  context.read<ReadingLoggingController>().setTypeIndex,
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        const InteractiveReadingCard(),
+        const SizedBox(height: 24),
+        Selector<ReadingLoggingController, DateTime>(
+          selector: (context, controller) => controller.state.selectedDate,
+          builder: (context, selectedDate, child) {
+            return ReadingDaySelector(
+              selectedDate: selectedDate,
               onTap: () async {
-                final DateTime? picked = await CustomCalendarModal.show(
-                    context, controller.state.selectedDate);
+                final controller = context.read<ReadingLoggingController>();
+                final DateTime? picked =
+                    await CustomCalendarModal.show(context, selectedDate);
                 if (picked != null) {
                   controller.setSelectedDate(picked);
                 }
               },
-            ),
-            const SizedBox(height: 32),
-            const ReadingSaveButton(),
-          ],
-        );
-      },
+            );
+          },
+        ),
+        const SizedBox(height: 32),
+        const ReadingSaveButton(),
+      ],
     );
   }
 }

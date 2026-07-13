@@ -14,6 +14,9 @@ class MutationSyncManager implements SessionLifecycleHandler {
   StreamSubscription? _networkSubscription;
   bool _isSyncing = false;
   bool _isSessionActive = false;
+  
+  final StreamController<String> _syncBroadcast = StreamController<String>.broadcast();
+  Stream<String> get onMutationSynced => _syncBroadcast.stream;
 
   MutationSyncManager({
     required ConnectivityService connectivityService,
@@ -141,6 +144,8 @@ class MutationSyncManager implements SessionLifecycleHandler {
       await _db.pendingMutationsDao.removePendingMutation(pending.id);
       debugPrint("Successfully synced mutation for ${pending.entityType} (${pending.entityId})");
       
+      _syncBroadcast.add(pending.entityType);
+      
       return didRemap;
     } on ApiException catch (e) {
       // 409 means Conflict (e.g., server rejected due to Last-Write-Wins being older)
@@ -214,5 +219,6 @@ class MutationSyncManager implements SessionLifecycleHandler {
     _debounceTimer?.cancel();
     _networkSubscription?.cancel();
     _networkSubscription = null;
+    _syncBroadcast.close();
   }
 }

@@ -5,16 +5,20 @@ import '../../../../core/services/connectivity_service.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/repositories/ai_chat_repository.dart';
 import 'ai_chat_state.dart';
+import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
 
-class AiChatController extends ChangeNotifier {
+class AiChatController extends ChangeNotifier with SafeNotifier {
   final AiChatRepository _repository;
   final ConnectivityService _connectivityService;
+  final MutationSyncManager _mutationSyncManager;
 
-  AiChatController(this._repository, this._connectivityService) {
+  AiChatController(this._repository, this._connectivityService, this._mutationSyncManager) {
     _init();
   }
 
   StreamSubscription<bool>? _connectivitySubscription;
+  StreamSubscription<String>? _syncSubscription;
   Future<void>? _activeSync;
 
   AiChatState _state = const AiChatState();
@@ -45,6 +49,7 @@ class AiChatController extends ChangeNotifier {
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
+    _syncSubscription?.cancel();
     super.dispose();
   }
 
@@ -59,6 +64,13 @@ class AiChatController extends ChangeNotifier {
       _setState(_state.copyWith(isOnline: isConnected));
 
       if (isConnected && wasOffline) {
+        syncConversations();
+      }
+    });
+
+    // Listen for background sync completion
+    _syncSubscription = _mutationSyncManager.onMutationSynced.listen((entityType) {
+      if (entityType == 'chat' || entityType == 'ai_chat_message') {
         syncConversations();
       }
     });

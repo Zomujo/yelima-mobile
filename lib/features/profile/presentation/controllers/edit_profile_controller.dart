@@ -7,8 +7,9 @@ import '../../../user/domain/entities/user_entity.dart';
 import '../../../user/domain/repositories/user_repository.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
 import '../states/edit_profile_state.dart';
+import '../../../../core/utils/safe_notifier.dart';
 
-class EditProfileController extends ChangeNotifier {
+class EditProfileController extends ChangeNotifier with SafeNotifier {
   final UserRepository _repository;
   final UserController _userController;
 

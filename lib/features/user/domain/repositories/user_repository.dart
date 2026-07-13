@@ -6,7 +6,7 @@ abstract class UserRepository {
   AsyncResponse<void> updateUserProfile(String uid, Map<String, dynamic> data);
 
   /// Hits the backend onboard endpoint to register the user fully
-  AsyncResponse<void> onboardUser(Map<String, dynamic> data);
+  AsyncResponseTyped<void> onboardUser(Map<String, dynamic> data);
 
   /// Gets the user profile from the database
   AsyncResponse<UserEntity?> getUserProfile(String uid);
