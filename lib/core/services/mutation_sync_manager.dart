@@ -148,6 +148,17 @@ class MutationSyncManager implements SessionLifecycleHandler {
         debugPrint(
             "Mutation ${pending.id} rejected by server (${e.code}). Removing from local queue.");
         await _db.pendingMutationsDao.removePendingMutation(pending.id);
+        
+        // If this was a creation mutation, aggressively delete the orphaned optimistic record
+        if (pending.action.startsWith('create')) {
+          debugPrint("Deleting orphaned optimistic record ${pending.entityId} for type ${pending.entityType}");
+          if (pending.entityType == 'medication') {
+            await _db.medicationsDao.deleteMedication(pending.entityId);
+          }
+          // Delete any dependent pending mutations (e.g. a confirm mutation that followed the create)
+          await _db.pendingMutationsDao.removeMutationsForEntity(pending.entityId);
+        }
+        
         return false;
       }
 

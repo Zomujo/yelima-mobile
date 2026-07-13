@@ -18,6 +18,8 @@ import '../models/medication_detail_model.dart';
 import '../models/seeded_medication_list_response_model.dart';
 import '../../../../core/db/app_database.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:get_it/get_it.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
 import '../utils/medication_isolate_parsers.dart';
 
 class MedicationRepositoryImpl implements MedicationRepository {
@@ -350,6 +352,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
         await db.medicationsDao.markMedicationTaken(medicationId);
         await _markSectionCacheTaken(section, medicationId);
 
+        try {
+          if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+            GetIt.instance<MutationSyncManager>().triggerSync();
+          }
+        } catch (_) {}
+
         return right(null); // Optimistic success.
       } catch (e) {
         return left('Cache failure');
@@ -620,6 +628,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
         ),
       );
 
+      try {
+        if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+          GetIt.instance<MutationSyncManager>().triggerSync();
+        }
+      } catch (_) {}
+
       return right(localId);
     }
     return left('Unexpected state');
@@ -712,6 +726,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
           createdAt: DateTime.now(),
         ),
       );
+
+      try {
+        if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+          GetIt.instance<MutationSyncManager>().triggerSync();
+        }
+      } catch (_) {}
 
       return right(id);
     }

@@ -167,9 +167,9 @@ class ExceptionWrapper {
       stopwatch.stop();
       AppLogger.e('Error Exception during $name', e, stack);
       return left(e.message.toString());
-    } on Exception catch (e, stack) {
+    } catch (e, stack) {
       stopwatch.stop();
-      AppLogger.e('Unhandled Exception during $name', e, stack);
+      AppLogger.e('Unhandled Exception or Error during $name', e, stack);
       return left(e.toString());
     }
   }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
 import 'session_lifecycle_service.dart';
 import 'fcm_token_service.dart';
@@ -43,7 +44,6 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     _connectivitySub = null;
     _registrationSucceeded = false;
 
-
     try {
       await GetIt.instance<FCMTokenService>()
           .deleteFCMToken()
@@ -56,6 +56,12 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
       await NotificationService.instance
           .unSubscribeFromTopic('yelima')
           .timeout(const Duration(seconds: 3));
+    } catch (e) {
+      // Ignored
+    }
+
+    try {
+      await FirebaseMessaging.instance.deleteToken();
     } catch (e) {
       // Ignored
     }

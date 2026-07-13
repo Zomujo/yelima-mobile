@@ -75,22 +75,36 @@ class AuthInterceptor extends Interceptor {
         if (user != null) {
           final newToken = await user.getIdToken(true);
           _refreshCompleter!.complete(true);
-          _refreshCompleter = null;
+          
+          // Debounce to prevent stampede of concurrent 401s triggering another refresh
+          Future.delayed(const Duration(seconds: 2), () {
+            _refreshCompleter = null;
+          });
 
           final options = err.requestOptions;
           options.headers['Authorization'] = 'Bearer $newToken';
           options.extra['isRetry'] = true;
 
-          final response = await _dio.fetch(options);
-          return handler.resolve(response);
+          try {
+            final response = await _dio.fetch(options);
+            return handler.resolve(response);
+          } on DioException catch (retryErr) {
+            return handler.next(retryErr);
+          } catch (e) {
+            return handler.next(err);
+          }
         } else {
           _refreshCompleter!.complete(false);
           _refreshCompleter = null;
         }
       } catch (e) {
         AppLogger.e('AuthInterceptor: Force refresh failed', e);
-        _refreshCompleter!.complete(false);
-        _refreshCompleter = null;
+        if (_refreshCompleter != null && !_refreshCompleter!.isCompleted) {
+          _refreshCompleter!.complete(false);
+          Future.delayed(const Duration(seconds: 2), () {
+            _refreshCompleter = null;
+          });
+        }
         try {
           await FirebaseAuth.instance.signOut();
         } catch (_) {}

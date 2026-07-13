@@ -217,8 +217,10 @@ class AiChatRepositoryImpl implements AiChatRepository {
 
         for (int i = 0; i < remoteMessages.length; i++) {
           final remoteMsg = remoteMessages[i];
-          final localMsg =
-              localMessages.where((m) => m.id == remoteMsg.id).firstOrNull;
+          final localMsg = localMessages.where((m) => 
+            m.id == remoteMsg.id || 
+            (m.localChatId != null && m.localChatId == remoteMsg.localChatId)
+          ).firstOrNull;
 
           if (localMsg != null) {
             if (localMsg.type == MessageType.audio) {

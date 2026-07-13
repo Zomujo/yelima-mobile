@@ -55,13 +55,15 @@ class AuthController extends ChangeNotifier {
           isInitialized: false,
         ));
 
-        await _refreshAuthAndProfile(user);
-
-        GlobalAsyncLoader.hide();
-        _updateState(_state.copyWith(
-          isInitialSyncInProgress: false,
-          isInitialized: true,
-        ));
+        try {
+          await _refreshAuthAndProfile(user);
+        } finally {
+          GlobalAsyncLoader.hide();
+          _updateState(_state.copyWith(
+            isInitialSyncInProgress: false,
+            isInitialized: true,
+          ));
+        }
       }
     });
   }
@@ -82,7 +84,11 @@ class AuthController extends ChangeNotifier {
       }
     } catch (_) {}
 
-    await _sessionLifecycleService.startSession(user.uid);
+    try {
+      await _sessionLifecycleService.startSession(user.uid);
+    } catch (e) {
+      debugPrint('Error starting session: $e');
+    }
   }
 
   void _showSessionExpiredSnackbar() {

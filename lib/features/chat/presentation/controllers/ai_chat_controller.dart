@@ -216,7 +216,6 @@ class AiChatController extends ChangeNotifier {
 
     if (_activeSync != null) await _activeSync;
 
-    
     final localId = const Uuid().v4();
     final userMsg = AiChatMessage(
       id: localId,
@@ -290,7 +289,6 @@ class AiChatController extends ChangeNotifier {
 
     if (_activeSync != null) await _activeSync;
 
-
     final localId = const Uuid().v4();
     final userMsg = AiChatMessage(
       id: localId,
@@ -354,12 +352,7 @@ class AiChatController extends ChangeNotifier {
         isSending: false,
       ));
       _repository.saveConversations(messages);
-      try {
-        if (!filePath.startsWith('http')) {
-          final file = File(filePath);
-          if (await file.exists()) await file.delete();
-        }
-      } catch (_) {}
+
       _triggerPendingSyncIfAny();
     });
   }

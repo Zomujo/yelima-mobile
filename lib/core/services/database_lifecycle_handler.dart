@@ -20,15 +20,15 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
   Future<void> onSessionEnded() async {
     AppLogger.w('DatabaseLifecycleHandler: Wiping all cached SQLite data for logout/deletion...');
     try {
-      await Future.wait([
-        _db.aiChatDao.clearAiChats(),
-        _db.aiChatDao.clearPendingDeletions(),
-        _db.vitalsDao.clearAllVitals(),
-        _db.medicationsDao.clearMedications(),
-        _db.appointmentsDao.clearAppointments(),
-        _db.userProfilesDao.clearProfiles(),
-        _db.pendingMutationsDao.clearPendingMutations(),
-      ]);
+      await _db.transaction(() async {
+        await _db.aiChatDao.clearAiChats();
+        await _db.aiChatDao.clearPendingDeletions();
+        await _db.vitalsDao.clearAllVitals();
+        await _db.medicationsDao.clearMedications();
+        await _db.appointmentsDao.clearAppointments();
+        await _db.userProfilesDao.clearProfiles();
+        await _db.pendingMutationsDao.clearPendingMutations();
+      });
       await AudioCacheManager().clearCache();
       AppLogger.i('DatabaseLifecycleHandler: SQLite data successfully wiped.');
     } catch (e) {

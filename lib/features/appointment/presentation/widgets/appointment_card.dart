@@ -127,7 +127,9 @@ class AppointmentCard extends StatelessWidget {
 
   String _formatUpcoming(DateTime date) {
     final now = DateTime.now();
-    final difference = date.difference(now);
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(date.year, date.month, date.day);
+    final difference = targetDate.difference(today);
     
     if (difference.inDays == 0) return 'today';
     if (difference.inDays == 1) return 'tomorrow';
@@ -139,7 +141,9 @@ class AppointmentCard extends StatelessWidget {
 
   String _formatPast(DateTime date) {
     final now = DateTime.now();
-    final difference = now.difference(date);
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(date.year, date.month, date.day);
+    final difference = today.difference(targetDate);
     
     if (difference.inDays == 0) return 'today';
     if (difference.inDays == 1) return 'yesterday';

@@ -37,4 +37,8 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase> with _$PendingMu
     return (update(pendingMutations)..where((t) => t.entityId.equals(oldEntityId)))
         .write(PendingMutationsCompanion(entityId: Value(newEntityId)));
   }
+
+  Future<void> removeMutationsForEntity(String entityId) {
+    return (delete(pendingMutations)..where((t) => t.entityId.equals(entityId))).go();
+  }
 }
