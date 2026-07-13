@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/connectivity_service.dart';
@@ -252,26 +251,29 @@ class AiChatController extends ChangeNotifier {
 
       final index = messages.indexWhere((m) => m.localChatId == localId);
       if (index != -1) {
-        messages[index] = messages[index].copyWith(status: MessageStatus.sent);
+        messages[index] = messages[index].copyWith(status: botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
       }
 
-      List<String> suggestions = [];
-      if (botData['suggestions'] != null) {
-        suggestions = List<String>.from(botData['suggestions']);
+      if (botData.isNotEmpty) {
+        List<String> suggestions = [];
+        if (botData['suggestions'] != null) {
+          suggestions = List<String>.from(botData['suggestions']);
+        }
+
+        final botMsg = AiChatMessage(
+          id: botData['_id'] as String,
+          sender: 'bot',
+          type: MessageType.text,
+          value: botData['text'] as String,
+          createdAt: DateTime.now(),
+          status: MessageStatus.sent,
+          suggestions: suggestions,
+          localChatId: localId,
+        );
+
+        messages.insert(0, botMsg);
       }
-
-      final botMsg = AiChatMessage(
-        id: botData['_id'] as String,
-        sender: 'bot',
-        type: MessageType.text,
-        value: botData['text'] as String,
-        createdAt: DateTime.now(),
-        status: MessageStatus.sent,
-        suggestions: suggestions,
-        localChatId: localId,
-      );
-
-      messages.insert(0, botMsg);
+      
       _setState(_state.copyWith(
         messages: messages,
         isSending: false,
@@ -327,26 +329,29 @@ class AiChatController extends ChangeNotifier {
 
       final index = messages.indexWhere((m) => m.localChatId == localId);
       if (index != -1) {
-        messages[index] = messages[index].copyWith(status: MessageStatus.sent);
+        messages[index] = messages[index].copyWith(status: botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
       }
 
-      List<String> suggestions = [];
-      if (botData['suggestions'] != null) {
-        suggestions = List<String>.from(botData['suggestions']);
+      if (botData.isNotEmpty) {
+        List<String> suggestions = [];
+        if (botData['suggestions'] != null) {
+          suggestions = List<String>.from(botData['suggestions']);
+        }
+
+        final botMsg = AiChatMessage(
+          id: botData['_id'] as String,
+          sender: 'bot',
+          type: MessageType.text,
+          value: botData['text'] as String,
+          createdAt: DateTime.now(),
+          status: MessageStatus.sent,
+          suggestions: suggestions,
+          localChatId: localId,
+        );
+
+        messages.insert(0, botMsg);
       }
 
-      final botMsg = AiChatMessage(
-        id: botData['_id'] as String,
-        sender: 'bot',
-        type: MessageType.text,
-        value: botData['text'] as String,
-        createdAt: DateTime.now(),
-        status: MessageStatus.sent,
-        suggestions: suggestions,
-        localChatId: localId,
-      );
-
-      messages.insert(0, botMsg);
       _setState(_state.copyWith(
         messages: messages,
         isSending: false,

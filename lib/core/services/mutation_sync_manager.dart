@@ -178,7 +178,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
       await _handlePoisonPill(pending, e.toString());
       return false;
       
-    } on NetworkException catch (e) {
+    } on NetworkException {
       debugPrint("Connection error syncing mutation for ${pending.id}. Aborting sync to try again later.");
       rethrow;
     } catch (e) {

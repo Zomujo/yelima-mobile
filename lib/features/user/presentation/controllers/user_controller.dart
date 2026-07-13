@@ -262,11 +262,17 @@ class UserController extends ChangeNotifier {
 
         final onboardResult = await _repository.onboardUser(onboardData);
 
-        return onboardResult.fold(
-          (error) {
+        return await onboardResult.fold(
+          (error) async {
             // Treat 409 Conflict as success (user already onboarded)
             if (error.contains('409') || error.toLowerCase().contains('already exists')) {
-              return right(null);
+              final data = {
+                'conditions': conditionsPayload,
+                'hasConsented': consented,
+                'registrationStatus': RegistrationStatus.complete.name,
+                'createdAt': DateTime.now().toIso8601String(),
+              };
+              return await _repository.updateUserProfile(user.uid, data);
             }
             return left(error);
           },

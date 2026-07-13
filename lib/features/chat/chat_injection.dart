@@ -18,6 +18,7 @@ void initChat(GetIt sl) {
         remoteDataSource: sl(),
         deletionSyncManager: sl(),
         connectivityService: sl(),
+        db: sl(),
       ));
 
   // Controller

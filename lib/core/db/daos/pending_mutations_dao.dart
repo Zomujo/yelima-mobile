@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import '../app_database.dart';
 import '../tables/pending_mutations.dart';
+import 'dart:convert';
 
 part 'pending_mutations_dao.g.dart';
 
@@ -40,5 +41,21 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase> with _$PendingMu
 
   Future<void> removeMutationsForEntity(String entityId) {
     return (delete(pendingMutations)..where((t) => t.entityId.equals(entityId))).go();
+  }
+
+  Future<void> queueMutation({
+    required String entityId,
+    required String entityType,
+    required String action,
+    required Map<String, dynamic> payload,
+  }) async {
+    await addPendingMutation(PendingMutationsCompanion(
+      id: Value('mut_${DateTime.now().microsecondsSinceEpoch}'),
+      entityId: Value(entityId),
+      entityType: Value(entityType),
+      action: Value(action),
+      payloadJson: Value(jsonEncode(payload)),
+      createdAt: Value(DateTime.now()),
+    ));
   }
 }

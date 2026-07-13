@@ -9,12 +9,14 @@ import 'connectivity_service.dart';
 class FCMLifecycleHandler implements SessionLifecycleHandler {
   StreamSubscription? _connectivitySub;
   bool _registrationSucceeded = false;
+  bool _isSessionActive = false;
 
   @override
   String get serviceName => 'FCMLifecycleHandler';
 
   @override
   Future<void> onSessionStarted(String userId) async {
+    _isSessionActive = true;
     _registrationSucceeded = false;
     _attemptRegistration();
 
@@ -22,16 +24,19 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     _connectivitySub = GetIt.instance<ConnectivityService>()
         .onConnectivityChanged
         .listen((isConnected) {
-      if (isConnected && !_registrationSucceeded) {
+      if (isConnected && !_registrationSucceeded && _isSessionActive) {
         _attemptRegistration();
       }
     });
   }
 
   Future<void> _attemptRegistration() async {
+    if (!_isSessionActive) return;
     try {
       await GetIt.instance<FCMTokenService>().registerFCMToken();
+      if (!_isSessionActive) return;
       await NotificationService.instance.subscribeToTopic('yelima');
+      if (!_isSessionActive) return;
       _registrationSucceeded = true;
     } catch (e) {
       _registrationSucceeded = false;
@@ -40,6 +45,7 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
 
   @override
   Future<void> onSessionEnded() async {
+    _isSessionActive = false;
     _connectivitySub?.cancel();
     _connectivitySub = null;
     _registrationSucceeded = false;

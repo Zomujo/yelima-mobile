@@ -20,6 +20,7 @@ void main() {
     
     interceptor = AuthInterceptor(
       tokenManager: mockTokenManager,
+      dio: MockDio(),
     );
     
     registerFallbackValue(RequestOptions(path: ''));

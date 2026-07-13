@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/utils/custom_types.dart';
@@ -10,6 +9,9 @@ import '../datasources/home_metrics_remote_datasource.dart';
 import '../datasources/home_metrics_local_datasource.dart';
 import '../models/home_metrics_model.dart';
 import '../models/vital_history_model.dart';
+import '../../../../core/db/app_database.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
+import 'package:get_it/get_it.dart';
 
 class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
   final HomeMetricsRemoteDataSource remoteDataSource;
@@ -92,8 +94,10 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
 
   @override
   AsyncResponse<void> saveVitalReading(VitalHistoryEntity entity) async {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
+    return ExceptionWrapper.runAsync<void>(
       () async {
+        final isConnected = await connectivityService.isConnected;
+
         final body = {
           "vitalType": entity.vitalType,
           "value": entity.value,
@@ -102,28 +106,56 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
               DateTime.now().toUtc().toIso8601String(),
         };
 
-        try {
-          await remoteDataSource.saveVitalReading(body);
-        } on SocketException {
-          return left('No internet connection. Please check your network and try again.');
-        } on TimeoutException {
-          return left('No internet connection. Please check your network and try again.');
-        }
+        final localId = entity.id.isEmpty ? 'offline_vital_${DateTime.now().millisecondsSinceEpoch}' : entity.id;
 
         final model = VitalHistoryModel(
-          id: entity.id,
+          id: localId,
           vitalType: entity.vitalType,
           value: entity.value,
           unit: entity.unit,
           severity: entity.severity,
           vitalName: entity.vitalName,
-          recordedAt: entity.recordedAt,
+          recordedAt: entity.recordedAt ?? DateTime.now(),
         );
 
-        await localDataSource.appendVitalHistory(model);
+        if (!isConnected) {
+          await localDataSource.appendVitalHistory(model);
+          final db = GetIt.instance<AppDatabase>();
+          await db.pendingMutationsDao.queueMutation(
+            entityId: localId,
+            entityType: 'vital_history',
+            action: 'saveVitalReading',
+            payload: body,
+          );
+          try {
+            if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+              GetIt.instance<MutationSyncManager>().triggerSync();
+            }
+          } catch (_) {}
+          return const Right(null);
+        }
+
+        try {
+          await remoteDataSource.saveVitalReading(body);
+          // Only append to local cache if successful to avoid duplicating when remote fetch happens next
+          await localDataSource.appendVitalHistory(model);
+        } catch (e) {
+          await localDataSource.appendVitalHistory(model);
+          final db = GetIt.instance<AppDatabase>();
+          await db.pendingMutationsDao.queueMutation(
+            entityId: localId,
+            entityType: 'vital_history',
+            action: 'saveVitalReading',
+            payload: body,
+          );
+          if (e is ApiException && (e.code == '401' || e.code == '403')) {
+            rethrow;
+          }
+        }
+
         return const Right(null);
       },
-      connectivityService: connectivityService,
+      operationName: 'HomeMetricsRepositoryImpl.saveVitalReading',
     );
   }
 }

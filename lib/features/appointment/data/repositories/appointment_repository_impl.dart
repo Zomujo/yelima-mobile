@@ -135,6 +135,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
             hostPersonnelUserName: drift.Value(remoteData.hostPersonnel.userName),
             hostPersonnelFacilityName: drift.Value(remoteData.hostPersonnel.facility.name),
           ));
+        } else {
+          // Edge Case 27: Clear ghost nearest appointment from local cache if it doesn't exist remotely
+          await db.appointmentsDao.clearUpcomingAppointments();
         }
         return Right(remoteData);
       } catch (e) {

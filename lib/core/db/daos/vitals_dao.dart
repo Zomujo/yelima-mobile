@@ -21,7 +21,8 @@ class VitalsDao extends DatabaseAccessor<AppDatabase> with _$VitalsDaoMixin {
   Future<void> clearVitals() {
     return (delete(vitalHistories)
           ..where((t) => t.vitalType.like('%CACHE%').not())
-          ..where((t) => t.vitalType.like('%TREND%').not()))
+          ..where((t) => t.vitalType.like('%TREND%').not())
+          ..where((t) => t.id.like('offline_%').not()))
         .go();
   }
 

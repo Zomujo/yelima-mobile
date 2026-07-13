@@ -19,6 +19,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   bool _isAnimationComplete = false;
+  bool _hasNavigated = false;
 
   @override
   void didChangeDependencies() {
@@ -72,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _navigateBasedOnStartupStatus() {
-    if (!mounted) return;
+    if (!mounted || _hasNavigated) return;
 
     final startupService = sl<AppStartupService>();
     final status = startupService.value;
@@ -81,6 +82,7 @@ class _SplashScreenState extends State<SplashScreen>
         status.phase == StartupPhase.unauthenticated ||
         status.phase == StartupPhase.error) {
       
+      _hasNavigated = true;
       final redirect = GoRouterState.of(context).uri.queryParameters['redirect'];
       context.go(redirect ?? '/');
     }

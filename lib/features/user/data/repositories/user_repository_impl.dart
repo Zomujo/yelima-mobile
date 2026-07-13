@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:drift/drift.dart' as drift;
 import 'package:fpdart/fpdart.dart';
+import 'package:get_it/get_it.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
 import '../../../../core/db/app_database.dart';
 import '../../../../core/exceptions/exceptions.dart';
 import '../../../../core/services/connectivity_service.dart';
@@ -113,10 +115,10 @@ class UserRepositoryImpl implements UserRepository {
 
   @override
   AsyncResponse<void> updateUserProfile(String uid, Map<String, dynamic> data) {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
+    return ExceptionWrapper.runAsync<void>(
       () async {
-        await remoteDataSource.updateUserProfile(uid, data);
-        
+        final isConnected = await connectivityService.isConnected;
+
         // Sync to local SQLite to prevent offline desync
         final currentProfile = await db.userProfilesDao.getProfile(uid);
         if (currentProfile != null) {
@@ -147,13 +149,41 @@ class UserRepositoryImpl implements UserRepository {
           );
           await db.userProfilesDao.insertOrUpdateProfile(newCompanion);
         }
+
+        if (!isConnected) {
+          await db.pendingMutationsDao.queueMutation(
+            entityId: uid,
+            entityType: 'user_profile',
+            action: 'updateUserProfile',
+            payload: data,
+          );
+          try {
+            if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+              GetIt.instance<MutationSyncManager>().triggerSync();
+            }
+          } catch (_) {}
+        } else {
+          try {
+            await remoteDataSource.updateUserProfile(uid, data);
+          } catch (e) {
+            await db.pendingMutationsDao.queueMutation(
+              entityId: uid,
+              entityType: 'user_profile',
+              action: 'updateUserProfile',
+              payload: data,
+            );
+            if (e is ApiException && (e.code == '401' || e.code == '403')) {
+              rethrow;
+            }
+          }
+        }
         
         return right(null);
       },
-      connectivityService: connectivityService,
       operationName: 'UserRepositoryImpl.updateUserProfile',
     );
   }
+
 
   @override
   AsyncResponse<void> onboardUser(Map<String, dynamic> data) {

@@ -21,6 +21,8 @@ import 'services/deletion_sync_manager.dart';
 import 'services/mutation_sync_manager.dart';
 import '../features/chat/data/datasources/ai_chat_remote_datasource.dart';
 import '../features/chat/data/datasources/ai_chat_remote_mutation_source.dart';
+import '../features/user/data/datasources/user_remote_mutation_source.dart';
+import '../features/home/data/datasources/home_remote_mutation_source.dart';
 
 void initCore(GetIt sl) {
   // --- Core Infrastructure ---
@@ -66,7 +68,9 @@ void initCore(GetIt sl) {
         ..init()
         ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));
 
-  sl.registerLazySingleton(() => AiChatRemoteMutationSource(sl()));
+  sl.registerLazySingleton(() => AiChatRemoteMutationSource(sl(), sl()));
+  sl.registerLazySingleton(() => UserRemoteMutationSource(sl()));
+  sl.registerLazySingleton(() => HomeRemoteMutationSource(sl()));
 
   sl.registerLazySingleton(() => MutationSyncManager(
         connectivityService: sl(),
@@ -74,6 +78,8 @@ void initCore(GetIt sl) {
         remoteSources: {
           'medication': sl<MedicationRemoteMutationSource>(),
           'chat': sl<AiChatRemoteMutationSource>(),
+          'user_profile': sl<UserRemoteMutationSource>(),
+          'vital_history': sl<HomeRemoteMutationSource>(),
         },
       )
         ..init()

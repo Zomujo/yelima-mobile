@@ -8,12 +8,14 @@ import 'package:yelima/features/chat/data/repositories/ai_chat_repository_impl.d
 import 'package:yelima/features/chat/domain/entities/ai_chat_message.dart';
 import 'package:yelima/features/chat/presentation/controllers/ai_chat_controller.dart';
 
-class MockAiChatRepositoryImpl extends Mock implements AiChatRepositoryImpl {}
+import 'package:yelima/features/chat/domain/repositories/ai_chat_repository.dart';
+
+class MockAiChatRepository extends Mock implements AiChatRepository {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 
 void main() {
-  late MockAiChatRepositoryImpl mockRepository;
+  late MockAiChatRepository mockRepository;
   late MockConnectivityService mockConnectivityService;
 
   AiChatMessage botMessage(String id, {String value = 'bot reply'}) {
@@ -41,7 +43,7 @@ void main() {
   }
 
   setUp(() {
-    mockRepository = MockAiChatRepositoryImpl();
+    mockRepository = MockAiChatRepository();
     mockConnectivityService = MockConnectivityService();
 
     when(() => mockConnectivityService.isConnected)
