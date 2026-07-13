@@ -12,6 +12,5 @@ void initReadingLogging(GetIt sl) {
   sl.registerFactory(() => ReadingLoggingController(
         repository: sl(),
         saveVitalReadingUseCase: sl(),
-        networkInfo: sl(),
       ));
 }

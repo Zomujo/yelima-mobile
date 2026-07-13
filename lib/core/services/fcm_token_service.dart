@@ -1,22 +1,44 @@
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../managers/token_manager.dart';
 import '../utils/logger.dart';
+import 'connectivity_service.dart';
 
 class FCMTokenService {
   final APIClient _apiClient;
+  final ConnectivityService _connectivityService;
   late final TokenManager _tokenManager;
+  StreamSubscription? _connectivitySubscription;
+  bool _isRegisteredSuccessfully = false;
+  bool _isRegistering = false;
 
   /// In-memory cache of the last registered FCM token.
   /// Populated on [registerFCMToken] so [deleteFCMToken] can use it
   /// even after TokenManager/SharedPreferences have been cleared during logout.
   String? _registeredToken;
 
-  FCMTokenService(this._apiClient) {
+  FCMTokenService(this._apiClient, this._connectivityService) {
     _tokenManager = TokenManager();
+    _initConnectivityListener();
+  }
+
+  void _initConnectivityListener() {
+    _connectivitySubscription =
+        _connectivityService.onConnectivityChanged.listen((isConnected) {
+      if (isConnected && !_isRegisteredSuccessfully && !_isRegistering) {
+        registerFCMToken().catchError((_) {});
+      }
+    });
+  }
+
+  void dispose() {
+    _connectivitySubscription?.cancel();
   }
 
   Future<void> registerFCMToken() async {
+    if (_isRegistering) return;
+    _isRegistering = true;
     try {
       final fcmToken = await _tokenManager.getFCMToken();
 
@@ -34,11 +56,15 @@ class FCMTokenService {
       // Cache it in-memory so deleteFCMToken can use it even after
       // SharedPreferences / TokenManager have been cleared during logout.
       _registeredToken = token;
+      _isRegisteredSuccessfully = true;
 
       AppLogger.i('FCM token successfully registered with backend: $token');
     } catch (e) {
+      _isRegisteredSuccessfully = false;
       AppLogger.w('Failed to register FCM token: $e');
       rethrow;
+    } finally {
+      _isRegistering = false;
     }
   }
 
@@ -73,8 +99,7 @@ class FCMTokenService {
       AppLogger.i('FCM token successfully deleted from backend: $token');
     } catch (e) {
       final errorString = e.toString().toLowerCase();
-      // 404 → token already gone. 401 → session already ended (auth cleared
-      // before this call). Both are non-fatal during logout.
+
       if (errorString.contains('404') ||
           errorString.contains('not found') ||
           errorString.contains('401') ||

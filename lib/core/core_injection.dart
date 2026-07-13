@@ -40,7 +40,7 @@ void initCore(GetIt sl) {
 
   sl.registerLazySingleton(() => AppStartupService());
   sl.registerLazySingleton(() => NotificationService.instance);
-  sl.registerLazySingleton(() => FCMTokenService(sl()));
+  sl.registerLazySingleton(() => FCMTokenService(sl(), sl()));
 
   // Register Lifecycle Handlers with SessionLifecycleService
   sl.registerLazySingleton(() => DatabaseLifecycleHandler(sl())

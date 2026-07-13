@@ -173,7 +173,11 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
       return 'Cannot confirm dose — it\'s not yet time.';
     }
 
-    state = state.copyWith(confirmingMedicationId: id);
+    if (state.confirmingMedicationIds.contains(id)) return null;
+
+    state = state.copyWith(
+      confirmingMedicationIds: {...state.confirmingMedicationIds, id},
+    );
 
     final updatedMed = med.copyWith(taken: true);
     final newList = List<MedicationEntity>.from(currentList);
@@ -184,7 +188,9 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     final result = await repository.confirmMedication(id, section);
     return result.fold(
       (error) {
-        state = state.copyWith(confirmingMedicationId: null);
+        final newConfirming = Set<String>.from(state.confirmingMedicationIds);
+        newConfirming.remove(id);
+        state = state.copyWith(confirmingMedicationIds: newConfirming);
         
         // Revert on failure
         final revertedList = List<MedicationEntity>.from(state.medicationsBySection[section] ?? []);
@@ -196,7 +202,9 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
         return error;
       },
       (_) {
-        state = state.copyWith(confirmingMedicationId: null);
+        final newConfirming = Set<String>.from(state.confirmingMedicationIds);
+        newConfirming.remove(id);
+        state = state.copyWith(confirmingMedicationIds: newConfirming);
         fetchAdherence();
         return null;
       },

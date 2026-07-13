@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fpdart/fpdart.dart';
 import '../../../home/domain/repositories/home_metrics_repository.dart';
 import '../../../../core/exceptions/exceptions.dart';
-import '../../../../core/network/network_info.dart';
 import '../../../../core/utils/custom_types.dart';
 import '../../domain/entities/reading_form_data.dart';
 import '../../domain/usecases/save_vital_reading_usecase.dart';
@@ -11,15 +9,12 @@ import '../states/reading_logging_state.dart';
 class ReadingLoggingController extends ChangeNotifier {
   final HomeMetricsRepository _repository;
   final SaveVitalReadingUseCase _saveVitalReadingUseCase;
-  final INetworkInfo _networkInfo;
 
   ReadingLoggingController({
     required HomeMetricsRepository repository,
     required SaveVitalReadingUseCase saveVitalReadingUseCase,
-    required INetworkInfo networkInfo,
   })  : _repository = repository,
-        _saveVitalReadingUseCase = saveVitalReadingUseCase,
-        _networkInfo = networkInfo;
+        _saveVitalReadingUseCase = saveVitalReadingUseCase;
 
   bool _isDisposed = false;
 
@@ -133,12 +128,6 @@ class ReadingLoggingController extends ChangeNotifier {
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
-        final isConnected = await _networkInfo.isConnected;
-        if (!isConnected) {
-          return left(
-              'No internet connection. Please check your network and try again.');
-        }
-
         final formData = ReadingFormData(
           selectedTypeIndex: _state.selectedTypeIndex,
           systolic: _state.systolic,

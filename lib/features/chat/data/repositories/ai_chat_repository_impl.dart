@@ -12,6 +12,7 @@ import '../datasources/ai_chat_remote_datasource.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/repositories/ai_chat_repository.dart';
 import '../../../../core/db/app_database.dart';
+import '../../../../core/services/session_lifecycle_service.dart';
 
 import '../models/ai_chat_response.dart';
 import '../../../../core/services/mutation_sync_manager.dart';
@@ -24,7 +25,7 @@ class PaginatedChatResult {
   PaginatedChatResult({required this.messages, required this.totalPages});
 }
 
-class AiChatRepositoryImpl implements AiChatRepository {
+class AiChatRepositoryImpl implements AiChatRepository, SessionLifecycleHandler {
   final AiChatLocalDataSource _localDataSource;
   final AiChatRemoteDataSource _remoteDataSource;
   final DeletionSyncManager _deletionSyncManager;
@@ -42,6 +43,37 @@ class AiChatRepositoryImpl implements AiChatRepository {
         _deletionSyncManager = deletionSyncManager,
         _connectivityService = connectivityService,
         _db = db;
+
+  @override
+  String get serviceName => 'AiChat Repository';
+
+  @override
+  Future<void> onSessionStarted(String userId) async {}
+
+  @override
+  Future<void> onSessionEnded() async {
+    try {
+      final localMessages = await _localDataSource.getChats();
+      for (final msg in localMessages) {
+        if (msg.type == MessageType.audio && msg.audioUrl != null) {
+          if (!msg.audioUrl!.startsWith('http')) {
+            try {
+              String path = msg.audioUrl!;
+              if (!path.startsWith('/')) {
+                final directory = await getApplicationDocumentsDirectory();
+                path = '${directory.path}/$path';
+              }
+              final file = File(path);
+              if (await file.exists()) {
+                await file.delete();
+              }
+            } catch (_) {}
+          }
+        }
+      }
+      await _localDataSource.clearChats();
+    } catch (_) {}
+  }
 
   @override
   AsyncResponse<PaginatedChatResult> fetchPaginatedConversations(

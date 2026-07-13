@@ -4,6 +4,7 @@ import 'data/datasources/ai_chat_remote_datasource.dart';
 import 'data/repositories/ai_chat_repository_impl.dart';
 import 'domain/repositories/ai_chat_repository.dart';
 import 'presentation/controllers/ai_chat_controller.dart';
+import '../../core/services/session_lifecycle_service.dart';
 
 void initChat(GetIt sl) {
   // Data sources
@@ -19,11 +20,18 @@ void initChat(GetIt sl) {
         deletionSyncManager: sl(),
         connectivityService: sl(),
         db: sl(),
-      ));
+      )..also((r) => sl<SessionLifecycleService>().register(r, priority: 70)));
 
   // Controller
   sl.registerFactory(() => AiChatController(
         sl(),
         sl(),
       ));
+}
+
+extension _Also<T> on T {
+  T also(void Function(T) action) {
+    action(this);
+    return this;
+  }
 }

@@ -17,7 +17,7 @@ abstract class MedicationsState with _$MedicationsState {
     String? adherenceError,
     String? countsError,
     @Default({}) Map<String, String> sectionErrors,
-    String? confirmingMedicationId,
+    @Default({}) Set<String> confirmingMedicationIds,
     @Default(0) int selectedTabIndex,
   }) = _MedicationsState;
 }

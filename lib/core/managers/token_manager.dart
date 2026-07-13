@@ -15,6 +15,7 @@ class TokenManager {
   TokenManager._internal();
 
   static const String _fcmTokenKey = 'cached_fcm_token';
+  static const String _authTokenKey = 'cached_auth_token';
   String? _cachedAuthToken;
   String? _cachedFCMToken;
   StreamSubscription? _tokenRefreshSubscription;
@@ -38,10 +39,20 @@ class TokenManager {
   /// when there's no network. Firebase SDK refreshes it automatically if needed.
   Future<String?> getValidAuthToken() async {
     try {
+      if (_cachedAuthToken == null) {
+        final prefs = await SharedPreferences.getInstance();
+        _cachedAuthToken = prefs.getString(_authTokenKey);
+      }
+
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
       final token = await user.getIdToken(false);
-      _cachedAuthToken = token;
+      
+      if (token != _cachedAuthToken) {
+        _cachedAuthToken = token;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_authTokenKey, token!);
+      }
       return token;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'network-request-failed' && _cachedAuthToken != null) {
@@ -130,6 +141,7 @@ class TokenManager {
     _tokenRefreshSubscription = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_fcmTokenKey);
+    await prefs.remove(_authTokenKey);
     AppLogger.d('TokenManager: All tokens cleared.');
   }
 

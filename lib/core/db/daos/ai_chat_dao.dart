@@ -30,6 +30,11 @@ class AiChatDao extends DatabaseAccessor<AppDatabase> with _$AiChatDaoMixin {
       
   Future<void> clearAiChats() => delete(aiChatConversations).go();
 
+  Future<void> updateMessageId(String oldId, String newId) {
+    return (update(aiChatConversations)..where((t) => t.id.equals(oldId)))
+        .write(AiChatConversationsCompanion(id: Value(newId)));
+  }
+
   // Pending Deletions Queries
   Future<List<PendingDeletion>> getPendingDeletions() => select(pendingDeletions).get();
   

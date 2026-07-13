@@ -8,6 +8,7 @@ import '../controllers/reading_logging_controller.dart';
 import '../../../../injection_container.dart';
 import '../widgets/form/reading_logging_form.dart';
 import '../widgets/history/reading_history_section.dart';
+import '../../../../shared/widgets/forms/unsaved_changes_guard.dart';
 
 class ReadingLoggingScreen extends StatelessWidget {
   const ReadingLoggingScreen({super.key});
@@ -39,8 +40,10 @@ class _ReadingLoggingView extends StatelessWidget {
             Expanded(
               child: Consumer<ReadingLoggingController>(
                 builder: (context, controller, child) {
-                  return StreamBuilder<List<VitalHistory>>(
-                    stream: context.read<VitalsDao>().watchAllVitals(),
+                  return UnsavedChangesGuard(
+                    hasUnsavedChanges: () => controller.state.hasChanged,
+                    child: StreamBuilder<List<VitalHistory>>(
+                      stream: context.read<VitalsDao>().watchAllVitals(),
                     builder: (context, snapshot) {
                       final allVitals =
                           List<VitalHistory>.from(snapshot.data ?? []);
@@ -77,7 +80,7 @@ class _ReadingLoggingView extends StatelessWidget {
                         body: const ReadingHistorySection(),
                       );
                     },
-                  );
+                  ));
                 },
               ),
             ),

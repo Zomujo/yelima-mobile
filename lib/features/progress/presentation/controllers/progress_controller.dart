@@ -10,9 +10,14 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
   ProgressState<BPTrend> bpTrendState = const ProgressState();
   ProgressState<VitalTrend> glucoseTrendState = const ProgressState();
 
+  String _currentBPRange = 'today';
+  String _currentGlucoseRange = 'today';
+
   ProgressController(this._repository);
 
   Future<void> fetchBPTrend({String dateRange = 'today'}) async {
+    _currentBPRange = dateRange;
+
     if (bpTrendState.data == null) {
       bpTrendState = bpTrendState.copyWith(isLoading: true, error: null);
       notifyListeners();
@@ -40,9 +45,11 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
 
     result.fold(
       (err) {
+        if (_currentBPRange != dateRange) return;
         bpTrendState = bpTrendState.copyWith(error: err, isLoading: false);
       },
       (data) {
+        if (_currentBPRange != dateRange) return;
         bpTrendState = bpTrendState.copyWith(
           data: data,
           isLoading: false,
@@ -56,6 +63,8 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
   }
 
   Future<void> fetchGlucoseTrend({String dateRange = 'today'}) async {
+    _currentGlucoseRange = dateRange;
+
     if (glucoseTrendState.data == null) {
       glucoseTrendState =
           glucoseTrendState.copyWith(isLoading: true, error: null);
@@ -86,10 +95,12 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
 
     result.fold(
       (err) {
+        if (_currentGlucoseRange != dateRange) return;
         glucoseTrendState =
             glucoseTrendState.copyWith(error: err, isLoading: false);
       },
       (data) {
+        if (_currentGlucoseRange != dateRange) return;
         glucoseTrendState = glucoseTrendState.copyWith(
           data: data,
           isLoading: false,

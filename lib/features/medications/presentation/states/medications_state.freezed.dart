@@ -24,7 +24,7 @@ mixin _$MedicationsState {
   String? get adherenceError;
   String? get countsError;
   Map<String, String> get sectionErrors;
-  String? get confirmingMedicationId;
+  Set<String> get confirmingMedicationIds;
   int get selectedTabIndex;
 
   /// Create a copy of MedicationsState
@@ -57,8 +57,8 @@ mixin _$MedicationsState {
                 other.countsError == countsError) &&
             const DeepCollectionEquality()
                 .equals(other.sectionErrors, sectionErrors) &&
-            (identical(other.confirmingMedicationId, confirmingMedicationId) ||
-                other.confirmingMedicationId == confirmingMedicationId) &&
+            const DeepCollectionEquality().equals(
+                other.confirmingMedicationIds, confirmingMedicationIds) &&
             (identical(other.selectedTabIndex, selectedTabIndex) ||
                 other.selectedTabIndex == selectedTabIndex));
   }
@@ -75,12 +75,12 @@ mixin _$MedicationsState {
       adherenceError,
       countsError,
       const DeepCollectionEquality().hash(sectionErrors),
-      confirmingMedicationId,
+      const DeepCollectionEquality().hash(confirmingMedicationIds),
       selectedTabIndex);
 
   @override
   String toString() {
-    return 'MedicationsState(adherence: $adherence, counts: $counts, medicationsBySection: $medicationsBySection, isAdherenceLoading: $isAdherenceLoading, isCountsLoading: $isCountsLoading, sectionLoadingStatus: $sectionLoadingStatus, adherenceError: $adherenceError, countsError: $countsError, sectionErrors: $sectionErrors, confirmingMedicationId: $confirmingMedicationId, selectedTabIndex: $selectedTabIndex)';
+    return 'MedicationsState(adherence: $adherence, counts: $counts, medicationsBySection: $medicationsBySection, isAdherenceLoading: $isAdherenceLoading, isCountsLoading: $isCountsLoading, sectionLoadingStatus: $sectionLoadingStatus, adherenceError: $adherenceError, countsError: $countsError, sectionErrors: $sectionErrors, confirmingMedicationIds: $confirmingMedicationIds, selectedTabIndex: $selectedTabIndex)';
   }
 }
 
@@ -100,7 +100,7 @@ abstract mixin class $MedicationsStateCopyWith<$Res> {
       String? adherenceError,
       String? countsError,
       Map<String, String> sectionErrors,
-      String? confirmingMedicationId,
+      Set<String> confirmingMedicationIds,
       int selectedTabIndex});
 }
 
@@ -126,7 +126,7 @@ class _$MedicationsStateCopyWithImpl<$Res>
     Object? adherenceError = freezed,
     Object? countsError = freezed,
     Object? sectionErrors = null,
-    Object? confirmingMedicationId = freezed,
+    Object? confirmingMedicationIds = null,
     Object? selectedTabIndex = null,
   }) {
     return _then(_self.copyWith(
@@ -166,10 +166,10 @@ class _$MedicationsStateCopyWithImpl<$Res>
           ? _self.sectionErrors
           : sectionErrors // ignore: cast_nullable_to_non_nullable
               as Map<String, String>,
-      confirmingMedicationId: freezed == confirmingMedicationId
-          ? _self.confirmingMedicationId
-          : confirmingMedicationId // ignore: cast_nullable_to_non_nullable
-              as String?,
+      confirmingMedicationIds: null == confirmingMedicationIds
+          ? _self.confirmingMedicationIds
+          : confirmingMedicationIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
       selectedTabIndex: null == selectedTabIndex
           ? _self.selectedTabIndex
           : selectedTabIndex // ignore: cast_nullable_to_non_nullable
@@ -191,11 +191,12 @@ class _MedicationsState implements MedicationsState {
       this.adherenceError,
       this.countsError,
       final Map<String, String> sectionErrors = const {},
-      this.confirmingMedicationId,
+      final Set<String> confirmingMedicationIds = const {},
       this.selectedTabIndex = 0})
       : _medicationsBySection = medicationsBySection,
         _sectionLoadingStatus = sectionLoadingStatus,
-        _sectionErrors = sectionErrors;
+        _sectionErrors = sectionErrors,
+        _confirmingMedicationIds = confirmingMedicationIds;
 
   @override
   final MedicationAdherence? adherence;
@@ -240,8 +241,16 @@ class _MedicationsState implements MedicationsState {
     return EqualUnmodifiableMapView(_sectionErrors);
   }
 
+  final Set<String> _confirmingMedicationIds;
   @override
-  final String? confirmingMedicationId;
+  @JsonKey()
+  Set<String> get confirmingMedicationIds {
+    if (_confirmingMedicationIds is EqualUnmodifiableSetView)
+      return _confirmingMedicationIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableSetView(_confirmingMedicationIds);
+  }
+
   @override
   @JsonKey()
   final int selectedTabIndex;
@@ -276,8 +285,8 @@ class _MedicationsState implements MedicationsState {
                 other.countsError == countsError) &&
             const DeepCollectionEquality()
                 .equals(other._sectionErrors, _sectionErrors) &&
-            (identical(other.confirmingMedicationId, confirmingMedicationId) ||
-                other.confirmingMedicationId == confirmingMedicationId) &&
+            const DeepCollectionEquality().equals(
+                other._confirmingMedicationIds, _confirmingMedicationIds) &&
             (identical(other.selectedTabIndex, selectedTabIndex) ||
                 other.selectedTabIndex == selectedTabIndex));
   }
@@ -294,12 +303,12 @@ class _MedicationsState implements MedicationsState {
       adherenceError,
       countsError,
       const DeepCollectionEquality().hash(_sectionErrors),
-      confirmingMedicationId,
+      const DeepCollectionEquality().hash(_confirmingMedicationIds),
       selectedTabIndex);
 
   @override
   String toString() {
-    return 'MedicationsState(adherence: $adherence, counts: $counts, medicationsBySection: $medicationsBySection, isAdherenceLoading: $isAdherenceLoading, isCountsLoading: $isCountsLoading, sectionLoadingStatus: $sectionLoadingStatus, adherenceError: $adherenceError, countsError: $countsError, sectionErrors: $sectionErrors, confirmingMedicationId: $confirmingMedicationId, selectedTabIndex: $selectedTabIndex)';
+    return 'MedicationsState(adherence: $adherence, counts: $counts, medicationsBySection: $medicationsBySection, isAdherenceLoading: $isAdherenceLoading, isCountsLoading: $isCountsLoading, sectionLoadingStatus: $sectionLoadingStatus, adherenceError: $adherenceError, countsError: $countsError, sectionErrors: $sectionErrors, confirmingMedicationIds: $confirmingMedicationIds, selectedTabIndex: $selectedTabIndex)';
   }
 }
 
@@ -321,7 +330,7 @@ abstract mixin class _$MedicationsStateCopyWith<$Res>
       String? adherenceError,
       String? countsError,
       Map<String, String> sectionErrors,
-      String? confirmingMedicationId,
+      Set<String> confirmingMedicationIds,
       int selectedTabIndex});
 }
 
@@ -347,7 +356,7 @@ class __$MedicationsStateCopyWithImpl<$Res>
     Object? adherenceError = freezed,
     Object? countsError = freezed,
     Object? sectionErrors = null,
-    Object? confirmingMedicationId = freezed,
+    Object? confirmingMedicationIds = null,
     Object? selectedTabIndex = null,
   }) {
     return _then(_MedicationsState(
@@ -387,10 +396,10 @@ class __$MedicationsStateCopyWithImpl<$Res>
           ? _self._sectionErrors
           : sectionErrors // ignore: cast_nullable_to_non_nullable
               as Map<String, String>,
-      confirmingMedicationId: freezed == confirmingMedicationId
-          ? _self.confirmingMedicationId
-          : confirmingMedicationId // ignore: cast_nullable_to_non_nullable
-              as String?,
+      confirmingMedicationIds: null == confirmingMedicationIds
+          ? _self._confirmingMedicationIds
+          : confirmingMedicationIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
       selectedTabIndex: null == selectedTabIndex
           ? _self.selectedTabIndex
           : selectedTabIndex // ignore: cast_nullable_to_non_nullable

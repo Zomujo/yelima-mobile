@@ -77,7 +77,7 @@ class TodaysMedicationsList extends StatelessWidget {
                 time: timeString,
                 isTaken: med.taken,
                 isOverdue: !med.taken && DateTime.now().isAfter(med.toBeTakenAt),
-                isConfirming: controller.state.confirmingMedicationId == med.id,
+                isConfirming: controller.state.confirmingMedicationIds.contains(med.id),
                 onConfirm: () async {
                   final error = await controller.toggleMedicationStatus(med.id);
                   if (error != null && context.mounted) {

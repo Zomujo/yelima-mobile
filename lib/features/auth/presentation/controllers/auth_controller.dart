@@ -47,7 +47,9 @@ class AuthController extends ChangeNotifier {
           currentUser: null,
           isInitialized: true,
         ));
-        _sessionLifecycleService.endSession();
+        try {
+          _sessionLifecycleService.endSession();
+        } catch (_) {}
       } else {
         _updateState(_state.copyWith(
           currentUser: user,
@@ -208,7 +210,11 @@ class AuthController extends ChangeNotifier {
         _showError(context, error);
       },
       (_) async {
-        await _sessionLifecycleService.endSession();
+        try {
+          await _sessionLifecycleService.endSession();
+        } catch (e) {
+          debugPrint('Error ending session on delete: $e');
+        }
         await TokenManager().clearTokens();
         GlobalAsyncLoader.hide();
         if (context.mounted) {
@@ -221,7 +227,11 @@ class AuthController extends ChangeNotifier {
 
   Future<void> signOut(BuildContext context) async {
     GlobalAsyncLoader.show(context, message: "Signing out...");
-    await _sessionLifecycleService.endSession();
+    try {
+      await _sessionLifecycleService.endSession();
+    } catch (e) {
+      debugPrint('Error ending session on sign out: $e');
+    }
 
     final result = await _repository.signOut();
     await TokenManager().clearTokens();

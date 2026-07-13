@@ -10,6 +10,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
   final AppointmentRepository repository;
 
   StreamSubscription<List<AppointmentEntity>>? _appointmentSubscription;
+  int _nearestFetchStamp = 0;
 
   AppointmentController({required this.repository}) {
     _initSubscription();
@@ -52,9 +53,12 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
   final int pageSize = 10;
 
   Future<void> fetchNearestAppointment() async {
+    final stamp = ++_nearestFetchStamp;
     state = state.copyWith(isNearestLoading: true, nearestError: null);
 
     final result = await repository.getNearestAppointment();
+
+    if (stamp != _nearestFetchStamp) return;
 
     result.fold(
       (error) {

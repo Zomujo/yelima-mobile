@@ -131,6 +131,8 @@ class MutationSyncManager implements SessionLifecycleHandler {
         debugPrint("Remapping offline ID ${pending.entityId} to server ID $newServerId for ${pending.entityType}");
         if (pending.entityType == 'medication') {
           await _db.medicationsDao.updateMedicationId(pending.entityId, newServerId);
+        } else if (pending.entityType == 'ai_chat_message') {
+          await _db.aiChatDao.updateMessageId(pending.entityId, newServerId);
         }
         // Cascade to pending mutations (e.g. an update that followed the create)
         await _db.pendingMutationsDao.updateEntityId(pending.entityId, newServerId);
