@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-
 import 'package:yelima/core/services/connectivity_service.dart';
+import 'package:yelima/core/services/mutation_sync_manager.dart';
 import 'package:yelima/features/chat/data/repositories/ai_chat_repository_impl.dart';
 import 'package:yelima/features/chat/domain/entities/ai_chat_message.dart';
 import 'package:yelima/features/chat/presentation/controllers/ai_chat_controller.dart';
@@ -14,9 +14,12 @@ class MockAiChatRepository extends Mock implements AiChatRepository {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 
+class MockMutationSyncManager extends Mock implements MutationSyncManager {}
+
 void main() {
   late MockAiChatRepository mockRepository;
   late MockConnectivityService mockConnectivityService;
+  late MockMutationSyncManager mockMutationSyncManager;
 
   AiChatMessage botMessage(String id, {String value = 'bot reply'}) {
     return AiChatMessage(
@@ -45,6 +48,10 @@ void main() {
   setUp(() {
     mockRepository = MockAiChatRepository();
     mockConnectivityService = MockConnectivityService();
+    mockMutationSyncManager = MockMutationSyncManager();
+
+    when(() => mockMutationSyncManager.onMutationSynced)
+        .thenAnswer((_) => const Stream.empty());
 
     when(() => mockConnectivityService.isConnected)
         .thenAnswer((_) async => true);
@@ -67,7 +74,7 @@ void main() {
     when(() => mockRepository.loadConversations())
         .thenAnswer((_) async => right(initialMessages));
     final controller =
-        AiChatController(mockRepository, mockConnectivityService);
+        AiChatController(mockRepository, mockConnectivityService, mockMutationSyncManager);
     // Let the constructor's fire-and-forget initial syncConversations() settle.
     await Future<void>.delayed(Duration.zero);
     await Future<void>.delayed(Duration.zero);

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/repositories/appointment_repository.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../states/appointment_state.dart';
 
@@ -25,11 +24,14 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
   }
 
   void _initSubscription() {
-    _appointmentSubscription = repository.watchAppointments().listen((appointments) {
+    _appointmentSubscription =
+        repository.watchAppointments().listen((appointments) {
       final now = DateTime.now();
 
-      final upcoming = appointments.where((a) => a.appointmentDate.isAfter(now)).toList();
-      final past = appointments.where((a) => a.appointmentDate.isBefore(now)).toList();
+      final upcoming =
+          appointments.where((a) => a.appointmentDate.isAfter(now)).toList();
+      final past =
+          appointments.where((a) => a.appointmentDate.isBefore(now)).toList();
 
       state = state.copyWith(
         upcomingState: state.upcomingState.copyWith(
@@ -65,7 +67,8 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
         state = state.copyWith(isNearestLoading: false, nearestError: error);
       },
       (data) {
-        state = state.copyWith(isNearestLoading: false, nearestAppointment: data);
+        state =
+            state.copyWith(isNearestLoading: false, nearestAppointment: data);
       },
     );
   }
@@ -76,17 +79,22 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     int? targetPage,
   }) async {
     final isUpcoming = filter == 'upcoming';
-    var currentPaginatedState = isUpcoming ? state.upcomingState : state.pastState;
+    var currentPaginatedState =
+        isUpcoming ? state.upcomingState : state.pastState;
 
-    final pageToFetch = targetPage ?? (isRefresh ? 1 : currentPaginatedState.page + 1);
+    final pageToFetch =
+        targetPage ?? (isRefresh ? 1 : currentPaginatedState.page + 1);
 
     if (isRefresh || targetPage != null) {
       currentPaginatedState = currentPaginatedState.copyWith(isLoading: true);
     } else {
-      if (!currentPaginatedState.hasNextPage || currentPaginatedState.isLoading || currentPaginatedState.isFetchingMore) {
+      if (!currentPaginatedState.hasNextPage ||
+          currentPaginatedState.isLoading ||
+          currentPaginatedState.isFetchingMore) {
         return;
       }
-      currentPaginatedState = currentPaginatedState.copyWith(isFetchingMore: true);
+      currentPaginatedState =
+          currentPaginatedState.copyWith(isFetchingMore: true);
     }
 
     _updatePaginatedState(filter, currentPaginatedState);
@@ -109,7 +117,9 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
         );
       },
       (data) {
-        final newItems = (isRefresh || targetPage != null) ? data.rows : [...currentPaginatedState.items, ...data.rows];
+        final newItems = (isRefresh || targetPage != null)
+            ? data.rows
+            : [...currentPaginatedState.items, ...data.rows];
 
         _updatePaginatedState(
           filter,
@@ -127,11 +137,10 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  Future<bool> requestAppointment({
-    required BuildContext context,
+  Future<String?> requestAppointment({
     required String note,
   }) async {
-    if (state.isRequestingAppointment) return false;
+    if (state.isRequestingAppointment) return null;
 
     state = state.copyWith(isRequestingAppointment: true);
 
@@ -140,22 +149,13 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     state = state.copyWith(isRequestingAppointment: false);
 
     return result.fold(
-      (error) {
-        if (context.mounted) {
-          context.showErrorSnackBar(error);
-        }
-        return false;
-      },
-      (_) {
-        if (context.mounted) {
-          context.showSuccessSnackBar('Appointment request sent successfully!');
-        }
-        return true;
-      },
+      (error) => error,
+      (_) => null,
     );
   }
 
-  void _updatePaginatedState(String filter, PaginatedAppointmentState newState) {
+  void _updatePaginatedState(
+      String filter, PaginatedAppointmentState newState) {
     if (filter == 'upcoming') {
       state = state.copyWith(upcomingState: newState);
     } else {

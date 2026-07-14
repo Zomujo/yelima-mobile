@@ -36,7 +36,10 @@ class _ReadingLoggingView extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const AppHeader(title: 'Log a reading'),
+            const AppHeader(
+              title: 'Log a reading',
+              automaticallyImplyLeading: false,
+            ),
             Expanded(
               child: UnsavedChangesGuard(
                 hasUnsavedChanges: () => context.read<ReadingLoggingController>().state.hasChanged,

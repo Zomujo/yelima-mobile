@@ -24,6 +24,7 @@ class RequestAppointmentModal extends StatefulWidget {
 
 class _RequestAppointmentModalState extends State<RequestAppointmentModal> {
   final _controller = TextEditingController();
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -35,16 +36,28 @@ class _RequestAppointmentModalState extends State<RequestAppointmentModal> {
     final note = _controller.text.trim();
     if (note.length <= 5) return;
 
+    if (mounted) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+
     // Use read so we don't rebuild on every isRequestingAppointment change
     final appointmentController = context.read<AppointmentController>();
 
-    final success = await appointmentController.requestAppointment(
-      context: context,
+    final error = await appointmentController.requestAppointment(
       note: note,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (error == null) {
+      context.showSuccessSnackBar('Appointment request sent successfully!');
       context.removeModal();
+    } else {
+      setState(() {
+        _errorMessage = error;
+      });
     }
   }
 
@@ -126,7 +139,15 @@ class _RequestAppointmentModalState extends State<RequestAppointmentModal> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: AppText.bodyMedium(
+                    _errorMessage!,
+                    color: Colors.redAccent,
+                  ),
+                ),
+              const SizedBox(height: 8),
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: _controller,
                 builder: (context, value, child) {

@@ -59,8 +59,11 @@ class MedicationRepositoryImpl implements MedicationRepository {
       {required bool showWeekdays}) async {
     if (await connectivityService.isConnected) {
       try {
-        final result =
+        MedicationAdherence result =
             await remoteDataSource.getAdherence(showWeekdays: showWeekdays);
+
+        result = await _applyPendingMutationsToAdherenceResult(result);
+
         // Cache adherence rate.
         final adherenceModel = VitalHistoriesCompanion(
           id: const drift.Value('adherence_cache_key'),
@@ -212,7 +215,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
       String section) async {
     if (await connectivityService.isConnected) {
       try {
-        final result = await remoteDataSource.getMedicationsBySection(section);
+        List<MedicationEntity> result =
+            await remoteDataSource.getMedicationsBySection(section);
+        result = await _applyPendingMutationsToRemoteResult(result,
+            sectionFilter: section);
 
         // Cache data atomically.
         await db.transaction(() async {
@@ -330,9 +336,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
     if (forceOffline) {
       // Queue optimistic offline mutation.
       try {
-        final pendingAll = await db.pendingMutationsDao.getAllPendingMutations();
-        final alreadyConfirming = pendingAll.any((p) => 
-            p.entityId == medicationId && p.action == 'confirm');
+        final pendingAll =
+            await db.pendingMutationsDao.getAllPendingMutations();
+        final alreadyConfirming = pendingAll
+            .any((p) => p.entityId == medicationId && p.action == 'confirm');
 
         if (!alreadyConfirming) {
           final payload =
@@ -351,6 +358,45 @@ class MedicationRepositoryImpl implements MedicationRepository {
         // Persist confirmation locally.
         await db.medicationsDao.markMedicationTaken(medicationId);
         await _markSectionCacheTaken(section, medicationId);
+        await _optimisticallyUpdateAdherence();
+
+        // Update specific history cache
+        try {
+          final now = DateTime.now();
+          final formattedDate = now.toIso8601String().split('T')[0];
+          final vitals = await db.vitalsDao.getAllVitals();
+          final historyVital = vitals
+              .where(
+                  (v) => v.id == 'med_history_${medicationId}_$formattedDate')
+              .firstOrNull;
+
+          if (historyVital != null) {
+            final decoded =
+                jsonDecode(historyVital.value) as Map<String, dynamic>;
+            final logs = List<dynamic>.from(decoded['logs'] ?? []);
+            logs.add({
+              'id': const Uuid().v4(),
+              'taken': true,
+              'takenAt': now.toIso8601String(),
+            });
+            decoded['logs'] = logs;
+            final currentRate =
+                (decoded['adherenceRate'] as num?)?.toDouble() ?? 0.0;
+            decoded['adherenceRate'] = (currentRate + 5).clamp(0, 100);
+
+            await db.vitalsDao.insertVitals([
+              VitalHistoriesCompanion(
+                id: drift.Value('med_history_${medicationId}_$formattedDate'),
+                vitalType: const drift.Value('MED_HISTORY_CACHE'),
+                vitalName: drift.Value('History for $medicationId'),
+                value: drift.Value(jsonEncode(decoded)),
+                unit: const drift.Value('json'),
+                severity: const drift.Value('normal'),
+                recordedAt: drift.Value(now),
+              )
+            ]);
+          }
+        } catch (_) {}
 
         try {
           if (GetIt.instance.isRegistered<MutationSyncManager>()) {
@@ -399,6 +445,259 @@ class MedicationRepositoryImpl implements MedicationRepository {
     }
   }
 
+  Future<void> _insertSectionCacheMedication(
+      CreateMedicationModel data, String localId) async {
+    try {
+      final vitals = await db.vitalsDao.getAllVitals();
+      final now = DateTime.now();
+
+      final schedules = {
+        if (data.morning != null) 'MORNING': data.morning!.time,
+        if (data.afternoon != null) 'AFTERNOON': data.afternoon!.time,
+        if (data.evening != null) 'EVENING': data.evening!.time,
+      };
+
+      for (var entry in schedules.entries) {
+        final section = entry.key;
+
+        final sectionVital = vitals
+            .where(
+                (v) => v.vitalType == 'MED_SECTION_CACHE_${section}_$_todayKey')
+            .firstOrNull;
+
+        List<dynamic> updated = [];
+        if (sectionVital != null) {
+          updated = jsonDecode(sectionVital.value) as List<dynamic>;
+        }
+
+        updated.add({
+          'id': localId,
+          'name': data.name,
+          'dosage': data.dosage,
+          'purpose': data.notes ?? '',
+          'toBeTakenAt': now.toIso8601String(), // Offline placeholder
+          'taken': false,
+        });
+
+        await db.vitalsDao.insertVitals([
+          VitalHistoriesCompanion(
+            id: drift.Value('med_section_cache_${section}_$_todayKey'),
+            vitalType: drift.Value('MED_SECTION_CACHE_${section}_$_todayKey'),
+            vitalName: drift.Value('Medications for $section'),
+            value: drift.Value(jsonEncode(updated)),
+            unit: const drift.Value('json'),
+            severity: const drift.Value('normal'),
+            recordedAt: drift.Value(now),
+          ),
+        ]);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _updateSectionCacheMedication(
+      String id, UpdateMedicationModel data) async {
+    try {
+      final vitals = await db.vitalsDao.getAllVitals();
+      for (final section in ['MORNING', 'AFTERNOON', 'EVENING']) {
+        final sectionVital = vitals
+            .where(
+                (v) => v.vitalType == 'MED_SECTION_CACHE_${section}_$_todayKey')
+            .firstOrNull;
+        if (sectionVital != null) {
+          final decoded = jsonDecode(sectionVital.value) as List;
+          bool found = false;
+          final updated = decoded.map((m) {
+            final entry = Map<String, dynamic>.from(m as Map);
+            if (entry['id'] == id) {
+              if (data.dosage != null) entry['dosage'] = data.dosage;
+              if (data.notes != null) entry['purpose'] = data.notes;
+              found = true;
+            }
+            return entry;
+          }).toList();
+
+          if (found) {
+            await db.vitalsDao.insertVitals([
+              VitalHistoriesCompanion(
+                id: drift.Value('med_section_cache_${section}_$_todayKey'),
+                vitalType:
+                    drift.Value('MED_SECTION_CACHE_${section}_$_todayKey'),
+                vitalName: drift.Value('Medications for $section'),
+                value: drift.Value(jsonEncode(updated)),
+                unit: const drift.Value('json'),
+                severity: const drift.Value('normal'),
+                recordedAt: drift.Value(DateTime.now()),
+              ),
+            ]);
+            break; // Stop searching once found
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _optimisticallyUpdateAdherence() async {
+    try {
+      final vitals = await db.vitalsDao.getAllVitals();
+
+      // Update basic adherence rate cache
+      final adherenceVital =
+          vitals.where((v) => v.vitalType == 'ADHERENCE_CACHE').firstOrNull;
+      double newRate = 0.0;
+      if (adherenceVital != null) {
+        final parsed = double.tryParse(adherenceVital.value) ?? 0.0;
+        newRate = (parsed > 0 && parsed <= 1.0) ? parsed * 100 : parsed;
+        newRate = (newRate + 5).clamp(0, 100); // Bump by 5%
+        await db.vitalsDao.insertVitals([
+          VitalHistoriesCompanion(
+            id: const drift.Value('adherence_cache_key'),
+            vitalType: const drift.Value('ADHERENCE_CACHE'),
+            vitalName: const drift.Value('Medication Adherence'),
+            value: drift.Value(newRate.toString()),
+            unit: const drift.Value('%'),
+            severity: const drift.Value('normal'),
+            recordedAt: drift.Value(DateTime.now()),
+          ),
+        ]);
+      }
+
+      // Update full adherence cache
+      final fullVital = vitals
+          .where((v) => v.vitalType == 'ADHERENCE_FULL_CACHE')
+          .firstOrNull;
+      if (fullVital != null) {
+        final decoded = jsonDecode(fullVital.value) as Map<String, dynamic>;
+        decoded['rate'] = newRate;
+
+        // Optimistically set today to taken if days exist
+        if (decoded['days'] != null) {
+          final daysList = List<dynamic>.from(decoded['days']);
+          final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+
+          for (var day in daysList) {
+            if (day is Map &&
+                day['takenAt'] != null &&
+                day['takenAt'].toString().startsWith(todayStr)) {
+              day['taken'] = true;
+            }
+          }
+          decoded['days'] = daysList;
+        }
+
+        await db.vitalsDao.insertVitals([
+          VitalHistoriesCompanion(
+            id: const drift.Value('adherence_full_cache_key'),
+            vitalType: const drift.Value('ADHERENCE_FULL_CACHE'),
+            vitalName: const drift.Value('Medication Adherence Full'),
+            value: drift.Value(jsonEncode(decoded)),
+            unit: const drift.Value('json'),
+            severity: const drift.Value('normal'),
+            recordedAt: drift.Value(DateTime.now()),
+          ),
+        ]);
+      }
+    } catch (_) {}
+  }
+
+  Future<List<MedicationEntity>> _applyPendingMutationsToRemoteResult(
+      List<MedicationEntity> remoteResult,
+      {String? sectionFilter}) async {
+    try {
+      final pendingAll = await db.pendingMutationsDao.getAllPendingMutations();
+      final pendingMeds =
+          pendingAll.where((p) => p.entityType == 'medication').toList();
+
+      if (pendingMeds.isEmpty) return remoteResult;
+
+      List<MedicationEntity> result = List.from(remoteResult);
+
+      for (var pending in pendingMeds) {
+        if (pending.action == 'confirm') {
+          final index = result.indexWhere((m) => m.id == pending.entityId);
+          if (index != -1) {
+            result[index] = result[index].copyWith(taken: true);
+          }
+        } else if (pending.action == 'update_medication') {
+          final index = result.indexWhere((m) => m.id == pending.entityId);
+          if (index != -1) {
+            final payload = jsonDecode(pending.payloadJson);
+            result[index] = result[index].copyWith(
+              dosage: payload['dosage'] as String?,
+              purpose: payload['notes'] as String?,
+            );
+          }
+        } else if (pending.action == 'create_medication') {
+          final meds = await db.medicationsDao.getAllMedications();
+          final localMed =
+              meds.where((m) => m.id == pending.entityId).firstOrNull;
+
+          if (localMed != null) {
+            bool matchesSection = true;
+            if (sectionFilter != null) {
+              final hour = localMed.toBeTakenAt.hour;
+              if (sectionFilter == 'MORNING' && hour >= 12) {
+                matchesSection = false;
+              }
+              if (sectionFilter == 'AFTERNOON' && (hour < 12 || hour >= 17)) {
+                matchesSection = false;
+              }
+              if (sectionFilter == 'EVENING' && hour < 17) {
+                matchesSection = false;
+              }
+            }
+
+            if (matchesSection && !result.any((m) => m.id == localMed.id)) {
+              result.add(MedicationEntity(
+                id: localMed.id,
+                name: localMed.name,
+                dosage: localMed.dosage,
+                purpose: localMed.purpose,
+                toBeTakenAt: localMed.toBeTakenAt,
+                taken: localMed.taken,
+              ));
+            }
+          }
+        }
+      }
+
+      return result;
+    } catch (_) {
+      return remoteResult;
+    }
+  }
+
+  Future<MedicationAdherence> _applyPendingMutationsToAdherenceResult(
+      MedicationAdherence remoteResult) async {
+    try {
+      final pendingAll = await db.pendingMutationsDao.getAllPendingMutations();
+      final pendingConfirms = pendingAll
+          .where((p) => p.entityType == 'medication' && p.action == 'confirm')
+          .toList();
+
+      if (pendingConfirms.isEmpty) return remoteResult;
+
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      List<AdherenceDay> newDays = List.from(remoteResult.days);
+
+      double newRate = remoteResult.rate;
+      newRate = (newRate + 5).clamp(0, 100).toDouble();
+
+      for (int i = 0; i < newDays.length; i++) {
+        if (newDays[i].takenAt.toIso8601String().startsWith(todayStr)) {
+          newDays[i] = AdherenceDay(
+            id: newDays[i].id,
+            taken: true,
+            takenAt: newDays[i].takenAt,
+          );
+        }
+      }
+
+      return MedicationAdherence(rate: newRate, days: newDays);
+    } catch (_) {
+      return remoteResult;
+    }
+  }
+
   // Pagination cache keys.
   final Map<String, DateTime> _lastFetchTimeByPage = {};
   static const Duration _cacheDuration = Duration(minutes: 5);
@@ -421,8 +720,19 @@ class MedicationRepositoryImpl implements MedicationRepository {
       }
 
       try {
-        final result = await remoteDataSource.getAllMedications(
-            page: page, pageSize: pageSize);
+        MedicationListResponse result = await remoteDataSource
+            .getAllMedications(page: page, pageSize: pageSize);
+
+        final patchedRows =
+            await _applyPendingMutationsToRemoteResult(result.rows);
+        result = MedicationListResponse(
+          rows: patchedRows,
+          total: result.total + (patchedRows.length - result.rows.length),
+          pageSize: result.pageSize,
+          page: result.page,
+          totalPages: result.totalPages,
+        );
+
         // Upsert medications to avoid wiping other pages.
         for (var row in result.rows) {
           await db.medicationsDao.insertOrUpdateMedication(MedicationsCompanion(
@@ -603,17 +913,44 @@ class MedicationRepositoryImpl implements MedicationRepository {
     if (forceOffline) {
       // Queue optimistic offline mutation. for creation
       final localId = 'offline_${const Uuid().v4()}';
+      final now = DateTime.now();
+
+      // Build and cache the full MedicationDetailModel so the details screen works offline
+      final detail = MedicationDetailModel(
+        id: localId,
+        name: data.name,
+        dosage: data.dosage,
+        notes: data.notes,
+        morning: data.morning,
+        afternoon: data.afternoon,
+        evening: data.evening,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      await db.vitalsDao.insertVitals([
+        VitalHistoriesCompanion(
+          id: drift.Value('med_detail_cache_$localId'),
+          vitalType: const drift.Value('MED_DETAIL_CACHE'),
+          vitalName: drift.Value('Detail for $localId'),
+          value: drift.Value(jsonEncode(detail.toJson())),
+          unit: const drift.Value('json'),
+          severity: const drift.Value('normal'),
+          recordedAt: drift.Value(now),
+        )
+      ]);
 
       // Save optimistic view.
-      final now = DateTime.now();
       await db.medicationsDao.insertOrUpdateMedication(MedicationsCompanion(
         id: drift.Value(localId),
         name: drift.Value(data.name),
         dosage: drift.Value(data.dosage),
-        purpose: const drift.Value(''),
+        purpose: drift.Value(data.notes ?? ''),
         toBeTakenAt: drift.Value(now), // Rough placeholder
         taken: const drift.Value(false),
       ));
+
+      await _insertSectionCacheMedication(data, localId);
 
       // Queue background mutation.
       final mutationId = const Uuid().v4();
@@ -644,6 +981,19 @@ class MedicationRepositoryImpl implements MedicationRepository {
     if (await connectivityService.isConnected) {
       try {
         final res = await remoteDataSource.getMedicationById(id);
+
+        await db.vitalsDao.insertVitals([
+          VitalHistoriesCompanion(
+            id: drift.Value('med_detail_cache_$id'),
+            vitalType: const drift.Value('MED_DETAIL_CACHE'),
+            vitalName: drift.Value('Detail for $id'),
+            value: drift.Value(jsonEncode(res.toJson())),
+            unit: const drift.Value('json'),
+            severity: const drift.Value('normal'),
+            recordedAt: drift.Value(DateTime.now()),
+          )
+        ]);
+
         return right(res);
       } on ApiException catch (e) {
         return (await _fetchLocalMedicationById(id))
@@ -659,6 +1009,18 @@ class MedicationRepositoryImpl implements MedicationRepository {
   AsyncResponse<MedicationDetailModel> _fetchLocalMedicationById(
       String id) async {
     try {
+      final vitals = await db.vitalsDao.getAllVitals();
+      final detailVital =
+          vitals.where((v) => v.id == 'med_detail_cache_$id').firstOrNull;
+
+      if (detailVital != null) {
+        try {
+          final detail = MedicationDetailModel.fromJson(
+              jsonDecode(detailVital.value) as Map<String, dynamic>);
+          return right(detail);
+        } catch (_) {}
+      }
+
       final localMeds = await db.medicationsDao.getAllMedications();
       final target = localMeds.where((m) => m.id == id).firstOrNull;
       if (target == null) return left('Cache failure');
@@ -712,6 +1074,36 @@ class MedicationRepositoryImpl implements MedicationRepository {
           toBeTakenAt: drift.Value(local.toBeTakenAt),
           taken: drift.Value(local.taken),
         ));
+
+        // Update detail cache
+        try {
+          final vitals = await db.vitalsDao.getAllVitals();
+          final detailVital =
+              vitals.where((v) => v.id == 'med_detail_cache_$id').firstOrNull;
+          if (detailVital != null) {
+            final oldDetail = MedicationDetailModel.fromJson(
+                jsonDecode(detailVital.value) as Map<String, dynamic>);
+            final newDetail = oldDetail.copyWith(
+              dosage: data.dosage ?? oldDetail.dosage,
+              notes: data.notes ?? oldDetail.notes,
+              updatedAt: DateTime.now(),
+            );
+
+            await db.vitalsDao.insertVitals([
+              VitalHistoriesCompanion(
+                id: drift.Value('med_detail_cache_$id'),
+                vitalType: const drift.Value('MED_DETAIL_CACHE'),
+                vitalName: drift.Value('Detail for $id'),
+                value: drift.Value(jsonEncode(newDetail.toJson())),
+                unit: const drift.Value('json'),
+                severity: const drift.Value('normal'),
+                recordedAt: drift.Value(DateTime.now()),
+              )
+            ]);
+          }
+        } catch (_) {}
+
+        await _updateSectionCacheMedication(id, data);
       }
 
       // Queue background mutation.

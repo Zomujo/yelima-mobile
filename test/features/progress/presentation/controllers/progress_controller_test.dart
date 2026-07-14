@@ -6,15 +6,23 @@ import 'package:yelima/features/progress/domain/entities/vital_trends.dart';
 import 'package:yelima/features/progress/domain/repositories/progress_repository.dart';
 import 'package:yelima/features/progress/presentation/controllers/progress_controller.dart';
 
+import 'package:yelima/core/services/mutation_sync_manager.dart';
+
 class MockProgressRepository extends Mock implements ProgressRepository {}
+class MockMutationSyncManager extends Mock implements MutationSyncManager {}
 
 void main() {
   late ProgressController controller;
   late MockProgressRepository mockRepository;
+  late MockMutationSyncManager mockMutationSyncManager;
 
   setUp(() {
     mockRepository = MockProgressRepository();
-    controller = ProgressController(mockRepository);
+    mockMutationSyncManager = MockMutationSyncManager();
+    when(() => mockMutationSyncManager.onMutationSynced)
+        .thenAnswer((_) => const Stream.empty());
+        
+    controller = ProgressController(mockRepository, mockMutationSyncManager);
   });
 
   group('ProgressController', () {
