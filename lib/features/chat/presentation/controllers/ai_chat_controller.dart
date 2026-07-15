@@ -140,7 +140,14 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
         if (messages.isEmpty) {
           final initialRes = await _repository.loadInitialMessage();
           initialRes.fold(
-              (err) => _setState(_state.copyWith(error: err, isLoading: false)),
+              (err) {
+            // Ignore offline errors during background sync to avoid infinite snackbar loops
+            if (err.contains('No internet connection')) {
+              _setState(_state.copyWith(isLoading: false));
+            } else {
+              _setState(_state.copyWith(error: err, isLoading: false));
+            }
+          },
               (initialMsg) async {
             if (initialMsg != null) {
               messages = [initialMsg];

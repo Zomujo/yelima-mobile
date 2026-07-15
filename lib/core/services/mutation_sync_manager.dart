@@ -144,7 +144,14 @@ class MutationSyncManager implements SessionLifecycleHandler {
       await _db.pendingMutationsDao.removePendingMutation(pending.id);
       debugPrint("Successfully synced mutation for ${pending.entityType} (${pending.entityId})");
       
-      _syncBroadcast.add(pending.entityType);
+      if (pending.entityType == 'medication') {
+        // Small delay to allow backend caches to invalidate before UI refetches
+        Future.delayed(const Duration(seconds: 2), () {
+          _syncBroadcast.add(pending.entityType);
+        });
+      } else {
+        _syncBroadcast.add(pending.entityType);
+      }
       
       return didRemap;
     } on ApiException catch (e) {

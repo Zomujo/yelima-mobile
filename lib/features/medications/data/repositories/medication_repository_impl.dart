@@ -315,11 +315,13 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
   @override
   AsyncResponse<void> confirmMedication(
-      String medicationId, String section) async {
+      String medicationId, String section, {String? date}) async {
     bool forceOffline = false;
+    final effectiveDate = date ?? DateTime.now().toIso8601String().split('T')[0];
+    
     if (await connectivityService.isConnected) {
       try {
-        await remoteDataSource.confirmMedication(medicationId, section);
+        await remoteDataSource.confirmMedication(medicationId, section, date: effectiveDate);
         return right(null);
       } on ApiException catch (e) {
         if (e.message != null && e.message!.contains('400')) {
@@ -343,7 +345,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
         if (!alreadyConfirming) {
           final payload =
-              jsonEncode({'medicationId': medicationId, 'section': section});
+              jsonEncode({'medicationId': medicationId, 'section': section, 'date': effectiveDate});
           await db.pendingMutationsDao.addPendingMutation(
             PendingMutationsCompanion.insert(
               id: const Uuid().v4(),
@@ -1060,72 +1062,74 @@ class MedicationRepositoryImpl implements MedicationRepository {
     }
 
     if (forceOffline) {
-      // Fetch local cache.
-      final localMeds = await db.medicationsDao.getAllMedications();
-      final local = localMeds.where((m) => m.id == id).firstOrNull;
+      try {
+        // Fetch local cache.
+        final localMeds = await db.medicationsDao.getAllMedications();
+        final local = localMeds.where((m) => m.id == id).firstOrNull;
 
-      if (local != null) {
-        // Optimistic local update (schedule edits await sync).
-        await db.medicationsDao.insertOrUpdateMedication(MedicationsCompanion(
-          id: drift.Value(id),
-          name: drift.Value(local.name),
-          dosage: drift.Value(data.dosage ?? local.dosage),
-          purpose: drift.Value(data.notes ?? local.purpose),
-          toBeTakenAt: drift.Value(local.toBeTakenAt),
-          taken: drift.Value(local.taken),
-        ));
+        if (local != null) {
+          // Optimistic local update (schedule edits await sync).
+          await db.medicationsDao.insertOrUpdateMedication(MedicationsCompanion(
+            id: drift.Value(id),
+            name: drift.Value(local.name),
+            dosage: drift.Value(data.dosage ?? local.dosage),
+            purpose: drift.Value(data.notes ?? local.purpose),
+            toBeTakenAt: drift.Value(local.toBeTakenAt),
+            taken: drift.Value(local.taken),
+          ));
+        }
 
-        // Update detail cache
+        // Update detail cache regardless of localMeds
+        final vitals = await db.vitalsDao.getAllVitals();
+        final detailVital =
+            vitals.where((v) => v.id == 'med_detail_cache_$id').firstOrNull;
+        if (detailVital != null) {
+          final oldDetail = MedicationDetailModel.fromJson(
+              jsonDecode(detailVital.value) as Map<String, dynamic>);
+          final newDetail = oldDetail.copyWith(
+            dosage: data.dosage ?? oldDetail.dosage,
+            notes: data.notes ?? oldDetail.notes,
+            updatedAt: DateTime.now(),
+          );
+
+          await db.vitalsDao.insertVitals([
+            VitalHistoriesCompanion(
+              id: drift.Value('med_detail_cache_$id'),
+              vitalType: const drift.Value('MED_DETAIL_CACHE'),
+              vitalName: drift.Value('Detail for $id'),
+              value: drift.Value(jsonEncode(newDetail.toJson())),
+              unit: const drift.Value('json'),
+              severity: const drift.Value('normal'),
+              recordedAt: drift.Value(DateTime.now()),
+            )
+          ]);
+        }
+
+        await _updateSectionCacheMedication(id, data);
+
+        // Queue background mutation.
+        final mutationId = const Uuid().v4();
+        await db.pendingMutationsDao.addPendingMutation(
+          PendingMutationsCompanion.insert(
+            id: mutationId,
+            entityType: 'medication',
+            entityId: id,
+            action: 'update_medication',
+            payloadJson: jsonEncode(data.toJson()),
+            createdAt: DateTime.now(),
+          ),
+        );
+
         try {
-          final vitals = await db.vitalsDao.getAllVitals();
-          final detailVital =
-              vitals.where((v) => v.id == 'med_detail_cache_$id').firstOrNull;
-          if (detailVital != null) {
-            final oldDetail = MedicationDetailModel.fromJson(
-                jsonDecode(detailVital.value) as Map<String, dynamic>);
-            final newDetail = oldDetail.copyWith(
-              dosage: data.dosage ?? oldDetail.dosage,
-              notes: data.notes ?? oldDetail.notes,
-              updatedAt: DateTime.now(),
-            );
-
-            await db.vitalsDao.insertVitals([
-              VitalHistoriesCompanion(
-                id: drift.Value('med_detail_cache_$id'),
-                vitalType: const drift.Value('MED_DETAIL_CACHE'),
-                vitalName: drift.Value('Detail for $id'),
-                value: drift.Value(jsonEncode(newDetail.toJson())),
-                unit: const drift.Value('json'),
-                severity: const drift.Value('normal'),
-                recordedAt: drift.Value(DateTime.now()),
-              )
-            ]);
+          if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+            GetIt.instance<MutationSyncManager>().triggerSync();
           }
         } catch (_) {}
 
-        await _updateSectionCacheMedication(id, data);
+        return right(id);
+      } catch (e) {
+        return left('Offline update failed');
       }
-
-      // Queue background mutation.
-      final mutationId = const Uuid().v4();
-      await db.pendingMutationsDao.addPendingMutation(
-        PendingMutationsCompanion.insert(
-          id: mutationId,
-          entityType: 'medication',
-          entityId: id,
-          action: 'update_medication',
-          payloadJson: jsonEncode(data.toJson()),
-          createdAt: DateTime.now(),
-        ),
-      );
-
-      try {
-        if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-          GetIt.instance<MutationSyncManager>().triggerSync();
-        }
-      } catch (_) {}
-
-      return right(id);
     }
     return left('Unexpected state');
   }

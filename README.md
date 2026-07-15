@@ -112,3 +112,40 @@ Yelima is designed to offer a frictionless, highly engaging journey tailored to 
 - **Appointments:** A streamlined flow for requesting, viewing, and managing consultations with healthcare professionals.
 
 ---
+
+## Getting Started
+
+### Prerequisites
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (`^3.6.1`)
+- IDE (VSCode or Android Studio) with Flutter extensions.
+- Properly configured Android SDK / iOS Xcode environments.
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository_url>
+   cd yelima
+   ```
+
+2. **Install Dependencies:**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Code Generation:**
+   Because we rely heavily on Freezed, Drift, and JSON Serializable, you must generate the boilerplate code before compiling:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+4. **Environment Setup:**
+   Ensure you have the required `.env`, `.env.dev`, and `.env.prod` configuration files at the root of the project.
+
+5. **Run the Application:**
+   ```bash
+   flutter run -t lib/main_dev.dart
+   ```
+
+---
+

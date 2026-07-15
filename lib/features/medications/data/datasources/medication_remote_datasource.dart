@@ -13,7 +13,7 @@ abstract class MedicationRemoteDataSource {
   Future<MedicationAdherenceModel> getAdherence({required bool showWeekdays});
   Future<MedicationCountModel> getMedicationCounts();
   Future<List<MedicationModel>> getMedicationsBySection(String section);
-  Future<String> confirmMedication(String medicationId, String section);
+  Future<String> confirmMedication(String medicationId, String section, {String? date});
   Future<MedicationListResponseModel> getAllMedications({int page = 1, int pageSize = 10});
   Future<MedicationHistoryModel> getMedicationHistory(String medicationId, {required String date});
   Future<String> createMedication(CreateMedicationModel data);
@@ -54,9 +54,13 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
   }
 
   @override
-  Future<String> confirmMedication(String medicationId, String section) async {
+  Future<String> confirmMedication(String medicationId, String section, {String? date}) async {
+    final queryParams = {'section': section};
+    if (date != null) queryParams['date'] = date;
+    
     final response = await apiClient.put(
-      '/api/v1/client/medications/$medicationId/confirm?section=$section',
+      '/api/v1/client/medications/$medicationId/confirm',
+      queryParameters: queryParams,
     );
     return response['message'] as String? ?? 'Confirmed';
   }

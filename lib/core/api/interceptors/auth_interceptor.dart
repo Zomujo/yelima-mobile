@@ -49,9 +49,15 @@ class AuthInterceptor extends Interceptor {
       }
 
       if (_refreshCompleter != null) {
-        // Wait for the in-progress refresh
+        // Wait for the in-progress refresh with a timeout
         AppLogger.d('AuthInterceptor: Token refresh in progress, waiting...');
-        final success = await _refreshCompleter!.future;
+        bool success = false;
+        try {
+          success = await _refreshCompleter!.future.timeout(const Duration(seconds: 10));
+        } catch (_) {
+          AppLogger.w('AuthInterceptor: Token refresh wait timed out.');
+          _refreshCompleter = null; // Clear hung completer
+        }
         if (success) {
           final token = await _tokenManager.getAuthToken();
           err.requestOptions.headers['Authorization'] = 'Bearer $token';

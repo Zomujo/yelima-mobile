@@ -18,7 +18,7 @@ abstract class MedicationRepository {
   AsyncResponse<List<MedicationEntity>> getMedicationsBySection(String section);
   AsyncResponse<List<MedicationEntity>> getCachedMedicationsBySection(String section);
   
-  AsyncResponse<void> confirmMedication(String medicationId, String section);
+  AsyncResponse<void> confirmMedication(String medicationId, String section, {String? date});
 
   AsyncResponse<String> createMedication(CreateMedicationModel data);
   AsyncResponse<MedicationDetailModel> getMedicationById(String id);

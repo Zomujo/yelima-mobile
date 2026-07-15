@@ -84,9 +84,9 @@ class APIClient {
     }
   }
 
-  Future<dynamic> put(String path, {dynamic data}) async {
+  Future<dynamic> put(String path, {dynamic data, JSON? queryParameters}) async {
     try {
-      final response = await _dio.put(path, data: data);
+      final response = await _dio.put(path, data: data, queryParameters: queryParameters);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);

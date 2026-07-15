@@ -28,9 +28,10 @@ class MedicationRemoteMutationSource implements IRemoteMutationSource {
         await _remoteDataSource.updateMedication(entityId, model);
         return null;
       case 'confirm':
-        // Confirm mutation has payload { "medicationId": "...", "section": "..." }
+        // Confirm mutation has payload { "medicationId": "...", "section": "...", "date": "..." }
         final section = payload['section'] as String;
-        await _remoteDataSource.confirmMedication(entityId, section);
+        final date = payload['date'] as String?;
+        await _remoteDataSource.confirmMedication(entityId, section, date: date);
         return null;
       default:
         throw UnimplementedError('Unknown action $action for medication');
