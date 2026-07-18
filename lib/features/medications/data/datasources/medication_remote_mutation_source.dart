@@ -33,6 +33,10 @@ class MedicationRemoteMutationSource implements IRemoteMutationSource {
         final date = payload['date'] as String?;
         await _remoteDataSource.confirmMedication(entityId, section, date: date);
         return null;
+      // TODO: 'delete_medication' is intentionally unimplemented - there's no
+      // delete UI or server endpoint wired up yet. Nothing enqueues this
+      // action today; when delete is built, add the case here rather than
+      // resurrecting the old syncStatus-based stub.
       default:
         throw UnimplementedError('Unknown action $action for medication');
     }

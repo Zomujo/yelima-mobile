@@ -21,6 +21,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:get_it/get_it.dart';
 import '../../../../core/services/mutation_sync_manager.dart';
 import '../utils/medication_isolate_parsers.dart';
+import '../models/dosing_schedule_model.dart';
 
 class MedicationRepositoryImpl implements MedicationRepository {
   final MedicationRemoteDataSource remoteDataSource;
@@ -40,6 +41,83 @@ class MedicationRepositoryImpl implements MedicationRepository {
   AsyncResponse<MedicationAdherence> getCachedAdherence(
           {required bool showWeekdays}) =>
       _fetchLocalAdherence();
+
+  @override
+  Stream<MedicationCount> watchMedicationCounts() {
+    return db.medicationsDao.watchAllMedications().map((meds) {
+      int m = 0, a = 0, e = 0;
+      for (var med in meds) {
+        if (med.syncStatus == 'pending_delete') continue;
+        if (med.morningSchedule != null) m++;
+        if (med.afternoonSchedule != null) a++;
+        if (med.eveningSchedule != null) e++;
+      }
+      return MedicationCount(morning: m, afternoon: a, evening: e);
+    });
+  }
+
+  @override
+  Stream<List<MedicationEntity>> watchMedicationsBySection(String section) {
+    return db.medicationsDao.watchAllMedications().map((meds) {
+      List<MedicationEntity> results = [];
+      final lowerSection = section.toLowerCase();
+
+      for (var med in meds) {
+        if (med.syncStatus == 'pending_delete') continue;
+
+        String? scheduleJson;
+        if (lowerSection == 'morning') scheduleJson = med.morningSchedule;
+        if (lowerSection == 'afternoon') scheduleJson = med.afternoonSchedule;
+        if (lowerSection == 'evening') scheduleJson = med.eveningSchedule;
+
+        if (scheduleJson != null) {
+          try {
+            final map = jsonDecode(scheduleJson);
+            final timeModel = map['time'];
+            var hour = timeModel['hour'] as int;
+            final min = timeModel['minutes'] as int;
+            final des = timeModel['timeDesignators'] as String;
+
+            if (des == 'PM' && hour < 12) hour += 12;
+            if (des == 'AM' && hour == 12) hour = 0;
+
+            final now = DateTime.now();
+            final time = DateTime(now.year, now.month, now.day, hour, min);
+
+            results.add(MedicationEntity(
+              id: med.id,
+              name: med.name,
+              dosage: med.dosage,
+              purpose: med.purpose,
+              toBeTakenAt: time,
+              taken: med
+                  .taken, // Will implement per-section tracking later if needed
+            ));
+          } catch (_) {}
+        }
+      }
+
+      // Sort by time
+      results.sort((a, b) => a.toBeTakenAt.compareTo(b.toBeTakenAt));
+      return results;
+    });
+  }
+
+  @override
+  Stream<List<MedicationEntity>> watchAllMedications() {
+    return db.medicationsDao.watchAllMedications().map((meds) {
+      return meds.where((m) => m.syncStatus != 'pending_delete').map((med) {
+        return MedicationEntity(
+          id: med.id,
+          name: med.name,
+          dosage: med.dosage,
+          purpose: med.purpose,
+          toBeTakenAt: med.toBeTakenAt ?? DateTime.now(), // Fallback
+          taken: med.taken,
+        );
+      }).toList();
+    });
+  }
 
   @override
   AsyncResponse<MedicationCount> getCachedMedicationCounts() =>
@@ -107,6 +185,33 @@ class MedicationRepositoryImpl implements MedicationRepository {
     }
   }
 
+  @override
+  Stream<MedicationAdherence> watchAdherence() {
+    return db.vitalsDao
+        .watchVitalsByType('ADHERENCE_FULL_CACHE')
+        .asyncMap((vitals) async {
+      final fullVital = vitals.firstOrNull;
+      if (fullVital != null) {
+        try {
+          final decoded = jsonDecode(fullVital.value);
+          final rate = (decoded['rate'] as num).toDouble();
+          final daysList = decoded['days'] as List;
+          final days = daysList
+              .map((d) => AdherenceDay(
+                    id: d['id'],
+                    taken: d['taken'],
+                    takenAt: DateTime.parse(d['takenAt']),
+                  ))
+              .toList();
+
+          final localResult = MedicationAdherence(rate: rate, days: days);
+          return await _applyPendingMutationsToAdherenceResult(localResult);
+        } catch (_) {}
+      }
+      return const MedicationAdherence(rate: 0, days: []);
+    });
+  }
+
   AsyncResponse<MedicationAdherence> _fetchLocalAdherence() async {
     try {
       final vitals = await db.vitalsDao.getAllVitals();
@@ -141,39 +246,13 @@ class MedicationRepositoryImpl implements MedicationRepository {
     }
   }
 
+  // Legacy count patching removed (obsolete with Stream watchers)
+
   @override
   AsyncResponse<MedicationCount> getMedicationCounts() async {
-    if (await connectivityService.isConnected) {
-      try {
-        final result = await remoteDataSource.getMedicationCounts();
-
-        // Cache medication counts.
-        final countsJson = jsonEncode({
-          'morning': result.morning,
-          'afternoon': result.afternoon,
-          'evening': result.evening,
-        });
-        final countsModel = VitalHistoriesCompanion(
-          id: drift.Value('medication_counts_cache_key_$_todayKey'),
-          vitalType: drift.Value('MEDICATION_COUNTS_CACHE_$_todayKey'),
-          vitalName: const drift.Value('Medication Counts'),
-          value: drift.Value(countsJson),
-          unit: const drift.Value('json'),
-          severity: const drift.Value('normal'),
-          recordedAt: drift.Value(DateTime.now()),
-        );
-        await db.vitalsDao.insertVitals([countsModel]);
-
-        return right(result);
-      } on ApiException catch (e) {
-        return (await _fetchLocalMedicationCounts())
-            .fold((_) => left(e.message ?? 'Server error'), right);
-      } catch (e) {
-        return _fetchLocalMedicationCounts();
-      }
-    } else {
-      return _fetchLocalMedicationCounts();
-    }
+    // We don't actively fetch counts anymore since the UI uses watchMedicationCounts()
+    // We just return the local counted state dynamically.
+    return _fetchLocalMedicationCounts();
   }
 
   AsyncResponse<MedicationCount> _fetchLocalMedicationCounts() async {
@@ -194,7 +273,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final meds = await db.medicationsDao.getAllMedications();
       int morning = 0, afternoon = 0, evening = 0;
       for (var m in meds) {
-        final hour = m.toBeTakenAt.hour;
+        if (m.id.startsWith('offline_')) {
+          continue; // Skip optimistic rows to avoid double counting
+        }
+        final hour = (m.toBeTakenAt ?? DateTime.now()).hour;
         if (hour < 12) {
           morning++;
         } else if (hour < 17) {
@@ -261,13 +343,21 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
         return right(result);
       } on ApiException catch (e) {
-        return (await _fetchLocalMedicationsBySection(section))
-            .fold((_) => left(e.message ?? 'Server error'), right);
+        return (await _fetchLocalMedicationsBySection(section)).fold(
+            (_) => left(e.message ?? 'Server error'),
+            (r) async => right(await _applyPendingMutationsToRemoteResult(r,
+                sectionFilter: section)));
       } catch (e) {
-        return _fetchLocalMedicationsBySection(section);
+        return _fetchLocalMedicationsBySection(section).then((res) => res.fold(
+            (l) => left(l),
+            (r) async => right(await _applyPendingMutationsToRemoteResult(r,
+                sectionFilter: section))));
       }
     } else {
-      return _fetchLocalMedicationsBySection(section);
+      return _fetchLocalMedicationsBySection(section).then((res) => res.fold(
+          (l) => left(l),
+          (r) async => right(await _applyPendingMutationsToRemoteResult(r,
+              sectionFilter: section))));
     }
   }
 
@@ -292,7 +382,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final meds = await db.medicationsDao.getAllMedications();
       final filtered = meds
           .where((m) {
-            final hour = m.toBeTakenAt.hour;
+            if (m.id.startsWith('offline_')) {
+              return false; // Skip optimistic rows to avoid double counting and wrong times
+            }
+            final hour = (m.toBeTakenAt ?? DateTime.now()).hour;
             if (section == 'MORNING') return hour < 12;
             if (section == 'AFTERNOON') return hour >= 12 && hour < 17;
             if (section == 'EVENING') return hour >= 17;
@@ -303,7 +396,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 name: m.name,
                 dosage: m.dosage,
                 purpose: m.purpose,
-                toBeTakenAt: m.toBeTakenAt,
+                toBeTakenAt: m.toBeTakenAt ?? DateTime.now(),
                 taken: m.taken,
               ))
           .toList();
@@ -314,22 +407,24 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   @override
-  AsyncResponse<void> confirmMedication(
-      String medicationId, String section, {String? date}) async {
+  AsyncResponse<void> confirmMedication(String medicationId, String section,
+      {String? date}) async {
     bool forceOffline = false;
-    final effectiveDate = date ?? DateTime.now().toIso8601String().split('T')[0];
-    
+    final effectiveDate =
+        date ?? DateTime.now().toIso8601String().split('T')[0];
+
     if (await connectivityService.isConnected) {
       try {
-        await remoteDataSource.confirmMedication(medicationId, section, date: effectiveDate);
+        await remoteDataSource.confirmMedication(medicationId, section,
+            date: effectiveDate);
         return right(null);
+      } on NetworkException {
+        forceOffline = true;
       } on ApiException catch (e) {
-        if (e.message != null && e.message!.contains('400')) {
-          return left(e.message!);
-        }
-        forceOffline = true;
+        return left(e.message ?? 'Failed to confirm dose. Please try again.');
       } catch (e) {
-        forceOffline = true;
+        return left(
+            'Something went wrong confirming this dose. Please try again.');
       }
     } else {
       forceOffline = true;
@@ -340,12 +435,18 @@ class MedicationRepositoryImpl implements MedicationRepository {
       try {
         final pendingAll =
             await db.pendingMutationsDao.getAllPendingMutations();
-        final alreadyConfirming = pendingAll
-            .any((p) => p.entityId == medicationId && p.action == 'confirm');
+        final alreadyConfirming = pendingAll.any((p) =>
+            p.entityId == medicationId &&
+            p.action == 'confirm' &&
+            jsonDecode(p.payloadJson)['section'] == section &&
+            jsonDecode(p.payloadJson)['date'] == effectiveDate);
 
         if (!alreadyConfirming) {
-          final payload =
-              jsonEncode({'medicationId': medicationId, 'section': section, 'date': effectiveDate});
+          final payload = jsonEncode({
+            'medicationId': medicationId,
+            'section': section,
+            'date': effectiveDate
+          });
           await db.pendingMutationsDao.addPendingMutation(
             PendingMutationsCompanion.insert(
               id: const Uuid().v4(),
@@ -357,10 +458,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
             ),
           );
         }
-        // Persist confirmation locally.
         await db.medicationsDao.markMedicationTaken(medicationId);
-        await _markSectionCacheTaken(section, medicationId);
-        await _optimisticallyUpdateAdherence();
+        await _markSectionCacheTaken(section, medicationId, effectiveDate);
+        await _optimisticallyUpdateAdherence(effectiveDate);
 
         // Update specific history cache
         try {
@@ -415,8 +515,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   Future<void> _markSectionCacheTaken(
-      String section, String medicationId) async {
+      String section, String medicationId, String effectiveDate) async {
     try {
+      if (effectiveDate != _todayKey) return; // Only update today's cache
+
       final vitals = await db.vitalsDao.getAllVitals();
       final sectionVital = vitals
           .where(
@@ -447,98 +549,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     }
   }
 
-  Future<void> _insertSectionCacheMedication(
-      CreateMedicationModel data, String localId) async {
-    try {
-      final vitals = await db.vitalsDao.getAllVitals();
-      final now = DateTime.now();
-
-      final schedules = {
-        if (data.morning != null) 'MORNING': data.morning!.time,
-        if (data.afternoon != null) 'AFTERNOON': data.afternoon!.time,
-        if (data.evening != null) 'EVENING': data.evening!.time,
-      };
-
-      for (var entry in schedules.entries) {
-        final section = entry.key;
-
-        final sectionVital = vitals
-            .where(
-                (v) => v.vitalType == 'MED_SECTION_CACHE_${section}_$_todayKey')
-            .firstOrNull;
-
-        List<dynamic> updated = [];
-        if (sectionVital != null) {
-          updated = jsonDecode(sectionVital.value) as List<dynamic>;
-        }
-
-        updated.add({
-          'id': localId,
-          'name': data.name,
-          'dosage': data.dosage,
-          'purpose': data.notes ?? '',
-          'toBeTakenAt': now.toIso8601String(), // Offline placeholder
-          'taken': false,
-        });
-
-        await db.vitalsDao.insertVitals([
-          VitalHistoriesCompanion(
-            id: drift.Value('med_section_cache_${section}_$_todayKey'),
-            vitalType: drift.Value('MED_SECTION_CACHE_${section}_$_todayKey'),
-            vitalName: drift.Value('Medications for $section'),
-            value: drift.Value(jsonEncode(updated)),
-            unit: const drift.Value('json'),
-            severity: const drift.Value('normal'),
-            recordedAt: drift.Value(now),
-          ),
-        ]);
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _updateSectionCacheMedication(
-      String id, UpdateMedicationModel data) async {
-    try {
-      final vitals = await db.vitalsDao.getAllVitals();
-      for (final section in ['MORNING', 'AFTERNOON', 'EVENING']) {
-        final sectionVital = vitals
-            .where(
-                (v) => v.vitalType == 'MED_SECTION_CACHE_${section}_$_todayKey')
-            .firstOrNull;
-        if (sectionVital != null) {
-          final decoded = jsonDecode(sectionVital.value) as List;
-          bool found = false;
-          final updated = decoded.map((m) {
-            final entry = Map<String, dynamic>.from(m as Map);
-            if (entry['id'] == id) {
-              if (data.dosage != null) entry['dosage'] = data.dosage;
-              if (data.notes != null) entry['purpose'] = data.notes;
-              found = true;
-            }
-            return entry;
-          }).toList();
-
-          if (found) {
-            await db.vitalsDao.insertVitals([
-              VitalHistoriesCompanion(
-                id: drift.Value('med_section_cache_${section}_$_todayKey'),
-                vitalType:
-                    drift.Value('MED_SECTION_CACHE_${section}_$_todayKey'),
-                vitalName: drift.Value('Medications for $section'),
-                value: drift.Value(jsonEncode(updated)),
-                unit: const drift.Value('json'),
-                severity: const drift.Value('normal'),
-                recordedAt: drift.Value(DateTime.now()),
-              ),
-            ]);
-            break; // Stop searching once found
-          }
-        }
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _optimisticallyUpdateAdherence() async {
+  Future<void> _optimisticallyUpdateAdherence([String? targetDate]) async {
     try {
       final vitals = await db.vitalsDao.getAllVitals();
 
@@ -571,15 +582,16 @@ class MedicationRepositoryImpl implements MedicationRepository {
         final decoded = jsonDecode(fullVital.value) as Map<String, dynamic>;
         decoded['rate'] = newRate;
 
-        // Optimistically set today to taken if days exist
+        // Optimistically set the date to taken if days exist
         if (decoded['days'] != null) {
           final daysList = List<dynamic>.from(decoded['days']);
-          final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+          final dateStr =
+              targetDate ?? DateTime.now().toIso8601String().substring(0, 10);
 
           for (var day in daysList) {
             if (day is Map &&
                 day['takenAt'] != null &&
-                day['takenAt'].toString().startsWith(todayStr)) {
+                day['takenAt'].toString().startsWith(dateStr)) {
               day['taken'] = true;
             }
           }
@@ -617,46 +629,21 @@ class MedicationRepositoryImpl implements MedicationRepository {
         if (pending.action == 'confirm') {
           final index = result.indexWhere((m) => m.id == pending.entityId);
           if (index != -1) {
-            result[index] = result[index].copyWith(taken: true);
-          }
-        } else if (pending.action == 'update_medication') {
-          final index = result.indexWhere((m) => m.id == pending.entityId);
-          if (index != -1) {
-            final payload = jsonDecode(pending.payloadJson);
-            result[index] = result[index].copyWith(
-              dosage: payload['dosage'] as String?,
-              purpose: payload['notes'] as String?,
-            );
-          }
-        } else if (pending.action == 'create_medication') {
-          final meds = await db.medicationsDao.getAllMedications();
-          final localMed =
-              meds.where((m) => m.id == pending.entityId).firstOrNull;
-
-          if (localMed != null) {
-            bool matchesSection = true;
-            if (sectionFilter != null) {
-              final hour = localMed.toBeTakenAt.hour;
-              if (sectionFilter == 'MORNING' && hour >= 12) {
-                matchesSection = false;
+            try {
+              final payload = jsonDecode(pending.payloadJson);
+              final confirmDate = payload['date'] as String?;
+              if (confirmDate != null) {
+                final targetDateStr =
+                    result[index].toBeTakenAt.toIso8601String();
+                if (targetDateStr.startsWith(confirmDate)) {
+                  result[index] = result[index].copyWith(taken: true);
+                }
+              } else {
+                // Fallback for old mutations without date
+                result[index] = result[index].copyWith(taken: true);
               }
-              if (sectionFilter == 'AFTERNOON' && (hour < 12 || hour >= 17)) {
-                matchesSection = false;
-              }
-              if (sectionFilter == 'EVENING' && hour < 17) {
-                matchesSection = false;
-              }
-            }
-
-            if (matchesSection && !result.any((m) => m.id == localMed.id)) {
-              result.add(MedicationEntity(
-                id: localMed.id,
-                name: localMed.name,
-                dosage: localMed.dosage,
-                purpose: localMed.purpose,
-                toBeTakenAt: localMed.toBeTakenAt,
-                taken: localMed.taken,
-              ));
+            } catch (_) {
+              result[index] = result[index].copyWith(taken: true);
             }
           }
         }
@@ -678,20 +665,30 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
       if (pendingConfirms.isEmpty) return remoteResult;
 
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      double newRate = remoteResult.rate;
       List<AdherenceDay> newDays = List.from(remoteResult.days);
 
-      double newRate = remoteResult.rate;
-      newRate = (newRate + 5).clamp(0, 100).toDouble();
+      for (var pending in pendingConfirms) {
+        try {
+          final payload = jsonDecode(pending.payloadJson);
+          final confirmDate = payload['date'] as String?;
+          final dateStr =
+              confirmDate ?? DateTime.now().toIso8601String().substring(0, 10);
 
-      for (int i = 0; i < newDays.length; i++) {
-        if (newDays[i].takenAt.toIso8601String().startsWith(todayStr)) {
-          newDays[i] = AdherenceDay(
-            id: newDays[i].id,
-            taken: true,
-            takenAt: newDays[i].takenAt,
-          );
-        }
+          for (int i = 0; i < newDays.length; i++) {
+            if (newDays[i].takenAt.toIso8601String().startsWith(dateStr)) {
+              if (!newDays[i].taken) {
+                newDays[i] = AdherenceDay(
+                  id: newDays[i].id,
+                  taken: true,
+                  takenAt: newDays[i].takenAt,
+                );
+                // Rough estimate bump for offline adherence view
+                newRate = (newRate + 5).clamp(0, 100).toDouble();
+              }
+            }
+          }
+        } catch (_) {}
       }
 
       return MedicationAdherence(rate: newRate, days: newDays);
@@ -777,7 +774,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 name: m.name,
                 dosage: m.dosage,
                 purpose: m.purpose,
-                toBeTakenAt: m.toBeTakenAt,
+                toBeTakenAt: m.toBeTakenAt ?? DateTime.now(),
                 taken: m.taken,
               ))
           .toList();
@@ -872,21 +869,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     }
   }
 
-  @override
-  Stream<List<MedicationEntity>> watchAllMedications() {
-    return db.medicationsDao.watchAllMedications().map((localMeds) {
-      return localMeds
-          .map((m) => MedicationEntity(
-                id: m.id,
-                name: m.name,
-                dosage: m.dosage,
-                purpose: m.purpose,
-                toBeTakenAt: m.toBeTakenAt,
-                taken: m.taken,
-              ))
-          .toList();
-    });
-  }
+  // Removed duplicate watchAllMedications
 
   @override
   void invalidateCache() {
@@ -895,77 +878,37 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
   @override
   AsyncResponse<String> createMedication(CreateMedicationModel data) async {
-    bool forceOffline = false;
-    if (await connectivityService.isConnected) {
-      try {
-        final res = await remoteDataSource.createMedication(data);
-        return right(res);
-      } on ApiException catch (e) {
-        if (e.message != null && e.message!.contains('400')) {
-          return left(e.message!);
-        }
-        forceOffline = true;
-      } catch (e) {
-        forceOffline = true;
-      }
-    } else {
-      forceOffline = true;
-    }
-
-    if (forceOffline) {
-      // Queue optimistic offline mutation. for creation
+    try {
       final localId = 'offline_${const Uuid().v4()}';
-      final now = DateTime.now();
-
-      // Build and cache the full MedicationDetailModel so the details screen works offline
-      final detail = MedicationDetailModel(
-        id: localId,
-        name: data.name,
-        dosage: data.dosage,
-        notes: data.notes,
-        morning: data.morning,
-        afternoon: data.afternoon,
-        evening: data.evening,
-        createdAt: now,
-        updatedAt: now,
-      );
-
-      await db.vitalsDao.insertVitals([
-        VitalHistoriesCompanion(
-          id: drift.Value('med_detail_cache_$localId'),
-          vitalType: const drift.Value('MED_DETAIL_CACHE'),
-          vitalName: drift.Value('Detail for $localId'),
-          value: drift.Value(jsonEncode(detail.toJson())),
-          unit: const drift.Value('json'),
-          severity: const drift.Value('normal'),
-          recordedAt: drift.Value(now),
-        )
-      ]);
-
-      // Save optimistic view.
-      await db.medicationsDao.insertOrUpdateMedication(MedicationsCompanion(
+      final companion = MedicationsCompanion(
         id: drift.Value(localId),
         name: drift.Value(data.name),
         dosage: drift.Value(data.dosage),
         purpose: drift.Value(data.notes ?? ''),
-        toBeTakenAt: drift.Value(now), // Rough placeholder
-        taken: const drift.Value(false),
-      ));
-
-      await _insertSectionCacheMedication(data, localId);
-
-      // Queue background mutation.
-      final mutationId = const Uuid().v4();
-      await db.pendingMutationsDao.addPendingMutation(
-        PendingMutationsCompanion.insert(
-          id: mutationId,
-          entityType: 'medication',
-          entityId: localId,
-          action: 'create_medication',
-          payloadJson: jsonEncode(data.toJson()),
-          createdAt: DateTime.now(),
-        ),
+        morningSchedule: drift.Value(
+            data.morning != null ? jsonEncode(data.morning!.toJson()) : null),
+        afternoonSchedule: drift.Value(data.afternoon != null
+            ? jsonEncode(data.afternoon!.toJson())
+            : null),
+        eveningSchedule: drift.Value(
+            data.evening != null ? jsonEncode(data.evening!.toJson()) : null),
+        syncStatus: const drift.Value('pending_create'),
+        lastModifiedAt: drift.Value(DateTime.now()),
       );
+
+      await db.transaction(() async {
+        await db.medicationsDao.insertOrUpdateMedication(companion);
+        await db.pendingMutationsDao.addPendingMutation(
+          PendingMutationsCompanion.insert(
+            id: const Uuid().v4(),
+            entityType: 'medication',
+            entityId: localId,
+            action: 'create_medication',
+            payloadJson: jsonEncode(data.toJson()),
+            createdAt: DateTime.now(),
+          ),
+        );
+      });
 
       try {
         if (GetIt.instance.isRegistered<MutationSyncManager>()) {
@@ -974,69 +917,48 @@ class MedicationRepositoryImpl implements MedicationRepository {
       } catch (_) {}
 
       return right(localId);
+    } catch (e) {
+      return left('Failed to create medication locally');
     }
-    return left('Unexpected state');
   }
 
   @override
   AsyncResponse<MedicationDetailModel> getMedicationById(String id) async {
-    if (await connectivityService.isConnected) {
-      try {
-        final res = await remoteDataSource.getMedicationById(id);
-
-        await db.vitalsDao.insertVitals([
-          VitalHistoriesCompanion(
-            id: drift.Value('med_detail_cache_$id'),
-            vitalType: const drift.Value('MED_DETAIL_CACHE'),
-            vitalName: drift.Value('Detail for $id'),
-            value: drift.Value(jsonEncode(res.toJson())),
-            unit: const drift.Value('json'),
-            severity: const drift.Value('normal'),
-            recordedAt: drift.Value(DateTime.now()),
-          )
-        ]);
-
-        return right(res);
-      } on ApiException catch (e) {
-        return (await _fetchLocalMedicationById(id))
-            .fold((_) => left(e.message ?? 'Server error'), right);
-      } catch (e) {
-        return _fetchLocalMedicationById(id);
-      }
-    } else {
-      return _fetchLocalMedicationById(id);
-    }
-  }
-
-  AsyncResponse<MedicationDetailModel> _fetchLocalMedicationById(
-      String id) async {
     try {
-      final vitals = await db.vitalsDao.getAllVitals();
-      final detailVital =
-          vitals.where((v) => v.id == 'med_detail_cache_$id').firstOrNull;
-
-      if (detailVital != null) {
-        try {
-          final detail = MedicationDetailModel.fromJson(
-              jsonDecode(detailVital.value) as Map<String, dynamic>);
-          return right(detail);
-        } catch (_) {}
-      }
-
       final localMeds = await db.medicationsDao.getAllMedications();
       final target = localMeds.where((m) => m.id == id).firstOrNull;
-      if (target == null) return left('Cache failure');
+      if (target == null) return left('Not found in cache');
 
-      // Best-effort detail reconstruction from local cache.
+      DosingScheduleModel? parseSchedule(String? jsonStr) {
+        if (jsonStr == null || jsonStr == 'null' || jsonStr.isEmpty)
+          return null;
+        try {
+          dynamic decoded = jsonDecode(jsonStr);
+          if (decoded is String) {
+            decoded = jsonDecode(decoded); // Handle double encoded
+          }
+          if (decoded is Map<String, dynamic>) {
+            return DosingScheduleModel.fromJson(decoded);
+          }
+        } catch (e) {
+          debugPrint('Failed to parse schedule: $jsonStr, Error: $e');
+        }
+        return null;
+      }
+
       return right(MedicationDetailModel(
         id: target.id,
         name: target.name,
         dosage: target.dosage,
         notes: target.purpose,
-        createdAt: target.toBeTakenAt,
-        updatedAt: target.toBeTakenAt,
+        morning: parseSchedule(target.morningSchedule),
+        afternoon: parseSchedule(target.afternoonSchedule),
+        evening: parseSchedule(target.eveningSchedule),
+        createdAt: target.lastModifiedAt ?? DateTime.now(),
+        updatedAt: target.lastModifiedAt ?? DateTime.now(),
       ));
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('Cache failure in getMedicationById for id $id: $e\n$stack');
       return left('Cache failure');
     }
   }
@@ -1044,74 +966,34 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   AsyncResponse<String> updateMedication(
       String id, UpdateMedicationModel data) async {
-    bool forceOffline = false;
-    if (await connectivityService.isConnected) {
-      try {
-        final res = await remoteDataSource.updateMedication(id, data);
-        return right(res);
-      } on ApiException catch (e) {
-        if (e.message != null && e.message!.contains('400')) {
-          return left(e.message!);
-        }
-        forceOffline = true;
-      } catch (e) {
-        forceOffline = true;
-      }
-    } else {
-      forceOffline = true;
-    }
+    try {
+      final localMeds = await db.medicationsDao.getAllMedications();
+      final local = localMeds.where((m) => m.id == id).firstOrNull;
+      if (local == null) return left('Medication not found locally');
 
-    if (forceOffline) {
-      try {
-        // Fetch local cache.
-        final localMeds = await db.medicationsDao.getAllMedications();
-        final local = localMeds.where((m) => m.id == id).firstOrNull;
+      final companion = MedicationsCompanion(
+        id: drift.Value(id),
+        name: drift.Value(local.name),
+        dosage: drift.Value(data.dosage ?? local.dosage),
+        purpose: drift.Value(data.notes ?? local.purpose),
+        morningSchedule: drift.Value(
+            data.morning != null ? jsonEncode(data.morning!.toJson()) : null),
+        afternoonSchedule: drift.Value(data.afternoon != null
+            ? jsonEncode(data.afternoon!.toJson())
+            : null),
+        eveningSchedule: drift.Value(
+            data.evening != null ? jsonEncode(data.evening!.toJson()) : null),
+        syncStatus: drift.Value(local.syncStatus == 'pending_create'
+            ? 'pending_create'
+            : 'pending_update'),
+        lastModifiedAt: drift.Value(DateTime.now()),
+      );
 
-        if (local != null) {
-          // Optimistic local update (schedule edits await sync).
-          await db.medicationsDao.insertOrUpdateMedication(MedicationsCompanion(
-            id: drift.Value(id),
-            name: drift.Value(local.name),
-            dosage: drift.Value(data.dosage ?? local.dosage),
-            purpose: drift.Value(data.notes ?? local.purpose),
-            toBeTakenAt: drift.Value(local.toBeTakenAt),
-            taken: drift.Value(local.taken),
-          ));
-        }
-
-        // Update detail cache regardless of localMeds
-        final vitals = await db.vitalsDao.getAllVitals();
-        final detailVital =
-            vitals.where((v) => v.id == 'med_detail_cache_$id').firstOrNull;
-        if (detailVital != null) {
-          final oldDetail = MedicationDetailModel.fromJson(
-              jsonDecode(detailVital.value) as Map<String, dynamic>);
-          final newDetail = oldDetail.copyWith(
-            dosage: data.dosage ?? oldDetail.dosage,
-            notes: data.notes ?? oldDetail.notes,
-            updatedAt: DateTime.now(),
-          );
-
-          await db.vitalsDao.insertVitals([
-            VitalHistoriesCompanion(
-              id: drift.Value('med_detail_cache_$id'),
-              vitalType: const drift.Value('MED_DETAIL_CACHE'),
-              vitalName: drift.Value('Detail for $id'),
-              value: drift.Value(jsonEncode(newDetail.toJson())),
-              unit: const drift.Value('json'),
-              severity: const drift.Value('normal'),
-              recordedAt: drift.Value(DateTime.now()),
-            )
-          ]);
-        }
-
-        await _updateSectionCacheMedication(id, data);
-
-        // Queue background mutation.
-        final mutationId = const Uuid().v4();
+      await db.transaction(() async {
+        await db.medicationsDao.insertOrUpdateMedication(companion);
         await db.pendingMutationsDao.addPendingMutation(
           PendingMutationsCompanion.insert(
-            id: mutationId,
+            id: const Uuid().v4(),
             entityType: 'medication',
             entityId: id,
             action: 'update_medication',
@@ -1119,19 +1001,18 @@ class MedicationRepositoryImpl implements MedicationRepository {
             createdAt: DateTime.now(),
           ),
         );
+      });
 
-        try {
-          if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-            GetIt.instance<MutationSyncManager>().triggerSync();
-          }
-        } catch (_) {}
+      try {
+        if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+          GetIt.instance<MutationSyncManager>().triggerSync();
+        }
+      } catch (_) {}
 
-        return right(id);
-      } catch (e) {
-        return left('Offline update failed');
-      }
+      return right(id);
+    } catch (e) {
+      return left('Failed to update medication locally');
     }
-    return left('Unexpected state');
   }
 
   @override

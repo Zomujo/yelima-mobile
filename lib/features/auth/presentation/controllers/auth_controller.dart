@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 import 'package:yelima/core/managers/token_manager.dart';
 
@@ -9,6 +10,9 @@ import '../../../../shared/utils/app_snackbar.dart';
 
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
+import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
+import '../../../../core/db/app_database.dart';
 import 'auth_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
@@ -48,6 +52,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
           currentUser: null,
           isInitialized: true,
         ));
+        await _flushPendingSyncBeforeSessionEnd();
         try {
           _sessionLifecycleService.endSession();
         } catch (_) {}
@@ -69,6 +74,18 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         }
       }
     });
+  }
+
+  Future<void> _flushPendingSyncBeforeSessionEnd() async {
+    try {
+      if (!GetIt.instance.isRegistered<MutationSyncManager>()) return;
+      if (!await GetIt.instance<ConnectivityService>().isConnected) return;
+      await GetIt.instance<MutationSyncManager>()
+          .triggerSync()
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('Best-effort pre-session-end sync failed or timed out: $e');
+    }
   }
 
   Future<void> _refreshAuthAndProfile(User user) async {
@@ -228,6 +245,42 @@ class AuthController extends ChangeNotifier with SafeNotifier {
 
   Future<void> signOut(BuildContext context) async {
     GlobalAsyncLoader.show(context, message: "Signing out...");
+
+    // Logging out wipes all local SQLite data (DatabaseLifecycleHandler), so
+    // any offline-created/edited/confirmed medications that haven't reached
+    // the server yet would be lost forever. Require connectivity and force
+    // a completed sync first so we only ever wipe once everything's synced.
+    final isConnected = await GetIt.instance<ConnectivityService>().isConnected;
+    if (!isConnected) {
+      GlobalAsyncLoader.hide();
+      if (context.mounted) {
+        AppSnackBar.showError(context,
+            message:
+                'Connect to the internet to sync your changes before logging out.');
+      }
+      return;
+    }
+
+    try {
+      if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+        await GetIt.instance<MutationSyncManager>().triggerSync();
+      }
+    } catch (e) {
+      debugPrint('Error syncing before sign out: $e');
+    }
+
+    final stillPending =
+        await GetIt.instance<AppDatabase>().pendingMutationsDao.getAllPendingMutations();
+    if (stillPending.isNotEmpty) {
+      GlobalAsyncLoader.hide();
+      if (context.mounted) {
+        AppSnackBar.showError(context,
+            message:
+                'Some changes are still syncing. Please try again in a moment.');
+      }
+      return;
+    }
+
     try {
       await _sessionLifecycleService.endSession();
     } catch (e) {

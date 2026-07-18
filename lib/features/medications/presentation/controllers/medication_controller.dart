@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../domain/entities/medication_count.dart';
+import '../../domain/entities/medication_adherence.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/repositories/medication_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../../../../core/services/mutation_sync_manager.dart';
 import '../states/medications_state.dart';
-import 'dart:async';
 
 class MedicationController extends ChangeNotifier with SafeNotifier {
   final MedicationRepository repository;
   final MutationSyncManager mutationSyncManager;
   StreamSubscription<String>? _syncSubscription;
 
-  MedicationController({required this.repository, required this.mutationSyncManager}) {
+  MedicationController(
+      {required this.repository, required this.mutationSyncManager}) {
     _initSyncListener();
   }
 
@@ -36,16 +39,77 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     }
   }
 
+  StreamSubscription<MedicationCount>? _countsSubscription;
+  StreamSubscription<List<MedicationEntity>>? _medsSubscription;
+  StreamSubscription<MedicationAdherence>? _adherenceSubscription;
+
   void init() {
     fetchAdherence();
-    fetchCounts();
-    fetchMedications();
+
+    _adherenceSubscription?.cancel();
+    _adherenceSubscription = repository.watchAdherence().listen((data) {
+      if (data.days.isNotEmpty || data.rate > 0) {
+        state = state.copyWith(
+            adherence: data, isAdherenceLoading: false, adherenceError: null);
+      } else {
+        // If empty, keep what we have or just set empty. We'll set it.
+        state = state.copyWith(
+            adherence: data, isAdherenceLoading: false, adherenceError: null);
+      }
+    }, onError: (e) {
+      state = state.copyWith(
+          adherenceError: e.toString(), isAdherenceLoading: false);
+    });
+
+    _countsSubscription?.cancel();
+    _countsSubscription = repository.watchMedicationCounts().listen((counts) {
+      state = state.copyWith(
+          counts: counts, isCountsLoading: false, countsError: null);
+    }, onError: (e) {
+      state = state.copyWith(countsError: e.toString(), isCountsLoading: false);
+    });
+
+    _subscribeToCurrentSection();
+  }
+
+  void _subscribeToCurrentSection() {
+    final section = _currentSection;
+    _setSectionLoading(section, true);
+
+    _medsSubscription?.cancel();
+    _medsSubscription =
+        repository.watchMedicationsBySection(section).listen((meds) {
+      _setSectionData(section, meds);
+      _setSectionLoading(section, false);
+      _setSectionError(section, null);
+    }, onError: (e) {
+      _setSectionError(section, e.toString());
+      _setSectionLoading(section, false);
+    });
+
+    // The stream above only reflects whatever's already cached locally - it
+    // never triggers a fetch by itself. repository.getMedicationsBySection
+    // already does the right online/offline thing (fetch + cache when
+    // connected, fall back to cache when not); actively call it here so
+    // opening/switching tabs doesn't depend entirely on a background sync
+    // having already run.
+    _refreshSection(section);
+  }
+
+  Future<void> _refreshSection(String section) async {
+    final result = await repository.getMedicationsBySection(section);
+    result.fold((error) {
+      final hasData = state.medicationsBySection[section]?.isNotEmpty ?? false;
+      if (!hasData) _setSectionError(section, error);
+    }, (_) {});
   }
 
   void _initSyncListener() {
-    _syncSubscription = mutationSyncManager.onMutationSynced.listen((entityType) {
+    _syncSubscription =
+        mutationSyncManager.onMutationSynced.listen((entityType) {
       if (entityType == 'medication') {
-        init(); // Refresh UI dynamically
+        // UI will update automatically from Drift streams!
+        fetchAdherence(); // Refresh adherence from remote to get latest accurate backend calculated rate
       }
     });
   }
@@ -53,101 +117,27 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   @override
   void dispose() {
     _syncSubscription?.cancel();
+    _countsSubscription?.cancel();
+    _medsSubscription?.cancel();
+    _adherenceSubscription?.cancel();
     super.dispose();
   }
 
   void setTabIndex(int index) {
     if (state.selectedTabIndex != index) {
       state = state.copyWith(selectedTabIndex: index);
-      fetchMedications();
+      _subscribeToCurrentSection();
     }
   }
 
   Future<void> fetchAdherence() async {
-    if (state.adherence == null) {
-      state = state.copyWith(isAdherenceLoading: true, adherenceError: null);
-
-      final cachedResult = await repository.getCachedAdherence(showWeekdays: true);
-      cachedResult.fold((_) => null, (data) {
-        if (data.days.isNotEmpty) {
-          state = state.copyWith(adherence: data, isAdherenceLoading: false, adherenceError: null);
-        }
-      });
-    }
-
-    if (state.adherence == null) {
-      state = state.copyWith(isAdherenceLoading: true, adherenceError: null);
-    }
-
-    final result = await repository.getAdherence(showWeekdays: true);
-    result.fold(
-      (error) {
-        state = state.copyWith(adherenceError: error, isAdherenceLoading: false);
-      },
-      (data) {
-        state = state.copyWith(adherence: data, isAdherenceLoading: false, adherenceError: null);
-      },
-    );
+    // Triggers network fetch which natively updates the DB stream
+    await repository.getAdherence(showWeekdays: true);
   }
 
-  Future<void> fetchCounts() async {
-    if (state.counts == null) {
-      state = state.copyWith(isCountsLoading: true, countsError: null);
-
-      final cachedResult = await repository.getCachedMedicationCounts();
-      cachedResult.fold((_) => null, (data) {
-        state = state.copyWith(counts: data, isCountsLoading: false, countsError: null);
-      });
-    }
-
-    if (state.counts == null) {
-      state = state.copyWith(isCountsLoading: true, countsError: null);
-    }
-
-    final result = await repository.getMedicationCounts();
-    result.fold(
-      (error) {
-        state = state.copyWith(countsError: error, isCountsLoading: false);
-      },
-      (data) {
-        state = state.copyWith(counts: data, isCountsLoading: false, countsError: null);
-      },
-    );
-  }
-
-  Future<void> fetchMedications() async {
-    final section = _currentSection;
-    final currentList = state.medicationsBySection[section];
-
-    if (currentList == null) {
-      _setSectionLoading(section, true);
-      _setSectionError(section, null);
-
-      final cachedResult = await repository.getCachedMedicationsBySection(section);
-      cachedResult.fold((_) => null, (data) {
-        if (data.isNotEmpty) {
-          _setSectionData(section, data);
-          _setSectionLoading(section, false);
-        }
-      });
-    }
-
-    if (state.medicationsBySection[section] == null) {
-      _setSectionLoading(section, true);
-    }
-
-    final result = await repository.getMedicationsBySection(section);
-    result.fold(
-      (error) {
-        _setSectionError(section, error);
-        _setSectionLoading(section, false);
-      },
-      (data) {
-        _setSectionData(section, data);
-        _setSectionLoading(section, false);
-      },
-    );
-  }
+  // Legacy stubs kept for compatibility if called elsewhere temporarily
+  Future<void> fetchCounts() async {}
+  Future<void> fetchMedications() async {}
 
   void _setSectionLoading(String section, bool isLoading) {
     state = state.copyWith(
@@ -211,9 +201,10 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
         final newConfirming = Set<String>.from(state.confirmingMedicationIds);
         newConfirming.remove(id);
         state = state.copyWith(confirmingMedicationIds: newConfirming);
-        
+
         // Revert on failure
-        final revertedList = List<MedicationEntity>.from(state.medicationsBySection[section] ?? []);
+        final revertedList = List<MedicationEntity>.from(
+            state.medicationsBySection[section] ?? []);
         final revertIndex = revertedList.indexWhere((m) => m.id == id);
         if (revertIndex != -1) {
           revertedList[revertIndex] = med;

@@ -13,13 +13,17 @@ abstract class MedicationRemoteDataSource {
   Future<MedicationAdherenceModel> getAdherence({required bool showWeekdays});
   Future<MedicationCountModel> getMedicationCounts();
   Future<List<MedicationModel>> getMedicationsBySection(String section);
-  Future<String> confirmMedication(String medicationId, String section, {String? date});
-  Future<MedicationListResponseModel> getAllMedications({int page = 1, int pageSize = 10});
-  Future<MedicationHistoryModel> getMedicationHistory(String medicationId, {required String date});
+  Future<String> confirmMedication(String medicationId, String section,
+      {String? date});
+  Future<MedicationListResponseModel> getAllMedications(
+      {int page = 1, int pageSize = 10});
+  Future<MedicationHistoryModel> getMedicationHistory(String medicationId,
+      {required String date});
   Future<String> createMedication(CreateMedicationModel data);
   Future<MedicationDetailModel> getMedicationById(String id);
   Future<String> updateMedication(String id, UpdateMedicationModel data);
-  Future<SeededMedicationListResponseModel> getPreloadedMedications({int page = 1, int limit = 10, String? search});
+  Future<SeededMedicationListResponseModel> getPreloadedMedications(
+      {int page = 1, int limit = 10, String? search});
 }
 
 class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
@@ -28,7 +32,8 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
   MedicationRemoteDataSourceImpl({required this.apiClient});
 
   @override
-  Future<MedicationAdherenceModel> getAdherence({required bool showWeekdays}) async {
+  Future<MedicationAdherenceModel> getAdherence(
+      {required bool showWeekdays}) async {
     final response = await apiClient.get(
       '/api/v1/client/medication-adherence',
       queryParameters: {'showWeekdays': showWeekdays.toString()},
@@ -38,7 +43,8 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
 
   @override
   Future<MedicationCountModel> getMedicationCounts() async {
-    final response = await apiClient.get('/api/v1/client/medications/today/count');
+    final response =
+        await apiClient.get('/api/v1/client/medications/today/count');
     return MedicationCountModel.fromJson(response['data']);
   }
 
@@ -48,16 +54,17 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
       '/api/v1/client/medications/today',
       queryParameters: {'section': section},
     );
-    
+
     final List<dynamic> data = response['data'];
     return data.map((json) => MedicationModel.fromJson(json)).toList();
   }
 
   @override
-  Future<String> confirmMedication(String medicationId, String section, {String? date}) async {
+  Future<String> confirmMedication(String medicationId, String section,
+      {String? date}) async {
     final queryParams = {'section': section};
     if (date != null) queryParams['date'] = date;
-    
+
     final response = await apiClient.put(
       '/api/v1/client/medications/$medicationId/confirm',
       queryParameters: queryParams,
@@ -66,7 +73,8 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
   }
 
   @override
-  Future<MedicationListResponseModel> getAllMedications({int page = 1, int pageSize = 10}) async {
+  Future<MedicationListResponseModel> getAllMedications(
+      {int page = 1, int pageSize = 10}) async {
     final response = await apiClient.get(
       '/api/v1/client/medications',
       queryParameters: {'page': page, 'pageSize': pageSize},
@@ -75,7 +83,8 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
   }
 
   @override
-  Future<MedicationHistoryModel> getMedicationHistory(String medicationId, {required String date}) async {
+  Future<MedicationHistoryModel> getMedicationHistory(String medicationId,
+      {required String date}) async {
     final response = await apiClient.get(
       '/api/v1/client/medications/$medicationId/adherence',
       queryParameters: {'date': date},
@@ -85,14 +94,22 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
 
   @override
   Future<String> createMedication(CreateMedicationModel data) async {
+    final payload = data.toJson();
+    if (!payload.containsKey('morning')) payload['morning'] = null;
+    if (!payload.containsKey('afternoon')) payload['afternoon'] = null;
+    if (!payload.containsKey('evening')) payload['evening'] = null;
+    if (!payload.containsKey('notes')) payload['notes'] = "";
+
     final response = await apiClient.post(
       '/api/v1/client/medications',
-      data: data.toJson(),
+      data: payload,
     );
-    // ApiUpsertSuccessResponseDto carries the new medication's id in `data`,
-    // not `message` - callers (sync's offline-id mapping) depend on this
-    // being the real id, not a human-readable message.
-    return response['data'] as String;
+
+    final responseData = response['data'];
+    if (responseData is Map) {
+      return (responseData['id'] ?? responseData['_id']).toString();
+    }
+    return responseData.toString();
   }
 
   @override
@@ -103,15 +120,22 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
 
   @override
   Future<String> updateMedication(String id, UpdateMedicationModel data) async {
+    final payload = data.toJson();
+    if (!payload.containsKey('morning')) payload['morning'] = null;
+    if (!payload.containsKey('afternoon')) payload['afternoon'] = null;
+    if (!payload.containsKey('evening')) payload['evening'] = null;
+    if (!payload.containsKey('notes')) payload['notes'] = "";
+
     final response = await apiClient.patch(
       '/api/v1/client/medications/$id',
-      data: data.toJson(),
+      data: payload,
     );
     return response['message'] as String? ?? 'Updated successfully';
   }
 
   @override
-  Future<SeededMedicationListResponseModel> getPreloadedMedications({int page = 1, int limit = 10, String? search}) async {
+  Future<SeededMedicationListResponseModel> getPreloadedMedications(
+      {int page = 1, int limit = 10, String? search}) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
     if (search != null && search.isNotEmpty) {
       query['search'] = search;

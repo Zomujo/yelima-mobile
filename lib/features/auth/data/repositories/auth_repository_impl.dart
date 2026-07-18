@@ -80,7 +80,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   AsyncResponse<void> signOut() {
-    /// Signing out must succeed offline as local session data is already wiped.
+    /// No network check here by design - AuthController.signOut() already
+    /// requires connectivity and forces a completed mutation sync before
+    /// calling this, so by the time we get here the device is expected to
+    /// be online. This method itself stays network-check-free so it still
+    /// degrades gracefully if called from anywhere else that doesn't do
+    /// that pre-check (e.g. a forced/expired-session sign-out).
     return ExceptionWrapper.runAsync<void>(
       () async {
         await remoteDataSource.signOut();

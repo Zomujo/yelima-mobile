@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import '../../../../core/services/mutation_sync_manager.dart';
 import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_history_entity.dart';
@@ -30,6 +32,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
 
   // Add subscription
   StreamSubscription<List<MedicationEntity>>? _medicationSubscription;
+  StreamSubscription<String>? _syncSubscription;
 
   void fetchAllMedicines({bool forceRefresh = false}) async {
     if (listState.data == null) {
@@ -85,11 +88,28 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
       listState = listState.copyWith(error: error.toString(), isLoading: false);
       notifyListeners();
     });
+
+    try {
+      if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+        _syncSubscription?.cancel();
+        _syncSubscription = GetIt.instance<MutationSyncManager>()
+            .onMutationSynced
+            .listen((entityType) {
+          if (entityType == 'medication') {
+            fetchAllMedicines(forceRefresh: true);
+            if (detailState.data != null) {
+              fetchMedicationDetails(detailState.data!.id);
+            }
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     _medicationSubscription?.cancel();
+    _syncSubscription?.cancel();
     super.dispose();
   }
 

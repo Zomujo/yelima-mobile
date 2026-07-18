@@ -1,6 +1,10 @@
 import '../../domain/entities/medication_entity.dart';
 
 class MedicationModel extends MedicationEntity {
+  final Map<String, dynamic>? morning;
+  final Map<String, dynamic>? afternoon;
+  final Map<String, dynamic>? evening;
+
   const MedicationModel({
     required super.id,
     required super.name,
@@ -8,6 +12,9 @@ class MedicationModel extends MedicationEntity {
     required super.purpose,
     required super.toBeTakenAt,
     required super.taken,
+    this.morning,
+    this.afternoon,
+    this.evening,
   });
 
   factory MedicationModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +25,9 @@ class MedicationModel extends MedicationEntity {
       purpose: json['purpose'] ?? '',
       toBeTakenAt: json['toBeTakenAt'] != null ? DateTime.parse(json['toBeTakenAt']).toLocal() : DateTime.now(),
       taken: json['taken'] ?? false,
+      morning: json['morning'],
+      afternoon: json['afternoon'],
+      evening: json['evening'],
     );
   }
 }

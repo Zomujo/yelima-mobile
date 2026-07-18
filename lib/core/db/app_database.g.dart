@@ -2054,12 +2054,44 @@ class $MedicationsTable extends Medications
   late final GeneratedColumn<String> purpose = GeneratedColumn<String>(
       'purpose', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _morningScheduleMeta =
+      const VerificationMeta('morningSchedule');
+  @override
+  late final GeneratedColumn<String> morningSchedule = GeneratedColumn<String>(
+      'morning_schedule', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _afternoonScheduleMeta =
+      const VerificationMeta('afternoonSchedule');
+  @override
+  late final GeneratedColumn<String> afternoonSchedule =
+      GeneratedColumn<String>('afternoon_schedule', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _eveningScheduleMeta =
+      const VerificationMeta('eveningSchedule');
+  @override
+  late final GeneratedColumn<String> eveningSchedule = GeneratedColumn<String>(
+      'evening_schedule', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('synced'));
+  static const VerificationMeta _lastModifiedAtMeta =
+      const VerificationMeta('lastModifiedAt');
+  @override
+  late final GeneratedColumn<DateTime> lastModifiedAt =
+      GeneratedColumn<DateTime>('last_modified_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _toBeTakenAtMeta =
       const VerificationMeta('toBeTakenAt');
   @override
   late final GeneratedColumn<DateTime> toBeTakenAt = GeneratedColumn<DateTime>(
-      'to_be_taken_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      'to_be_taken_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _takenMeta = const VerificationMeta('taken');
   @override
   late final GeneratedColumn<bool> taken = GeneratedColumn<bool>(
@@ -2070,8 +2102,19 @@ class $MedicationsTable extends Medications
           GeneratedColumn.constraintIsAlways('CHECK ("taken" IN (0, 1))'),
       defaultValue: const Constant(false));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, name, dosage, purpose, toBeTakenAt, taken];
+  List<GeneratedColumn> get $columns => [
+        id,
+        name,
+        dosage,
+        purpose,
+        morningSchedule,
+        afternoonSchedule,
+        eveningSchedule,
+        syncStatus,
+        lastModifiedAt,
+        toBeTakenAt,
+        taken
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2105,13 +2148,41 @@ class $MedicationsTable extends Medications
     } else if (isInserting) {
       context.missing(_purposeMeta);
     }
+    if (data.containsKey('morning_schedule')) {
+      context.handle(
+          _morningScheduleMeta,
+          morningSchedule.isAcceptableOrUnknown(
+              data['morning_schedule']!, _morningScheduleMeta));
+    }
+    if (data.containsKey('afternoon_schedule')) {
+      context.handle(
+          _afternoonScheduleMeta,
+          afternoonSchedule.isAcceptableOrUnknown(
+              data['afternoon_schedule']!, _afternoonScheduleMeta));
+    }
+    if (data.containsKey('evening_schedule')) {
+      context.handle(
+          _eveningScheduleMeta,
+          eveningSchedule.isAcceptableOrUnknown(
+              data['evening_schedule']!, _eveningScheduleMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
+    if (data.containsKey('last_modified_at')) {
+      context.handle(
+          _lastModifiedAtMeta,
+          lastModifiedAt.isAcceptableOrUnknown(
+              data['last_modified_at']!, _lastModifiedAtMeta));
+    }
     if (data.containsKey('to_be_taken_at')) {
       context.handle(
           _toBeTakenAtMeta,
           toBeTakenAt.isAcceptableOrUnknown(
               data['to_be_taken_at']!, _toBeTakenAtMeta));
-    } else if (isInserting) {
-      context.missing(_toBeTakenAtMeta);
     }
     if (data.containsKey('taken')) {
       context.handle(
@@ -2134,8 +2205,18 @@ class $MedicationsTable extends Medications
           .read(DriftSqlType.string, data['${effectivePrefix}dosage'])!,
       purpose: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}purpose'])!,
+      morningSchedule: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}morning_schedule']),
+      afternoonSchedule: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}afternoon_schedule']),
+      eveningSchedule: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}evening_schedule']),
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
+      lastModifiedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}last_modified_at']),
       toBeTakenAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}to_be_taken_at'])!,
+          DriftSqlType.dateTime, data['${effectivePrefix}to_be_taken_at']),
       taken: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}taken'])!,
     );
@@ -2152,14 +2233,24 @@ class Medication extends DataClass implements Insertable<Medication> {
   final String name;
   final String dosage;
   final String purpose;
-  final DateTime toBeTakenAt;
+  final String? morningSchedule;
+  final String? afternoonSchedule;
+  final String? eveningSchedule;
+  final String syncStatus;
+  final DateTime? lastModifiedAt;
+  final DateTime? toBeTakenAt;
   final bool taken;
   const Medication(
       {required this.id,
       required this.name,
       required this.dosage,
       required this.purpose,
-      required this.toBeTakenAt,
+      this.morningSchedule,
+      this.afternoonSchedule,
+      this.eveningSchedule,
+      required this.syncStatus,
+      this.lastModifiedAt,
+      this.toBeTakenAt,
       required this.taken});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2168,7 +2259,22 @@ class Medication extends DataClass implements Insertable<Medication> {
     map['name'] = Variable<String>(name);
     map['dosage'] = Variable<String>(dosage);
     map['purpose'] = Variable<String>(purpose);
-    map['to_be_taken_at'] = Variable<DateTime>(toBeTakenAt);
+    if (!nullToAbsent || morningSchedule != null) {
+      map['morning_schedule'] = Variable<String>(morningSchedule);
+    }
+    if (!nullToAbsent || afternoonSchedule != null) {
+      map['afternoon_schedule'] = Variable<String>(afternoonSchedule);
+    }
+    if (!nullToAbsent || eveningSchedule != null) {
+      map['evening_schedule'] = Variable<String>(eveningSchedule);
+    }
+    map['sync_status'] = Variable<String>(syncStatus);
+    if (!nullToAbsent || lastModifiedAt != null) {
+      map['last_modified_at'] = Variable<DateTime>(lastModifiedAt);
+    }
+    if (!nullToAbsent || toBeTakenAt != null) {
+      map['to_be_taken_at'] = Variable<DateTime>(toBeTakenAt);
+    }
     map['taken'] = Variable<bool>(taken);
     return map;
   }
@@ -2179,7 +2285,22 @@ class Medication extends DataClass implements Insertable<Medication> {
       name: Value(name),
       dosage: Value(dosage),
       purpose: Value(purpose),
-      toBeTakenAt: Value(toBeTakenAt),
+      morningSchedule: morningSchedule == null && nullToAbsent
+          ? const Value.absent()
+          : Value(morningSchedule),
+      afternoonSchedule: afternoonSchedule == null && nullToAbsent
+          ? const Value.absent()
+          : Value(afternoonSchedule),
+      eveningSchedule: eveningSchedule == null && nullToAbsent
+          ? const Value.absent()
+          : Value(eveningSchedule),
+      syncStatus: Value(syncStatus),
+      lastModifiedAt: lastModifiedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastModifiedAt),
+      toBeTakenAt: toBeTakenAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(toBeTakenAt),
       taken: Value(taken),
     );
   }
@@ -2192,7 +2313,13 @@ class Medication extends DataClass implements Insertable<Medication> {
       name: serializer.fromJson<String>(json['name']),
       dosage: serializer.fromJson<String>(json['dosage']),
       purpose: serializer.fromJson<String>(json['purpose']),
-      toBeTakenAt: serializer.fromJson<DateTime>(json['toBeTakenAt']),
+      morningSchedule: serializer.fromJson<String?>(json['morningSchedule']),
+      afternoonSchedule:
+          serializer.fromJson<String?>(json['afternoonSchedule']),
+      eveningSchedule: serializer.fromJson<String?>(json['eveningSchedule']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
+      lastModifiedAt: serializer.fromJson<DateTime?>(json['lastModifiedAt']),
+      toBeTakenAt: serializer.fromJson<DateTime?>(json['toBeTakenAt']),
       taken: serializer.fromJson<bool>(json['taken']),
     );
   }
@@ -2204,7 +2331,12 @@ class Medication extends DataClass implements Insertable<Medication> {
       'name': serializer.toJson<String>(name),
       'dosage': serializer.toJson<String>(dosage),
       'purpose': serializer.toJson<String>(purpose),
-      'toBeTakenAt': serializer.toJson<DateTime>(toBeTakenAt),
+      'morningSchedule': serializer.toJson<String?>(morningSchedule),
+      'afternoonSchedule': serializer.toJson<String?>(afternoonSchedule),
+      'eveningSchedule': serializer.toJson<String?>(eveningSchedule),
+      'syncStatus': serializer.toJson<String>(syncStatus),
+      'lastModifiedAt': serializer.toJson<DateTime?>(lastModifiedAt),
+      'toBeTakenAt': serializer.toJson<DateTime?>(toBeTakenAt),
       'taken': serializer.toJson<bool>(taken),
     };
   }
@@ -2214,14 +2346,31 @@ class Medication extends DataClass implements Insertable<Medication> {
           String? name,
           String? dosage,
           String? purpose,
-          DateTime? toBeTakenAt,
+          Value<String?> morningSchedule = const Value.absent(),
+          Value<String?> afternoonSchedule = const Value.absent(),
+          Value<String?> eveningSchedule = const Value.absent(),
+          String? syncStatus,
+          Value<DateTime?> lastModifiedAt = const Value.absent(),
+          Value<DateTime?> toBeTakenAt = const Value.absent(),
           bool? taken}) =>
       Medication(
         id: id ?? this.id,
         name: name ?? this.name,
         dosage: dosage ?? this.dosage,
         purpose: purpose ?? this.purpose,
-        toBeTakenAt: toBeTakenAt ?? this.toBeTakenAt,
+        morningSchedule: morningSchedule.present
+            ? morningSchedule.value
+            : this.morningSchedule,
+        afternoonSchedule: afternoonSchedule.present
+            ? afternoonSchedule.value
+            : this.afternoonSchedule,
+        eveningSchedule: eveningSchedule.present
+            ? eveningSchedule.value
+            : this.eveningSchedule,
+        syncStatus: syncStatus ?? this.syncStatus,
+        lastModifiedAt:
+            lastModifiedAt.present ? lastModifiedAt.value : this.lastModifiedAt,
+        toBeTakenAt: toBeTakenAt.present ? toBeTakenAt.value : this.toBeTakenAt,
         taken: taken ?? this.taken,
       );
   Medication copyWithCompanion(MedicationsCompanion data) {
@@ -2230,6 +2379,20 @@ class Medication extends DataClass implements Insertable<Medication> {
       name: data.name.present ? data.name.value : this.name,
       dosage: data.dosage.present ? data.dosage.value : this.dosage,
       purpose: data.purpose.present ? data.purpose.value : this.purpose,
+      morningSchedule: data.morningSchedule.present
+          ? data.morningSchedule.value
+          : this.morningSchedule,
+      afternoonSchedule: data.afternoonSchedule.present
+          ? data.afternoonSchedule.value
+          : this.afternoonSchedule,
+      eveningSchedule: data.eveningSchedule.present
+          ? data.eveningSchedule.value
+          : this.eveningSchedule,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
+      lastModifiedAt: data.lastModifiedAt.present
+          ? data.lastModifiedAt.value
+          : this.lastModifiedAt,
       toBeTakenAt:
           data.toBeTakenAt.present ? data.toBeTakenAt.value : this.toBeTakenAt,
       taken: data.taken.present ? data.taken.value : this.taken,
@@ -2243,6 +2406,11 @@ class Medication extends DataClass implements Insertable<Medication> {
           ..write('name: $name, ')
           ..write('dosage: $dosage, ')
           ..write('purpose: $purpose, ')
+          ..write('morningSchedule: $morningSchedule, ')
+          ..write('afternoonSchedule: $afternoonSchedule, ')
+          ..write('eveningSchedule: $eveningSchedule, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedAt: $lastModifiedAt, ')
           ..write('toBeTakenAt: $toBeTakenAt, ')
           ..write('taken: $taken')
           ..write(')'))
@@ -2250,8 +2418,18 @@ class Medication extends DataClass implements Insertable<Medication> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, dosage, purpose, toBeTakenAt, taken);
+  int get hashCode => Object.hash(
+      id,
+      name,
+      dosage,
+      purpose,
+      morningSchedule,
+      afternoonSchedule,
+      eveningSchedule,
+      syncStatus,
+      lastModifiedAt,
+      toBeTakenAt,
+      taken);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2260,6 +2438,11 @@ class Medication extends DataClass implements Insertable<Medication> {
           other.name == this.name &&
           other.dosage == this.dosage &&
           other.purpose == this.purpose &&
+          other.morningSchedule == this.morningSchedule &&
+          other.afternoonSchedule == this.afternoonSchedule &&
+          other.eveningSchedule == this.eveningSchedule &&
+          other.syncStatus == this.syncStatus &&
+          other.lastModifiedAt == this.lastModifiedAt &&
           other.toBeTakenAt == this.toBeTakenAt &&
           other.taken == this.taken);
 }
@@ -2269,7 +2452,12 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
   final Value<String> name;
   final Value<String> dosage;
   final Value<String> purpose;
-  final Value<DateTime> toBeTakenAt;
+  final Value<String?> morningSchedule;
+  final Value<String?> afternoonSchedule;
+  final Value<String?> eveningSchedule;
+  final Value<String> syncStatus;
+  final Value<DateTime?> lastModifiedAt;
+  final Value<DateTime?> toBeTakenAt;
   final Value<bool> taken;
   final Value<int> rowid;
   const MedicationsCompanion({
@@ -2277,6 +2465,11 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     this.name = const Value.absent(),
     this.dosage = const Value.absent(),
     this.purpose = const Value.absent(),
+    this.morningSchedule = const Value.absent(),
+    this.afternoonSchedule = const Value.absent(),
+    this.eveningSchedule = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedAt = const Value.absent(),
     this.toBeTakenAt = const Value.absent(),
     this.taken = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2286,19 +2479,28 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     required String name,
     required String dosage,
     required String purpose,
-    required DateTime toBeTakenAt,
+    this.morningSchedule = const Value.absent(),
+    this.afternoonSchedule = const Value.absent(),
+    this.eveningSchedule = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedAt = const Value.absent(),
+    this.toBeTakenAt = const Value.absent(),
     this.taken = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
         dosage = Value(dosage),
-        purpose = Value(purpose),
-        toBeTakenAt = Value(toBeTakenAt);
+        purpose = Value(purpose);
   static Insertable<Medication> custom({
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? dosage,
     Expression<String>? purpose,
+    Expression<String>? morningSchedule,
+    Expression<String>? afternoonSchedule,
+    Expression<String>? eveningSchedule,
+    Expression<String>? syncStatus,
+    Expression<DateTime>? lastModifiedAt,
     Expression<DateTime>? toBeTakenAt,
     Expression<bool>? taken,
     Expression<int>? rowid,
@@ -2308,6 +2510,11 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       if (name != null) 'name': name,
       if (dosage != null) 'dosage': dosage,
       if (purpose != null) 'purpose': purpose,
+      if (morningSchedule != null) 'morning_schedule': morningSchedule,
+      if (afternoonSchedule != null) 'afternoon_schedule': afternoonSchedule,
+      if (eveningSchedule != null) 'evening_schedule': eveningSchedule,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (lastModifiedAt != null) 'last_modified_at': lastModifiedAt,
       if (toBeTakenAt != null) 'to_be_taken_at': toBeTakenAt,
       if (taken != null) 'taken': taken,
       if (rowid != null) 'rowid': rowid,
@@ -2319,7 +2526,12 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       Value<String>? name,
       Value<String>? dosage,
       Value<String>? purpose,
-      Value<DateTime>? toBeTakenAt,
+      Value<String?>? morningSchedule,
+      Value<String?>? afternoonSchedule,
+      Value<String?>? eveningSchedule,
+      Value<String>? syncStatus,
+      Value<DateTime?>? lastModifiedAt,
+      Value<DateTime?>? toBeTakenAt,
       Value<bool>? taken,
       Value<int>? rowid}) {
     return MedicationsCompanion(
@@ -2327,6 +2539,11 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       name: name ?? this.name,
       dosage: dosage ?? this.dosage,
       purpose: purpose ?? this.purpose,
+      morningSchedule: morningSchedule ?? this.morningSchedule,
+      afternoonSchedule: afternoonSchedule ?? this.afternoonSchedule,
+      eveningSchedule: eveningSchedule ?? this.eveningSchedule,
+      syncStatus: syncStatus ?? this.syncStatus,
+      lastModifiedAt: lastModifiedAt ?? this.lastModifiedAt,
       toBeTakenAt: toBeTakenAt ?? this.toBeTakenAt,
       taken: taken ?? this.taken,
       rowid: rowid ?? this.rowid,
@@ -2348,6 +2565,21 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     if (purpose.present) {
       map['purpose'] = Variable<String>(purpose.value);
     }
+    if (morningSchedule.present) {
+      map['morning_schedule'] = Variable<String>(morningSchedule.value);
+    }
+    if (afternoonSchedule.present) {
+      map['afternoon_schedule'] = Variable<String>(afternoonSchedule.value);
+    }
+    if (eveningSchedule.present) {
+      map['evening_schedule'] = Variable<String>(eveningSchedule.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (lastModifiedAt.present) {
+      map['last_modified_at'] = Variable<DateTime>(lastModifiedAt.value);
+    }
     if (toBeTakenAt.present) {
       map['to_be_taken_at'] = Variable<DateTime>(toBeTakenAt.value);
     }
@@ -2367,6 +2599,11 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
           ..write('name: $name, ')
           ..write('dosage: $dosage, ')
           ..write('purpose: $purpose, ')
+          ..write('morningSchedule: $morningSchedule, ')
+          ..write('afternoonSchedule: $afternoonSchedule, ')
+          ..write('eveningSchedule: $eveningSchedule, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedAt: $lastModifiedAt, ')
           ..write('toBeTakenAt: $toBeTakenAt, ')
           ..write('taken: $taken, ')
           ..write('rowid: $rowid')
@@ -3869,7 +4106,12 @@ typedef $$MedicationsTableCreateCompanionBuilder = MedicationsCompanion
   required String name,
   required String dosage,
   required String purpose,
-  required DateTime toBeTakenAt,
+  Value<String?> morningSchedule,
+  Value<String?> afternoonSchedule,
+  Value<String?> eveningSchedule,
+  Value<String> syncStatus,
+  Value<DateTime?> lastModifiedAt,
+  Value<DateTime?> toBeTakenAt,
   Value<bool> taken,
   Value<int> rowid,
 });
@@ -3879,7 +4121,12 @@ typedef $$MedicationsTableUpdateCompanionBuilder = MedicationsCompanion
   Value<String> name,
   Value<String> dosage,
   Value<String> purpose,
-  Value<DateTime> toBeTakenAt,
+  Value<String?> morningSchedule,
+  Value<String?> afternoonSchedule,
+  Value<String?> eveningSchedule,
+  Value<String> syncStatus,
+  Value<DateTime?> lastModifiedAt,
+  Value<DateTime?> toBeTakenAt,
   Value<bool> taken,
   Value<int> rowid,
 });
@@ -3904,6 +4151,25 @@ class $$MedicationsTableFilterComposer
 
   ColumnFilters<String> get purpose => $composableBuilder(
       column: $table.purpose, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get morningSchedule => $composableBuilder(
+      column: $table.morningSchedule,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get afternoonSchedule => $composableBuilder(
+      column: $table.afternoonSchedule,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get eveningSchedule => $composableBuilder(
+      column: $table.eveningSchedule,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastModifiedAt => $composableBuilder(
+      column: $table.lastModifiedAt,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get toBeTakenAt => $composableBuilder(
       column: $table.toBeTakenAt, builder: (column) => ColumnFilters(column));
@@ -3933,6 +4199,25 @@ class $$MedicationsTableOrderingComposer
   ColumnOrderings<String> get purpose => $composableBuilder(
       column: $table.purpose, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get morningSchedule => $composableBuilder(
+      column: $table.morningSchedule,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get afternoonSchedule => $composableBuilder(
+      column: $table.afternoonSchedule,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get eveningSchedule => $composableBuilder(
+      column: $table.eveningSchedule,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastModifiedAt => $composableBuilder(
+      column: $table.lastModifiedAt,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get toBeTakenAt => $composableBuilder(
       column: $table.toBeTakenAt, builder: (column) => ColumnOrderings(column));
 
@@ -3960,6 +4245,21 @@ class $$MedicationsTableAnnotationComposer
 
   GeneratedColumn<String> get purpose =>
       $composableBuilder(column: $table.purpose, builder: (column) => column);
+
+  GeneratedColumn<String> get morningSchedule => $composableBuilder(
+      column: $table.morningSchedule, builder: (column) => column);
+
+  GeneratedColumn<String> get afternoonSchedule => $composableBuilder(
+      column: $table.afternoonSchedule, builder: (column) => column);
+
+  GeneratedColumn<String> get eveningSchedule => $composableBuilder(
+      column: $table.eveningSchedule, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastModifiedAt => $composableBuilder(
+      column: $table.lastModifiedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get toBeTakenAt => $composableBuilder(
       column: $table.toBeTakenAt, builder: (column) => column);
@@ -3995,7 +4295,12 @@ class $$MedicationsTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<String> dosage = const Value.absent(),
             Value<String> purpose = const Value.absent(),
-            Value<DateTime> toBeTakenAt = const Value.absent(),
+            Value<String?> morningSchedule = const Value.absent(),
+            Value<String?> afternoonSchedule = const Value.absent(),
+            Value<String?> eveningSchedule = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime?> lastModifiedAt = const Value.absent(),
+            Value<DateTime?> toBeTakenAt = const Value.absent(),
             Value<bool> taken = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -4004,6 +4309,11 @@ class $$MedicationsTableTableManager extends RootTableManager<
             name: name,
             dosage: dosage,
             purpose: purpose,
+            morningSchedule: morningSchedule,
+            afternoonSchedule: afternoonSchedule,
+            eveningSchedule: eveningSchedule,
+            syncStatus: syncStatus,
+            lastModifiedAt: lastModifiedAt,
             toBeTakenAt: toBeTakenAt,
             taken: taken,
             rowid: rowid,
@@ -4013,7 +4323,12 @@ class $$MedicationsTableTableManager extends RootTableManager<
             required String name,
             required String dosage,
             required String purpose,
-            required DateTime toBeTakenAt,
+            Value<String?> morningSchedule = const Value.absent(),
+            Value<String?> afternoonSchedule = const Value.absent(),
+            Value<String?> eveningSchedule = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime?> lastModifiedAt = const Value.absent(),
+            Value<DateTime?> toBeTakenAt = const Value.absent(),
             Value<bool> taken = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -4022,6 +4337,11 @@ class $$MedicationsTableTableManager extends RootTableManager<
             name: name,
             dosage: dosage,
             purpose: purpose,
+            morningSchedule: morningSchedule,
+            afternoonSchedule: afternoonSchedule,
+            eveningSchedule: eveningSchedule,
+            syncStatus: syncStatus,
+            lastModifiedAt: lastModifiedAt,
             toBeTakenAt: toBeTakenAt,
             taken: taken,
             rowid: rowid,

@@ -12,6 +12,9 @@ class VitalsDao extends DatabaseAccessor<AppDatabase> with _$VitalsDaoMixin {
   
   Stream<List<VitalHistory>> watchAllVitals() => select(vitalHistories).watch();
   
+  Stream<List<VitalHistory>> watchVitalsByType(String type) =>
+      (select(vitalHistories)..where((t) => t.vitalType.equals(type))).watch();
+  
   Future<void> insertVitals(List<VitalHistoriesCompanion> vitals) async {
     await batch((batch) {
       batch.insertAll(vitalHistories, vitals, mode: InsertMode.insertOrReplace);

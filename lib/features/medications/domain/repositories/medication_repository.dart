@@ -11,7 +11,12 @@ import '../../data/models/seeded_medication_list_response_model.dart';
 abstract class MedicationRepository {
   AsyncResponse<MedicationAdherence> getAdherence({required bool showWeekdays});
   AsyncResponse<MedicationAdherence> getCachedAdherence({required bool showWeekdays});
+  Stream<MedicationAdherence> watchAdherence();
   
+  Stream<MedicationCount> watchMedicationCounts();
+  Stream<List<MedicationEntity>> watchMedicationsBySection(String section);
+  
+  // Keep legacy async responses for backward compatibility during refactoring
   AsyncResponse<MedicationCount> getMedicationCounts();
   AsyncResponse<MedicationCount> getCachedMedicationCounts();
   

@@ -8,6 +8,8 @@ import 'domain/usecases/create_medication_usecase.dart';
 import 'domain/usecases/update_medication_usecase.dart';
 import 'presentation/controllers/all_medicines_controller.dart';
 import 'presentation/controllers/medication_controller.dart';
+import '../../core/services/medication_sync_manager.dart';
+import '../../core/services/session_lifecycle_service.dart';
 
 void initMedications(GetIt sl) {
   // Data sources
@@ -15,6 +17,14 @@ void initMedications(GetIt sl) {
       () => MedicationRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<MedicationRemoteMutationSource>(
       () => MedicationRemoteMutationSource(sl()));
+
+  // Sync Manager
+  sl.registerSingleton<MedicationSyncManager>(
+    MedicationSyncManager(sl(), sl())
+  );
+
+  // Hook into Session Lifecycle
+  sl<SessionLifecycleService>().register(sl<MedicationSyncManager>(), priority: 80);
 
   // Repository
   sl.registerLazySingleton<MedicationRepository>(() => MedicationRepositoryImpl(
