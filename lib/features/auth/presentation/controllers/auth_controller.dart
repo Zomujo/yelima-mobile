@@ -97,7 +97,9 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         return;
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'user-disabled' || e.code == 'user-token-expired') {
+      if (e.code == 'user-not-found' ||
+          e.code == 'user-disabled' ||
+          e.code == 'user-token-expired') {
         _showSessionExpiredSnackbar();
         await _repository.signOut();
         return;
@@ -112,7 +114,8 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   }
 
   void _showSessionExpiredSnackbar() {
-    AppSnackBar.showError(null, message: 'Your session has expired or your account was disabled.');
+    AppSnackBar.showError(null,
+        message: 'Your session has expired or your account was disabled.');
   }
 
   @override
@@ -246,38 +249,31 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   Future<void> signOut(BuildContext context) async {
     GlobalAsyncLoader.show(context, message: "Signing out...");
 
-    // Logging out wipes all local SQLite data (DatabaseLifecycleHandler), so
-    // any offline-created/edited/confirmed medications that haven't reached
-    // the server yet would be lost forever. Require connectivity and force
-    // a completed sync first so we only ever wipe once everything's synced.
     final isConnected = await GetIt.instance<ConnectivityService>().isConnected;
     if (!isConnected) {
       GlobalAsyncLoader.hide();
-      if (context.mounted) {
-        AppSnackBar.showError(context,
-            message:
-                'Connect to the internet to sync your changes before logging out.');
-      }
+      AppSnackBar.showError(context.mounted ? context : null,
+          message:
+              'Connect to the internet to sync your changes before logging out.');
       return;
     }
 
-    try {
-      if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-        await GetIt.instance<MutationSyncManager>().triggerSync();
+      try {
+        if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+          await GetIt.instance<MutationSyncManager>().triggerSync();
+        }
+      } catch (e) {
+        debugPrint('Error syncing before sign out: $e');
       }
-    } catch (e) {
-      debugPrint('Error syncing before sign out: $e');
-    }
 
-    final stillPending =
-        await GetIt.instance<AppDatabase>().pendingMutationsDao.getAllPendingMutations();
+    final stillPending = await GetIt.instance<AppDatabase>()
+        .pendingMutationsDao
+        .getAllPendingMutations();
     if (stillPending.isNotEmpty) {
       GlobalAsyncLoader.hide();
-      if (context.mounted) {
-        AppSnackBar.showError(context,
-            message:
-                'Some changes are still syncing. Please try again in a moment.');
-      }
+      AppSnackBar.showError(context.mounted ? context : null,
+          message:
+              'Some changes are still syncing. Please try again in a moment.');
       return;
     }
 
@@ -293,20 +289,22 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     GlobalAsyncLoader.hide();
 
     result.fold(
-      (error) => _showError(context, error),
+      (error) => _showError(context.mounted ? context : null, error),
       (_) {
-        AppSnackBar.showSuccess(context, message: 'Successfully signed out.');
+        AppSnackBar.showSuccess(context.mounted ? context : null,
+            message: 'Successfully signed out.');
       },
     );
   }
 
-  void _showError(BuildContext context, String message) {
-    if (message == 'User cancelled the operation.' || 
+  void _showError(BuildContext? context, String message) {
+    if (message == 'User cancelled the operation.' ||
         message == 'Sign in cancelled' ||
         message == 'Apple sign-in cancelled' ||
         message == 'Re-authentication was cancelled.') {
       return; // Silent failure for user cancellations
     }
-    AppSnackBar.showError(context, message: message);
+    AppSnackBar.showError(context != null && context.mounted ? context : null,
+        message: message);
   }
 }

@@ -90,41 +90,43 @@ class MutationSyncManager implements SessionLifecycleHandler {
     _isSyncing = true;
 
     try {
-      final pendingMutations = await _db.pendingMutationsDao.getAllPendingMutations();
-      if (pendingMutations.isEmpty) {
-        return;
-      }
-
-      debugPrint("Found ${pendingMutations.length} pending mutations to sync.");
-
-      final blockedEntityKeys = <String>{};
-
-      for (final pending in pendingMutations) {
-        if (!_isSessionActive) {
-          debugPrint("Session ended during sync. Aborting batch.");
+      bool moreToProcess = true;
+      while (moreToProcess && _isSessionActive) {
+        final pendingMutations = await _db.pendingMutationsDao.getAllPendingMutations();
+        if (pendingMutations.isEmpty) {
           break;
         }
 
-        final entityKey = '${pending.entityType}:${pending.entityId}';
-        if (blockedEntityKeys.contains(entityKey)) {
-          debugPrint(
-              "Skipping mutation ${pending.id}: an earlier mutation for $entityKey hasn't resolved yet.");
-          continue;
-        }
+        debugPrint("Found ${pendingMutations.length} pending mutations to sync.");
+        final blockedEntityKeys = <String>{};
+        moreToProcess = false;
 
-        final outcome = await _attemptMutation(pending);
-        if (outcome == _MutationOutcome.remapped) {
-          debugPrint("ID remapped, breaking batch to refetch fresh state.");
-          // Trigger next batch asynchronously
-          Future.delayed(const Duration(milliseconds: 500), triggerSync);
-          break;
-        }
-        if (outcome == _MutationOutcome.blocked) {
-          blockedEntityKeys.add(entityKey);
-        }
+        for (final pending in pendingMutations) {
+          if (!_isSessionActive) {
+            debugPrint("Session ended during sync. Aborting batch.");
+            break;
+          }
 
-        // Small delay to prevent rate-limiting when processing a large backlog
-        await Future.delayed(const Duration(milliseconds: 100));
+          final entityKey = '${pending.entityType}:${pending.entityId}';
+          if (blockedEntityKeys.contains(entityKey)) {
+            debugPrint(
+                "Skipping mutation ${pending.id}: an earlier mutation for $entityKey hasn't resolved yet.");
+            continue;
+          }
+
+          final outcome = await _attemptMutation(pending);
+          if (outcome == _MutationOutcome.remapped) {
+            debugPrint("ID remapped, breaking batch to refetch fresh state.");
+            moreToProcess = true; // Loop again immediately to fetch fresh state
+            break;
+          }
+          if (outcome == _MutationOutcome.blocked) {
+            blockedEntityKeys.add(entityKey);
+          }
+
+          // Small delay to prevent rate-limiting when processing a large backlog
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
       }
     } catch (e) {
       debugPrint("Error during mutation sync: $e");
