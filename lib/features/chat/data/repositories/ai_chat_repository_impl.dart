@@ -3,7 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/utils/custom_types.dart';
 import '../../../../core/exceptions/exceptions.dart';
 import '../../../../core/services/connectivity_service.dart';
-import '../../../../core/services/deletion_sync_manager.dart';
+import '../../../../core/managers/deletion_sync_manager.dart';
 import '../datasources/ai_chat_local_datasource.dart';
 import '../datasources/ai_chat_remote_datasource.dart';
 import '../../domain/entities/ai_chat_message.dart';
@@ -12,7 +12,7 @@ import '../../../../core/db/app_database.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 
 import '../models/ai_chat_response.dart';
-import '../../../../core/services/mutation_sync_manager.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/utils/file_helper.dart';
 import 'package:get_it/get_it.dart';
 

@@ -11,7 +11,7 @@ import '../../../../shared/utils/app_snackbar.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 import '../../../../core/services/connectivity_service.dart';
-import '../../../../core/services/mutation_sync_manager.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/db/app_database.dart';
 import 'auth_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
@@ -259,10 +259,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     }
 
       try {
-        if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-          await GetIt.instance<MutationSyncManager>().triggerSync();
-        }
-      } catch (e) {
+              } catch (e) {
         debugPrint('Error syncing before sign out: $e');
       }
 

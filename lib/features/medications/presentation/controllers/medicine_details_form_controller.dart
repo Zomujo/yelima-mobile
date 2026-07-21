@@ -9,7 +9,7 @@ import '../states/medicine_details_form_state.dart';
 class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
   final AllMedicinesController allMedicinesController;
   final UpdateMedicationUseCase updateMedicationUseCase;
-  final String medicationId;
+  String medicationId;
 
   MedicineDetailsFormController({
     required this.allMedicinesController,
@@ -20,6 +20,8 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     dosageController.addListener(_markChanged);
     notesController.addListener(_markChanged);
   }
+
+
 
   MedicineDetailsFormState state = const MedicineDetailsFormState();
 

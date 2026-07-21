@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../exceptions/exceptions.dart';
 import '../api/i_remote_deletion.dart';
 import '../db/app_database.dart';
-import 'connectivity_service.dart';
-import 'session_lifecycle_service.dart';
+import '../services/connectivity_service.dart';
+import '../services/session_lifecycle_service.dart';
 
 class DeletionSyncManager implements SessionLifecycleHandler {
   final ConnectivityService _connectivityService;

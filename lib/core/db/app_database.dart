@@ -10,20 +10,18 @@ import 'tables/ai_chat_conversations.dart';
 import 'tables/pending_deletions.dart';
 import 'tables/user_profiles.dart';
 import 'tables/pending_mutations.dart';
-import 'tables/medications.dart';
 import 'tables/appointments.dart';
 import 'daos/vitals_dao.dart';
 import 'daos/ai_chat_dao.dart';
 import 'daos/user_profiles_dao.dart';
 import 'daos/pending_mutations_dao.dart';
-import 'daos/medications_dao.dart';
 import 'daos/appointments_dao.dart';
 
 part 'app_database.g.dart';
 
 @DriftDatabase(
-    tables: [VitalHistories, AiChatConversations, PendingDeletions, UserProfiles, PendingMutations, Medications, Appointments],
-    daos: [VitalsDao, AiChatDao, UserProfilesDao, PendingMutationsDao, MedicationsDao, AppointmentsDao])
+    tables: [VitalHistories, AiChatConversations, PendingDeletions, UserProfiles, PendingMutations, Appointments],
+    daos: [VitalsDao, AiChatDao, UserProfilesDao, PendingMutationsDao, AppointmentsDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
@@ -59,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(pendingMutations);
         }
         if (from < 8) {
-          await m.createTable(medications);
+          // Medications table removed
         }
         if (from < 9) {
           await m.createTable(appointments);

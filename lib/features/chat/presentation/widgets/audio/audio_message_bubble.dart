@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/services/audio_player_manager.dart';
+import '../../../../../core/managers/audio_player_manager.dart';
 import '../../../../../injection_container.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/services/audio_cache_manager.dart';

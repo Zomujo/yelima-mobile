@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
-import '../../../../core/services/mutation_sync_manager.dart';
+
 import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_history_entity.dart';
@@ -24,29 +23,18 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
   final Map<String, MedicationState<MedicationHistoryEntity>> historyStates =
       {};
 
-  // New states for the UI
+  // States for the UI
   MedicationState<SeededMedicationListResponseModel> preloadedState =
       const MedicationState();
   MedicationState<MedicationDetailModel> detailState = const MedicationState();
   MedicationState<String> formSubmitState = const MedicationState();
-
-  // Add subscription
-  StreamSubscription<List<MedicationEntity>>? _medicationSubscription;
-  StreamSubscription<String>? _syncSubscription;
 
   void fetchAllMedicines({bool forceRefresh = false}) async {
     if (listState.data == null) {
       listState = listState.copyWith(isLoading: true, error: null);
       notifyListeners();
 
-      final cachedResult = await repository.getCachedAllMedications();
-      cachedResult.fold((_) => null, (data) {
-        if (data.rows.isNotEmpty) {
-          listState =
-              listState.copyWith(data: data, isLoading: false, error: null);
-          notifyListeners();
-        }
-      });
+
     }
 
     if (listState.data == null) {
@@ -54,64 +42,21 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
       notifyListeners();
     }
 
-    // Trigger background fetch to update the remote data
     final refreshResult = await repository.getAllMedications(
         page: 1, pageSize: 50, forceRefresh: forceRefresh);
     refreshResult.fold((failure) {
-      // Only surface the error if we still have nothing to show - if we
-      // already have cached/local data, silently rely on that instead.
       if (listState.data == null || listState.data!.rows.isEmpty) {
         listState =
             listState.copyWith(error: failure, isLoading: false);
         notifyListeners();
       }
-    }, (_) => null);
-
-    // Watch local database for updates
-    _medicationSubscription?.cancel();
-    _medicationSubscription =
-        repository.watchAllMedications().listen((entities) {
-      final response = MedicationListResponse(
-        rows: entities,
-        total: entities.length,
-        pageSize: 50,
-        page: 1,
-        totalPages: (entities.length / 50).ceil() == 0
-            ? 1
-            : (entities.length / 50).ceil(),
-      );
-
-      listState =
-          listState.copyWith(data: response, isLoading: false, error: null);
-      notifyListeners();
-    }, onError: (error) {
-      listState = listState.copyWith(error: error.toString(), isLoading: false);
+    }, (data) {
+      listState = listState.copyWith(data: data, isLoading: false, error: null);
       notifyListeners();
     });
-
-    try {
-      if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-        _syncSubscription?.cancel();
-        _syncSubscription = GetIt.instance<MutationSyncManager>()
-            .onMutationSynced
-            .listen((entityType) {
-          if (entityType == 'medication') {
-            fetchAllMedicines(forceRefresh: true);
-            if (detailState.data != null) {
-              fetchMedicationDetails(detailState.data!.id);
-            }
-          }
-        });
-      }
-    } catch (_) {}
   }
 
-  @override
-  void dispose() {
-    _medicationSubscription?.cancel();
-    _syncSubscription?.cancel();
-    super.dispose();
-  }
+
 
   void fetchMedicationHistory(String id, {DateTime? targetMonth}) async {
     final month = targetMonth ?? DateTime.now();

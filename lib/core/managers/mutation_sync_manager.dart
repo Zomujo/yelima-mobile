@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../api/i_remote_mutation.dart';
 import '../db/app_database.dart';
-import 'connectivity_service.dart';
-import 'session_lifecycle_service.dart';
+import '../services/connectivity_service.dart';
+import '../services/session_lifecycle_service.dart';
 import '../exceptions/exceptions.dart';
 
 enum _MutationOutcome {
@@ -21,8 +20,9 @@ class MutationSyncManager implements SessionLifecycleHandler {
   StreamSubscription? _networkSubscription;
   bool _isSyncing = false;
   bool _isSessionActive = false;
-  
-  final StreamController<String> _syncBroadcast = StreamController<String>.broadcast();
+
+  final StreamController<String> _syncBroadcast =
+      StreamController<String>.broadcast();
   Stream<String> get onMutationSynced => _syncBroadcast.stream;
 
   MutationSyncManager({
@@ -50,7 +50,8 @@ class MutationSyncManager implements SessionLifecycleHandler {
     _isSessionActive = false;
     _debounceTimer?.cancel();
     if (_syncTask != null) {
-      debugPrint("MutationSyncManager: Awaiting in-flight sync task before ending session...");
+      debugPrint(
+          "MutationSyncManager: Awaiting in-flight sync task before ending session...");
       await _syncTask;
       debugPrint("MutationSyncManager: Sync task completed, session ending.");
     }
@@ -62,10 +63,10 @@ class MutationSyncManager implements SessionLifecycleHandler {
     _networkSubscription =
         _connectivityService.onConnectivityChanged.listen((isConnected) {
       if (isConnected) {
-        // Debounce: Wait for connection to be stable for 3 seconds
         _debounceTimer?.cancel();
         _debounceTimer = Timer(const Duration(seconds: 3), () {
-          debugPrint("Network connection stable for 3s. Starting mutation sync...");
+          debugPrint(
+              "Network connection stable for 3s. Starting mutation sync...");
           triggerSync();
         });
       } else {
@@ -75,8 +76,6 @@ class MutationSyncManager implements SessionLifecycleHandler {
   }
 
   Future<void> triggerSync() async {
-    // A mutation queued by a previous user must never be sent under the next
-    // user's auth token, so only sync while a session is actually active.
     if (_isSessionActive && await _connectivityService.isConnected) {
       if (!_isSyncing) {
         _syncTask = _syncPendingMutations();
@@ -90,41 +89,43 @@ class MutationSyncManager implements SessionLifecycleHandler {
     _isSyncing = true;
 
     try {
-      bool moreToProcess = true;
-      while (moreToProcess && _isSessionActive) {
-        final pendingMutations = await _db.pendingMutationsDao.getAllPendingMutations();
-        if (pendingMutations.isEmpty) {
+      bool hasPendingMutations = true;
+      while (hasPendingMutations && _isSessionActive) {
+        final mutations =
+            await _db.pendingMutationsDao.getAllPendingMutations();
+        if (mutations.isEmpty) {
           break;
         }
 
-        debugPrint("Found ${pendingMutations.length} pending mutations to sync.");
-        final blockedEntityKeys = <String>{};
-        moreToProcess = false;
+        debugPrint("Found ${mutations.length} pending mutations to sync.");
+        final blockedKeys = <String>{};
+        hasPendingMutations = false;
 
-        for (final pending in pendingMutations) {
+        for (final mutation in mutations) {
           if (!_isSessionActive) {
             debugPrint("Session ended during sync. Aborting batch.");
             break;
           }
 
-          final entityKey = '${pending.entityType}:${pending.entityId}';
-          if (blockedEntityKeys.contains(entityKey)) {
+          final entityKey = '${mutation.entityType}:${mutation.entityId}';
+          if (blockedKeys.contains(entityKey)) {
             debugPrint(
-                "Skipping mutation ${pending.id}: an earlier mutation for $entityKey hasn't resolved yet.");
+                "Skipping mutation ${mutation.id}: an earlier mutation for $entityKey hasn't resolved yet.");
             continue;
           }
 
-          final outcome = await _attemptMutation(pending);
+          final outcome = await _attemptMutation(mutation);
+
           if (outcome == _MutationOutcome.remapped) {
             debugPrint("ID remapped, breaking batch to refetch fresh state.");
-            moreToProcess = true; // Loop again immediately to fetch fresh state
+            hasPendingMutations = true;
             break;
           }
+
           if (outcome == _MutationOutcome.blocked) {
-            blockedEntityKeys.add(entityKey);
+            blockedKeys.add(entityKey);
           }
 
-          // Small delay to prevent rate-limiting when processing a large backlog
           await Future.delayed(const Duration(milliseconds: 100));
         }
       }
@@ -135,82 +136,66 @@ class MutationSyncManager implements SessionLifecycleHandler {
     }
   }
 
-  Future<_MutationOutcome> _attemptMutation(PendingMutation pending) async {
+  Future<_MutationOutcome> _attemptMutation(PendingMutation mutation) async {
     try {
-      final remoteSource = _remoteSources[pending.entityType];
+      final remoteSource = _remoteSources[mutation.entityType];
       if (remoteSource == null) {
-        debugPrint("No registered remote source for '${pending.entityType}', skipping for now.");
+        debugPrint(
+            "No registered remote source for '${mutation.entityType}', skipping for now.");
         return _MutationOutcome.blocked;
       }
 
       final newServerId = await remoteSource.syncMutation(
-        entityId: pending.entityId,
-        action: pending.action,
-        payloadJson: pending.payloadJson,
-        createdAt: pending.createdAt,
+        entityId: mutation.entityId,
+        action: mutation.action,
+        payloadJson: mutation.payloadJson,
+        createdAt: mutation.createdAt,
       );
 
       bool didRemap = false;
-      if (newServerId != null && newServerId != pending.entityId) {
+
+      if (newServerId != null && newServerId != mutation.entityId) {
         didRemap = true;
-        debugPrint("Remapping offline ID ${pending.entityId} to server ID $newServerId for ${pending.entityType}");
-        // The row rename, the pending-mutation entityId cascade, and the
-        // embedded-payload id patch must all land together - a crash
-        // mid-cascade must not leave a mutation pointing at an id nothing
-        // references anymore.
+        debugPrint(
+            "Remapping offline ID ${mutation.entityId} to server ID $newServerId for ${mutation.entityType}");
+
         await _db.transaction(() async {
-          if (pending.entityType == 'medication') {
-            await _db.medicationsDao.updateMedicationId(pending.entityId, newServerId);
-          } else if (pending.entityType == 'ai_chat_message') {
-            await _db.aiChatDao.updateMessageId(pending.entityId, newServerId);
+          if (mutation.entityType == 'ai_chat_message') {
+            await _db.aiChatDao.updateMessageId(mutation.entityId, newServerId);
           }
-          // Cascade to pending mutations (e.g. an update/confirm that followed the create)
-          await _db.pendingMutationsDao.updateEntityId(pending.entityId, newServerId);
-          await _patchEmbeddedEntityIdReferences(pending.entityId, newServerId);
+          await _db.pendingMutationsDao
+              .updateEntityId(mutation.entityId, newServerId);
         });
       }
 
-      await _db.pendingMutationsDao.removePendingMutation(pending.id);
-      debugPrint("Successfully synced mutation for ${pending.entityType} (${pending.entityId})");
+      await _db.pendingMutationsDao.removePendingMutation(mutation.id);
+      debugPrint(
+          "Successfully synced mutation for ${mutation.entityType} (${mutation.entityId})");
 
-      if (pending.entityType == 'medication' &&
-          (pending.action == 'create_medication' || pending.action == 'update_medication')) {
-        await _db.medicationsDao.markSynced(newServerId ?? pending.entityId);
-      }
-
-      if (pending.entityType == 'medication') {
-        // Small delay to allow backend caches to invalidate before UI refetches
-        Future.delayed(const Duration(seconds: 2), () {
-          _syncBroadcast.add(pending.entityType);
-        });
+      if (didRemap && newServerId != null) {
+        _syncBroadcast.add(
+            'remap:${mutation.entityType}:${mutation.entityId}:$newServerId');
       } else {
-        _syncBroadcast.add(pending.entityType);
+        _syncBroadcast.add(mutation.entityType);
       }
 
       return didRemap ? _MutationOutcome.remapped : _MutationOutcome.resolved;
     } on ApiException catch (e) {
-      // 409 means Conflict (e.g., server rejected due to Last-Write-Wins being older)
-      // 404 means the entity no longer exists on the server.
-      // 400 means Bad Request
       if (e.code == '409' || e.code == '404' || e.code == '400') {
         debugPrint(
-            "Mutation ${pending.id} rejected by server (${e.code}). Removing from local queue.");
-        await _db.transaction(() async {
-          await _db.pendingMutationsDao.removePendingMutation(pending.id);
+            "Mutation ${mutation.id} rejected by server (${e.code}). Removing from local queue.");
 
-          // If this was a creation mutation, aggressively delete the orphaned optimistic record
-          if (pending.action.startsWith('create')) {
-            debugPrint("Deleting orphaned optimistic record ${pending.entityId} for type ${pending.entityType}");
-            if (pending.entityType == 'medication') {
-              await _db.medicationsDao.deleteMedication(pending.entityId);
-            }
-            // Delete any dependent pending mutations (e.g. a confirm mutation that followed the create)
-            await _db.pendingMutationsDao.removeMutationsForEntity(pending.entityId);
+        await _db.transaction(() async {
+          await _db.pendingMutationsDao.removePendingMutation(mutation.id);
+
+          if (mutation.action.startsWith('create')) {
+            debugPrint(
+                "Deleting orphaned optimistic record ${mutation.entityId} for type ${mutation.entityType}");
+            await _db.pendingMutationsDao
+                .removeMutationsForEntity(mutation.entityId);
           }
         });
 
-        // Terminally resolved (rejected + cleaned up, including dependents),
-        // so it doesn't block other entities' mutations.
         return _MutationOutcome.resolved;
       }
 
@@ -226,64 +211,34 @@ class MutationSyncManager implements SessionLifecycleHandler {
         rethrow;
       }
 
-      // Handle other non-fatal ApiExceptions or malformed responses as "Poison Pills"
-      await _handlePoisonPill(pending, e.toString());
+      await _handleFailedMutation(mutation, e.toString());
       return _MutationOutcome.blocked;
-
     } on NetworkException {
-      debugPrint("Connection error syncing mutation for ${pending.id}. Aborting sync to try again later.");
+      debugPrint(
+          "Connection error syncing mutation for ${mutation.id}. Aborting sync to try again later.");
       rethrow;
     } catch (e) {
-      debugPrint("Unexpected error syncing mutation ${pending.id}: $e");
-      await _handlePoisonPill(pending, e.toString());
+      debugPrint("Unexpected error syncing mutation ${mutation.id}: $e");
+      await _handleFailedMutation(mutation, e.toString());
       return _MutationOutcome.blocked;
     }
   }
 
-  /// After remapping [oldEntityId] to [newEntityId], patch any *other*
-  /// pending mutation whose JSON payload embeds the old id in a
-  /// `medicationId` field (e.g. an offline medication confirm carries
-  /// `{"medicationId": "offline_xyz", ...}` independently of its own
-  /// `entityId` column, which [PendingMutationsDao.updateEntityId] already
-  /// renamed).
-  Future<void> _patchEmbeddedEntityIdReferences(
-      String oldEntityId, String newEntityId) async {
-    final remaining = await _db.pendingMutationsDao.getAllPendingMutations();
-    for (final p in remaining) {
-      if (p.entityId != newEntityId) continue;
-      try {
-        final payload = jsonDecode(p.payloadJson);
-        if (payload is Map<String, dynamic> &&
-            payload['medicationId'] == oldEntityId) {
-          payload['medicationId'] = newEntityId;
-          await _db.pendingMutationsDao
-              .updatePendingMutation(p.copyWith(payloadJson: jsonEncode(payload)));
-        }
-      } catch (_) {
-        // Payload isn't a JSON object, or has no embedded id reference.
-      }
-    }
-  }
+  Future<void> _handleFailedMutation(
+      PendingMutation mutation, String errorMsg) async {
+    debugPrint("Failed to sync mutation ${mutation.id}: $errorMsg");
 
-  Future<void> _handlePoisonPill(PendingMutation pending, String errorMsg) async {
-    debugPrint("Failed to sync mutation ${pending.id}: $errorMsg");
-    
-    // Increment retry count
-    final newRetryCount = pending.retryCount + 1;
-    
+    final newRetryCount = mutation.retryCount + 1;
+
     if (newRetryCount >= 3) {
-      // Dead letter queue logic - drop it after 3 strikes to avoid infinite loops
-      debugPrint("Mutation ${pending.id} failed 3 times. Dropping to prevent poison pill loop.");
-      await _db.pendingMutationsDao.removePendingMutation(pending.id);
+      debugPrint(
+          "Mutation ${mutation.id} failed 3 times. Dropping from queue to prevent infinite retry loop.");
+      await _db.pendingMutationsDao.removePendingMutation(mutation.id);
     } else {
-      // Update the row with new retry count
-      await _db.pendingMutationsDao.updatePendingMutation(
-        pending.copyWith(retryCount: newRetryCount)
-      );
+      await _db.pendingMutationsDao
+          .updatePendingMutation(mutation.copyWith(retryCount: newRetryCount));
     }
   }
-
-
 
   void dispose() {
     _debounceTimer?.cancel();

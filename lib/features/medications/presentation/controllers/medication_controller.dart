@@ -5,18 +5,12 @@ import '../../domain/entities/medication_adherence.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/repositories/medication_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/services/mutation_sync_manager.dart';
+
 import '../states/medications_state.dart';
 
 class MedicationController extends ChangeNotifier with SafeNotifier {
   final MedicationRepository repository;
-  final MutationSyncManager mutationSyncManager;
-  StreamSubscription<String>? _syncSubscription;
-
-  MedicationController(
-      {required this.repository, required this.mutationSyncManager}) {
-    _initSyncListener();
-  }
+  MedicationController({required this.repository});
 
   MedicationsState _state = const MedicationsState();
   MedicationsState get state => _state;
@@ -78,8 +72,9 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
 
     _medsSubscription?.cancel();
     _medsSubscription =
-        repository.watchMedicationsBySection(section).listen((meds) {
+        repository.watchMedicationsBySection(section).listen((meds) async {
       _setSectionData(section, meds);
+
       _setSectionLoading(section, false);
       _setSectionError(section, null);
     }, onError: (e) {
@@ -87,12 +82,6 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
       _setSectionLoading(section, false);
     });
 
-    // The stream above only reflects whatever's already cached locally - it
-    // never triggers a fetch by itself. repository.getMedicationsBySection
-    // already does the right online/offline thing (fetch + cache when
-    // connected, fall back to cache when not); actively call it here so
-    // opening/switching tabs doesn't depend entirely on a background sync
-    // having already run.
     _refreshSection(section);
   }
 
@@ -101,22 +90,14 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     result.fold((error) {
       final hasData = state.medicationsBySection[section]?.isNotEmpty ?? false;
       if (!hasData) _setSectionError(section, error);
-    }, (_) {});
-  }
-
-  void _initSyncListener() {
-    _syncSubscription =
-        mutationSyncManager.onMutationSynced.listen((entityType) {
-      if (entityType == 'medication') {
-        // UI will update automatically from Drift streams!
-        fetchAdherence(); // Refresh adherence from remote to get latest accurate backend calculated rate
-      }
+      _setSectionLoading(section, false);
+    }, (_) {
+      _setSectionLoading(section, false);
     });
   }
 
   @override
   void dispose() {
-    _syncSubscription?.cancel();
     _countsSubscription?.cancel();
     _medsSubscription?.cancel();
     _adherenceSubscription?.cancel();

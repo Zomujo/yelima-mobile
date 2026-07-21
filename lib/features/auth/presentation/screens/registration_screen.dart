@@ -65,8 +65,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     /// Sign out and return to sign up if on the first step.
     final authController = context.read<AuthController>();
+    context.go(RoutePaths.signUp); // clear deep link intent before sign out
     await authController.signOut(context);
-    if (mounted) context.go(RoutePaths.signUp);
   }
 
   @override
@@ -92,8 +92,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   totalSteps: 3,
                   onClose: () async {
                     final authController = context.read<AuthController>();
+                    context.go(RoutePaths
+                        .signUp); // clear deep link intent before sign out
                     await authController.signOut(context);
-                    if (context.mounted) context.go(RoutePaths.signUp);
                   },
                 );
               },
@@ -103,17 +104,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  RegistrationStepOne(
-                    onContinue: _nextStep,
-                  ),
+                  RegistrationStepOne(onContinue: _nextStep),
                   RegistrationStepTwo(
-                    onBack: _previousStep,
-                    onContinue: _nextStep,
-                  ),
+                      onBack: _previousStep, onContinue: _nextStep),
                   RegistrationStepThree(
-                    onBack: _previousStep,
-                    onContinue: _nextStep,
-                  ),
+                      onBack: _previousStep, onContinue: _nextStep),
                 ],
               ),
             ),

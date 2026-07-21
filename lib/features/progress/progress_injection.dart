@@ -13,5 +13,5 @@ void initProgress(GetIt sl) {
             connectivityService: sl(),
             db: sl(),
           ));
-  sl.registerFactory(() => ProgressController(sl(), sl()));
+  sl.registerFactory(() => ProgressController(sl()));
 }

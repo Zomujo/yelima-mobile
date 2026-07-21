@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
+import '../../../../core/router/route_paths.dart';
 import '../controllers/auth_controller.dart';
 
 class LogoutModal extends StatelessWidget {
@@ -53,6 +55,7 @@ class LogoutModal extends StatelessWidget {
                   onPressed: () {
                     final controller = context.read<AuthController>();
                     Navigator.of(context).pop(); // dismiss modal
+                    context.go(RoutePaths.signIn); // clear deep link intent
                     controller.signOut(context);
                   },
                 ),

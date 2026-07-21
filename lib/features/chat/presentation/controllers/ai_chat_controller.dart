@@ -6,7 +6,7 @@ import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/repositories/ai_chat_repository.dart';
 import 'ai_chat_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/services/mutation_sync_manager.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
 
 class AiChatController extends ChangeNotifier with SafeNotifier {
   final AiChatRepository _repository;

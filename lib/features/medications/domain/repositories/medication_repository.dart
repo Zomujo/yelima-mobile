@@ -18,10 +18,8 @@ abstract class MedicationRepository {
   
   // Keep legacy async responses for backward compatibility during refactoring
   AsyncResponse<MedicationCount> getMedicationCounts();
-  AsyncResponse<MedicationCount> getCachedMedicationCounts();
   
   AsyncResponse<List<MedicationEntity>> getMedicationsBySection(String section);
-  AsyncResponse<List<MedicationEntity>> getCachedMedicationsBySection(String section);
   
   AsyncResponse<void> confirmMedication(String medicationId, String section, {String? date});
 
@@ -31,11 +29,10 @@ abstract class MedicationRepository {
   AsyncResponse<SeededMedicationListResponseModel> getPreloadedMedications({int page = 1, int limit = 10, String? search});
 
   AsyncResponse<MedicationListResponse> getAllMedications({int page = 1, int pageSize = 10, bool forceRefresh = false});
-  AsyncResponse<MedicationListResponse> getCachedAllMedications();
 
   Stream<List<MedicationEntity>> watchAllMedications();
   
-  AsyncResponse<MedicationHistoryEntity> getMedicationHistory(String medicationId, {required String date});
 
-  void invalidateCache();
+
+  AsyncResponse<MedicationHistoryEntity> getMedicationHistory(String medicationId, {required String date});
 }

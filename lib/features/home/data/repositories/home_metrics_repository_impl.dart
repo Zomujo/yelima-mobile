@@ -10,7 +10,6 @@ import '../datasources/home_metrics_local_datasource.dart';
 import '../models/home_metrics_model.dart';
 import '../models/vital_history_model.dart';
 import '../../../../core/db/app_database.dart';
-import '../../../../core/services/mutation_sync_manager.dart';
 import 'package:get_it/get_it.dart';
 
 class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
@@ -128,10 +127,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
             payload: body,
           );
           try {
-            if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-              GetIt.instance<MutationSyncManager>().triggerSync();
-            }
-          } catch (_) {}
+                      } catch (_) {}
           return const Right(null);
         }
 

@@ -3,7 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/services/connectivity_service.dart';
-import 'package:yelima/core/services/mutation_sync_manager.dart';
+import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/features/chat/data/repositories/ai_chat_repository_impl.dart';
 import 'package:yelima/features/chat/domain/entities/ai_chat_message.dart';
 import 'package:yelima/features/chat/presentation/controllers/ai_chat_controller.dart';

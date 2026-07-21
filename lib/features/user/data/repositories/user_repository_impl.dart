@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:drift/drift.dart' as drift;
 import 'package:fpdart/fpdart.dart';
-import 'package:get_it/get_it.dart';
-import '../../../../core/services/mutation_sync_manager.dart';
 import '../../../../core/db/app_database.dart';
 import '../../../../core/exceptions/exceptions.dart';
 import '../../../../core/services/connectivity_service.dart';
@@ -158,10 +156,7 @@ class UserRepositoryImpl implements UserRepository {
             payload: data,
           );
           try {
-            if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-              GetIt.instance<MutationSyncManager>().triggerSync();
-            }
-          } catch (_) {}
+                      } catch (_) {}
         } else {
           try {
             await remoteDataSource.updateUserProfile(uid, data);
