@@ -13,7 +13,8 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
   final ConnectivityService _connectivityService;
   final MutationSyncManager _mutationSyncManager;
 
-  AiChatController(this._repository, this._connectivityService, this._mutationSyncManager) {
+  AiChatController(
+      this._repository, this._connectivityService, this._mutationSyncManager) {
     _init();
   }
 
@@ -24,24 +25,25 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
   AiChatState _state = const AiChatState();
   AiChatState get state => _state;
 
-  void _setState(AiChatState newState) {
-    _state = newState;
+  set state(AiChatState value) {
+    if (_state == value) return;
+    _state = value;
     if (!_state.syncPending) {
       notifyListeners();
     }
   }
 
   // Expose messages and booleans for compatibility with UI (to minimize UI breakage)
-  List<AiChatMessage> get messages => _state.messages;
-  bool get isLoading => _state.isLoading;
-  bool get isLoadingMore => _state.isLoadingMore;
-  bool get hasMoreMessages => _state.hasMoreMessages;
-  bool get isOnline => _state.isOnline;
-  bool get isSending => _state.isSending;
-  String? get error => _state.error;
+  List<AiChatMessage> get messages => state.messages;
+  bool get isLoading => state.isLoading;
+  bool get isLoadingMore => state.isLoadingMore;
+  bool get hasMoreMessages => state.hasMoreMessages;
+  bool get isOnline => state.isOnline;
+  bool get isSending => state.isSending;
+  String? get error => state.error;
 
   void clearError() {
-    _setState(_state.copyWith(error: null));
+    state = state.copyWith(error: null);
   }
 
   static const int _pageSize = 20;
@@ -55,13 +57,13 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
 
   Future<void> _init() async {
     final isConnected = await _connectivityService.isConnected;
-    _setState(_state.copyWith(isOnline: isConnected));
+    state = state.copyWith(isOnline: isConnected);
 
     // Listen for connection changes
     _connectivitySubscription =
         _connectivityService.onConnectivityChanged.listen((isConnected) {
-      final wasOffline = !_state.isOnline;
-      _setState(_state.copyWith(isOnline: isConnected));
+      final wasOffline = !state.isOnline;
+      state = state.copyWith(isOnline: isConnected);
 
       if (isConnected && wasOffline) {
         syncConversations();
@@ -69,7 +71,8 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     });
 
     // Listen for background sync completion
-    _syncSubscription = _mutationSyncManager.onMutationSynced.listen((entityType) {
+    _syncSubscription =
+        _mutationSyncManager.onMutationSynced.listen((entityType) {
       if (entityType == 'chat' || entityType == 'ai_chat_message') {
         syncConversations();
       }
@@ -78,9 +81,10 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     await syncConversations();
   }
 
+  /// Synchronizes local chat conversations with the remote server.
   Future<void> syncConversations() async {
-    if (_state.isSending || _state.isLoadingMore) {
-      _setState(_state.copyWith(syncPending: true));
+    if (state.isSending || state.isLoadingMore) {
+      state = state.copyWith(syncPending: true);
       return;
     }
 
@@ -94,144 +98,135 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
   }
 
   Future<void> _syncConversationsInternal() async {
-    _setState(_state.copyWith(isLoading: true));
+    state = state.copyWith(isLoading: true);
 
     final localRes = await _repository.loadConversations();
-    localRes
-        .fold((err) => _setState(_state.copyWith(error: err, isLoading: false)),
-            (localMsgs) async {
-      var messages = List<AiChatMessage>.from(localMsgs);
+    localRes.fold(
+      (err) => state = state.copyWith(error: err, isLoading: false),
+      (localMsgs) async {
+        var msgs = List<AiChatMessage>.from(localMsgs);
 
-      bool stateChanged = false;
-      for (int i = 0; i < messages.length; i++) {
-        if (messages[i].status == MessageStatus.sending) {
-          messages[i] = messages[i].copyWith(status: MessageStatus.failed);
-          stateChanged = true;
+        bool stateChanged = false;
+        for (int i = 0; i < msgs.length; i++) {
+          if (msgs[i].status == MessageStatus.sending) {
+            msgs[i] = msgs[i].copyWith(status: MessageStatus.failed);
+            stateChanged = true;
+          }
         }
-      }
-      if (stateChanged) {
-        await _repository.saveConversations(messages);
-      }
+        if (stateChanged) {
+          await _repository.saveConversations(msgs);
+        }
 
-      int currentPage = _state.currentPage;
-      if (messages.isNotEmpty) {
-        currentPage = (messages.length / _pageSize).ceil();
-        if (currentPage < 1) currentPage = 1;
-      }
+        int currentPage = state.currentPage;
+        if (msgs.isNotEmpty) {
+          currentPage = (msgs.length / _pageSize).ceil();
+          if (currentPage < 1) currentPage = 1;
+        }
 
-      _setState(_state.copyWith(
-        messages: messages,
-        currentPage: currentPage,
-      ));
+        state = state.copyWith(messages: msgs, currentPage: currentPage);
 
-      if (!_state.isOnline) {
-        _setState(_state.copyWith(isLoading: false));
-        return;
-      }
+        if (!state.isOnline) {
+          state = state.copyWith(isLoading: false);
+          return;
+        }
 
-      await _repository.syncRemoteConversations();
+        await _repository.syncRemoteConversations();
 
-      final newLocalRes = await _repository.loadConversations();
-      newLocalRes.fold(
-          (err) => _setState(_state.copyWith(error: err, isLoading: false)),
+        final newLocalRes = await _repository.loadConversations();
+        newLocalRes.fold(
+          (err) => state = state.copyWith(error: err, isLoading: false),
           (newLocalMsgs) async {
-        messages = List.from(newLocalMsgs);
+            msgs = List.from(newLocalMsgs);
 
-        if (messages.isEmpty) {
-          final initialRes = await _repository.loadInitialMessage();
-          initialRes.fold(
-              (err) {
-            // Ignore offline errors during background sync to avoid infinite snackbar loops
-            if (err.contains('No internet connection')) {
-              _setState(_state.copyWith(isLoading: false));
+            if (msgs.isEmpty) {
+              final initialRes = await _repository.loadInitialMessage();
+              initialRes.fold(
+                (err) {
+                  // Ignore offline errors during background sync
+                  if (err.contains('No internet connection')) {
+                    state = state.copyWith(isLoading: false);
+                  } else {
+                    state = state.copyWith(error: err, isLoading: false);
+                  }
+                },
+                (initialMsg) async {
+                  if (initialMsg != null) {
+                    msgs = [initialMsg];
+                    await _repository.saveConversations(msgs);
+                  }
+                  state = state.copyWith(messages: msgs, isLoading: false);
+                },
+              );
             } else {
-              _setState(_state.copyWith(error: err, isLoading: false));
+              state = state.copyWith(messages: msgs, isLoading: false);
             }
           },
-              (initialMsg) async {
-            if (initialMsg != null) {
-              messages = [initialMsg];
-              await _repository.saveConversations(messages);
-            }
-            _setState(_state.copyWith(
-              messages: messages,
-              isLoading: false,
-            ));
-          });
-        } else {
-          _setState(_state.copyWith(
-            messages: messages,
-            isLoading: false,
-          ));
-        }
-      });
-    });
+        );
+      },
+    );
   }
 
+  /// Fetches older paginated conversations from the database.
   Future<void> loadMoreMessages() async {
-    if (_state.isLoadingMore || !_state.hasMoreMessages) return;
+    if (state.isLoadingMore || !state.hasMoreMessages) return;
 
-    _setState(_state.copyWith(isLoadingMore: true));
-
+    state = state.copyWith(isLoadingMore: true);
     if (_activeSync != null) await _activeSync;
 
-    final targetPage = _state.currentPage + 1;
+    final targetPage = state.currentPage + 1;
     final result =
         await _repository.fetchPaginatedConversations(page: targetPage);
 
-    result.fold((err) {
-      _setState(_state.copyWith(
-        error: err,
-        isLoadingMore: false,
-      ));
-      _triggerPendingSyncIfAny();
-    }, (paginated) async {
-      if (paginated.messages.isNotEmpty) {
-        paginated.messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    result.fold(
+      (err) {
+        state = state.copyWith(error: err, isLoadingMore: false);
+        _triggerPendingSyncIfAny();
+      },
+      (paginated) async {
+        if (paginated.messages.isNotEmpty) {
+          paginated.messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-        final updatedConversations = [
-          ..._state.messages,
-          ...paginated.messages,
-        ];
+          final updatedConversations = [
+            ...state.messages,
+            ...paginated.messages
+          ];
+          final uniqueMessages = <String, AiChatMessage>{};
 
-        final uniqueMessages = <String, AiChatMessage>{};
-        for (var msg in updatedConversations) {
-          uniqueMessages[msg.id] = msg;
+          for (var msg in updatedConversations) {
+            uniqueMessages[msg.id] = msg;
+          }
+
+          final newMessages = uniqueMessages.values.toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          await _repository.saveConversations(newMessages);
+
+          state = state.copyWith(
+            messages: newMessages,
+            currentPage: targetPage,
+            hasMoreMessages: targetPage < paginated.totalPages,
+            isLoadingMore: false,
+          );
+        } else {
+          state = state.copyWith(hasMoreMessages: false, isLoadingMore: false);
         }
-
-        final newMessages = uniqueMessages.values.toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-        await _repository.saveConversations(newMessages);
-
-        _setState(_state.copyWith(
-          messages: newMessages,
-          currentPage: targetPage,
-          hasMoreMessages: targetPage < paginated.totalPages,
-          isLoadingMore: false,
-        ));
-      } else {
-        _setState(_state.copyWith(
-          hasMoreMessages: false,
-          isLoadingMore: false,
-        ));
-      }
-      _triggerPendingSyncIfAny();
-    });
+        _triggerPendingSyncIfAny();
+      },
+    );
   }
 
   void _triggerPendingSyncIfAny() {
-    if (_state.syncPending) {
-      _setState(_state.copyWith(syncPending: false));
+    if (state.syncPending) {
+      state = state.copyWith(syncPending: false);
       syncConversations();
     }
   }
 
+  /// Sends a text message to the AI Chat API.
   Future<void> sendMessage(String text) async {
-    if (text.trim().isEmpty || _state.isSending) return;
+    if (text.trim().isEmpty || state.isSending) return;
 
-    _setState(_state.copyWith(isSending: true));
-
+    state = state.copyWith(isSending: true);
     if (_activeSync != null) await _activeSync;
 
     final localId = const Uuid().v4();
@@ -245,69 +240,66 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
       localChatId: localId,
     );
 
-    _setState(_state.copyWith(
-      messages: [userMsg, ..._state.messages],
-    ));
+    state = state.copyWith(messages: [userMsg, ...state.messages]);
 
     final res = await _repository.sendMessage(text, localChatId: localId);
 
-    res.fold((err) {
-      final messages = List<AiChatMessage>.from(_state.messages);
-      final index = messages.indexWhere((m) => m.localChatId == localId);
-      if (index != -1) {
-        messages[index] =
-            messages[index].copyWith(status: MessageStatus.failed);
-      }
-      _setState(_state.copyWith(
-        messages: messages,
-        isSending: false,
-        error: err,
-      ));
-      _repository.saveConversations(messages);
-      _triggerPendingSyncIfAny();
-    }, (botData) {
-      final messages = List<AiChatMessage>.from(_state.messages);
+    res.fold(
+      (err) {
+        final msgs = List<AiChatMessage>.from(state.messages);
+        final index = msgs.indexWhere((m) => m.localChatId == localId);
 
-      final index = messages.indexWhere((m) => m.localChatId == localId);
-      if (index != -1) {
-        messages[index] = messages[index].copyWith(status: botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
-      }
-
-      if (botData.isNotEmpty) {
-        List<String> suggestions = [];
-        if (botData['suggestions'] != null) {
-          suggestions = List<String>.from(botData['suggestions']);
+        if (index != -1) {
+          msgs[index] = msgs[index].copyWith(status: MessageStatus.failed);
         }
 
-        final botMsg = AiChatMessage(
-          id: botData['_id'] as String,
-          sender: 'bot',
-          type: MessageType.text,
-          value: botData['text'] as String,
-          createdAt: DateTime.now(),
-          status: MessageStatus.sent,
-          suggestions: suggestions,
-          localChatId: localId,
-        );
+        state = state.copyWith(messages: msgs, isSending: false, error: err);
+        _repository.saveConversations(msgs);
+        _triggerPendingSyncIfAny();
+      },
+      (botData) {
+        final msgs = List<AiChatMessage>.from(state.messages);
+        final index = msgs.indexWhere((m) => m.localChatId == localId);
 
-        messages.insert(0, botMsg);
-      }
-      
-      _setState(_state.copyWith(
-        messages: messages,
-        isSending: false,
-      ));
-      _repository.saveConversations(messages);
-      _triggerPendingSyncIfAny();
-    });
+        if (index != -1) {
+          msgs[index] = msgs[index].copyWith(
+              status:
+                  botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
+        }
+
+        if (botData.isNotEmpty) {
+          List<String> suggestions = [];
+          if (botData['suggestions'] != null) {
+            suggestions = List<String>.from(botData['suggestions']);
+          }
+
+          final botMsg = AiChatMessage(
+            id: botData['_id'] as String,
+            sender: 'bot',
+            type: MessageType.text,
+            value: botData['text'] as String,
+            createdAt: DateTime.now(),
+            status: MessageStatus.sent,
+            suggestions: suggestions,
+            localChatId: localId,
+          );
+
+          msgs.insert(0, botMsg);
+        }
+
+        state = state.copyWith(messages: msgs, isSending: false);
+        _repository.saveConversations(msgs);
+        _triggerPendingSyncIfAny();
+      },
+    );
   }
 
+  /// Sends a voice note/audio file to the AI Chat API.
   Future<void> sendAudioMessage(String filePath,
       [String durationStr = "Voice Message"]) async {
-    if (_state.isSending) return;
+    if (state.isSending) return;
 
-    _setState(_state.copyWith(isSending: true));
-
+    state = state.copyWith(isSending: true);
     if (_activeSync != null) await _activeSync;
 
     final localId = const Uuid().v4();
@@ -322,74 +314,73 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
       audioUrl: filePath,
     );
 
-    _setState(_state.copyWith(
-      messages: [userMsg, ..._state.messages],
-    ));
+    state = state.copyWith(messages: [userMsg, ...state.messages]);
 
     final res = await _repository.sendAudioMessage(
         filePath: filePath, localChatId: localId);
 
-    res.fold((err) {
-      final messages = List<AiChatMessage>.from(_state.messages);
-      final index = messages.indexWhere((m) => m.localChatId == localId);
-      if (index != -1) {
-        messages[index] =
-            messages[index].copyWith(status: MessageStatus.failed);
-      }
-      _setState(_state.copyWith(
-        messages: messages,
-        isSending: false,
-        error: err,
-      ));
-      _repository.saveConversations(messages);
-      _triggerPendingSyncIfAny();
-    }, (botData) async {
-      final messages = List<AiChatMessage>.from(_state.messages);
+    res.fold(
+      (err) {
+        final msgs = List<AiChatMessage>.from(state.messages);
+        final index = msgs.indexWhere((m) => m.localChatId == localId);
 
-      final index = messages.indexWhere((m) => m.localChatId == localId);
-      if (index != -1) {
-        messages[index] = messages[index].copyWith(status: botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
-      }
-
-      if (botData.isNotEmpty) {
-        List<String> suggestions = [];
-        if (botData['suggestions'] != null) {
-          suggestions = List<String>.from(botData['suggestions']);
+        if (index != -1) {
+          msgs[index] = msgs[index].copyWith(status: MessageStatus.failed);
         }
 
-        final botMsg = AiChatMessage(
-          id: botData['_id'] as String,
-          sender: 'bot',
-          type: MessageType.text,
-          value: botData['text'] as String,
-          createdAt: DateTime.now(),
-          status: MessageStatus.sent,
-          suggestions: suggestions,
-          localChatId: localId,
-        );
+        state = state.copyWith(messages: msgs, isSending: false, error: err);
+        _repository.saveConversations(msgs);
+        _triggerPendingSyncIfAny();
+      },
+      (botData) async {
+        final msgs = List<AiChatMessage>.from(state.messages);
+        final index = msgs.indexWhere((m) => m.localChatId == localId);
 
-        messages.insert(0, botMsg);
-      }
+        if (index != -1) {
+          msgs[index] = msgs[index].copyWith(
+              status:
+                  botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
+        }
 
-      _setState(_state.copyWith(
-        messages: messages,
-        isSending: false,
-      ));
-      _repository.saveConversations(messages);
+        if (botData.isNotEmpty) {
+          List<String> suggestions = [];
+          if (botData['suggestions'] != null) {
+            suggestions = List<String>.from(botData['suggestions']);
+          }
 
-      _triggerPendingSyncIfAny();
-    });
+          final botMsg = AiChatMessage(
+            id: botData['_id'] as String,
+            sender: 'bot',
+            type: MessageType.text,
+            value: botData['text'] as String,
+            createdAt: DateTime.now(),
+            status: MessageStatus.sent,
+            suggestions: suggestions,
+            localChatId: localId,
+          );
+
+          msgs.insert(0, botMsg);
+        }
+
+        state = state.copyWith(messages: msgs, isSending: false);
+        _repository.saveConversations(msgs);
+        _triggerPendingSyncIfAny();
+      },
+    );
   }
 
+  /// Retries sending a previously failed message.
   Future<void> retryMessage(AiChatMessage failedMsg) async {
-    if (_state.isSending || _state.isLoading) return;
+    if (state.isSending || state.isLoading) return;
 
-    final updatedMessages = List<AiChatMessage>.from(_state.messages);
+    final updatedMessages = List<AiChatMessage>.from(state.messages);
     final index = updatedMessages.indexWhere((m) => m.id == failedMsg.id);
+
     if (index != -1) {
       updatedMessages.removeAt(index);
     }
-    _setState(_state.copyWith(messages: updatedMessages));
+
+    state = state.copyWith(messages: updatedMessages);
     _repository.deleteLocalMessageOnly(failedMsg.id);
 
     if (failedMsg.type == MessageType.audio && failedMsg.audioUrl != null) {
@@ -399,11 +390,13 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     }
   }
 
+  /// Deletes a chat message from local storage and state.
   Future<void> deleteMessage(String id) async {
     await _repository.deleteMessage(id);
 
-    final updatedMessages = List<AiChatMessage>.from(_state.messages);
+    final updatedMessages = List<AiChatMessage>.from(state.messages);
     updatedMessages.removeWhere((msg) => msg.id == id);
-    _setState(_state.copyWith(messages: updatedMessages));
+
+    state = state.copyWith(messages: updatedMessages);
   }
 }
