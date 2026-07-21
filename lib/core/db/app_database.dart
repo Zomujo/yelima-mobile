@@ -19,14 +19,25 @@ import 'daos/appointments_dao.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(
-    tables: [VitalHistories, AiChatConversations, PendingDeletions, UserProfiles, PendingMutations, Appointments],
-    daos: [VitalsDao, AiChatDao, UserProfilesDao, PendingMutationsDao, AppointmentsDao])
+@DriftDatabase(tables: [
+  VitalHistories,
+  AiChatConversations,
+  PendingDeletions,
+  UserProfiles,
+  PendingMutations,
+  Appointments
+], daos: [
+  VitalsDao,
+  AiChatDao,
+  UserProfilesDao,
+  PendingMutationsDao,
+  AppointmentsDao
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 10; // Incremented schema version
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration {
@@ -66,8 +77,8 @@ class AppDatabase extends _$AppDatabase {
           try {
             await m.addColumn(pendingMutations, pendingMutations.retryCount);
           } catch (e) {
-            // Ignore duplicate column errors if it was already added during a failed migration
-            debugPrint('Migration to 10: Column retry_count might already exist. Exception: $e');
+            debugPrint(
+                'Migration to 10: Column retry_count might already exist. Exception: $e');
           }
         }
       },

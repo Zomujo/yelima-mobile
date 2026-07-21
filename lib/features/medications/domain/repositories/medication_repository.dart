@@ -10,29 +10,32 @@ import '../../data/models/seeded_medication_list_response_model.dart';
 
 abstract class MedicationRepository {
   AsyncResponse<MedicationAdherence> getAdherence({required bool showWeekdays});
-  AsyncResponse<MedicationAdherence> getCachedAdherence({required bool showWeekdays});
+  AsyncResponse<MedicationAdherence> getCachedAdherence(
+      {required bool showWeekdays});
   Stream<MedicationAdherence> watchAdherence();
-  
+
   Stream<MedicationCount> watchMedicationCounts();
   Stream<List<MedicationEntity>> watchMedicationsBySection(String section);
-  
-  // Keep legacy async responses for backward compatibility during refactoring
+
   AsyncResponse<MedicationCount> getMedicationCounts();
-  
+
   AsyncResponse<List<MedicationEntity>> getMedicationsBySection(String section);
-  
-  AsyncResponse<void> confirmMedication(String medicationId, String section, {String? date});
+
+  AsyncResponse<void> confirmMedication(String medicationId, String section,
+      {String? date});
 
   AsyncResponse<String> createMedication(CreateMedicationModel data);
   AsyncResponse<MedicationDetailModel> getMedicationById(String id);
   AsyncResponse<String> updateMedication(String id, UpdateMedicationModel data);
-  AsyncResponse<SeededMedicationListResponseModel> getPreloadedMedications({int page = 1, int limit = 10, String? search});
+  AsyncResponse<SeededMedicationListResponseModel> getPreloadedMedications(
+      {int page = 1, int limit = 10, String? search});
 
-  AsyncResponse<MedicationListResponse> getAllMedications({int page = 1, int pageSize = 10, bool forceRefresh = false});
+  AsyncResponse<MedicationListResponse> getAllMedications(
+      {int page = 1, int pageSize = 10, bool forceRefresh = false});
 
   Stream<List<MedicationEntity>> watchAllMedications();
-  
 
-
-  AsyncResponse<MedicationHistoryEntity> getMedicationHistory(String medicationId, {required String date});
+  AsyncResponse<MedicationHistoryEntity> getMedicationHistory(
+      String medicationId,
+      {required String date});
 }

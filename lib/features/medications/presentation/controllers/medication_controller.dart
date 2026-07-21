@@ -1,21 +1,19 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../domain/entities/medication_count.dart';
-import '../../domain/entities/medication_adherence.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/repositories/medication_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
-
 import '../states/medications_state.dart';
 
 class MedicationController extends ChangeNotifier with SafeNotifier {
   final MedicationRepository repository;
+
   MedicationController({required this.repository});
 
   MedicationsState _state = const MedicationsState();
   MedicationsState get state => _state;
 
   set state(MedicationsState value) {
+    if (_state == value) return;
     _state = value;
     notifyListeners();
   }
@@ -33,121 +31,92 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     }
   }
 
-  StreamSubscription<MedicationCount>? _countsSubscription;
-  StreamSubscription<List<MedicationEntity>>? _medsSubscription;
-  StreamSubscription<MedicationAdherence>? _adherenceSubscription;
-
+  /// Initializes the controller by fetching adherence, counts, and medications.
   void init() {
     fetchAdherence();
-
-    _adherenceSubscription?.cancel();
-    _adherenceSubscription = repository.watchAdherence().listen((data) {
-      if (data.days.isNotEmpty || data.rate > 0) {
-        state = state.copyWith(
-            adherence: data, isAdherenceLoading: false, adherenceError: null);
-      } else {
-        // If empty, keep what we have or just set empty. We'll set it.
-        state = state.copyWith(
-            adherence: data, isAdherenceLoading: false, adherenceError: null);
-      }
-    }, onError: (e) {
-      state = state.copyWith(
-          adherenceError: e.toString(), isAdherenceLoading: false);
-    });
-
-    _countsSubscription?.cancel();
-    _countsSubscription = repository.watchMedicationCounts().listen((counts) {
-      state = state.copyWith(
-          counts: counts, isCountsLoading: false, countsError: null);
-    }, onError: (e) {
-      state = state.copyWith(countsError: e.toString(), isCountsLoading: false);
-    });
-
-    _subscribeToCurrentSection();
+    fetchCounts();
+    fetchMedications();
   }
 
-  void _subscribeToCurrentSection() {
-    final section = _currentSection;
-    _setSectionLoading(section, true);
-
-    _medsSubscription?.cancel();
-    _medsSubscription =
-        repository.watchMedicationsBySection(section).listen((meds) async {
-      _setSectionData(section, meds);
-
-      _setSectionLoading(section, false);
-      _setSectionError(section, null);
-    }, onError: (e) {
-      _setSectionError(section, e.toString());
-      _setSectionLoading(section, false);
-    });
-
-    _refreshSection(section);
-  }
-
-  Future<void> _refreshSection(String section) async {
-    final result = await repository.getMedicationsBySection(section);
-    result.fold((error) {
-      final hasData = state.medicationsBySection[section]?.isNotEmpty ?? false;
-      if (!hasData) _setSectionError(section, error);
-      _setSectionLoading(section, false);
-    }, (_) {
-      _setSectionLoading(section, false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _countsSubscription?.cancel();
-    _medsSubscription?.cancel();
-    _adherenceSubscription?.cancel();
-    super.dispose();
-  }
-
+  /// Updates the selected tab index and refreshes the medication list for that time of day.
   void setTabIndex(int index) {
     if (state.selectedTabIndex != index) {
       state = state.copyWith(selectedTabIndex: index);
-      _subscribeToCurrentSection();
+      fetchMedications();
     }
   }
 
+  /// Fetches the user's overall medication adherence rate from the backend.
   Future<void> fetchAdherence() async {
-    // Triggers network fetch which natively updates the DB stream
-    await repository.getAdherence(showWeekdays: true);
+    state = state.copyWith(isAdherenceLoading: true, adherenceError: null);
+    final result = await repository.getAdherence(showWeekdays: true);
+
+    state = result.fold(
+      (error) =>
+          state.copyWith(isAdherenceLoading: false, adherenceError: error),
+      (data) => state.copyWith(
+          isAdherenceLoading: false, adherence: data, adherenceError: null),
+    );
   }
 
-  // Legacy stubs kept for compatibility if called elsewhere temporarily
-  Future<void> fetchCounts() async {}
-  Future<void> fetchMedications() async {}
+  /// Fetches the number of medications taken and missed for the day.
+  Future<void> fetchCounts() async {
+    state = state.copyWith(isCountsLoading: true, countsError: null);
+    final result = await repository.getMedicationCounts();
+
+    state = result.fold(
+      (error) => state.copyWith(isCountsLoading: false, countsError: error),
+      (data) => state.copyWith(
+          isCountsLoading: false, counts: data, countsError: null),
+    );
+  }
+
+  /// Fetches the medication list for the currently selected time section.
+  Future<void> fetchMedications() async {
+    final section = _currentSection;
+    _setSectionLoading(section, true);
+
+    final result = await repository.getMedicationsBySection(section);
+
+    state = result.fold(
+      (error) => _buildStateWithError(section, error, false),
+      (data) => _buildStateWithData(section, data, false),
+    );
+  }
+
+  MedicationsState _buildStateWithError(
+      String section, String error, bool isLoading) {
+    final newErrors = Map<String, String>.from(state.sectionErrors)
+      ..[section] = error;
+    final newLoading = Map<String, bool>.from(state.sectionLoadingStatus)
+      ..[section] = isLoading;
+    return state.copyWith(
+        sectionErrors: newErrors, sectionLoadingStatus: newLoading);
+  }
+
+  MedicationsState _buildStateWithData(
+      String section, List<MedicationEntity> data, bool isLoading) {
+    final newErrors = Map<String, String>.from(state.sectionErrors)
+      ..remove(section);
+    final newLoading = Map<String, bool>.from(state.sectionLoadingStatus)
+      ..[section] = isLoading;
+    final newMeds =
+        Map<String, List<MedicationEntity>>.from(state.medicationsBySection)
+          ..[section] = data;
+    return state.copyWith(
+      sectionErrors: newErrors,
+      sectionLoadingStatus: newLoading,
+      medicationsBySection: newMeds,
+    );
+  }
 
   void _setSectionLoading(String section, bool isLoading) {
-    state = state.copyWith(
-      sectionLoadingStatus: {
-        ...state.sectionLoadingStatus,
-        section: isLoading,
-      },
-    );
+    final newLoading = Map<String, bool>.from(state.sectionLoadingStatus)
+      ..[section] = isLoading;
+    state = state.copyWith(sectionLoadingStatus: newLoading);
   }
 
-  void _setSectionError(String section, String? error) {
-    final newErrors = Map<String, String>.from(state.sectionErrors);
-    if (error == null) {
-      newErrors.remove(section);
-    } else {
-      newErrors[section] = error;
-    }
-    state = state.copyWith(sectionErrors: newErrors);
-  }
-
-  void _setSectionData(String section, List<MedicationEntity> data) {
-    state = state.copyWith(
-      medicationsBySection: {
-        ...state.medicationsBySection,
-        section: data,
-      },
-    );
-  }
-
+  /// Optimistically marks a medication as taken and syncs the update with the backend.
   Future<String?> toggleMedicationStatus(String id) async {
     final section = _currentSection;
     final currentList = state.medicationsBySection[section];
@@ -157,7 +126,6 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     if (index == -1) return null;
 
     final med = currentList[index];
-
     if (med.taken) return null;
 
     if (DateTime.now().isBefore(med.toBeTakenAt)) {
@@ -166,40 +134,44 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
 
     if (state.confirmingMedicationIds.contains(id)) return null;
 
-    state = state.copyWith(
-      confirmingMedicationIds: {...state.confirmingMedicationIds, id},
-    );
+    _setConfirming(id, true);
 
-    final updatedMed = med.copyWith(taken: true);
     final newList = List<MedicationEntity>.from(currentList);
-    newList[index] = updatedMed;
-
-    _setSectionData(section, newList);
+    newList[index] = med.copyWith(taken: true);
+    state = _buildStateWithData(
+        section, newList, state.sectionLoadingStatus[section] ?? false);
 
     final result = await repository.confirmMedication(id, section);
+
     return result.fold(
       (error) {
-        final newConfirming = Set<String>.from(state.confirmingMedicationIds);
-        newConfirming.remove(id);
-        state = state.copyWith(confirmingMedicationIds: newConfirming);
+        _setConfirming(id, false);
 
-        // Revert on failure
         final revertedList = List<MedicationEntity>.from(
             state.medicationsBySection[section] ?? []);
         final revertIndex = revertedList.indexWhere((m) => m.id == id);
         if (revertIndex != -1) {
           revertedList[revertIndex] = med;
-          _setSectionData(section, revertedList);
+          state = _buildStateWithData(section, revertedList,
+              state.sectionLoadingStatus[section] ?? false);
         }
         return error;
       },
       (_) {
-        final newConfirming = Set<String>.from(state.confirmingMedicationIds);
-        newConfirming.remove(id);
-        state = state.copyWith(confirmingMedicationIds: newConfirming);
+        _setConfirming(id, false);
         fetchAdherence();
         return null;
       },
     );
+  }
+
+  void _setConfirming(String id, bool isConfirming) {
+    final newConfirming = Set<String>.from(state.confirmingMedicationIds);
+    if (isConfirming) {
+      newConfirming.add(id);
+    } else {
+      newConfirming.remove(id);
+    }
+    state = state.copyWith(confirmingMedicationIds: newConfirming);
   }
 }

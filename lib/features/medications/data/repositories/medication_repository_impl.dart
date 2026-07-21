@@ -39,8 +39,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Stream<List<MedicationEntity>> watchAllMedications() => const Stream.empty();
 
-
-
   @override
   AsyncResponse<MedicationAdherence> getAdherence(
       {required bool showWeekdays}) async {
@@ -155,8 +153,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
       return left('No internet');
     }
   }
-
-
 
   @override
   AsyncResponse<String> createMedication(CreateMedicationModel data) async {

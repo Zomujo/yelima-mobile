@@ -7,11 +7,10 @@ import 'presentation/controllers/progress_controller.dart';
 void initProgress(GetIt sl) {
   sl.registerLazySingleton<ProgressRemoteDataSource>(
       () => ProgressRemoteDataSourceImpl(sl()));
-  sl.registerLazySingleton<ProgressRepository>(
-      () => ProgressRepositoryImpl(
-            remoteDataSource: sl(),
-            connectivityService: sl(),
-            db: sl(),
-          ));
+  sl.registerLazySingleton<ProgressRepository>(() => ProgressRepositoryImpl(
+        remoteDataSource: sl(),
+        connectivityService: sl(),
+        db: sl(),
+      ));
   sl.registerFactory(() => ProgressController(sl()));
 }

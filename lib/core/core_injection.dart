@@ -71,7 +71,7 @@ void initCore(GetIt sl) {
         db: sl(),
         remoteSources: {
           'chat': sl<AiChatRemoteMutationSource>(),
-          },
+        },
       )
         ..init()
         ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));

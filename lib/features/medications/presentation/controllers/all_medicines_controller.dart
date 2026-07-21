@@ -33,8 +33,6 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
     if (listState.data == null) {
       listState = listState.copyWith(isLoading: true, error: null);
       notifyListeners();
-
-
     }
 
     if (listState.data == null) {
@@ -46,8 +44,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
         page: 1, pageSize: 50, forceRefresh: forceRefresh);
     refreshResult.fold((failure) {
       if (listState.data == null || listState.data!.rows.isEmpty) {
-        listState =
-            listState.copyWith(error: failure, isLoading: false);
+        listState = listState.copyWith(error: failure, isLoading: false);
         notifyListeners();
       }
     }, (data) {
@@ -55,8 +52,6 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
       notifyListeners();
     });
   }
-
-
 
   void fetchMedicationHistory(String id, {DateTime? targetMonth}) async {
     final month = targetMonth ?? DateTime.now();
@@ -69,8 +64,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
     final result = await repository.getMedicationHistory(id, date: date);
     result.fold(
       (failure) {
-        historyStates[id] =
-            MedicationState(error: failure, isLoading: false);
+        historyStates[id] = MedicationState(error: failure, isLoading: false);
         notifyListeners();
       },
       (data) {
@@ -127,8 +121,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
     final result = await repository.createMedication(data);
     return result.fold(
       (failure) {
-        formSubmitState =
-            MedicationState(error: failure, isLoading: false);
+        formSubmitState = MedicationState(error: failure, isLoading: false);
         notifyListeners();
         return false;
       },
@@ -149,8 +142,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
     final result = await repository.updateMedication(id, data);
     return result.fold(
       (failure) {
-        formSubmitState =
-            MedicationState(error: failure, isLoading: false);
+        formSubmitState = MedicationState(error: failure, isLoading: false);
         notifyListeners();
         return false;
       },
@@ -158,8 +150,8 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
         formSubmitState =
             MedicationState(data: successMsg, isLoading: false, error: null);
         notifyListeners();
-        fetchAllMedicines(forceRefresh: true); // Refresh list after update
-        fetchMedicationDetails(id); // Refresh details
+        fetchAllMedicines(forceRefresh: true);
+        fetchMedicationDetails(id);
         return true;
       },
     );

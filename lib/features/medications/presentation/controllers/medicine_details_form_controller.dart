@@ -21,8 +21,6 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     notesController.addListener(_markChanged);
   }
 
-
-
   MedicineDetailsFormState state = const MedicineDetailsFormState();
 
   final nameController = TextEditingController();
@@ -202,7 +200,6 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
       (error) => error,
       (_) {
         toggleEditing(false);
-        // Refresh the list so the header card reflects the latest values
         allMedicinesController.fetchAllMedicines(forceRefresh: true);
         allMedicinesController.fetchMedicationDetails(medicationId);
         return null;

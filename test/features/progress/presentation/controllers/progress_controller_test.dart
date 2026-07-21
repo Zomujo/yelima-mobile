@@ -6,19 +6,15 @@ import 'package:yelima/features/progress/domain/entities/vital_trends.dart';
 import 'package:yelima/features/progress/domain/repositories/progress_repository.dart';
 import 'package:yelima/features/progress/presentation/controllers/progress_controller.dart';
 
-
-
 class MockProgressRepository extends Mock implements ProgressRepository {}
-
 
 void main() {
   late ProgressController controller;
   late MockProgressRepository mockRepository;
-  
 
   setUp(() {
     mockRepository = MockProgressRepository();
-        
+
     controller = ProgressController(mockRepository);
   });
 

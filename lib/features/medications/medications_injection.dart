@@ -14,8 +14,7 @@ void initMedications(GetIt sl) {
       () => MedicationRemoteDataSourceImpl(apiClient: sl()));
   // Repository
   sl.registerLazySingleton<MedicationRepository>(() => MedicationRepositoryImpl(
-      remoteDataSource: sl(),
-      connectivityService: sl()));
+      remoteDataSource: sl(), connectivityService: sl()));
 
   // Use cases
   sl.registerLazySingleton<UpdateMedicationUseCase>(
@@ -24,7 +23,6 @@ void initMedications(GetIt sl) {
       () => CreateMedicationUseCase(sl()));
 
   // Controllers
-  sl.registerFactory(
-      () => MedicationController(repository: sl()));
+  sl.registerFactory(() => MedicationController(repository: sl()));
   sl.registerFactory(() => AllMedicinesController(repository: sl()));
 }
