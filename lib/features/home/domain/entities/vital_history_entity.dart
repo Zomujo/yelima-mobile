@@ -36,4 +36,21 @@ class HomeMetricsEntity extends Equatable {
 
   @override
   List<Object?> get props => [bloodPressure, bloodGlucose, adherenceRate];
+
+  /// Returns the blood pressure parsed as a tuple of (systolic, diastolic).
+  (int, int)? get parsedBloodPressure {
+    if (bloodPressure == null || bloodPressure!.isEmpty || bloodPressure!.contains('--')) return null;
+    final parts = bloodPressure!.split('/');
+    if (parts.length != 2) return null;
+    final sys = int.tryParse(parts[0].trim());
+    final dia = int.tryParse(parts[1].trim());
+    if (sys != null && dia != null) return (sys, dia);
+    return null;
+  }
+
+  /// Returns the blood glucose parsed as a double.
+  double? get parsedBloodGlucose {
+    if (bloodGlucose == null || bloodGlucose!.isEmpty || bloodGlucose!.contains('--')) return null;
+    return double.tryParse(bloodGlucose!.trim());
+  }
 }

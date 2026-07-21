@@ -21,112 +21,70 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
       ReadingLoggingState(selectedDate: DateTime.now());
   ReadingLoggingState get state => _state;
 
-  Future<void> init() async {
-    final result = await _repository.getHomeMetrics();
-
-    if (isDisposed) return;
-
-    result.fold(
-      (_) {},
-      (metrics) {
-        int? initialSys;
-        int? initialDia;
-        double? initialSugar;
-
-        if (metrics.bloodPressure != null &&
-            metrics.bloodPressure!.isNotEmpty &&
-            !metrics.bloodPressure!.contains('--')) {
-          final parts = metrics.bloodPressure!.split('/');
-          if (parts.length == 2) {
-            final sys = int.tryParse(parts[0].trim());
-            final dia = int.tryParse(parts[1].trim());
-            if (sys != null && dia != null) {
-              initialSys = sys;
-              initialDia = dia;
-            }
-          }
-        }
-        if (metrics.bloodGlucose != null &&
-            metrics.bloodGlucose!.isNotEmpty &&
-            !metrics.bloodGlucose!.contains('--')) {
-          final level = double.tryParse(metrics.bloodGlucose!.trim());
-          if (level != null) {
-            initialSugar = level;
-          }
-        }
-
-        _state = _state.copyWith(
-          systolic: initialSys ?? _state.systolic,
-          diastolic: initialDia ?? _state.diastolic,
-          sugarLevel: initialSugar ?? _state.sugarLevel,
-        );
-
-        if (!isDisposed) notifyListeners();
-      },
-    );
-  }
-
-  void setTypeIndex(int index) {
-    if (_state.selectedTypeIndex != index) {
-      _state = _state.copyWith(
-        selectedTypeIndex: index,
-        hasChanged: false, // reset when switching tabs
-      );
-      notifyListeners();
-    }
-  }
-
-  void setBloodPressure(int sys, int dia) {
-    if (_state.systolic != sys || _state.diastolic != dia) {
-      _state = _state.copyWith(
-        systolic: sys,
-        diastolic: dia,
-        hasChanged: true,
-      );
-      notifyListeners();
-    }
-  }
-
-  void setSugarLevel(double level) {
-    if (_state.sugarLevel != level) {
-      _state = _state.copyWith(
-        sugarLevel: level,
-        hasChanged: true,
-      );
-      notifyListeners();
-    }
-  }
-
-  void setSelectedDate(DateTime date) {
-    // Preserve the current time if the user picks a new day
-    final now = DateTime.now();
-    final newDate = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      now.hour,
-      now.minute,
-      now.second,
-    );
-    _state = _state.copyWith(
-      selectedDate: newDate,
-      hasChanged: true,
-    );
+  set state(ReadingLoggingState value) {
+    if (_state == value) return;
+    _state = value;
     notifyListeners();
   }
 
+  /// Fetches the latest home metrics to prepopulate the reading forms.
+  Future<void> init() async {
+    final result = await _repository.getHomeMetrics();
+
+    result.fold((_) {}, (metrics) {
+      final bp = metrics.parsedBloodPressure;
+      final sugar = metrics.parsedBloodGlucose;
+
+      state = state.copyWith(
+        systolic: bp?.$1 ?? state.systolic,
+        diastolic: bp?.$2 ?? state.diastolic,
+        sugarLevel: sugar ?? state.sugarLevel,
+      );
+    });
+  }
+
+  /// Updates the currently selected tab (e.g., Blood Pressure vs. Blood Glucose).
+  void setTypeIndex(int index) {
+    if (state.selectedTypeIndex != index) {
+      state = state.copyWith(selectedTypeIndex: index, hasChanged: false);
+    }
+  }
+
+  /// Sets the blood pressure readings (systolic and diastolic).
+  void setBloodPressure(int sys, int dia) {
+    if (state.systolic != sys || state.diastolic != dia) {
+      state = state.copyWith(systolic: sys, diastolic: dia, hasChanged: true);
+    }
+  }
+
+  /// Sets the blood glucose reading level.
+  void setSugarLevel(double level) {
+    if (state.sugarLevel != level) {
+      state = state.copyWith(sugarLevel: level, hasChanged: true);
+    }
+  }
+
+  /// Updates the selected date while preserving the current time.
+  void setSelectedDate(DateTime date) {
+    final now = DateTime.now();
+    final newDate = DateTime(
+        date.year, date.month, date.day, now.hour, now.minute, now.second);
+
+    state = state.copyWith(selectedDate: newDate, hasChanged: true);
+  }
+
+  /// Saves the current vital reading to the backend.
   AsyncResponse<void> saveReading() async {
-    _state = _state.copyWith(isSaving: true);
-    if (!isDisposed) notifyListeners();
+    state = state.copyWith(isSaving: true);
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
         final formData = ReadingFormData(
-          selectedTypeIndex: _state.selectedTypeIndex,
-          systolic: _state.systolic,
-          diastolic: _state.diastolic,
-          sugarLevel: _state.sugarLevel,
-          recordedAt: _state.selectedDate,
+          selectedTypeIndex: state.selectedTypeIndex,
+          systolic: state.systolic,
+          diastolic: state.diastolic,
+          sugarLevel: state.sugarLevel,
+          recordedAt: state.selectedDate,
         );
 
         return await _saveVitalReadingUseCase(formData);
@@ -134,12 +92,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
       operationName: 'saveReading',
     );
 
-    _state = _state.copyWith(
-      isSaving: false,
-      hasChanged: response.isLeft(), // Reset hasChanged if successful
-    );
-    if (!isDisposed) notifyListeners();
-
+    state = state.copyWith(isSaving: false, hasChanged: response.isLeft());
     return response;
   }
 }

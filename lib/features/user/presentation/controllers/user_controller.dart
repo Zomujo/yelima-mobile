@@ -26,15 +26,16 @@ class UserController extends ChangeNotifier with SafeNotifier {
   UserState _state = const UserState();
   UserState get state => _state;
 
+  set state(UserState value) {
+    if (_state == value) return;
+    _state = value;
+    notifyListeners();
+  }
+
   UserEntity? get userEntity => _state.userEntity;
   bool get isInitialized => _state.isInitialized;
 
   int _userEventStamp = 0;
-
-  void _updateState(UserState newState) {
-    _state = newState;
-    notifyListeners();
-  }
 
   void _initializeAuthStateListener() {
     _authStateSubscription?.cancel();
@@ -43,14 +44,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
       final stamp = ++_userEventStamp;
 
       if (user == null) {
-        _updateState(_state.copyWith(
-          userEntity: null,
-          isInitialized: true,
-        ));
+        state = state.copyWith(userEntity: null, isInitialized: true);
       } else {
-        _updateState(_state.copyWith(
-          isInitialized: false,
-        ));
+        state = state.copyWith(isInitialized: false);
 
         UserEntity? resolvedProfile =
             await _repository.getCachedProfile(user.uid);
@@ -68,33 +64,30 @@ class UserController extends ChangeNotifier with SafeNotifier {
           );
         }
 
-        _updateState(_state.copyWith(
-          userEntity: resolvedProfile,
-          isInitialized: true,
-        ));
-
+        state =
+            state.copyWith(userEntity: resolvedProfile, isInitialized: true);
         refreshProfile(user);
       }
     });
   }
 
+  /// Refreshes the user profile from the network and subscribes to offline changes.
   Future<void> refreshProfile(User user) async {
     final profileResult = await _repository.getUserProfile(user.uid);
     profileResult.fold(
       (error) {},
       (profile) {
-        if (profile != null && profile != _state.userEntity) {
-          _updateState(_state.copyWith(userEntity: profile));
+        if (profile != null && profile != state.userEntity) {
+          state = state.copyWith(userEntity: profile);
         }
       },
     );
 
     _userProfileSubscription?.cancel();
     _userProfileSubscription =
-        _repository.watchUserProfile(user.uid).listen((userEntity) {
-      if (userEntity != null || _state.userEntity == null) {
-        _state = _state.copyWith(userEntity: userEntity);
-        if (_state.isInitialized) notifyListeners();
+        _repository.watchUserProfile(user.uid).listen((entity) {
+      if (entity != null || state.userEntity == null) {
+        state = state.copyWith(userEntity: entity);
       }
     });
   }
@@ -110,6 +103,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     AppSnackBar.showError(context, message: message);
   }
 
+  /// Updates the user's basic information such as name and gender.
   AsyncResponse<void> updateBasicInfo(
     BuildContext context, {
     required String firstName,
@@ -124,9 +118,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
         final currentStatusIndex =
-            _state.userEntity?.registrationStatus.index ?? 0;
+            state.userEntity?.registrationStatus.index ?? 0;
         final newStatus = currentStatusIndex > RegistrationStatus.dob.index
-            ? _state.userEntity!.registrationStatus
+            ? state.userEntity!.registrationStatus
             : RegistrationStatus.dob;
 
         final data = {
@@ -152,34 +146,30 @@ class UserController extends ChangeNotifier with SafeNotifier {
       },
       (_) {
         final currentStatusIndex =
-            _state.userEntity?.registrationStatus.index ?? 0;
+            state.userEntity?.registrationStatus.index ?? 0;
         final newStatus = currentStatusIndex > RegistrationStatus.dob.index
-            ? _state.userEntity!.registrationStatus
+            ? state.userEntity!.registrationStatus
             : RegistrationStatus.dob;
 
-        final currentEntity = _state.userEntity ??
-            UserEntity(
-              id: user.uid,
-              email: user.email ?? '',
-            );
+        final currentEntity = state.userEntity ??
+            UserEntity(id: user.uid, email: user.email ?? '');
 
-        _updateState(_state.copyWith(
+        state = state.copyWith(
           userEntity: currentEntity.copyWith(
             firstName: firstName,
             lastName: lastName,
             gender: gender,
             registrationStatus: newStatus,
           ),
-        ));
+        );
         return right(null);
       },
     );
   }
 
-  AsyncResponse<void> updateDob(
-    BuildContext context, {
-    required DateTime dob,
-  }) async {
+  /// Updates the user's date of birth.
+  AsyncResponse<void> updateDob(BuildContext context,
+      {required DateTime dob}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return left('User not authenticated');
 
@@ -188,10 +178,10 @@ class UserController extends ChangeNotifier with SafeNotifier {
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
         final currentStatusIndex =
-            _state.userEntity?.registrationStatus.index ?? 0;
+            state.userEntity?.registrationStatus.index ?? 0;
         final newStatus =
             currentStatusIndex > RegistrationStatus.healthConditions.index
-                ? _state.userEntity!.registrationStatus
+                ? state.userEntity!.registrationStatus
                 : RegistrationStatus.healthConditions;
 
         final data = {
@@ -213,32 +203,33 @@ class UserController extends ChangeNotifier with SafeNotifier {
       },
       (_) {
         final currentStatusIndex =
-            _state.userEntity?.registrationStatus.index ?? 0;
+            state.userEntity?.registrationStatus.index ?? 0;
         final newStatus =
             currentStatusIndex > RegistrationStatus.healthConditions.index
-                ? _state.userEntity!.registrationStatus
+                ? state.userEntity!.registrationStatus
                 : RegistrationStatus.healthConditions;
 
-        if (_state.userEntity != null) {
-          _updateState(_state.copyWith(
-            userEntity: _state.userEntity!.copyWith(
+        if (state.userEntity != null) {
+          state = state.copyWith(
+            userEntity: state.userEntity!.copyWith(
               dateOfBirth: dob,
               registrationStatus: newStatus,
             ),
-          ));
+          );
         }
         return right(null);
       },
     );
   }
 
+  /// Finalizes onboarding by updating the user's health conditions and consent.
   AsyncResponse<void> updateHealthConditions(
     BuildContext context, {
     required HealthConditionCategory? category,
     required bool consented,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || _state.userEntity == null || category == null) {
+    if (user == null || state.userEntity == null || category == null) {
       return left('Invalid user state or missing category');
     }
 
@@ -249,14 +240,14 @@ class UserController extends ChangeNotifier with SafeNotifier {
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
         final onboardData = {
-          "firstname": _state.userEntity!.firstName ?? '',
-          "lastname": _state.userEntity!.lastName ?? '',
-          "gender": _state.userEntity!.gender?.toLowerCase() ??
-              'prefer_not_to_say',
+          "firstname": state.userEntity!.firstName ?? '',
+          "lastname": state.userEntity!.lastName ?? '',
+          "gender":
+              state.userEntity!.gender?.toLowerCase() ?? 'prefer_not_to_say',
           "dateOfBirth":
-              _state.userEntity!.dateOfBirth?.toUtc().toIso8601String() ??
+              state.userEntity!.dateOfBirth?.toUtc().toIso8601String() ??
                   DateTime.now().toUtc().toIso8601String(),
-          "age": _state.userEntity!.age ?? 0,
+          "age": state.userEntity!.age ?? 0,
           "chronicConditions":
               conditionsPayload.map((c) => c.toLowerCase()).toList(),
         };
@@ -301,14 +292,14 @@ class UserController extends ChangeNotifier with SafeNotifier {
         return left(error);
       },
       (_) {
-        _updateState(_state.copyWith(
-          userEntity: _state.userEntity!.copyWith(
+        state = state.copyWith(
+          userEntity: state.userEntity!.copyWith(
             conditions: conditionsPayload,
             hasConsented: consented,
             registrationStatus: RegistrationStatus.complete,
             createdAt: DateTime.now(),
           ),
-        ));
+        );
         return right(null);
       },
     );

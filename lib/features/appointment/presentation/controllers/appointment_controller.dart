@@ -19,10 +19,12 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
   AppointmentState get state => _state;
 
   set state(AppointmentState value) {
+    if (_state == value) return;
     _state = value;
     notifyListeners();
   }
 
+  /// Sets up a listener for real-time updates to the local appointments cache.
   void _initSubscription() {
     _appointmentSubscription =
         repository.watchAppointments().listen((appointments) {
@@ -34,14 +36,9 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
           appointments.where((a) => a.appointmentDate.isBefore(now)).toList();
 
       state = state.copyWith(
-        upcomingState: state.upcomingState.copyWith(
-          items: upcoming,
-          isLoading: false,
-        ),
-        pastState: state.pastState.copyWith(
-          items: past,
-          isLoading: false,
-        ),
+        upcomingState:
+            state.upcomingState.copyWith(items: upcoming, isLoading: false),
+        pastState: state.pastState.copyWith(items: past, isLoading: false),
       );
     });
   }
@@ -52,8 +49,14 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     super.dispose();
   }
 
-  final int pageSize = 10;
+  /// Initializes the controller by fetching nearest and paginated appointments.
+  void initialize() {
+    fetchNearestAppointment();
+    fetchAppointments(filter: 'upcoming', isRefresh: true);
+    fetchAppointments(filter: 'past', isRefresh: true);
+  }
 
+  /// Fetches the single nearest upcoming appointment for the dashboard.
   Future<void> fetchNearestAppointment() async {
     final stamp = ++_nearestFetchStamp;
     state = state.copyWith(isNearestLoading: true, nearestError: null);
@@ -62,17 +65,14 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
 
     if (stamp != _nearestFetchStamp) return;
 
-    result.fold(
-      (error) {
-        state = state.copyWith(isNearestLoading: false, nearestError: error);
-      },
-      (data) {
-        state =
-            state.copyWith(isNearestLoading: false, nearestAppointment: data);
-      },
+    state = result.fold(
+      (error) => state.copyWith(isNearestLoading: false, nearestError: error),
+      (data) =>
+          state.copyWith(isNearestLoading: false, nearestAppointment: data),
     );
   }
 
+  /// Fetches a paginated list of appointments filtered by 'upcoming' or 'past'.
   Future<void> fetchAppointments({
     required String filter,
     bool isRefresh = false,
@@ -101,7 +101,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
 
     final result = await repository.getAppointments(
       page: pageToFetch,
-      pageSize: pageSize,
+      pageSize: 10,
       filter: filter,
     );
 
@@ -110,10 +110,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
         _updatePaginatedState(
           filter,
           currentPaginatedState.copyWith(
-            isLoading: false,
-            isFetchingMore: false,
-            error: error,
-          ),
+              isLoading: false, isFetchingMore: false, error: error),
         );
       },
       (data) {
@@ -137,21 +134,15 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  Future<String?> requestAppointment({
-    required String note,
-  }) async {
+  /// Submits a request for a new appointment with the provided note.
+  Future<String?> requestAppointment({required String note}) async {
     if (state.isRequestingAppointment) return null;
 
     state = state.copyWith(isRequestingAppointment: true);
-
     final result = await repository.requestAppointment(note: note);
-
     state = state.copyWith(isRequestingAppointment: false);
 
-    return result.fold(
-      (error) => error,
-      (_) => null,
-    );
+    return result.fold((error) => error, (_) => null);
   }
 
   void _updatePaginatedState(
@@ -161,11 +152,5 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     } else {
       state = state.copyWith(pastState: newState);
     }
-  }
-
-  void initialize() {
-    fetchNearestAppointment();
-    fetchAppointments(filter: 'upcoming', isRefresh: true);
-    fetchAppointments(filter: 'past', isRefresh: true);
   }
 }
