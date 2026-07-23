@@ -11,9 +11,17 @@ import 'features/medications/medications_injection.dart';
 import 'features/appointment/appointment_injection.dart';
 import 'features/reading_logging/reading_logging_injection.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/shared_prefs_service.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  // Wait for SharedPreferences
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton(() => sharedPreferences);
+  sl.registerLazySingleton(() => SharedPrefsService(sl()));
+
   // --- Core Infrastructure & Services ---
   initCore(sl);
 

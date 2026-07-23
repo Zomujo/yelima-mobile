@@ -11,11 +11,18 @@ import 'tables/pending_deletions.dart';
 import 'tables/user_profiles.dart';
 import 'tables/pending_mutations.dart';
 import 'tables/appointments.dart';
+import 'tables/medications.dart';
+import 'tables/preloaded_medications.dart';
 import 'daos/vitals_dao.dart';
 import 'daos/ai_chat_dao.dart';
 import 'daos/user_profiles_dao.dart';
 import 'daos/pending_mutations_dao.dart';
 import 'daos/appointments_dao.dart';
+import 'daos/medications_dao.dart';
+import 'tables/adherence_globals.dart';
+import 'tables/adherence_global_days.dart';
+import 'tables/medication_logs.dart';
+import 'daos/adherence_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -25,19 +32,26 @@ part 'app_database.g.dart';
   PendingDeletions,
   UserProfiles,
   PendingMutations,
-  Appointments
+  Appointments,
+  Medications,
+  PreloadedMedications,
+  AdherenceGlobals,
+  AdherenceGlobalDays,
+  MedicationLogs
 ], daos: [
   VitalsDao,
   AiChatDao,
   UserProfilesDao,
   PendingMutationsDao,
-  AppointmentsDao
+  AppointmentsDao,
+  MedicationsDao,
+  AdherenceDao
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration {
@@ -80,6 +94,20 @@ class AppDatabase extends _$AppDatabase {
             debugPrint(
                 'Migration to 10: Column retry_count might already exist. Exception: $e');
           }
+        }
+        if (from < 11) {
+          await m.createTable(medications);
+          await m.createTable(preloadedMedications);
+        }
+        if (from < 12) {
+          // Destructive migration for medications to change primary key
+          await customStatement('DROP TABLE IF EXISTS medications;');
+          await m.createTable(medications);
+        }
+        if (from < 13) {
+          await m.createTable(adherenceGlobals);
+          await m.createTable(adherenceGlobalDays);
+          await m.createTable(medicationLogs);
         }
       },
     );

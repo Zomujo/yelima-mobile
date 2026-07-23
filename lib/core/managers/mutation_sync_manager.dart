@@ -162,6 +162,9 @@ class MutationSyncManager implements SessionLifecycleHandler {
         await _db.transaction(() async {
           if (mutation.entityType == 'ai_chat_message') {
             await _db.aiChatDao.updateMessageId(mutation.entityId, newServerId);
+          } else if (mutation.entityType == 'medication') {
+            await _db.medicationsDao
+                .updateMedicationId(mutation.entityId, newServerId);
           }
           await _db.pendingMutationsDao
               .updateEntityId(mutation.entityId, newServerId);

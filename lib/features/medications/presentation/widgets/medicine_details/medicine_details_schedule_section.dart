@@ -30,8 +30,13 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
                 time: controller.state.morningTime,
                 quantity: controller.state.morningQuantity,
                 onToggle: (v) => controller.updateMorning(v),
-                onTimeSelect: () => _selectTime(context, controller.state.morningTime, (t) => controller.updateMorning(controller.state.hasMorning, t)),
-                onQuantityChange: (q) => controller.updateMorning(controller.state.hasMorning, null, q),
+                onTimeSelect: () => _selectTime(
+                    context,
+                    controller.state.morningTime,
+                    (t) => controller.updateMorning(
+                        controller.state.hasMorning, t)),
+                onQuantityChange: (q) => controller.updateMorning(
+                    controller.state.hasMorning, null, q),
               ),
               const SizedBox(height: 16),
               _EditableDosageToggle(
@@ -40,8 +45,13 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
                 time: controller.state.afternoonTime,
                 quantity: controller.state.afternoonQuantity,
                 onToggle: (v) => controller.updateAfternoon(v),
-                onTimeSelect: () => _selectTime(context, controller.state.afternoonTime, (t) => controller.updateAfternoon(controller.state.hasAfternoon, t)),
-                onQuantityChange: (q) => controller.updateAfternoon(controller.state.hasAfternoon, null, q),
+                onTimeSelect: () => _selectTime(
+                    context,
+                    controller.state.afternoonTime,
+                    (t) => controller.updateAfternoon(
+                        controller.state.hasAfternoon, t)),
+                onQuantityChange: (q) => controller.updateAfternoon(
+                    controller.state.hasAfternoon, null, q),
               ),
               const SizedBox(height: 16),
               _EditableDosageToggle(
@@ -50,19 +60,27 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
                 time: controller.state.eveningTime,
                 quantity: controller.state.eveningQuantity,
                 onToggle: (v) => controller.updateEvening(v),
-                onTimeSelect: () => _selectTime(context, controller.state.eveningTime, (t) => controller.updateEvening(controller.state.hasEvening, t)),
-                onQuantityChange: (q) => controller.updateEvening(controller.state.hasEvening, null, q),
+                onTimeSelect: () => _selectTime(
+                    context,
+                    controller.state.eveningTime,
+                    (t) => controller.updateEvening(
+                        controller.state.hasEvening, t)),
+                onQuantityChange: (q) => controller.updateEvening(
+                    controller.state.hasEvening, null, q),
               ),
             ] else ...[
               if (data.morning != null)
-                _ReadOnlyDosageTime(timeOfDay: 'Morning', schedule: data.morning!),
+                _ReadOnlyDosageTime(
+                    timeOfDay: 'Morning', schedule: data.morning!),
               if (data.afternoon != null) ...[
                 const SizedBox(height: 24),
-                _ReadOnlyDosageTime(timeOfDay: 'Afternoon', schedule: data.afternoon!),
+                _ReadOnlyDosageTime(
+                    timeOfDay: 'Afternoon', schedule: data.afternoon!),
               ],
               if (data.evening != null) ...[
                 const SizedBox(height: 24),
-                _ReadOnlyDosageTime(timeOfDay: 'Evening', schedule: data.evening!),
+                _ReadOnlyDosageTime(
+                    timeOfDay: 'Evening', schedule: data.evening!),
               ],
               if (data.morning == null &&
                   data.afternoon == null &&
@@ -76,8 +94,8 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
     );
   }
 
-  Future<void> _selectTime(
-      BuildContext context, TimeOfDay initialTime, Function(TimeOfDay) onSelected) async {
+  Future<void> _selectTime(BuildContext context, TimeOfDay initialTime,
+      Function(TimeOfDay) onSelected) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
@@ -102,12 +120,15 @@ class _ReadOnlyDosageTime extends StatelessWidget {
   final String timeOfDay;
   final DosingScheduleModel schedule;
 
-  const _ReadOnlyDosageTime({required this.timeOfDay, required this.schedule});
+  const _ReadOnlyDosageTime({
+    required this.timeOfDay,
+    required this.schedule,
+  });
 
-  String _formatTime(TimeOfDay time) {
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+  String _formatScheduleTime(ScheduleTimeModel time) {
+    final hour = time.hour.toString();
+    final minute = time.minutes.toString().padLeft(2, '0');
+    final period = time.timeDesignators.toUpperCase();
     return '$hour:$minute $period';
   }
 
@@ -124,7 +145,7 @@ class _ReadOnlyDosageTime extends StatelessWidget {
                 fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
             const SizedBox(height: 8),
             AppText.bodyMedium(
-                '${_formatTime(TimeOfDay(hour: schedule.time.hour, minute: schedule.time.minutes))} | ${schedule.quantity.value} ${schedule.quantity.unit}(s)',
+                '${_formatScheduleTime(schedule.time)} | ${schedule.quantity.value} ${schedule.quantity.unit}(s)',
                 color: const Color(0xFF475569)),
           ],
         ),
@@ -166,7 +187,8 @@ class _EditableDosageToggle extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: isEnabled ? const Color(0xFFFDBA74) : const Color(0xFFE2E8F0),
+            color:
+                isEnabled ? const Color(0xFFFDBA74) : const Color(0xFFE2E8F0),
             width: isEnabled ? 2 : 1),
       ),
       child: Column(
@@ -178,7 +200,8 @@ class _EditableDosageToggle extends StatelessWidget {
             onChanged: onToggle,
             activeColor: const Color(0xFFFDBA74),
             inactiveThumbColor: const Color(0xFFFDBA74),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           if (isEnabled) ...[
             const Divider(height: 1, color: Color(0xFFE2E8F0)),

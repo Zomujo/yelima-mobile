@@ -18,6 +18,17 @@ class MedicationAdherenceModel extends MedicationAdherence {
       days: daysList,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'rate': rate,
+      'days': days.map((e) => {
+        'id': e.id,
+        'taken': e.taken,
+        'takenAt': e.takenAt.toIso8601String(),
+      }).toList(),
+    };
+  }
 }
 
 class AdherenceDayModel extends AdherenceDay {

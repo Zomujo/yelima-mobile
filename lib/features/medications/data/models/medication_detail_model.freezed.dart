@@ -15,6 +15,7 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$MedicationDetailModel {
+  @JsonKey(readValue: _readId)
   String get id;
   String get name;
   String get dosage;
@@ -73,7 +74,7 @@ abstract mixin class $MedicationDetailModelCopyWith<$Res> {
       _$MedicationDetailModelCopyWithImpl;
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(readValue: _readId) String id,
       String name,
       String dosage,
       String? notes,
@@ -198,7 +199,7 @@ class _$MedicationDetailModelCopyWithImpl<$Res>
 @JsonSerializable()
 class _MedicationDetailModel implements MedicationDetailModel {
   const _MedicationDetailModel(
-      {required this.id,
+      {@JsonKey(readValue: _readId) required this.id,
       required this.name,
       required this.dosage,
       this.notes,
@@ -211,6 +212,7 @@ class _MedicationDetailModel implements MedicationDetailModel {
       _$MedicationDetailModelFromJson(json);
 
   @override
+  @JsonKey(readValue: _readId)
   final String id;
   @override
   final String name;
@@ -284,7 +286,7 @@ abstract mixin class _$MedicationDetailModelCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(readValue: _readId) String id,
       String name,
       String dosage,
       String? notes,

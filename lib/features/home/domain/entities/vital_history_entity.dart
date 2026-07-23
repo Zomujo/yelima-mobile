@@ -37,6 +37,18 @@ class HomeMetricsEntity extends Equatable {
   @override
   List<Object?> get props => [bloodPressure, bloodGlucose, adherenceRate];
 
+  HomeMetricsEntity copyWith({
+    String? bloodPressure,
+    String? bloodGlucose,
+    double? adherenceRate,
+  }) {
+    return HomeMetricsEntity(
+      bloodPressure: bloodPressure ?? this.bloodPressure,
+      bloodGlucose: bloodGlucose ?? this.bloodGlucose,
+      adherenceRate: adherenceRate ?? this.adherenceRate,
+    );
+  }
+
   /// Returns the blood pressure parsed as a tuple of (systolic, diastolic).
   (int, int)? get parsedBloodPressure {
     if (bloodPressure == null || bloodPressure!.isEmpty || bloodPressure!.contains('--')) return null;

@@ -9,7 +9,7 @@ part of 'seeded_medication_model.dart';
 _SeededMedicationModel _$SeededMedicationModelFromJson(
         Map<String, dynamic> json) =>
     _SeededMedicationModel(
-      id: json['id'] as String,
+      id: _readId(json, 'id') as String,
       name: json['name'] as String,
       possibleDosages: (json['possibleDosages'] as List<dynamic>)
           .map((e) => e as String)

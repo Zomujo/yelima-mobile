@@ -14,4 +14,12 @@ class MedicationCountModel extends MedicationCount {
       evening: json['evening'] ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'morning': morning,
+      'afternoon': afternoon,
+      'evening': evening,
+    };
+  }
 }

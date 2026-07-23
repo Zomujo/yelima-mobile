@@ -9,7 +9,7 @@ part of 'medication_detail_model.dart';
 _MedicationDetailModel _$MedicationDetailModelFromJson(
         Map<String, dynamic> json) =>
     _MedicationDetailModel(
-      id: json['id'] as String,
+      id: _readId(json, 'id') as String,
       name: json['name'] as String,
       dosage: json['dosage'] as String,
       notes: json['notes'] as String?,

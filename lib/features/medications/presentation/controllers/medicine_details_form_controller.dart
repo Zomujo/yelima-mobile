@@ -138,21 +138,21 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
           hasMorning: data.morning != null,
           morningTime: data.morning != null
               ? TimeOfDay(
-                  hour: data.morning!.time.hour,
+                  hour: _to24Hour(data.morning!.time.hour, data.morning!.time.timeDesignators),
                   minute: data.morning!.time.minutes)
               : const TimeOfDay(hour: 8, minute: 0),
           morningQuantity: data.morning?.quantity.value ?? 1,
           hasAfternoon: data.afternoon != null,
           afternoonTime: data.afternoon != null
               ? TimeOfDay(
-                  hour: data.afternoon!.time.hour,
+                  hour: _to24Hour(data.afternoon!.time.hour, data.afternoon!.time.timeDesignators),
                   minute: data.afternoon!.time.minutes)
               : const TimeOfDay(hour: 13, minute: 0),
           afternoonQuantity: data.afternoon?.quantity.value ?? 1,
           hasEvening: data.evening != null,
           eveningTime: data.evening != null
               ? TimeOfDay(
-                  hour: data.evening!.time.hour,
+                  hour: _to24Hour(data.evening!.time.hour, data.evening!.time.timeDesignators),
                   minute: data.evening!.time.minutes)
               : const TimeOfDay(hour: 20, minute: 0),
           eveningQuantity: data.evening?.quantity.value ?? 1,
@@ -160,6 +160,12 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
         notifyListeners();
       });
     });
+  }
+
+  int _to24Hour(int hour, String designator) {
+    if (designator.toUpperCase() == 'PM' && hour < 12) return hour + 12;
+    if (designator.toUpperCase() == 'AM' && hour == 12) return 0;
+    return hour;
   }
 
   // ─── Save ─────────────────────────────────────────────────────────────────

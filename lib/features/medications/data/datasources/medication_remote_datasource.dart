@@ -62,12 +62,12 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
   @override
   Future<String> confirmMedication(String medicationId, String section,
       {String? date}) async {
-    final queryParams = {'section': section};
-    if (date != null) queryParams['date'] = date;
+    final payload = {'section': section};
+    if (date != null) payload['date'] = date;
 
     final response = await apiClient.put(
       '/api/v1/client/medications/$medicationId/confirm',
-      queryParameters: queryParams,
+      queryParameters: payload,
     );
     return response['message'] as String? ?? 'Confirmed';
   }

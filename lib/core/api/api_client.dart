@@ -13,8 +13,15 @@ extension ResponseData on Response {
 }
 
 extension DioExceptionExtension on DioException {
-  String? get responseMessage =>
-      response?.data is Map ? response?.data['message'] : message;
+  String? get responseMessage {
+    if (response?.data is Map) {
+      final data = response!.data as Map;
+      final msg = data['message'] ?? data['error'];
+      if (msg is List) return msg.join(', ');
+      return msg?.toString() ?? message;
+    }
+    return message;
+  }
 }
 
 class APIClient {
@@ -113,6 +120,7 @@ class APIClient {
 
   void _handleDioError(DioException e) {
     debugPrint('API Error: ${e.responseMessage}');
+    debugPrint('API Raw Data: ${e.response?.data}');
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.receiveTimeout ||

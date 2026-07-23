@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
+import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_history_entity.dart';
@@ -14,8 +16,23 @@ import '../states/medication_state.dart';
 
 class AllMedicinesController extends ChangeNotifier with SafeNotifier {
   final MedicationRepository repository;
+  StreamSubscription? _mutationSyncSub;
 
-  AllMedicinesController({required this.repository});
+  AllMedicinesController({required this.repository}) {
+    _init();
+  }
+
+  void _init() {
+    if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+      _mutationSyncSub = GetIt.instance<MutationSyncManager>()
+          .onMutationSynced
+          .listen((event) {
+        if (event.contains('medication')) {
+          fetchAllMedicines(forceRefresh: true);
+        }
+      });
+    }
+  }
 
   MedicationState<MedicationListResponse> listState = const MedicationState();
 
@@ -30,11 +47,6 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
   MedicationState<String> formSubmitState = const MedicationState();
 
   void fetchAllMedicines({bool forceRefresh = false}) async {
-    if (listState.data == null) {
-      listState = listState.copyWith(isLoading: true, error: null);
-      notifyListeners();
-    }
-
     if (listState.data == null) {
       listState = listState.copyWith(isLoading: true, error: null);
       notifyListeners();
@@ -58,13 +70,14 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
     // Format as yyyy-MM-15
     final date = AppDateFormats.yyyyMM15.format(month);
 
-    historyStates[id] = const MedicationState(isLoading: true);
+    final existing = historyStates[id]?.data;
+    historyStates[id] = MedicationState(isLoading: true, data: existing);
     notifyListeners();
 
     final result = await repository.getMedicationHistory(id, date: date);
     result.fold(
       (failure) {
-        historyStates[id] = MedicationState(error: failure, isLoading: false);
+        historyStates[id] = MedicationState(error: failure, isLoading: false, data: existing);
         notifyListeners();
       },
       (data) {
@@ -155,5 +168,11 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
         return true;
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _mutationSyncSub?.cancel();
+    super.dispose();
   }
 }
