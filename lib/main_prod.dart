@@ -10,7 +10,7 @@ void main() async {
   await dotenv.load(fileName: ".env.prod");
   
   AppConfig.instance = AppConfig(
-    appName: 'yelima',
+    appName: 'Yelima',
     flavor: AppFlavor.prod,
     apiBaseUrl: dotenv.env['API_BASE_URL']!, 
   );

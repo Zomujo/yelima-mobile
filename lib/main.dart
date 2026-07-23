@@ -7,7 +7,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppConfig.instance = const AppConfig(
-    appName: 'yelima',
+    appName: 'Yelima',
     flavor: AppFlavor.prod,
     apiBaseUrl: 'https://dnh-server-production.up.railway.app/',
   );

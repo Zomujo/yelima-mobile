@@ -81,9 +81,9 @@ class _SplashScreenState extends State<SplashScreen>
     if (status.phase == StartupPhase.ready ||
         status.phase == StartupPhase.unauthenticated ||
         status.phase == StartupPhase.error) {
-      
       _hasNavigated = true;
-      final redirect = GoRouterState.of(context).uri.queryParameters['redirect'];
+      final redirect =
+          GoRouterState.of(context).uri.queryParameters['redirect'];
       context.go(redirect ?? '/');
     }
   }
@@ -108,11 +108,10 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo fading in and scaling up elegantly
               const Image(
                 image: AppImages.logoPng,
-                height: 180,
-                width: 180,
+                height: 280,
+                width: 280,
                 fit: BoxFit.fill,
               )
                   .animate(controller: _controller)
@@ -124,28 +123,27 @@ class _SplashScreenState extends State<SplashScreen>
                       curve: Curves.easeOutCubic)
                   .shimmer(
                       delay: 600.ms, duration: 1200.ms, color: Colors.white54),
-
-              const SizedBox(height: 6),
-
-              // Text revealing with a gentle rise and fade
-              const Text(
-                'Yelima',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
-                  letterSpacing: 2.0,
-                  height: 1.1,
-                ),
-              )
-                  .animate(controller: _controller)
-                  .fadeIn(duration: 800.ms, delay: 600.ms)
-                  .slideY(
-                      begin: 0.3,
-                      end: 0,
-                      duration: 800.ms,
-                      delay: 600.ms,
-                      curve: Curves.easeOutQuart),
+              Transform.translate(
+                offset: const Offset(0, -30),
+                child: const Text(
+                  'Yelima',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                    letterSpacing: 2.0,
+                    height: 1.1,
+                  ),
+                )
+                    .animate(controller: _controller)
+                    .fadeIn(duration: 800.ms, delay: 600.ms)
+                    .slideY(
+                        begin: 0.3,
+                        end: 0,
+                        duration: 800.ms,
+                        delay: 600.ms,
+                        curve: Curves.easeOutQuart),
+              ),
             ],
           ),
         ),
