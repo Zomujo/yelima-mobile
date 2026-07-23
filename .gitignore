@@ -9,6 +9,7 @@
 .history
 .svn/
 .env
+.agents/
 
 # IntelliJ related
 *.iml
@@ -60,4 +61,3 @@ android/key.properties
 # Environments
 .env
 .env.*
-

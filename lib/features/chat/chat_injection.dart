@@ -19,7 +19,8 @@ void initChat(GetIt sl) {
         remoteDataSource: sl(),
         deletionSyncManager: sl(),
         connectivityService: sl(),
-        db: sl(),
+        mutationSyncManager: sl(),
+        fileService: sl(),
       )..also((r) => sl<SessionLifecycleService>().register(r, priority: 70)));
 
   // Controller

@@ -55,10 +55,12 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   Future<void> fetchAdherence() async {
     if (state.adherence == null) {
       state = state.copyWith(isAdherenceLoading: true, adherenceError: null);
-      final cacheResult = await repository.getCachedAdherence(showWeekdays: true);
+      final cacheResult =
+          await repository.getCachedAdherence(showWeekdays: true);
       cacheResult.fold(
         (_) {}, // Ignore cache miss
-        (data) => state = state.copyWith(isAdherenceLoading: false, adherence: data, adherenceError: null),
+        (data) => state = state.copyWith(
+            isAdherenceLoading: false, adherence: data, adherenceError: null),
       );
     }
 
@@ -71,7 +73,8 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     state = result.fold(
       (error) {
         if (state.adherence == null) {
-          return state.copyWith(isAdherenceLoading: false, adherenceError: error);
+          return state.copyWith(
+              isAdherenceLoading: false, adherenceError: error);
         }
         return state.copyWith(isAdherenceLoading: false);
       },
@@ -85,7 +88,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     if (state.counts == null) {
       state = state.copyWith(isCountsLoading: true, countsError: null);
     }
-    
+
     final result = await repository.getMedicationCounts();
 
     state = result.fold(

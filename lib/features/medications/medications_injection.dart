@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import 'data/datasources/medication_local_datasource.dart';
 import 'data/datasources/medication_remote_datasource.dart';
 import 'domain/repositories/medication_repository.dart';
 import 'data/repositories/medication_repository_impl.dart';
@@ -12,16 +13,17 @@ import 'presentation/controllers/medication_controller.dart';
 
 void initMedications(GetIt sl) {
   // Data sources
+  sl.registerLazySingleton<MedicationLocalDataSource>(
+      () => MedicationLocalDataSourceImpl(db: sl()));
   sl.registerLazySingleton<MedicationRemoteDataSource>(
       () => MedicationRemoteDataSourceImpl(apiClient: sl()));
+
   // Repository
   sl.registerLazySingleton<MedicationRepository>(() => MedicationRepositoryImpl(
         remoteDataSource: sl(),
+        localDataSource: sl(),
         connectivityService: sl(),
-        medicationsDao: sl(),
-        db: sl(),
         mutationSyncManager: sl(),
-        sharedPrefsService: sl(),
       ));
 
   // Background Sync Services

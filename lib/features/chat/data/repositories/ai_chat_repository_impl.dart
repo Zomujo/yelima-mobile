@@ -8,20 +8,12 @@ import '../datasources/ai_chat_local_datasource.dart';
 import '../datasources/ai_chat_remote_datasource.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/repositories/ai_chat_repository.dart';
-import '../../../../core/db/app_database.dart';
+import '../../domain/entities/paginated_chat_result.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 
 import '../models/ai_chat_response.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
-import '../../../../core/utils/file_helper.dart';
-import 'package:get_it/get_it.dart';
-
-class PaginatedChatResult {
-  final List<AiChatMessage> messages;
-  final int totalPages;
-
-  PaginatedChatResult({required this.messages, required this.totalPages});
-}
+import '../../../../core/services/file_service.dart';
 
 class AiChatRepositoryImpl
     implements AiChatRepository, SessionLifecycleHandler {
@@ -29,39 +21,46 @@ class AiChatRepositoryImpl
   final AiChatRemoteDataSource _remoteDataSource;
   final DeletionSyncManager _deletionSyncManager;
   final ConnectivityService _connectivityService;
-  final AppDatabase _db;
+  final MutationSyncManager _mutationSyncManager;
+  final FileService _fileService;
 
   AiChatRepositoryImpl({
     required AiChatLocalDataSource localDataSource,
     required AiChatRemoteDataSource remoteDataSource,
     required DeletionSyncManager deletionSyncManager,
     required ConnectivityService connectivityService,
-    required AppDatabase db,
+    required MutationSyncManager mutationSyncManager,
+    required FileService fileService,
   })  : _localDataSource = localDataSource,
         _remoteDataSource = remoteDataSource,
         _deletionSyncManager = deletionSyncManager,
         _connectivityService = connectivityService,
-        _db = db;
+        _mutationSyncManager = mutationSyncManager,
+        _fileService = fileService;
 
+  /// Returns the designated service name for this repository.
   @override
   String get serviceName => 'AiChat Repository';
 
+  /// Lifecycle hook invoked when a user session begins.
   @override
   Future<void> onSessionStarted(String userId) async {}
 
+  /// Lifecycle hook invoked when a user session ends, clearing local data.
   @override
   Future<void> onSessionEnded() async {
     try {
       final localMessages = await _localDataSource.getChats();
       for (final msg in localMessages) {
         if (msg.type == MessageType.audio) {
-          await FileHelper.deleteLocalAudioFile(msg.audioUrl);
+          await _fileService.deleteLocalAudioFile(msg.audioUrl);
         }
       }
       await _localDataSource.clearChats();
     } catch (_) {}
   }
 
+  /// Fetches paginated AI conversations from the remote source.
   @override
   AsyncResponse<PaginatedChatResult> fetchPaginatedConversations(
       {required int page}) async {
@@ -81,6 +80,7 @@ class AiChatRepositoryImpl
     );
   }
 
+  /// Loads all cached AI conversations from the local database.
   @override
   AsyncResponse<List<AiChatMessage>> loadConversations() async {
     return ExceptionWrapper.runAsync(() async {
@@ -89,6 +89,7 @@ class AiChatRepositoryImpl
     });
   }
 
+  /// Persists a list of AI conversations directly into the local database.
   @override
   AsyncResponse<void> saveConversations(
       List<AiChatMessage> conversations) async {
@@ -98,6 +99,7 @@ class AiChatRepositoryImpl
     });
   }
 
+  /// Remove all AI conversations from the local database.
   @override
   AsyncResponse<void> clearConversations() async {
     return ExceptionWrapper.runAsync(() async {
@@ -106,6 +108,7 @@ class AiChatRepositoryImpl
     });
   }
 
+  /// Deletes a specific message locally without notifying the remote source.
   @override
   AsyncResponse<void> deleteLocalMessageOnly(String id) async {
     return ExceptionWrapper.runAsync(() async {
@@ -114,13 +117,14 @@ class AiChatRepositoryImpl
     });
   }
 
+  /// Deletes a message locally and enqueues a deletion mutation for synchronization.
   @override
   AsyncResponse<void> deleteMessage(String id) async {
     return ExceptionWrapper.runAsync(() async {
       final chats = await _localDataSource.getChats();
       final message = chats.where((m) => m.id == id).firstOrNull;
       if (message != null && message.type == MessageType.audio) {
-        await FileHelper.deleteLocalAudioFile(message.audioUrl);
+        await _fileService.deleteLocalAudioFile(message.audioUrl);
       }
 
       await _localDataSource.deleteChat(id);
@@ -130,58 +134,65 @@ class AiChatRepositoryImpl
     });
   }
 
+  Future<Map<String, dynamic>> _executeWithOfflineFallback({
+    required String action,
+    required Map<String, dynamic> payload,
+    String? localChatId,
+    required Future<Map<String, dynamic>> Function() remoteCall,
+  }) async {
+    final isConnected = await _connectivityService.isConnected;
+
+    if (!isConnected) {
+      await _localDataSource.queueOfflineMessageMutation(
+        entityId: localChatId ??
+            'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+        action: action,
+        payload: payload,
+      );
+      _mutationSyncManager.triggerSync();
+      return <String, dynamic>{};
+    }
+
+    try {
+      return await remoteCall();
+    } catch (e) {
+      if (e is ApiException && (e.code == '401' || e.code == '403')) {
+        rethrow;
+      }
+
+      await _localDataSource.queueOfflineMessageMutation(
+        entityId: localChatId ??
+            'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+        action: action,
+        payload: payload,
+      );
+
+      _mutationSyncManager.triggerSync();
+
+      return <String, dynamic>{};
+    }
+  }
+
+  /// Sends a text message to the AI, queuing it locally if offline.
   @override
   AsyncResponse<Map<String, dynamic>> sendMessage(String message,
       {String? localChatId}) async {
     return ExceptionWrapper.runAsync<Map<String, dynamic>>(
       () async {
-        final isConnected = await _connectivityService.isConnected;
-
-        if (!isConnected) {
-          await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ??
-                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
-            entityType: 'chat',
-            action: 'sendMessage',
-            payload: {
-              'message': message,
-              'localChatId': localChatId,
-            },
-          );
-          try {
-            if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-              GetIt.instance<MutationSyncManager>().triggerSync();
-            }
-          } catch (_) {}
-          // Return a stub so the UI doesn't crash but knows it's pending
-          return right({});
-        }
-
-        try {
-          final res = await _remoteDataSource.sendMessage(message,
-              localChatId: localChatId);
-          return right(res);
-        } catch (e) {
-          await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ??
-                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
-            entityType: 'chat',
-            action: 'sendMessage',
-            payload: {
-              'message': message,
-              'localChatId': localChatId,
-            },
-          );
-          if (e is ApiException && (e.code == '401' || e.code == '403')) {
-            rethrow;
-          }
-          return right({});
-        }
+        final res = await _executeWithOfflineFallback(
+          action: 'sendMessage',
+          payload: {'message': message, 'localChatId': localChatId},
+          localChatId: localChatId,
+          remoteCall: () =>
+              _remoteDataSource.sendMessage(message, localChatId: localChatId),
+        );
+        return right(res);
       },
       operationName: 'AiChatRepositoryImpl.sendMessage',
     );
   }
 
+  /// Sends an audio file message to the AI, queuing it locally if offline.
   @override
   AsyncResponse<Map<String, dynamic>> sendAudioMessage({
     required String filePath,
@@ -189,57 +200,21 @@ class AiChatRepositoryImpl
   }) async {
     return ExceptionWrapper.runAsync<Map<String, dynamic>>(
       () async {
-        final isConnected = await _connectivityService.isConnected;
-
-        // Edge Case 25 fix: Always store filename rather than absolute path if possible
         final filename = filePath.split('/').last;
-
-        if (!isConnected) {
-          await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ??
-                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
-            entityType: 'chat',
-            action: 'sendAudioMessage',
-            payload: {
-              'filePath': filename,
-              'localChatId': localChatId,
-            },
-          );
-          try {
-            if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-              GetIt.instance<MutationSyncManager>().triggerSync();
-            }
-          } catch (_) {}
-          return right({});
-        }
-
-        try {
-          final res = await _remoteDataSource.sendAudioMessage(
-            filePath: filePath,
-            localChatId: localChatId,
-          );
-          return right(res);
-        } catch (e) {
-          await _db.pendingMutationsDao.queueMutation(
-            entityId: localChatId ??
-                'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
-            entityType: 'chat',
-            action: 'sendAudioMessage',
-            payload: {
-              'filePath': filename,
-              'localChatId': localChatId,
-            },
-          );
-          if (e is ApiException && (e.code == '401' || e.code == '403')) {
-            rethrow;
-          }
-          return right({});
-        }
+        final res = await _executeWithOfflineFallback(
+          action: 'sendAudioMessage',
+          payload: {'filePath': filename, 'localChatId': localChatId},
+          localChatId: localChatId,
+          remoteCall: () => _remoteDataSource.sendAudioMessage(
+              filePath: filePath, localChatId: localChatId),
+        );
+        return right(res);
       },
       operationName: 'AiChatRepositoryImpl.sendAudioMessage',
     );
   }
 
+  /// Fetches the initial AI greeting message from the remote source.
   @override
   AsyncResponse<AiChatMessage?> loadInitialMessage() async {
     return ExceptionWrapper.runAsyncWithNetworkCheck(
@@ -269,6 +244,7 @@ class AiChatRepositoryImpl
     );
   }
 
+  /// Synchronizes remote chat history with local caching while preserving pending offline messages.
   @override
   AsyncResponse<void> syncRemoteConversations() async {
     return ExceptionWrapper.runAsyncWithNetworkCheck(
@@ -284,88 +260,16 @@ class AiChatRepositoryImpl
             .where((m) => !pendingDeletions.contains(m.id))
             .toList();
 
-        final remoteMessageIds = remoteMessages.map((m) => m.id).toSet();
         final localMessages = await _localDataSource.getChats();
 
-        final messagesToKeep = <AiChatMessage>[];
+        final messagesToKeep =
+            _getPendingAndFailedLocalMessages(localMessages, remoteMessages);
+        _mergeAudioUrlsFromLocal(remoteMessages, localMessages);
+        messagesToKeep
+            .addAll(_getOldLocalMessages(localMessages, remoteMessages));
 
-        for (final localMsg in localMessages) {
-          if (localMsg.status != MessageStatus.failed &&
-              localMsg.status != MessageStatus.sending) {
-            continue;
-          }
-
-          final isDuplicate = remoteMessageIds.contains(localMsg.id) ||
-              (localMsg.localChatId != null &&
-                  remoteMessages.any((remoteMsg) =>
-                      remoteMsg.localChatId == localMsg.localChatId)) ||
-              remoteMessages.any((remoteMsg) =>
-                  remoteMsg.sender == localMsg.sender &&
-                  remoteMsg.value == localMsg.value &&
-                  remoteMsg.createdAt
-                          .difference(localMsg.createdAt)
-                          .inMinutes
-                          .abs() <
-                      5);
-
-          if (!isDuplicate) {
-            messagesToKeep.add(localMsg);
-          }
-        }
-
-        for (int i = 0; i < remoteMessages.length; i++) {
-          final remoteMsg = remoteMessages[i];
-          final localMsg = localMessages
-              .where((m) =>
-                  m.id == remoteMsg.id ||
-                  (m.localChatId != null &&
-                      m.localChatId == remoteMsg.localChatId))
-              .firstOrNull;
-
-          if (localMsg != null) {
-            if (localMsg.type == MessageType.audio) {
-              remoteMessages[i] = remoteMsg.copyWith(
-                type: MessageType.audio,
-                audioUrl: remoteMsg.audioUrl ?? localMsg.audioUrl,
-              );
-            }
-          }
-        }
-
-        DateTime? oldestRemote;
-        if (remoteMessages.isNotEmpty) {
-          oldestRemote = remoteMessages.last.createdAt;
-          for (final m in remoteMessages) {
-            if (m.createdAt.isBefore(oldestRemote!)) {
-              oldestRemote = m.createdAt;
-            }
-          }
-        }
-
-        final oldLocalMessages = localMessages.where((localMsg) {
-          if (oldestRemote == null) return false;
-          if (localMsg.status == MessageStatus.failed ||
-              localMsg.status == MessageStatus.sending) {
-            return false;
-          }
-          return localMsg.createdAt.isBefore(oldestRemote);
-        }).toList();
-
-        messagesToKeep.addAll(oldLocalMessages);
-
-        // Edge Case 26: Delete orphaned local audio files
-        final idsToKeep = messagesToKeep.map((m) => m.id).toSet();
-        final remoteIds = remoteMessages.map((m) => m.id).toSet();
-
-        for (final localMsg in localMessages) {
-          if (!idsToKeep.contains(localMsg.id) &&
-              !remoteIds.contains(localMsg.id)) {
-            // This message is being wiped.
-            if (localMsg.type == MessageType.audio) {
-              await FileHelper.deleteLocalAudioFile(localMsg.audioUrl);
-            }
-          }
-        }
+        await _purgeUnlinkedMediaAssets(
+            localMessages, remoteMessages, messagesToKeep);
 
         await _localDataSource.clearChats();
 
@@ -377,5 +281,90 @@ class AiChatRepositoryImpl
       },
       connectivityService: _connectivityService,
     );
+  }
+
+  List<AiChatMessage> _getPendingAndFailedLocalMessages(
+      List<AiChatMessage> localMessages, List<AiChatMessage> remoteMessages) {
+    final remoteMessageIds = remoteMessages.map((m) => m.id).toSet();
+    final remoteLocalIds = remoteMessages
+        .where((m) => m.localChatId != null)
+        .map((m) => m.localChatId!)
+        .toSet();
+
+    final messagesToKeep = <AiChatMessage>[];
+    for (final localMsg in localMessages) {
+      if (localMsg.status != MessageStatus.failed &&
+          localMsg.status != MessageStatus.sending) {
+        continue;
+      }
+
+      // Strict match based on real ID or localChatId
+      final isDuplicate = remoteMessageIds.contains(localMsg.id) ||
+          (localMsg.localChatId != null &&
+              remoteLocalIds.contains(localMsg.localChatId));
+
+      if (!isDuplicate) {
+        messagesToKeep.add(localMsg);
+      }
+    }
+    return messagesToKeep;
+  }
+
+  void _mergeAudioUrlsFromLocal(
+      List<AiChatMessage> remoteMessages, List<AiChatMessage> localMessages) {
+    for (int i = 0; i < remoteMessages.length; i++) {
+      final remoteMsg = remoteMessages[i];
+      final localMsg = localMessages
+          .where((m) =>
+              m.id == remoteMsg.id ||
+              (m.localChatId != null && m.localChatId == remoteMsg.localChatId))
+          .firstOrNull;
+
+      if (localMsg != null && localMsg.type == MessageType.audio) {
+        remoteMessages[i] = remoteMsg.copyWith(
+          type: MessageType.audio,
+          audioUrl: remoteMsg.audioUrl ?? localMsg.audioUrl,
+        );
+      }
+    }
+  }
+
+  List<AiChatMessage> _getOldLocalMessages(
+      List<AiChatMessage> localMessages, List<AiChatMessage> remoteMessages) {
+    DateTime? oldestRemote;
+    if (remoteMessages.isNotEmpty) {
+      oldestRemote = remoteMessages.last.createdAt;
+      for (final m in remoteMessages) {
+        if (m.createdAt.isBefore(oldestRemote!)) {
+          oldestRemote = m.createdAt;
+        }
+      }
+    }
+
+    return localMessages.where((localMsg) {
+      if (oldestRemote == null) return false;
+      if (localMsg.status == MessageStatus.failed ||
+          localMsg.status == MessageStatus.sending) {
+        return false;
+      }
+      return localMsg.createdAt.isBefore(oldestRemote);
+    }).toList();
+  }
+
+  Future<void> _purgeUnlinkedMediaAssets(
+      List<AiChatMessage> localMessages,
+      List<AiChatMessage> remoteMessages,
+      List<AiChatMessage> messagesToKeep) async {
+    final idsToKeep = messagesToKeep.map((m) => m.id).toSet();
+    final remoteIds = remoteMessages.map((m) => m.id).toSet();
+
+    for (final localMsg in localMessages) {
+      if (!idsToKeep.contains(localMsg.id) &&
+          !remoteIds.contains(localMsg.id)) {
+        if (localMsg.type == MessageType.audio) {
+          await _fileService.deleteLocalAudioFile(localMsg.audioUrl);
+        }
+      }
+    }
   }
 }

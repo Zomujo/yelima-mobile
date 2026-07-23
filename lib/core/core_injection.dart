@@ -10,6 +10,7 @@ import 'db/app_database.dart';
 import 'services/connectivity_service.dart';
 import 'services/session_lifecycle_service.dart';
 import 'services/app_startup_service.dart';
+import 'services/file_service.dart';
 import 'managers/audio_player_manager.dart';
 import 'services/voice_recording_service.dart';
 import 'services/notification_service.dart';
@@ -36,6 +37,7 @@ void initCore(GetIt sl) {
   // --- Services ---
   sl.registerLazySingleton(() => ConnectivityService());
   sl.registerLazySingleton(() => SessionLifecycleService());
+  sl.registerLazySingleton<FileService>(() => FileServiceImpl());
 
   sl.registerLazySingleton(() => AppStartupService());
   sl.registerLazySingleton(() => NotificationService.instance);

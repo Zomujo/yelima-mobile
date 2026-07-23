@@ -10,6 +10,11 @@ abstract class AiChatLocalDataSource {
   Future<void> deleteChat(String id);
   Future<void> queueDeletion(String id);
   Future<List<String>> getPendingDeletions();
+  Future<void> queueOfflineMessageMutation({
+    required String entityId,
+    required String action,
+    required Map<String, dynamic> payload,
+  });
 }
 
 class AiChatLocalDataSourceImpl implements AiChatLocalDataSource {
@@ -84,5 +89,19 @@ class AiChatLocalDataSourceImpl implements AiChatLocalDataSource {
   Future<List<String>> getPendingDeletions() async {
     final deletions = await _db.aiChatDao.getPendingDeletions();
     return deletions.where((d) => d.source == 'chat').map((d) => d.messageId).toList();
+  }
+
+  @override
+  Future<void> queueOfflineMessageMutation({
+    required String entityId,
+    required String action,
+    required Map<String, dynamic> payload,
+  }) async {
+    await _db.pendingMutationsDao.queueMutation(
+      entityId: entityId,
+      entityType: 'chat',
+      action: action,
+      payload: payload,
+    );
   }
 }

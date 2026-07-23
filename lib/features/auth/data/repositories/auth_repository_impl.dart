@@ -18,6 +18,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.db,
   });
 
+  /// Authenticates a user using email and password credentials.
   @override
   AsyncResponse<void> signIn(String email, String password) {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
@@ -30,6 +31,7 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
+  /// Registers a new user account with the provided email and password.
   @override
   AsyncResponse<void> register(String email, String password) {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
@@ -42,6 +44,7 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
+  /// Authenticates a user using their Google account.
   @override
   AsyncResponse<void> signInWithGoogle() {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
@@ -54,6 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
+  /// Authenticates a user using their Apple ID.
   @override
   AsyncResponse<void> signInWithApple() {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
@@ -66,6 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
+  /// Sends a password reset link to the specified email address.
   @override
   AsyncResponse<void> sendPasswordResetEmail(String email) {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
@@ -78,14 +83,9 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
+  /// Signs the current user out of the application.
   @override
   AsyncResponse<void> signOut() {
-    /// No network check here by design - AuthController.signOut() already
-    /// requires connectivity and forces a completed mutation sync before
-    /// calling this, so by the time we get here the device is expected to
-    /// be online. This method itself stays network-check-free so it still
-    /// degrades gracefully if called from anywhere else that doesn't do
-    /// that pre-check (e.g. a forced/expired-session sign-out).
     return ExceptionWrapper.runAsync<void>(
       () async {
         await remoteDataSource.signOut();
@@ -95,6 +95,7 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
+  /// Permanently deletes the current user's account and associated data.
   @override
   AsyncResponse<void> deleteAccount({String? password}) {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
