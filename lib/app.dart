@@ -63,7 +63,8 @@ class _MyAppState extends State<MyApp> {
             Provider<UpdateMedicationUseCase>(create: (_) => sl()),
             ChangeNotifierProvider(
                 create: (_) => sl<AppointmentController>()..initialize()),
-            ChangeNotifierProvider(create: (_) => sl<ReadingLoggingController>()),
+            ChangeNotifierProvider(
+                create: (_) => sl<ReadingLoggingController>()),
             Provider<VitalsDao>(create: (_) => sl()),
           ],
           child: MaterialApp.router(

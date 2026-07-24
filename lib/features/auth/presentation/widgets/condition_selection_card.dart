@@ -26,7 +26,8 @@ class ConditionSelectionCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primaryGreen : const Color(0xFFE2E8F0),
+            color:
+                isSelected ? AppColors.primaryGreen : const Color(0xFFE2E8F0),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
@@ -64,7 +65,9 @@ class ConditionSelectionCard extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primaryGreen : const Color(0xFFE2E8F0),
+                  color: isSelected
+                      ? AppColors.primaryGreen
+                      : const Color(0xFFE2E8F0),
                   width: 2,
                 ),
                 color: isSelected ? AppColors.primaryGreen : Colors.transparent,

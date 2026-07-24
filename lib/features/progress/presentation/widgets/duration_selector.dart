@@ -4,7 +4,8 @@ class DurationSelector extends StatelessWidget {
   final String duration;
   final Function(String) onDurationChanged;
 
-  const DurationSelector({super.key, required this.duration, required this.onDurationChanged});
+  const DurationSelector(
+      {super.key, required this.duration, required this.onDurationChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +51,8 @@ class DurationSelector extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 12,
-              color: isActive ? const Color(0xFF1F2937) : const Color(0xFF6B7280),
+              color:
+                  isActive ? const Color(0xFF1F2937) : const Color(0xFF6B7280),
             ),
           ),
         ),

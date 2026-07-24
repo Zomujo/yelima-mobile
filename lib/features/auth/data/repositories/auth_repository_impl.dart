@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/db/app_database.dart';
 import '../../../../core/exceptions/exceptions.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/custom_types.dart';
 
 import '../../domain/repositories/auth_repository.dart';
@@ -88,6 +89,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AsyncResponse<void> signOut() {
     return ExceptionWrapper.runAsync<void>(
       () async {
+        await NotificationService.instance.cancelAllReminders();
         await remoteDataSource.signOut();
         return right(null);
       },
@@ -100,6 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AsyncResponse<void> deleteAccount({String? password}) {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
       () async {
+        await NotificationService.instance.cancelAllReminders();
         await remoteDataSource.deleteAccount(password: password);
         return right(null);
       },

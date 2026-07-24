@@ -12,7 +12,8 @@ class GlucoseGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final validValues = data.values.where((v) => v != null).map((v) => v!.toDouble()).toList();
+    final validValues =
+        data.values.where((v) => v != null).map((v) => v!.toDouble()).toList();
 
     double minY = 4.0;
     double maxY = 12.0;
@@ -23,13 +24,19 @@ class GlucoseGraph extends StatelessWidget {
       minY = (dataMin - 1).floor().toDouble();
       maxY = (dataMax + 1).ceil().toDouble();
       if (minY == maxY) {
-         minY -= 1;
-         maxY += 1;
+        minY -= 1;
+        maxY += 1;
       }
     }
 
     final step = (maxY - minY) / 4;
-    final leftLabelValues = [minY, minY + step, minY + 2 * step, minY + 3 * step, maxY];
+    final leftLabelValues = [
+      minY,
+      minY + step,
+      minY + 2 * step,
+      minY + 3 * step,
+      maxY
+    ];
 
     return BaseVitalGraph(
       minX: 0,

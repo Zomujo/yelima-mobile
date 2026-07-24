@@ -105,7 +105,9 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
               DateTime.now().toUtc().toIso8601String(),
         };
 
-        final localId = entity.id.isEmpty ? 'offline_vital_${DateTime.now().millisecondsSinceEpoch}' : entity.id;
+        final localId = entity.id.isEmpty
+            ? 'offline_vital_${DateTime.now().millisecondsSinceEpoch}'
+            : entity.id;
 
         final model = VitalHistoryModel(
           id: localId,
@@ -126,8 +128,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
             action: 'saveVitalReading',
             payload: body,
           );
-          try {
-                      } catch (_) {}
+          try {} catch (_) {}
           return const Right(null);
         }
 

@@ -63,7 +63,8 @@ class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
     try {
       final hasPermission = await requestMicrophonePermission();
       if (!hasPermission) {
-        throw Exception("Microphone permission is required to record a voice message.");
+        throw Exception(
+            "Microphone permission is required to record a voice message.");
       }
 
       final directory = await getApplicationDocumentsDirectory();
@@ -86,7 +87,8 @@ class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
   }
 
   Future<void> resumeRecording() async {
-    if (_maxDurationReached) return; // Recording was already finalized at the cap
+    if (_maxDurationReached)
+      return; // Recording was already finalized at the cap
     try {
       await _recorderController.record();
     } catch (e) {

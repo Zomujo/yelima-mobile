@@ -80,47 +80,47 @@ class _OverlayModalState extends State<OverlayModal>
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return PopScope(
-          canPop: _isDismissing,
-          onPopInvokedWithResult: (didPop, result) {
-            if (didPop) return;
-            if (widget.isDismissible && !_isDismissing) {
-              _dismiss();
-            }
-          },
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                onTap: widget.isDismissible ? _dismiss : null,
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                  child: Container(
-                    color: Colors.black
-                        .withValues(alpha: 0.5 * _fadeAnimation.value),
+        animation: _animationController,
+        builder: (context, child) {
+          return PopScope(
+            canPop: _isDismissing,
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) return;
+              if (widget.isDismissible && !_isDismissing) {
+                _dismiss();
+              }
+            },
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: widget.isDismissible ? _dismiss : null,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                      child: Container(
+                        color: Colors.black
+                            .withValues(alpha: 0.5 * _fadeAnimation.value),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                AnimatedPadding(
+                  padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom),
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  child: Align(
+                    alignment: widget.alignment == ModalAlignment.bottomCenter
+                        ? Alignment.bottomCenter
+                        : Alignment.center,
+                    child: _buildModalContent(),
+                  ),
+                ),
+              ],
             ),
-            AnimatedPadding(
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              child: Align(
-                alignment: widget.alignment == ModalAlignment.bottomCenter
-                    ? Alignment.bottomCenter
-                    : Alignment.center,
-                child: _buildModalContent(),
-              ),
-            ),
-          ],
-        ),
-        );
-      },
-    ),
+          );
+        },
+      ),
     );
   }
 

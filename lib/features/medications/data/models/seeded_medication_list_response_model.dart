@@ -5,7 +5,8 @@ part 'seeded_medication_list_response_model.freezed.dart';
 part 'seeded_medication_list_response_model.g.dart';
 
 @freezed
-abstract class SeededMedicationListResponseModel with _$SeededMedicationListResponseModel {
+abstract class SeededMedicationListResponseModel
+    with _$SeededMedicationListResponseModel {
   const factory SeededMedicationListResponseModel({
     @Default([]) List<SeededMedicationModel> rows,
     @Default(0) int total,
@@ -14,6 +15,7 @@ abstract class SeededMedicationListResponseModel with _$SeededMedicationListResp
     @Default(0) int totalPages,
   }) = _SeededMedicationListResponseModel;
 
-  factory SeededMedicationListResponseModel.fromJson(Map<String, dynamic> json) =>
+  factory SeededMedicationListResponseModel.fromJson(
+          Map<String, dynamic> json) =>
       _$SeededMedicationListResponseModelFromJson(json);
 }

@@ -68,7 +68,9 @@ class APIClient {
   }
 
   Future<dynamic> postMultipart(String path,
-      {JSON? fields, Map<String, MultipartFile>? files, JSON? queryParameters}) async {
+      {JSON? fields,
+      Map<String, MultipartFile>? files,
+      JSON? queryParameters}) async {
     try {
       final formData = FormData();
       if (files != null) {
@@ -91,9 +93,11 @@ class APIClient {
     }
   }
 
-  Future<dynamic> put(String path, {dynamic data, JSON? queryParameters}) async {
+  Future<dynamic> put(String path,
+      {dynamic data, JSON? queryParameters}) async {
     try {
-      final response = await _dio.put(path, data: data, queryParameters: queryParameters);
+      final response =
+          await _dio.put(path, data: data, queryParameters: queryParameters);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);
@@ -125,7 +129,8 @@ class APIClient {
         e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
-      throw const NetworkException('No internet connection. Please check your network and try again.');
+      throw const NetworkException(
+          'No internet connection. Please check your network and try again.');
     }
     // Map to custom ApiException
     throw ApiException.fromDioError(e);

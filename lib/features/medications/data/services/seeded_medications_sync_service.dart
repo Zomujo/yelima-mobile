@@ -36,10 +36,10 @@ class SeededMedicationsSyncService implements SessionLifecycleHandler {
 
     try {
       debugPrint('SeededMedicationsSyncService: Starting background sync...');
-      
+
       // Fetch first page to get total pages
-      final firstPageRes = await _remoteDataSource.getPreloadedMedications(
-          page: 1, limit: 100);
+      final firstPageRes =
+          await _remoteDataSource.getPreloadedMedications(page: 1, limit: 100);
 
       // Wipe old cache completely as per our cache strategy
       await _db.medicationsDao.clearPreloadedMedications();

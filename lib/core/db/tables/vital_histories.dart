@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
-@TableIndex(name: 'idx_vital_histories_type_date', columns: {#vitalType, #recordedAt})
+@TableIndex(
+    name: 'idx_vital_histories_type_date', columns: {#vitalType, #recordedAt})
 class VitalHistories extends Table {
   TextColumn get id => text()();
   TextColumn get vitalType => text()();

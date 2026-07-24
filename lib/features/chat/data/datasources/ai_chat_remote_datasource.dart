@@ -55,7 +55,8 @@ class AiChatRemoteDataSourceImpl implements AiChatRemoteDataSource {
     if (response == null || response == "") return {};
     Map<String, dynamic> responseData =
         response is Map ? response as Map<String, dynamic> : response.data;
-    if (responseData['data'] == null || responseData['data']['outResponse'] == null) return {};
+    if (responseData['data'] == null ||
+        responseData['data']['outResponse'] == null) return {};
     return responseData['data']['outResponse'];
   }
 
@@ -82,7 +83,8 @@ class AiChatRemoteDataSourceImpl implements AiChatRemoteDataSource {
     if (response == null || response == "") return {};
     Map<String, dynamic> responseData =
         response is Map ? response as Map<String, dynamic> : response.data;
-    if (responseData['data'] == null || responseData['data']['outResponse'] == null) return {};
+    if (responseData['data'] == null ||
+        responseData['data']['outResponse'] == null) return {};
     return responseData['data']['outResponse'];
   }
 

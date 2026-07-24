@@ -22,11 +22,13 @@ class MedicationAdherenceModel extends MedicationAdherence {
   Map<String, dynamic> toJson() {
     return {
       'rate': rate,
-      'days': days.map((e) => {
-        'id': e.id,
-        'taken': e.taken,
-        'takenAt': e.takenAt.toIso8601String(),
-      }).toList(),
+      'days': days
+          .map((e) => {
+                'id': e.id,
+                'taken': e.taken,
+                'takenAt': e.takenAt.toIso8601String(),
+              })
+          .toList(),
     };
   }
 }
@@ -40,11 +42,14 @@ class AdherenceDayModel extends AdherenceDay {
 
   factory AdherenceDayModel.fromJson(Map<String, dynamic> json) {
     final dateStr = json['dateTaken'] ?? json['date'] ?? json['takenAt'];
-    final bool isTaken = json['taken'] == true || json['status'] == 'taken' || json['status'] == 'completed';
+    final bool isTaken = json['taken'] == true ||
+        json['status'] == 'taken' ||
+        json['status'] == 'completed';
     return AdherenceDayModel(
       id: json['id'],
       taken: isTaken,
-      takenAt: dateStr != null ? DateTime.parse(dateStr).toLocal() : DateTime.now(),
+      takenAt:
+          dateStr != null ? DateTime.parse(dateStr).toLocal() : DateTime.now(),
     );
   }
 }

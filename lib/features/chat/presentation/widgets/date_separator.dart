@@ -49,7 +49,8 @@ class DateSeparator extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade600),
+                Icon(Icons.calendar_today_outlined,
+                    size: 14, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
                   _getFormattedDate(),

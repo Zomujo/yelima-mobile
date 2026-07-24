@@ -25,12 +25,14 @@ class AppointmentCard extends StatelessWidget {
     final iconBgColor =
         isPast ? const Color(0xFFF1F5F9) : const Color(0xFFFFEDD5);
 
-    final timeUntil = isPast 
-        ? _formatPast(appointment.appointmentDate) 
+    final timeUntil = isPast
+        ? _formatPast(appointment.appointmentDate)
         : _formatUpcoming(appointment.appointmentDate);
-    
-    final dateTime = AppDateFormats.appointmentCard.format(appointment.appointmentDate);
-    final subtitle = 'with ${appointment.hostPersonnel.userName} • ${appointment.hostPersonnel.facility.name}';
+
+    final dateTime =
+        AppDateFormats.appointmentCard.format(appointment.appointmentDate);
+    final subtitle =
+        'with ${appointment.hostPersonnel.userName} • ${appointment.hostPersonnel.facility.name}';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -70,7 +72,8 @@ class AppointmentCard extends StatelessWidget {
                       color: const Color(0xFF1E293B),
                     ),
                     const SizedBox(height: 4),
-                    AppText.bodyMedium(appointment.title, color: const Color(0xFF475569)),
+                    AppText.bodyMedium(appointment.title,
+                        color: const Color(0xFF475569)),
                     const SizedBox(height: 4),
                     AppText.labelSmall(
                       subtitle,
@@ -130,7 +133,7 @@ class AppointmentCard extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
     final targetDate = DateTime(date.year, date.month, date.day);
     final difference = targetDate.difference(today);
-    
+
     if (difference.inDays == 0) return 'today';
     if (difference.inDays == 1) return 'tomorrow';
     if (difference.inDays < 7) return 'in ${difference.inDays} days';
@@ -144,7 +147,7 @@ class AppointmentCard extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
     final targetDate = DateTime(date.year, date.month, date.day);
     final difference = today.difference(targetDate);
-    
+
     if (difference.inDays == 0) return 'today';
     if (difference.inDays == 1) return 'yesterday';
     if (difference.inDays < 7) return '${difference.inDays} days ago';

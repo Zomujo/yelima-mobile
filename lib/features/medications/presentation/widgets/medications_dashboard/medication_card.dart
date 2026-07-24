@@ -58,7 +58,9 @@ class MedicationCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: isOverdue ? Colors.red.withValues(alpha: 0.1) : const Color(0xFFF1F5F9), // Light grey/blue
+                color: isOverdue
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : const Color(0xFFF1F5F9), // Light grey/blue
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(

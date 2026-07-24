@@ -88,7 +88,8 @@ class PaginatedAppointmentList extends StatelessWidget {
             ),
           );
         }),
-        _PaginationControls(state: state, filter: filter, controller: controller),
+        _PaginationControls(
+            state: state, filter: filter, controller: controller),
       ],
     );
   }
@@ -145,7 +146,8 @@ class _PaginationControls extends StatelessWidget {
     );
   }
 
-  Widget _buildNavButton({required IconData icon, required VoidCallback? onPressed}) {
+  Widget _buildNavButton(
+      {required IconData icon, required VoidCallback? onPressed}) {
     return Container(
       width: 40,
       height: 40,

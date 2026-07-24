@@ -4,7 +4,6 @@ import '../../domain/entities/medication_count.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_history_entity.dart';
 
-
 MedicationHistoryEntity parseHistoryJson(String jsonStr) {
   final decoded = jsonDecode(jsonStr);
   final logsList = (decoded['logs'] as List)

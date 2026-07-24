@@ -59,7 +59,8 @@ abstract class AiChatMessageDto with _$AiChatMessageDto {
       localChatId: localChatId?.toString(),
 
       suggestions: suggestions,
-      audioUrl: type == 'audio' && content.startsWith('http') ? content : audioUrl,
+      audioUrl:
+          type == 'audio' && content.startsWith('http') ? content : audioUrl,
     );
   }
 }

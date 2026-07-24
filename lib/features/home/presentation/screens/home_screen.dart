@@ -16,7 +16,8 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<UserController>().userEntity;
     final String greetingName = user?.firstName ?? '';
-    final String formattedDate = AppDateFormats.dayDateMonth.format(DateTime.now());
+    final String formattedDate =
+        AppDateFormats.dayDateMonth.format(DateTime.now());
 
     return Container(
       decoration: const BoxDecoration(
@@ -27,11 +28,14 @@ class HomeScreen extends StatelessWidget {
         body: SafeArea(
           bottom: false,
           child: ListView(
-            padding: EdgeInsets.only(bottom: AppSizes.bottomNavClearance(context)),
+            padding:
+                EdgeInsets.only(bottom: AppSizes.bottomNavClearance(context)),
             children: [
               HomeHeader(
                 date: formattedDate,
-                greeting: greetingName.isNotEmpty ? 'Akwaaba, $greetingName' : 'Akwaaba',
+                greeting: greetingName.isNotEmpty
+                    ? 'Akwaaba, $greetingName'
+                    : 'Akwaaba',
               ),
               const HomeMetricsSection(),
               const SizedBox(height: 32),

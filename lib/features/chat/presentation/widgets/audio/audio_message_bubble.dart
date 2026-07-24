@@ -95,23 +95,24 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
         shouldExtractWaveform: false,
         volume: 1.0,
       );
-      
+
       final data = await _playerController.extractWaveformData(
         path: path,
         noOfSamples: const PlayerWaveStyle().getSamplesForWidth(200),
       );
-      
+
       _waveformData = data;
-      
+
       // Delay briefly to allow native platform to parse duration
       await Future.delayed(const Duration(milliseconds: 100));
       final duration = await _playerController.getDuration(DurationType.max);
       if (duration == 0) {
-        throw Exception("Invalid audio file: duration is 0 (file might be corrupted HTML/XML).");
+        throw Exception(
+            "Invalid audio file: duration is 0 (file might be corrupted HTML/XML).");
       }
-      
+
       _maxDurationMs = duration;
-      
+
       if (mounted) setState(() {});
     } catch (e) {
       debugPrint("Error preparing audio player: $e");
@@ -142,23 +143,23 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
       debugPrint("Cannot download a local file path");
       return;
     }
-    
+
     setState(() {
       _isDownloading = true;
     });
-    
+
     try {
       final directory = await getApplicationDocumentsDirectory();
       final safeFileName = 'audio_${widget.audioUrl.hashCode.abs()}.m4a';
       _localPath = '${directory.path}/$safeFileName';
-      
+
       await Dio().download(widget.audioUrl, _localPath!);
-      
+
       await AudioCacheManager().savePath(widget.messageId, _localPath!);
       if (widget.localChatId != null) {
         await AudioCacheManager().savePath(widget.localChatId!, _localPath!);
       }
-      
+
       _isDownloaded = true;
       await _prepareAudio(_localPath!);
     } catch (e) {
@@ -264,9 +265,9 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
           stream: _playerController.onCurrentDurationChanged,
           builder: (context, snapshot) {
             final currentDurationMs = snapshot.data ?? 0;
-            
+
             int displayDurationMs = _maxDurationMs;
-            
+
             if (_playerController.playerState == PlayerState.playing ||
                 (_playerController.playerState == PlayerState.paused &&
                     currentDurationMs > 0)) {

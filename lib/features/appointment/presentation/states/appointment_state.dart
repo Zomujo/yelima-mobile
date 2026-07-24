@@ -19,7 +19,8 @@ abstract class PaginatedAppointmentState with _$PaginatedAppointmentState {
 @freezed
 abstract class AppointmentState with _$AppointmentState {
   const factory AppointmentState({
-    @Default(PaginatedAppointmentState()) PaginatedAppointmentState upcomingState,
+    @Default(PaginatedAppointmentState())
+    PaginatedAppointmentState upcomingState,
     @Default(PaginatedAppointmentState()) PaginatedAppointmentState pastState,
     AppointmentEntity? nearestAppointment,
     @Default(false) bool isNearestLoading,

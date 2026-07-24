@@ -33,7 +33,9 @@ class TimeOfDayTabs extends StatelessWidget {
           children: [
             AppText.labelMedium(
               title,
-              color: isSelected ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+              color: isSelected
+                  ? const Color(0xFF64748B)
+                  : const Color(0xFF94A3B8),
               fontWeight: FontWeight.w600,
             ),
             if (count > 0) ...[
@@ -73,4 +75,3 @@ class TimeOfDayTabs extends StatelessWidget {
     );
   }
 }
-

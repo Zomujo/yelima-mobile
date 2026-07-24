@@ -53,7 +53,8 @@ class BloodGlucoseSection extends StatelessWidget {
     return GlucoseGraph(data: controller.glucoseTrendState.data!);
   }
 
-  void _openFullScreen(BuildContext context, ProgressController controller, String tab) {
+  void _openFullScreen(
+      BuildContext context, ProgressController controller, String tab) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider<ProgressController>.value(

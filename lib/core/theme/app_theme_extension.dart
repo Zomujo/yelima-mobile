@@ -22,7 +22,6 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.primaryOrange,
     required this.cardBgLightGreen,
     required this.cardBgMint,
-
     required this.circleBgLightOrange,
   });
 
@@ -36,7 +35,6 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Color? primaryOrange,
     Color? cardBgLightGreen,
     Color? cardBgMint,
-
     Color? circleBgLightOrange,
   }) {
     return AppThemeExtension(
@@ -48,13 +46,13 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       primaryOrange: primaryOrange ?? this.primaryOrange,
       cardBgLightGreen: cardBgLightGreen ?? this.cardBgLightGreen,
       cardBgMint: cardBgMint ?? this.cardBgMint,
-
       circleBgLightOrange: circleBgLightOrange ?? this.circleBgLightOrange,
     );
   }
 
   @override
-  ThemeExtension<AppThemeExtension> lerp(ThemeExtension<AppThemeExtension>? other, double t) {
+  ThemeExtension<AppThemeExtension> lerp(
+      ThemeExtension<AppThemeExtension>? other, double t) {
     if (other is! AppThemeExtension) {
       return this;
     }
@@ -67,8 +65,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       primaryOrange: Color.lerp(primaryOrange, other.primaryOrange, t),
       cardBgLightGreen: Color.lerp(cardBgLightGreen, other.cardBgLightGreen, t),
       cardBgMint: Color.lerp(cardBgMint, other.cardBgMint, t),
-
-      circleBgLightOrange: Color.lerp(circleBgLightOrange, other.circleBgLightOrange, t),
+      circleBgLightOrange:
+          Color.lerp(circleBgLightOrange, other.circleBgLightOrange, t),
     );
   }
 }

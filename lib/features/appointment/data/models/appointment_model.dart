@@ -13,7 +13,7 @@ class AppointmentModel extends AppointmentEntity {
     return AppointmentModel(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
-      appointmentDate: json['appointmentDate'] != null 
+      appointmentDate: json['appointmentDate'] != null
           ? DateTime.parse(json['appointmentDate'])
           : DateTime.now(),
       hostPersonnel: HostPersonnelModel.fromJson(json['hostPersonnel'] ?? {}),
@@ -61,7 +61,7 @@ class AppointmentListResponseModel extends AppointmentListResponse {
 
   factory AppointmentListResponseModel.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>? ?? json;
-    
+
     return AppointmentListResponseModel(
       rows: (data['rows'] as List<dynamic>?)
               ?.map((e) => AppointmentModel.fromJson(e as Map<String, dynamic>))

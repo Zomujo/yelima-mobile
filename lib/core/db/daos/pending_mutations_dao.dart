@@ -6,7 +6,8 @@ import 'dart:convert';
 part 'pending_mutations_dao.g.dart';
 
 @DriftAccessor(tables: [PendingMutations])
-class PendingMutationsDao extends DatabaseAccessor<AppDatabase> with _$PendingMutationsDaoMixin {
+class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
+    with _$PendingMutationsDaoMixin {
   PendingMutationsDao(super.db);
 
   Future<List<PendingMutation>> getAllPendingMutations() {
@@ -35,12 +36,14 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase> with _$PendingMu
   }
 
   Future<void> updateEntityId(String oldEntityId, String newEntityId) {
-    return (update(pendingMutations)..where((t) => t.entityId.equals(oldEntityId)))
+    return (update(pendingMutations)
+          ..where((t) => t.entityId.equals(oldEntityId)))
         .write(PendingMutationsCompanion(entityId: Value(newEntityId)));
   }
 
   Future<void> removeMutationsForEntity(String entityId) {
-    return (delete(pendingMutations)..where((t) => t.entityId.equals(entityId))).go();
+    return (delete(pendingMutations)..where((t) => t.entityId.equals(entityId)))
+        .go();
   }
 
   Future<void> queueMutation({

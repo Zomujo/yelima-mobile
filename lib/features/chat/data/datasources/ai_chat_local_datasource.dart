@@ -32,7 +32,9 @@ class AiChatLocalDataSourceImpl implements AiChatLocalDataSource {
           suggestions = List<String>.from(jsonDecode(e.suggestionsJson!));
         } catch (_) {}
       }
-      var mappedStatus = MessageStatus.values.firstWhere((s) => s.name == e.status, orElse: () => MessageStatus.sent);
+      var mappedStatus = MessageStatus.values.firstWhere(
+          (s) => s.name == e.status,
+          orElse: () => MessageStatus.sent);
       // Edge Case 3: If status was 'sending' when the app restarted, it's actually 'failed'
       if (mappedStatus == MessageStatus.sending) {
         mappedStatus = MessageStatus.failed;
@@ -88,7 +90,10 @@ class AiChatLocalDataSourceImpl implements AiChatLocalDataSource {
   @override
   Future<List<String>> getPendingDeletions() async {
     final deletions = await _db.aiChatDao.getPendingDeletions();
-    return deletions.where((d) => d.source == 'chat').map((d) => d.messageId).toList();
+    return deletions
+        .where((d) => d.source == 'chat')
+        .map((d) => d.messageId)
+        .toList();
   }
 
   @override

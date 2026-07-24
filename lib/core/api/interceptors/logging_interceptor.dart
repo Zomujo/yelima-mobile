@@ -33,7 +33,8 @@ class LoggingInterceptor extends Interceptor {
     // Suppress verbose console spam for expected FCM token deletion errors during logout.
     // The FCMTokenService already handles these gracefully via an INFO log.
     final isFcmEndpoint = err.requestOptions.path.contains('fcm-tokens');
-    final isExpectedAuthError = err.response?.statusCode == 401 || err.response?.statusCode == 404;
+    final isExpectedAuthError =
+        err.response?.statusCode == 401 || err.response?.statusCode == 404;
 
     if (kDebugMode && !(isFcmEndpoint && isExpectedAuthError)) {
       debugPrint(

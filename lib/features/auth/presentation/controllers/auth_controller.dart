@@ -258,10 +258,9 @@ class AuthController extends ChangeNotifier with SafeNotifier {
       return;
     }
 
-      try {
-              } catch (e) {
-        debugPrint('Error syncing before sign out: $e');
-      }
+    try {} catch (e) {
+      debugPrint('Error syncing before sign out: $e');
+    }
 
     final stillPending = await GetIt.instance<AppDatabase>()
         .pendingMutationsDao

@@ -266,12 +266,12 @@ class MonitoringService {
 
       // Enhance Crashlytics correlation with custom keys
       await _crashlytics.setCustomKey('is_authenticated', true);
-      
+
       if (email != null) {
         await setUserProperty(name: 'email', value: email);
         await _crashlytics.setCustomKey('user_email', email);
       }
-      
+
       if (accountType != null) {
         await setUserProperty(name: 'account_type', value: accountType);
         await _crashlytics.setCustomKey('account_type', accountType);

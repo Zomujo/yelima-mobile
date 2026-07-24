@@ -19,5 +19,6 @@ class AppointmentListResponse extends Equatable {
   });
 
   @override
-  List<Object?> get props => [rows, total, pageSize, page, totalPages, nextPage];
+  List<Object?> get props =>
+      [rows, total, pageSize, page, totalPages, nextPage];
 }

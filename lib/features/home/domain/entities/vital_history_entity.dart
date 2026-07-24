@@ -20,7 +20,8 @@ class VitalHistoryEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, vitalType, value, unit, severity, vitalName, recordedAt];
+  List<Object?> get props =>
+      [id, vitalType, value, unit, severity, vitalName, recordedAt];
 }
 
 class HomeMetricsEntity extends Equatable {
@@ -51,7 +52,9 @@ class HomeMetricsEntity extends Equatable {
 
   /// Returns the blood pressure parsed as a tuple of (systolic, diastolic).
   (int, int)? get parsedBloodPressure {
-    if (bloodPressure == null || bloodPressure!.isEmpty || bloodPressure!.contains('--')) return null;
+    if (bloodPressure == null ||
+        bloodPressure!.isEmpty ||
+        bloodPressure!.contains('--')) return null;
     final parts = bloodPressure!.split('/');
     if (parts.length != 2) return null;
     final sys = int.tryParse(parts[0].trim());
@@ -62,7 +65,9 @@ class HomeMetricsEntity extends Equatable {
 
   /// Returns the blood glucose parsed as a double.
   double? get parsedBloodGlucose {
-    if (bloodGlucose == null || bloodGlucose!.isEmpty || bloodGlucose!.contains('--')) return null;
+    if (bloodGlucose == null ||
+        bloodGlucose!.isEmpty ||
+        bloodGlucose!.contains('--')) return null;
     return double.tryParse(bloodGlucose!.trim());
   }
 }

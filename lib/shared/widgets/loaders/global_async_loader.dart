@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class GlobalAsyncLoader extends StatelessWidget {
   final String? message;
-  
+
   const GlobalAsyncLoader({super.key, this.message});
 
   @override
@@ -18,7 +18,8 @@ class GlobalAsyncLoader extends StatelessWidget {
                 color: const Color(0xB0000000), // Semi-transparent black
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 20, horizontal: 25),
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),

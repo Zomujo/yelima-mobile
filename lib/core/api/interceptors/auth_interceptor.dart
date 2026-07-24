@@ -53,7 +53,8 @@ class AuthInterceptor extends Interceptor {
         AppLogger.d('AuthInterceptor: Token refresh in progress, waiting...');
         bool success = false;
         try {
-          success = await _refreshCompleter!.future.timeout(const Duration(seconds: 10));
+          success = await _refreshCompleter!.future
+              .timeout(const Duration(seconds: 10));
         } catch (_) {
           AppLogger.w('AuthInterceptor: Token refresh wait timed out.');
           _refreshCompleter = null; // Clear hung completer
@@ -81,7 +82,7 @@ class AuthInterceptor extends Interceptor {
         if (user != null) {
           final newToken = await user.getIdToken(true);
           _refreshCompleter!.complete(true);
-          
+
           // Debounce to prevent stampede of concurrent 401s triggering another refresh
           Future.delayed(const Duration(seconds: 2), () {
             _refreshCompleter = null;

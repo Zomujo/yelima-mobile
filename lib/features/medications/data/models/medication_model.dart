@@ -23,7 +23,9 @@ class MedicationModel extends MedicationEntity {
       name: json['name'] ?? '',
       dosage: json['dosage'] ?? '',
       purpose: json['purpose'] ?? '',
-      toBeTakenAt: json['toBeTakenAt'] != null ? DateTime.parse(json['toBeTakenAt']).toLocal() : DateTime.now(),
+      toBeTakenAt: json['toBeTakenAt'] != null
+          ? DateTime.parse(json['toBeTakenAt']).toLocal()
+          : DateTime.now(),
       taken: json['taken'] ?? false,
       morning: json['morning'],
       afternoon: json['afternoon'],

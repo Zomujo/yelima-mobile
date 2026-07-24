@@ -77,7 +77,8 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
     final result = await repository.getMedicationHistory(id, date: date);
     result.fold(
       (failure) {
-        historyStates[id] = MedicationState(error: failure, isLoading: false, data: existing);
+        historyStates[id] =
+            MedicationState(error: failure, isLoading: false, data: existing);
         notifyListeners();
       },
       (data) {

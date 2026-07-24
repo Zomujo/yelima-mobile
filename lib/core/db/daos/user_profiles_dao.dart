@@ -5,15 +5,18 @@ import '../tables/user_profiles.dart';
 part 'user_profiles_dao.g.dart';
 
 @DriftAccessor(tables: [UserProfiles])
-class UserProfilesDao extends DatabaseAccessor<AppDatabase> with _$UserProfilesDaoMixin {
+class UserProfilesDao extends DatabaseAccessor<AppDatabase>
+    with _$UserProfilesDaoMixin {
   UserProfilesDao(super.db);
 
   Stream<UserProfile?> watchProfile(String id) {
-    return (select(userProfiles)..where((t) => t.id.equals(id))).watchSingleOrNull();
+    return (select(userProfiles)..where((t) => t.id.equals(id)))
+        .watchSingleOrNull();
   }
 
   Future<UserProfile?> getProfile(String id) {
-    return (select(userProfiles)..where((t) => t.id.equals(id))).getSingleOrNull();
+    return (select(userProfiles)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
   }
 
   Future<void> insertOrUpdateProfile(UserProfilesCompanion profile) {

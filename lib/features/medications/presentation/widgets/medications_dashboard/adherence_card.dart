@@ -16,11 +16,12 @@ class AdherenceCard extends StatelessWidget {
     if (adherence == null) return const SizedBox.shrink();
 
     final rate = adherence!.rate.toInt();
-    
+
     // We map the backend days to our DayStatus UI
     final List<Widget> dayWidgets = adherence!.days.map((dayData) {
-      final label = AppDateFormats.dayOfWeekShort.format(dayData.takenAt).substring(0, 1);
-      
+      final label =
+          AppDateFormats.dayOfWeekShort.format(dayData.takenAt).substring(0, 1);
+
       // Determine status based on taken boolean and date
       DayStatus status;
       if (dayData.taken) {

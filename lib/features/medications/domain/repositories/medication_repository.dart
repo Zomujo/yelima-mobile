@@ -30,6 +30,9 @@ abstract class MedicationRepository {
   AsyncResponse<SeededMedicationListResponseModel> getPreloadedMedications(
       {int page = 1, int limit = 10, String? search});
 
+  /// Syncs alarms for all existing local medications.
+  Future<void> syncLocalAlarms();
+
   AsyncResponse<MedicationListResponse> getAllMedications(
       {int page = 1, int pageSize = 10, bool forceRefresh = false});
 

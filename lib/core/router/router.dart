@@ -30,14 +30,16 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 final shellNavigatorKey = GlobalKey<NavigatorState>();
 
 class AppRouter {
-  static GoRouter createRouter(AuthController authController, UserController userController) {
+  static GoRouter createRouter(
+      AuthController authController, UserController userController) {
     return GoRouter(
       navigatorKey: rootNavigatorKey,
       initialLocation: RoutePaths.splash,
       refreshListenable: Listenable.merge([authController, userController]),
       observers: [MonitoringService.instance.analyticsObserver],
       redirect: (context, state) {
-        final isInitialized = authController.isInitialized && userController.isInitialized;
+        final isInitialized =
+            authController.isInitialized && userController.isInitialized;
         final isAuthenticated = authController.isAuthenticated;
         final isSyncInProgress = authController.isInitialSyncInProgress;
 
@@ -54,9 +56,11 @@ class AppRouter {
 
         final redirectParam = state.uri.queryParameters['redirect'];
         final currentUri = state.uri.toString();
-        // Determine the original user intent. 
-        final intendedPath = redirectParam ?? 
-            (isAuthRoute || isRegistrationRoute || isSplashRoute ? null : currentUri);
+        // Determine the original user intent.
+        final intendedPath = redirectParam ??
+            (isAuthRoute || isRegistrationRoute || isSplashRoute
+                ? null
+                : currentUri);
 
         String withRedirect(String path) {
           if (intendedPath == null || intendedPath == '/') return path;

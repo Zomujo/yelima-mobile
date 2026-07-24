@@ -15,7 +15,11 @@ class TodaysMedicationsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final section = controller.state.selectedTabIndex == 0 ? 'MORNING' : controller.state.selectedTabIndex == 1 ? 'AFTERNOON' : 'EVENING';
+    final section = controller.state.selectedTabIndex == 0
+        ? 'MORNING'
+        : controller.state.selectedTabIndex == 1
+            ? 'AFTERNOON'
+            : 'EVENING';
     if (controller.state.sectionLoadingStatus[section] == true) {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
@@ -76,8 +80,10 @@ class TodaysMedicationsList extends StatelessWidget {
                 purpose: med.purpose,
                 time: timeString,
                 isTaken: med.taken,
-                isOverdue: !med.taken && DateTime.now().isAfter(med.toBeTakenAt),
-                isConfirming: controller.state.confirmingMedicationIds.contains(med.id),
+                isOverdue:
+                    !med.taken && DateTime.now().isAfter(med.toBeTakenAt),
+                isConfirming:
+                    controller.state.confirmingMedicationIds.contains(med.id),
                 onConfirm: () async {
                   final error = await controller.toggleMedicationStatus(med.id);
                   if (error != null && context.mounted) {

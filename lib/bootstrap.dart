@@ -14,8 +14,10 @@ import 'dart:ui';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'core/services/monitoring_service.dart';
 import 'core/services/notification_service.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 
-Future<void> bootstrap(FirebaseOptions? firebaseOptions, {String? envFile}) async {
+Future<void> bootstrap(FirebaseOptions? firebaseOptions,
+    {String? envFile}) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Apply system-wide UI overlay style so the status bar and Android navigation
@@ -34,6 +36,9 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions, {String? envFile}) asyn
 
   // Initialize Monitoring Service (Crashlytics + Analytics)
   await MonitoringService.instance.initialize();
+
+  // Initialize timezone data required for scheduled notifications
+  tz.initializeTimeZones();
 
   // Initialize Notification Service (Push Notifications). This only sets up
   // local plugin/channel state and reads cold-start message info - it's

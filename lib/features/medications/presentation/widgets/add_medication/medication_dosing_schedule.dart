@@ -6,7 +6,8 @@ import '../../controllers/add_medication_form_controller.dart';
 class MedicationDosingSchedule extends StatelessWidget {
   const MedicationDosingSchedule({super.key});
 
-  Future<void> _selectTime(BuildContext context, TimeOfDay initialTime, Function(TimeOfDay) onSelected) async {
+  Future<void> _selectTime(BuildContext context, TimeOfDay initialTime,
+      Function(TimeOfDay) onSelected) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
@@ -55,12 +56,14 @@ class MedicationDosingSchedule extends StatelessWidget {
       child: Column(
         children: [
           SwitchListTile(
-            title: AppText.titleMedium(label, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+            title: AppText.titleMedium(label,
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
             value: isEnabled,
             onChanged: onToggle,
             activeColor: const Color(0xFFFDBA74),
             inactiveThumbColor: const Color(0xFFFDBA74),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           if (isEnabled) ...[
             const Divider(height: 1, color: Color(0xFFE2E8F0)),
@@ -73,7 +76,8 @@ class MedicationDosingSchedule extends StatelessWidget {
                       onTap: onTimeSelect,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 12),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
@@ -81,9 +85,12 @@ class MedicationDosingSchedule extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time, color: Color(0xFF94A3B8), size: 18),
+                            const Icon(Icons.access_time,
+                                color: Color(0xFF94A3B8), size: 18),
                             const SizedBox(width: 8),
-                            AppText.bodyMedium(_formatTime(time), fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                            AppText.bodyMedium(_formatTime(time),
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF1E293B)),
                           ],
                         ),
                       ),
@@ -99,12 +106,17 @@ class MedicationDosingSchedule extends StatelessWidget {
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove, size: 18, color: Color(0xFF64748B)),
-                          onPressed: quantity > 1 ? () => onQuantityChange(quantity - 1) : null,
+                          icon: const Icon(Icons.remove,
+                              size: 18, color: Color(0xFF64748B)),
+                          onPressed: quantity > 1
+                              ? () => onQuantityChange(quantity - 1)
+                              : null,
                         ),
-                        AppText.bodyLarge(quantity.toString(), fontWeight: FontWeight.bold),
+                        AppText.bodyLarge(quantity.toString(),
+                            fontWeight: FontWeight.bold),
                         IconButton(
-                          icon: const Icon(Icons.add, size: 18, color: Color(0xFF64748B)),
+                          icon: const Icon(Icons.add,
+                              size: 18, color: Color(0xFF64748B)),
                           onPressed: () => onQuantityChange(quantity + 1),
                         ),
                       ],
@@ -126,9 +138,11 @@ class MedicationDosingSchedule extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const AppText.titleLarge('Dosing Schedule', fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            const AppText.titleLarge('Dosing Schedule',
+                fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
             const SizedBox(height: 8),
-            const AppText.bodyMedium('Select when and how much to take.', color: Color(0xFF64748B)),
+            const AppText.bodyMedium('Select when and how much to take.',
+                color: Color(0xFF64748B)),
             const SizedBox(height: 24),
             _buildDosageToggle(
               context,
@@ -137,8 +151,13 @@ class MedicationDosingSchedule extends StatelessWidget {
               time: controller.state.morningTime,
               quantity: controller.state.morningQuantity,
               onToggle: (v) => controller.updateMorning(v),
-              onTimeSelect: () => _selectTime(context, controller.state.morningTime, (t) => controller.updateMorning(controller.state.hasMorning, t)),
-              onQuantityChange: (v) => controller.updateMorning(controller.state.hasMorning, controller.state.morningTime, v),
+              onTimeSelect: () => _selectTime(
+                  context,
+                  controller.state.morningTime,
+                  (t) =>
+                      controller.updateMorning(controller.state.hasMorning, t)),
+              onQuantityChange: (v) => controller.updateMorning(
+                  controller.state.hasMorning, controller.state.morningTime, v),
             ),
             const SizedBox(height: 16),
             _buildDosageToggle(
@@ -148,8 +167,15 @@ class MedicationDosingSchedule extends StatelessWidget {
               time: controller.state.afternoonTime,
               quantity: controller.state.afternoonQuantity,
               onToggle: (v) => controller.updateAfternoon(v),
-              onTimeSelect: () => _selectTime(context, controller.state.afternoonTime, (t) => controller.updateAfternoon(controller.state.hasAfternoon, t)),
-              onQuantityChange: (v) => controller.updateAfternoon(controller.state.hasAfternoon, controller.state.afternoonTime, v),
+              onTimeSelect: () => _selectTime(
+                  context,
+                  controller.state.afternoonTime,
+                  (t) => controller.updateAfternoon(
+                      controller.state.hasAfternoon, t)),
+              onQuantityChange: (v) => controller.updateAfternoon(
+                  controller.state.hasAfternoon,
+                  controller.state.afternoonTime,
+                  v),
             ),
             const SizedBox(height: 16),
             _buildDosageToggle(
@@ -159,8 +185,13 @@ class MedicationDosingSchedule extends StatelessWidget {
               time: controller.state.eveningTime,
               quantity: controller.state.eveningQuantity,
               onToggle: (v) => controller.updateEvening(v),
-              onTimeSelect: () => _selectTime(context, controller.state.eveningTime, (t) => controller.updateEvening(controller.state.hasEvening, t)),
-              onQuantityChange: (v) => controller.updateEvening(controller.state.hasEvening, controller.state.eveningTime, v),
+              onTimeSelect: () => _selectTime(
+                  context,
+                  controller.state.eveningTime,
+                  (t) =>
+                      controller.updateEvening(controller.state.hasEvening, t)),
+              onQuantityChange: (v) => controller.updateEvening(
+                  controller.state.hasEvening, controller.state.eveningTime, v),
             ),
           ],
         );

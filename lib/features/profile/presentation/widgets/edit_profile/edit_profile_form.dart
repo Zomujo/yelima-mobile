@@ -25,16 +25,22 @@ class _EditProfileFormState extends State<EditProfileForm> {
     final controller = context.read<EditProfileController>();
     final user = context.read<UserController>().userEntity;
 
-    _firstNameController = TextEditingController(text: controller.state.firstName);
-    _lastNameController = TextEditingController(text: controller.state.lastName);
+    _firstNameController =
+        TextEditingController(text: controller.state.firstName);
+    _lastNameController =
+        TextEditingController(text: controller.state.lastName);
     _emailController = TextEditingController(text: user?.email ?? '');
 
     _firstNameController.addListener(() {
-      context.read<EditProfileController>().updateForm(firstName: _firstNameController.text);
+      context
+          .read<EditProfileController>()
+          .updateForm(firstName: _firstNameController.text);
     });
 
     _lastNameController.addListener(() {
-      context.read<EditProfileController>().updateForm(lastName: _lastNameController.text);
+      context
+          .read<EditProfileController>()
+          .updateForm(lastName: _lastNameController.text);
     });
   }
 

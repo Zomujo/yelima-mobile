@@ -14,6 +14,6 @@ class NetworkInfoImpl implements INetworkInfo {
   Future<bool> get isConnected => _internetConnection.hasInternetAccess;
 
   @override
-  Stream<bool> get onConnectivityChanged =>
-      _internetConnection.onStatusChange.map((status) => status == InternetStatus.connected);
+  Stream<bool> get onConnectivityChanged => _internetConnection.onStatusChange
+      .map((status) => status == InternetStatus.connected);
 }

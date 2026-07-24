@@ -90,7 +90,8 @@ class _OptionBlockTile extends StatelessWidget {
               Expanded(
                 child: AppText.bodyLarge(
                   option.label,
-                  color: option.labelColor ?? const Color(0xFF1E293B), // Slate 800
+                  color:
+                      option.labelColor ?? const Color(0xFF1E293B), // Slate 800
                 ),
               ),
               const SizedBox(width: 16),

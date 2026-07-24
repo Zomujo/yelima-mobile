@@ -95,7 +95,9 @@ class AiMessageTile extends StatelessWidget {
                       ? AudioMessageBubble(
                           audioUrl: message.audioUrl!,
                           isUser: isUser,
-                          durationString: message.value.isNotEmpty ? message.value : "00:00",
+                          durationString: message.value.isNotEmpty
+                              ? message.value
+                              : "00:00",
                           messageId: message.id,
                           localChatId: message.localChatId,
                         )
@@ -138,9 +140,7 @@ class AiMessageTile extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     if (message.localChatId != null) {
-                      context
-                          .read<AiChatController>()
-                          .retryMessage(message);
+                      context.read<AiChatController>().retryMessage(message);
                     }
                   },
                   child: const Row(

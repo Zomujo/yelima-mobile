@@ -47,7 +47,7 @@ class TokenManager {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
       final token = await user.getIdToken(false);
-      
+
       if (token != _cachedAuthToken) {
         _cachedAuthToken = token;
         final prefs = await SharedPreferences.getInstance();
@@ -92,13 +92,15 @@ class TokenManager {
         apnsToken = await _firebaseMessaging.getAPNSToken();
         if (apnsToken == null) {
           retryCount++;
-          AppLogger.w('TokenManager: Waiting for APNs token (Attempt $retryCount/$maxRetries)...');
+          AppLogger.w(
+              'TokenManager: Waiting for APNs token (Attempt $retryCount/$maxRetries)...');
           await Future.delayed(const Duration(seconds: 2));
         }
       }
 
       if (apnsToken == null) {
-        AppLogger.w('TokenManager: APNs token still null after $maxRetries attempts — FCM token may be unavailable.');
+        AppLogger.w(
+            'TokenManager: APNs token still null after $maxRetries attempts — FCM token may be unavailable.');
       }
     }
 
@@ -113,15 +115,18 @@ class TokenManager {
     // Listen for future token refreshes — cancel any previous listener first
     // to prevent duplicate subscription leaks across multiple sessions.
     await _tokenRefreshSubscription?.cancel();
-    _tokenRefreshSubscription = _firebaseMessaging.onTokenRefresh.listen((newToken) async {
+    _tokenRefreshSubscription =
+        _firebaseMessaging.onTokenRefresh.listen((newToken) async {
       AppLogger.i('TokenManager: FCM token refreshed.');
       _cachedFCMToken = newToken;
       final p = await SharedPreferences.getInstance();
       await p.setString(_fcmTokenKey, newToken);
-      
+
       try {
         if (GetIt.instance.isRegistered<FCMTokenService>()) {
-          GetIt.instance<FCMTokenService>().registerFCMToken().catchError((_) {});
+          GetIt.instance<FCMTokenService>()
+              .registerFCMToken()
+              .catchError((_) {});
         }
       } catch (_) {}
     });
@@ -149,7 +154,8 @@ class TokenManager {
   Future<void> clearToken() => clearTokens();
 
   /// No-op — Firebase handles token storage internally.
-  Future<void> saveTokens({required String auth, required String refresh}) async {}
+  Future<void> saveTokens(
+      {required String auth, required String refresh}) async {}
 
   /// No-op — Firebase handles refresh token internally.
   Future<String?> getRefreshToken() async => null;

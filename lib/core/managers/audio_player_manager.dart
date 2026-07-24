@@ -38,7 +38,8 @@ class AudioPlayerManager with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       for (var c in _controllers) {
         if (c.playerState == PlayerState.playing) {
           c.pausePlayer();
@@ -51,4 +52,3 @@ class AudioPlayerManager with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
   }
 }
-

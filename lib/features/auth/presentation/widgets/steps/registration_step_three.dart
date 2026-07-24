@@ -41,7 +41,8 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
     if (!_hasConsented || _isSubmitting) return;
 
     if (_selectedCondition == null) {
-      AppSnackBar.showError(context, message: 'Please select a condition to continue.');
+      AppSnackBar.showError(context,
+          message: 'Please select a condition to continue.');
       return;
     }
 

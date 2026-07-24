@@ -13,10 +13,11 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
 
   AiChatRemoteMutationSource(this._remoteDataSource, this._db);
 
-  Future<void> _handleBotReply(Map<String, dynamic> response, String? localChatId) async {
+  Future<void> _handleBotReply(
+      Map<String, dynamic> response, String? localChatId) async {
     if (response['suggestions'] != null) {}
     final botData = response;
-    
+
     List<String> suggestions = [];
     if (botData['suggestions'] != null) {
       suggestions = List<String>.from(botData['suggestions']);
@@ -49,15 +50,16 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
       case 'sendMessage':
         final message = payload['message'] as String;
         final localChatId = payload['localChatId'] as String?;
-        final res = await _remoteDataSource.sendMessage(message, localChatId: localChatId);
+        final res = await _remoteDataSource.sendMessage(message,
+            localChatId: localChatId);
         await _handleBotReply(res, localChatId);
         // We return the actual _id so MutationSyncManager can remap our localChatId
         return res['_id'] as String?;
-        
+
       case 'sendAudioMessage':
         String filePath = payload['filePath'] as String;
         final localChatId = payload['localChatId'] as String?;
-        
+
         if (!filePath.startsWith('/')) {
           final directory = await getApplicationDocumentsDirectory();
           filePath = '${directory.path}/$filePath';
@@ -65,13 +67,15 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
 
         final file = File(filePath);
         if (!await file.exists()) {
-          throw Exception("Audio file not found at $filePath. Cannot sync mutation.");
+          throw Exception(
+              "Audio file not found at $filePath. Cannot sync mutation.");
         }
 
-        final res = await _remoteDataSource.sendAudioMessage(filePath: filePath, localChatId: localChatId);
+        final res = await _remoteDataSource.sendAudioMessage(
+            filePath: filePath, localChatId: localChatId);
         await _handleBotReply(res, localChatId);
         return res['_id'] as String?;
-        
+
       default:
         throw UnimplementedError('Unknown action $action for chat');
     }

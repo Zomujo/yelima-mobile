@@ -39,7 +39,6 @@ class HomeNextStepSection extends StatelessWidget {
               Expanded(
                 child: ActionCard(
                   title: 'My Medicines',
-               
                   iconPath: AppImages.pillIcon.assetName,
                   bgImagePath: AppImages.medicineBgIcon.assetName,
                   backgroundColor: const Color(0xFF20C7D3),

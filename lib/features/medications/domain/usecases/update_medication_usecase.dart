@@ -10,8 +10,7 @@ class UpdateMedicationUseCase {
 
   const UpdateMedicationUseCase(this.repository);
 
-  AsyncResponse<String> call(
-      String medicationId, MedicineFormData data) async {
+  AsyncResponse<String> call(String medicationId, MedicineFormData data) async {
     if (data.morning == null &&
         data.afternoon == null &&
         data.evening == null) {

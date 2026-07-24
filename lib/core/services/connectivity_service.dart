@@ -13,6 +13,6 @@ class ConnectivityService {
 
   Future<bool> get isConnected => _internetConnection.hasInternetAccess;
 
-  Stream<bool> get onConnectivityChanged =>
-      _internetConnection.onStatusChange.map((status) => status == InternetStatus.connected);
+  Stream<bool> get onConnectivityChanged => _internetConnection.onStatusChange
+      .map((status) => status == InternetStatus.connected);
 }

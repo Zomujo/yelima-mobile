@@ -258,7 +258,8 @@ class ExceptionWrapper {
         return left(const UserCanceledException('Sign in cancelled'));
       }
       AppLogger.e('Platform Exception during $name', e, stack);
-      return left(ErrorException(message: e.message ?? 'A platform error occurred'));
+      return left(
+          ErrorException(message: e.message ?? 'A platform error occurred'));
     } on FirebaseAuthException catch (e, stack) {
       stopwatch.stop();
       AppLogger.e('Firebase Auth Exception during $name (${e.code})', e, stack);
@@ -267,10 +268,12 @@ class ExceptionWrapper {
       stopwatch.stop();
       if (e.code == 'unavailable' || e.code == 'network-request-failed') {
         AppLogger.w('Network/Unavailable during $name: ${e.message}');
-        return left(const NetworkException("Service unavailable. Please check your connection."));
+        return left(const NetworkException(
+            "Service unavailable. Please check your connection."));
       }
       AppLogger.e('Firebase Exception during $name', e, stack);
-      return left(ErrorException(message: e.message ?? 'A Firebase error occurred'));
+      return left(
+          ErrorException(message: e.message ?? 'A Firebase error occurred'));
     } on ErrorException catch (e, stack) {
       stopwatch.stop();
       AppLogger.e('Error Exception during $name', e, stack);

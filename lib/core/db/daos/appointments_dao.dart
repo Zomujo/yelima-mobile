@@ -5,7 +5,8 @@ import '../tables/appointments.dart';
 part 'appointments_dao.g.dart';
 
 @DriftAccessor(tables: [Appointments])
-class AppointmentsDao extends DatabaseAccessor<AppDatabase> with _$AppointmentsDaoMixin {
+class AppointmentsDao extends DatabaseAccessor<AppDatabase>
+    with _$AppointmentsDaoMixin {
   AppointmentsDao(super.db);
 
   Stream<List<Appointment>> watchAllAppointments() {
@@ -29,10 +30,15 @@ class AppointmentsDao extends DatabaseAccessor<AppDatabase> with _$AppointmentsD
   }
 
   Future<void> clearUpcomingAppointments() {
-    return (delete(appointments)..where((t) => t.appointmentDate.isBiggerThanValue(DateTime.now()))).go();
+    return (delete(appointments)
+          ..where((t) => t.appointmentDate.isBiggerThanValue(DateTime.now())))
+        .go();
   }
 
   Future<void> clearPastAppointments() {
-    return (delete(appointments)..where((t) => t.appointmentDate.isSmallerOrEqualValue(DateTime.now()))).go();
+    return (delete(appointments)
+          ..where(
+              (t) => t.appointmentDate.isSmallerOrEqualValue(DateTime.now())))
+        .go();
   }
 }

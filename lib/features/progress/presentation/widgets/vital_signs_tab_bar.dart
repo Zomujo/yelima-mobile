@@ -4,7 +4,8 @@ class VitalSignsTabBar extends StatelessWidget {
   final String activeTab;
   final Function(String) onTabChanged;
 
-  const VitalSignsTabBar({super.key, required this.activeTab, required this.onTabChanged});
+  const VitalSignsTabBar(
+      {super.key, required this.activeTab, required this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,8 @@ class VitalSignsTabBar extends StatelessWidget {
     );
   }
 
-  Widget _buildTab(String id, IconData icon, String label, List<Color> gradientColors) {
+  Widget _buildTab(
+      String id, IconData icon, String label, List<Color> gradientColors) {
     final isActive = activeTab == id;
     return GestureDetector(
       onTap: () => onTabChanged(id),

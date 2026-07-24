@@ -42,7 +42,8 @@ class _ReadingLoggingView extends StatelessWidget {
             ),
             Expanded(
               child: UnsavedChangesGuard(
-                hasUnsavedChanges: () => context.read<ReadingLoggingController>().state.hasChanged,
+                hasUnsavedChanges: () =>
+                    context.read<ReadingLoggingController>().state.hasChanged,
                 child: StreamBuilder<List<VitalHistory>>(
                   stream: context.read<VitalsDao>().watchAllVitals(),
                   builder: (context, snapshot) {
@@ -50,8 +51,7 @@ class _ReadingLoggingView extends StatelessWidget {
                         List<VitalHistory>.from(snapshot.data ?? []);
                     final hasHistory = allVitals.any((v) {
                       final type = v.vitalType.toUpperCase();
-                      return !type.contains('CACHE') &&
-                          !type.contains('TREND');
+                      return !type.contains('CACHE') && !type.contains('TREND');
                     });
 
                     // No history: simple non-scrollable column

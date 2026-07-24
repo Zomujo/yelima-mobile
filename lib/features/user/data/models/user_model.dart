@@ -17,12 +17,14 @@ abstract class UserModel with _$UserModel {
     DateTime? dateOfBirth,
     @Default([]) List<String> conditions,
     @Default(false) bool hasConsented,
-    @Default(RegistrationStatus.personalDetails) RegistrationStatus registrationStatus,
+    @Default(RegistrationStatus.personalDetails)
+    RegistrationStatus registrationStatus,
     String? modeOfRegistration,
     DateTime? createdAt,
   }) = _UserModel;
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      _$UserModelFromJson(json);
 
   /// Mapper to convert from Data Layer to Domain Layer
   UserEntity toDomain() {

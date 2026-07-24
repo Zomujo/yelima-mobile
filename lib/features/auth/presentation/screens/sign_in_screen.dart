@@ -48,7 +48,8 @@ class SignInScreen extends StatelessWidget {
                 AuthFooter(
                   text: 'Don\'t have an account? ',
                   actionText: 'Create an account',
-                  onActionTap: isLoading ? null : () => context.go(RoutePaths.signUp),
+                  onActionTap:
+                      isLoading ? null : () => context.go(RoutePaths.signUp),
                 ),
                 const SizedBox(height: 32),
                 const TermsAndPrivacyText(),

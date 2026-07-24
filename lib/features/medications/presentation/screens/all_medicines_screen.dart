@@ -39,7 +39,8 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> {
                 },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFDBA74),
                     borderRadius: BorderRadius.circular(20),

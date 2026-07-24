@@ -4,8 +4,10 @@ abstract class MedicationLocalDataSource {
   // Adherence
   Future<AdherenceGlobal?> getGlobalAdherenceRate(String typeId);
   Future<List<AdherenceGlobalDay>> getGlobalAdherenceDays();
-  Future<void> saveGlobalAdherence(String typeId, double rate, List<AdherenceGlobalDay> driftDays);
-  Future<void> markMedicationLogAsTakenOffline(String logId, String medicationId, DateTime date);
+  Future<void> saveGlobalAdherence(
+      String typeId, double rate, List<AdherenceGlobalDay> driftDays);
+  Future<void> markMedicationLogAsTakenOffline(
+      String logId, String medicationId, DateTime date);
   Future<void> markGlobalDayAsTakenOffline(String dateStr);
   Future<void> saveMedicationLogs(List<MedicationLog> logs);
   Future<List<MedicationLog>> getLogsForMedication(String medicationId);
@@ -43,13 +45,16 @@ class MedicationLocalDataSourceImpl implements MedicationLocalDataSource {
   }
 
   @override
-  Future<void> saveGlobalAdherence(String typeId, double rate, List<AdherenceGlobalDay> driftDays) {
+  Future<void> saveGlobalAdherence(
+      String typeId, double rate, List<AdherenceGlobalDay> driftDays) {
     return db.adherenceDao.saveGlobalAdherence(typeId, rate, driftDays);
   }
 
   @override
-  Future<void> markMedicationLogAsTakenOffline(String logId, String medicationId, DateTime date) {
-    return db.adherenceDao.markMedicationLogAsTakenOffline(logId, medicationId, date);
+  Future<void> markMedicationLogAsTakenOffline(
+      String logId, String medicationId, DateTime date) {
+    return db.adherenceDao
+        .markMedicationLogAsTakenOffline(logId, medicationId, date);
   }
 
   @override
@@ -119,13 +124,17 @@ class MedicationLocalDataSourceImpl implements MedicationLocalDataSource {
 
   @override
   Future<bool> hasPendingMutationsForEntity(String entityId) async {
-    final list = await (db.select(db.pendingMutations)..where((t) => t.entityId.equals(entityId))).get();
+    final list = await (db.select(db.pendingMutations)
+          ..where((t) => t.entityId.equals(entityId)))
+        .get();
     return list.isNotEmpty;
   }
 
   @override
   Future<bool> hasPendingMutationsForType(String type) async {
-    final list = await (db.select(db.pendingMutations)..where((t) => t.entityType.equals(type))).get();
+    final list = await (db.select(db.pendingMutations)
+          ..where((t) => t.entityType.equals(type)))
+        .get();
     return list.isNotEmpty;
   }
 }

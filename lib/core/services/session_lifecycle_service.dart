@@ -40,10 +40,11 @@ class SessionLifecycleService {
   Future<void> startSession(String userId) async {
     // Chain onto the existing task to ensure sequential execution
     final previousTask = _lifecycleTask ?? Future.value();
-    
+
     _lifecycleTask = previousTask.then((_) async {
       if (_isSessionActive) {
-        AppLogger.d('SessionLifecycleService: Session already active, ignoring startSession.');
+        AppLogger.d(
+            'SessionLifecycleService: Session already active, ignoring startSession.');
         return;
       }
       _isSessionActive = true;
@@ -63,7 +64,7 @@ class SessionLifecycleService {
         );
       }
     });
-    
+
     return _lifecycleTask;
   }
 
@@ -71,10 +72,11 @@ class SessionLifecycleService {
   Future<void> endSession() async {
     // Chain onto the existing task to ensure sequential execution
     final previousTask = _lifecycleTask ?? Future.value();
-    
+
     _lifecycleTask = previousTask.then((_) async {
       if (!_isSessionActive) {
-        AppLogger.d('SessionLifecycleService: No active session, ignoring endSession.');
+        AppLogger.d(
+            'SessionLifecycleService: No active session, ignoring endSession.');
         return;
       }
       _isSessionActive = false;
@@ -94,7 +96,7 @@ class SessionLifecycleService {
         );
       }
     });
-    
+
     return _lifecycleTask;
   }
 }

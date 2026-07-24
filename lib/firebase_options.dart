@@ -62,7 +62,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '701397813152',
     projectId: 'giz-dnh',
     storageBucket: 'giz-dnh.firebasestorage.app',
-    iosClientId: '701397813152-0s13rg2o80mt7ovkq2oqlm9fmq3iuvjs.apps.googleusercontent.com',
+    iosClientId:
+        '701397813152-0s13rg2o80mt7ovkq2oqlm9fmq3iuvjs.apps.googleusercontent.com',
     iosBundleId: 'com.yelima',
   );
 }

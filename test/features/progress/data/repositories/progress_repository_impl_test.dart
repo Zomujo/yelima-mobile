@@ -49,7 +49,8 @@ void main() {
         'should return remote data and cache it when online and request is successful',
         () async {
       // Arrange
-      when(() => mockConnectivityService.isConnected).thenAnswer((_) async => true);
+      when(() => mockConnectivityService.isConnected)
+          .thenAnswer((_) async => true);
       when(() => mockRemoteDataSource.getBPTrend(dateRange: tDateRange))
           .thenAnswer((_) async => tBPTrend);
 
@@ -74,7 +75,8 @@ void main() {
 
     test('should return cached data when offline', () async {
       // Arrange
-      when(() => mockConnectivityService.isConnected).thenAnswer((_) async => false);
+      when(() => mockConnectivityService.isConnected)
+          .thenAnswer((_) async => false);
 
       // Pre-populate the database with cached data
       final trendJson = jsonEncode({
@@ -110,7 +112,8 @@ void main() {
     test('should return Failure when offline and no cached data exists',
         () async {
       // Arrange
-      when(() => mockConnectivityService.isConnected).thenAnswer((_) async => false);
+      when(() => mockConnectivityService.isConnected)
+          .thenAnswer((_) async => false);
       // Database is empty
 
       // Act

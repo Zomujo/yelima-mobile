@@ -86,7 +86,9 @@ class VitalTrend extends Equatable {
   factory VitalTrend.fromJson(Map<String, dynamic> json) {
     return VitalTrend(
       labels: List<String>.from(json['labels'] ?? []),
-      values: List<double?>.from(json['values']?.map((x) => x != null ? (x as num).toDouble() : null) ?? []),
+      values: List<double?>.from(json['values']
+              ?.map((x) => x != null ? (x as num).toDouble() : null) ??
+          []),
     );
   }
 

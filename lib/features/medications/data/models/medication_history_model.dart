@@ -31,11 +31,14 @@ class MedicationLogModel extends MedicationLogEntity {
 
   factory MedicationLogModel.fromJson(Map<String, dynamic> json) {
     final dateStr = json['dateTaken'] ?? json['date'] ?? json['takenAt'];
-    final bool isTaken = json['taken'] == true || json['status'] == 'taken' || json['status'] == 'completed';
+    final bool isTaken = json['taken'] == true ||
+        json['status'] == 'taken' ||
+        json['status'] == 'completed';
     return MedicationLogModel(
       id: json['id'] ?? '',
       taken: isTaken,
-      takenAt: dateStr != null ? DateTime.parse(dateStr).toLocal() : DateTime.now(),
+      takenAt:
+          dateStr != null ? DateTime.parse(dateStr).toLocal() : DateTime.now(),
     );
   }
 }

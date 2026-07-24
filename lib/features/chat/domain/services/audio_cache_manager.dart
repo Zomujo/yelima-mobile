@@ -4,11 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AudioCacheManager {
   static final AudioCacheManager _instance = AudioCacheManager._internal();
-  
+
   factory AudioCacheManager() {
     return _instance;
   }
-  
+
   AudioCacheManager._internal();
 
   Future<void> savePath(String messageId, String absolutePath) async {
@@ -24,7 +24,7 @@ class AudioCacheManager {
     if (filename != null) {
       final directory = await getApplicationDocumentsDirectory();
       final fullPath = '${directory.path}/$filename';
-      
+
       final file = File(fullPath);
       if (await file.exists()) {
         return fullPath;
@@ -38,12 +38,13 @@ class AudioCacheManager {
 
   Future<void> clearCache() async {
     final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys().where((k) => k.startsWith('audio_cache_')).toList();
-    
+    final keys =
+        prefs.getKeys().where((k) => k.startsWith('audio_cache_')).toList();
+
     if (keys.isEmpty) return;
-    
+
     final directory = await getApplicationDocumentsDirectory();
-    
+
     for (final key in keys) {
       final filename = prefs.getString(key);
       if (filename != null) {

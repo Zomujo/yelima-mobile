@@ -11,7 +11,8 @@ class ErrorInterceptor extends Interceptor {
     if (err.response?.statusCode == 401) {
       if (!_isLoggingOut) {
         _isLoggingOut = true;
-        AppLogger.w('401 Unauthorized detected. Triggering silent global logout.');
+        AppLogger.w(
+            '401 Unauthorized detected. Triggering silent global logout.');
         TokenManager().clearToken();
         // Silently sign out to drop back to login via AuthController's stream
         FirebaseAuth.instance.signOut().catchError((e) {
@@ -23,7 +24,8 @@ class ErrorInterceptor extends Interceptor {
           });
         });
       } else {
-        AppLogger.w('401 Unauthorized detected but logout is already in progress.');
+        AppLogger.w(
+            '401 Unauthorized detected but logout is already in progress.');
       }
     }
 

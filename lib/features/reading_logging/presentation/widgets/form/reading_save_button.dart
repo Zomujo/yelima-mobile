@@ -21,7 +21,8 @@ class ReadingSaveButton extends StatelessWidget {
               result.fold(
                 (error) => AppSnackBar.showError(context, message: error),
                 (_) {
-                  AppSnackBar.showSuccess(context, message: 'Reading saved successfully');
+                  AppSnackBar.showSuccess(context,
+                      message: 'Reading saved successfully');
                   try {
                     context.read<HomeMetricsController>().fetchMetrics();
                   } catch (_) {}

@@ -10,7 +10,8 @@ class GraphContainer extends StatelessWidget {
   final String activeTab;
   final String durationLabel;
 
-  const GraphContainer({super.key, required this.activeTab, required this.durationLabel});
+  const GraphContainer(
+      {super.key, required this.activeTab, required this.durationLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +102,8 @@ class GraphContainer extends StatelessWidget {
   void _openFullScreen(BuildContext context) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => FullScreenGraphView(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            FullScreenGraphView(
           activeTab: activeTab,
           durationLabel: durationLabel,
         ),

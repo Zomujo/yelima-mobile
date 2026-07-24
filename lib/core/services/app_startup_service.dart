@@ -22,9 +22,7 @@ class StartupStatus {
 }
 
 class AppStartupService extends ValueNotifier<StartupStatus> {
-
-  AppStartupService()
-      : super(StartupStatus(phase: StartupPhase.idle));
+  AppStartupService() : super(StartupStatus(phase: StartupPhase.idle));
 
   Future<void> start() async {
     //  Foreground Guard: Avoid initialization during headless background boot

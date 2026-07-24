@@ -79,10 +79,10 @@ class _AppShimmerState extends State<AppShimmer>
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    final baseColor = widget.baseColor ?? 
-        (isDark ? Colors.grey[800]! : Colors.grey[300]!);
-    final highlightColor = widget.highlightColor ?? 
+
+    final baseColor =
+        widget.baseColor ?? (isDark ? Colors.grey[800]! : Colors.grey[300]!);
+    final highlightColor = widget.highlightColor ??
         (isDark ? Colors.grey[700]! : Colors.grey[100]!);
 
     return RepaintBoundary(

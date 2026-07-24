@@ -36,7 +36,8 @@ class _SignUpFormState extends State<SignUpForm> {
     final password = _passwordController.text;
 
     // Strict validation: must be valid email format and password length >= 6
-    final isValid = Validators.isValidEmail(email) && Validators.isValidPassword(password);
+    final isValid =
+        Validators.isValidEmail(email) && Validators.isValidPassword(password);
     if (_isButtonEnabled != isValid) {
       setState(() {
         _isButtonEnabled = isValid;

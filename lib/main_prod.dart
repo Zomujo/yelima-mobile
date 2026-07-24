@@ -8,11 +8,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env.prod");
-  
+
   AppConfig.instance = AppConfig(
     appName: 'Yelima',
     flavor: AppFlavor.prod,
-    apiBaseUrl: dotenv.env['API_BASE_URL']!, 
+    apiBaseUrl: dotenv.env['API_BASE_URL']!,
   );
   await bootstrap(DefaultFirebaseOptions.currentPlatform);
 }

@@ -10,7 +10,8 @@ class CreateMedicationUseCase {
 
   const CreateMedicationUseCase(this.repository);
 
-  AsyncResponse<String> call(MedicineFormData data, String medicationName) async {
+  AsyncResponse<String> call(
+      MedicineFormData data, String medicationName) async {
     if (data.morning == null &&
         data.afternoon == null &&
         data.evening == null) {

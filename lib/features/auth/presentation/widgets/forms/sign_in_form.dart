@@ -36,9 +36,10 @@ class _SignInFormState extends State<SignInForm> {
   void _validateForm() {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    
+
     // Strict validation: must be valid email format and password length >= 6
-    final isValid = Validators.isValidEmail(email) && Validators.isValidPassword(password);
+    final isValid =
+        Validators.isValidEmail(email) && Validators.isValidPassword(password);
     if (_isButtonEnabled != isValid) {
       setState(() {
         _isButtonEnabled = isValid;
@@ -116,10 +117,10 @@ class _SignInFormState extends State<SignInForm> {
               ? () {
                   FocusScope.of(context).unfocus();
                   context.read<AuthController>().signIn(
-                    context,
-                    _emailController.text.trim(),
-                    _passwordController.text,
-                  );
+                        context,
+                        _emailController.text.trim(),
+                        _passwordController.text,
+                      );
                 }
               : null,
           width: double.infinity,

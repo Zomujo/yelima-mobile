@@ -132,7 +132,8 @@ class ProgressRepositoryImpl implements ProgressRepository {
       final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
 
       if (cachedVital != null) {
-        final trend = await Isolate.run(() => parseVitalTrend(cachedVital.value));
+        final trend =
+            await Isolate.run(() => parseVitalTrend(cachedVital.value));
         return right(trend);
       }
       return left(

@@ -60,18 +60,23 @@ class _EditProfileView extends StatelessWidget {
               child: Consumer<EditProfileController>(
                 builder: (context, controller, child) {
                   return AppButton(
-                    text: controller.state.isSaving ? 'Saving...' : 'Save Changes',
-                    isDisabled: !controller.state.isButtonEnabled || controller.state.isSaving,
+                    text: controller.state.isSaving
+                        ? 'Saving...'
+                        : 'Save Changes',
+                    isDisabled: !controller.state.isButtonEnabled ||
+                        controller.state.isSaving,
                     isLoading: controller.state.isSaving,
                     onPressed: () async {
                       FocusScope.of(context).unfocus();
                       final response = await controller.saveProfile();
-                      
+
                       if (context.mounted) {
                         response.fold(
-                          (failure) => AppSnackBar.showError(context, message: failure),
+                          (failure) =>
+                              AppSnackBar.showError(context, message: failure),
                           (_) {
-                            AppSnackBar.showSuccess(context, message: 'Profile updated successfully');
+                            AppSnackBar.showSuccess(context,
+                                message: 'Profile updated successfully');
                             context.pop();
                           },
                         );

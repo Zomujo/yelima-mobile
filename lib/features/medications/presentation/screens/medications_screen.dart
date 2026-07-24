@@ -76,14 +76,15 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                   ),
                   const SizedBox(height: 12),
                   Consumer<MedicationController>(
-                    builder: (context, controller, child) {
-                      return ShimmerLoading(
-                        isLoading: controller.state.isAdherenceLoading,
-                        shimmer: AppShimmer.box(width: double.infinity, height: 150),
-                        child: AdherenceCard(adherence: controller.state.adherence),
-                      );
-                    }
-                  ),
+                      builder: (context, controller, child) {
+                    return ShimmerLoading(
+                      isLoading: controller.state.isAdherenceLoading,
+                      shimmer:
+                          AppShimmer.box(width: double.infinity, height: 150),
+                      child:
+                          AdherenceCard(adherence: controller.state.adherence),
+                    );
+                  }),
                   const SizedBox(height: 32),
                   const AppText.titleLarge(
                     "Today's medications",
@@ -92,18 +93,17 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Consumer<MedicationController>(
-                    builder: (context, controller, child) {
-                      return TimeOfDayTabs(
-                        selectedIndex: controller.state.selectedTabIndex,
-                        onTabSelected: controller.setTabIndex,
-                        counts: {
-                          'MORNING': controller.state.counts?.morning ?? 0,
-                          'AFTERNOON': controller.state.counts?.afternoon ?? 0,
-                          'EVENING': controller.state.counts?.evening ?? 0,
-                        },
-                      );
-                    }
-                  ),
+                      builder: (context, controller, child) {
+                    return TimeOfDayTabs(
+                      selectedIndex: controller.state.selectedTabIndex,
+                      onTabSelected: controller.setTabIndex,
+                      counts: {
+                        'MORNING': controller.state.counts?.morning ?? 0,
+                        'AFTERNOON': controller.state.counts?.afternoon ?? 0,
+                        'EVENING': controller.state.counts?.evening ?? 0,
+                      },
+                    );
+                  }),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -112,10 +112,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             sliver: Consumer<MedicationController>(
-              builder: (context, controller, child) {
-                return TodaysMedicationsList(controller: controller);
-              }
-            ),
+                builder: (context, controller, child) {
+              return TodaysMedicationsList(controller: controller);
+            }),
           ),
           const SliverToBoxAdapter(
             child: SizedBox(height: 60),

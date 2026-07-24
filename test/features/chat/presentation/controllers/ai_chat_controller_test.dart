@@ -73,8 +73,8 @@ void main() {
   }) async {
     when(() => mockRepository.loadConversations())
         .thenAnswer((_) async => right(initialMessages));
-    final controller =
-        AiChatController(mockRepository, mockConnectivityService, mockMutationSyncManager);
+    final controller = AiChatController(
+        mockRepository, mockConnectivityService, mockMutationSyncManager);
     // Let the constructor's fire-and-forget initial syncConversations() settle.
     await Future<void>.delayed(Duration.zero);
     await Future<void>.delayed(Duration.zero);
@@ -93,8 +93,8 @@ void main() {
 
       when(() => mockRepository.sendMessage(any(),
               localChatId: any(named: 'localChatId')))
-          .thenAnswer((_) async =>
-              right(chatResponse(userId: 'user-1', botId: 'bot-1', botText: 'updated reply')));
+          .thenAnswer((_) async => right(chatResponse(
+              userId: 'user-1', botId: 'bot-1', botText: 'updated reply')));
 
       await controller.sendMessage('Hello');
 
@@ -151,12 +151,13 @@ void main() {
       final controller = await createController();
 
       final syncCompleter = Completer<void>();
-      when(() => mockRepository.loadConversations())
-          .thenAnswer((_) => syncCompleter.future.then((_) => right(<AiChatMessage>[])));
+      when(() => mockRepository.loadConversations()).thenAnswer(
+          (_) => syncCompleter.future.then((_) => right(<AiChatMessage>[])));
 
-      when(() => mockRepository.sendMessage(any(),
-              localChatId: any(named: 'localChatId')))
-          .thenAnswer((_) async => right(chatResponse(userId: 'user-1', botId: 'bot-1')));
+      when(() =>
+          mockRepository.sendMessage(any(),
+              localChatId: any(named: 'localChatId'))).thenAnswer(
+          (_) async => right(chatResponse(userId: 'user-1', botId: 'bot-1')));
 
       final syncFuture = controller.syncConversations();
       await Future<void>.delayed(Duration.zero);
@@ -198,8 +199,7 @@ void main() {
 
       final pageCompleter = Completer<Either<String, PaginatedChatResult>>();
       when(() => mockRepository.fetchPaginatedConversations(
-              page: any(named: 'page')))
-          .thenAnswer((_) => pageCompleter.future);
+          page: any(named: 'page'))).thenAnswer((_) => pageCompleter.future);
 
       final loadMoreFuture = controller.loadMoreMessages();
       await Future<void>.delayed(Duration.zero);
@@ -212,8 +212,8 @@ void main() {
       // loadMoreMessages owns _messages.
       expect(loadConversationsCallCount, 0);
 
-      pageCompleter.complete(
-          right(PaginatedChatResult(messages: [botMessage('bot-2')], totalPages: 5)));
+      pageCompleter.complete(right(
+          PaginatedChatResult(messages: [botMessage('bot-2')], totalPages: 5)));
       await loadMoreFuture;
 
       // Let the deferred sync (triggered from loadMoreMessages's finally
@@ -236,10 +236,10 @@ void main() {
       when(() => mockRepository.loadConversations()).thenAnswer(
           (_) => syncCompleter.future.then((_) => right(<AiChatMessage>[])));
 
-      when(() => mockRepository.fetchPaginatedConversations(
-              page: any(named: 'page')))
-          .thenAnswer((_) async =>
-              right(PaginatedChatResult(messages: [botMessage('bot-2')], totalPages: 5)));
+      when(() =>
+          mockRepository.fetchPaginatedConversations(
+              page: any(named: 'page'))).thenAnswer((_) async => right(
+          PaginatedChatResult(messages: [botMessage('bot-2')], totalPages: 5)));
 
       final syncFuture = controller.syncConversations();
       await Future<void>.delayed(Duration.zero);

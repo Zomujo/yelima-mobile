@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import '../utils/logger.dart';
 import '../../firebase_options.dart';
@@ -170,6 +172,78 @@ class NotificationService {
       AppLogger.w(
           'NotificationService: Failed to unsubscribe from topic $topic: $e');
       rethrow;
+    }
+  }
+
+  Future<void> scheduleDailyReminder({
+    required int id,
+    required String title,
+    required String body,
+    required TimeOfDay time,
+  }) async {
+    try {
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        time.hour,
+        time.minute,
+      );
+
+      // If the time has already passed today, schedule for tomorrow
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      await _localNotifications.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'medication_reminders',
+            'Medication Reminders',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      AppLogger.i(
+          'NotificationService: Scheduled daily reminder id=$id at ${time.hour}:${time.minute}');
+    } catch (e, stack) {
+      AppLogger.e('NotificationService: Failed to schedule reminder', e, stack);
+    }
+  }
+
+  Future<void> cancelReminder(int id) async {
+    try {
+      await _localNotifications.cancel(id);
+      AppLogger.i('NotificationService: Cancelled reminder id=$id');
+    } catch (e, stack) {
+      AppLogger.e(
+          'NotificationService: Failed to cancel reminder $id', e, stack);
+    }
+  }
+
+  Future<void> cancelAllReminders() async {
+    try {
+      await _localNotifications.cancelAll();
+      AppLogger.i('NotificationService: Cancelled all local reminders');
+    } catch (e, stack) {
+      AppLogger.e(
+          'NotificationService: Failed to cancel all reminders', e, stack);
     }
   }
 

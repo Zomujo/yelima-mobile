@@ -61,7 +61,8 @@ class BloodPressureSection extends StatelessWidget {
     return BPGraph(data: controller.bpTrendState.data!);
   }
 
-  void _openFullScreen(BuildContext context, ProgressController controller, String tab) {
+  void _openFullScreen(
+      BuildContext context, ProgressController controller, String tab) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider<ProgressController>.value(

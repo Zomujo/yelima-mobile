@@ -12,8 +12,14 @@ class BPGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final systolicValues = data.systolic.where((v) => v != null).map((v) => v!.toDouble()).toList();
-    final diastolicValues = data.diastolic.where((v) => v != null).map((v) => v!.toDouble()).toList();
+    final systolicValues = data.systolic
+        .where((v) => v != null)
+        .map((v) => v!.toDouble())
+        .toList();
+    final diastolicValues = data.diastolic
+        .where((v) => v != null)
+        .map((v) => v!.toDouble())
+        .toList();
 
     final allValues = [...systolicValues, ...diastolicValues];
 
@@ -26,8 +32,8 @@ class BPGraph extends StatelessWidget {
       minY = (dataMin / 10).floor() * 10.0;
       maxY = (dataMax / 10).ceil() * 10.0;
       if (minY == maxY) {
-         minY -= 10;
-         maxY += 10;
+        minY -= 10;
+        maxY += 10;
       }
     }
 

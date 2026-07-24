@@ -21,5 +21,6 @@ void initUser(GetIt sl) {
       ));
 
   // State Management
-  sl.registerLazySingleton<UserController>(() => UserController(repository: sl()));
+  sl.registerLazySingleton<UserController>(
+      () => UserController(repository: sl()));
 }

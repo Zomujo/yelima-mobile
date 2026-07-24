@@ -46,7 +46,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           pageSize: pageSize,
           filter: filter,
         );
-        
+
         await db.transaction(() async {
           if (page == 1) {
             if (filter == 'upcoming') {
@@ -57,13 +57,15 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           }
 
           for (var row in remoteData.rows) {
-            await db.appointmentsDao.insertOrUpdateAppointment(AppointmentsCompanion(
+            await db.appointmentsDao
+                .insertOrUpdateAppointment(AppointmentsCompanion(
               id: drift.Value(row.id),
               title: drift.Value(row.title),
               appointmentDate: drift.Value(row.appointmentDate),
               hostPersonnelId: drift.Value(row.hostPersonnel.id),
               hostPersonnelUserName: drift.Value(row.hostPersonnel.userName),
-              hostPersonnelFacilityName: drift.Value(row.hostPersonnel.facility.name),
+              hostPersonnelFacilityName:
+                  drift.Value(row.hostPersonnel.facility.name),
             ));
           }
         });
@@ -83,9 +85,11 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     try {
       final localAppointments = await db.appointmentsDao.getAllAppointments();
       final now = DateTime.now();
-      final filtered = localAppointments.where((a) => filter == 'upcoming'
-          ? a.appointmentDate.isAfter(now)
-          : a.appointmentDate.isBefore(now)).toList()
+      final filtered = localAppointments
+          .where((a) => filter == 'upcoming'
+              ? a.appointmentDate.isAfter(now)
+              : a.appointmentDate.isBefore(now))
+          .toList()
         ..sort((a, b) => filter == 'upcoming'
             ? a.appointmentDate.compareTo(b.appointmentDate)
             : b.appointmentDate.compareTo(a.appointmentDate));
@@ -93,20 +97,24 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       final start = (page - 1) * pageSize;
       final pageRows = start >= filtered.length
           ? <Appointment>[]
-          : filtered.sublist(start, (start + pageSize).clamp(0, filtered.length));
+          : filtered.sublist(
+              start, (start + pageSize).clamp(0, filtered.length));
 
-      final entities = pageRows.map((a) => AppointmentEntity(
-        id: a.id,
-        title: a.title,
-        appointmentDate: a.appointmentDate,
-        hostPersonnel: HostPersonnelEntity(
-          id: a.hostPersonnelId,
-          userName: a.hostPersonnelUserName,
-          facility: FacilityEntity(name: a.hostPersonnelFacilityName),
-        ),
-      )).toList();
+      final entities = pageRows
+          .map((a) => AppointmentEntity(
+                id: a.id,
+                title: a.title,
+                appointmentDate: a.appointmentDate,
+                hostPersonnel: HostPersonnelEntity(
+                  id: a.hostPersonnelId,
+                  userName: a.hostPersonnelUserName,
+                  facility: FacilityEntity(name: a.hostPersonnelFacilityName),
+                ),
+              ))
+          .toList();
 
-      final totalPages = filtered.isEmpty ? 1 : (filtered.length / pageSize).ceil();
+      final totalPages =
+          filtered.isEmpty ? 1 : (filtered.length / pageSize).ceil();
 
       return Right(AppointmentListResponse(
         rows: entities,
@@ -127,13 +135,16 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       try {
         final remoteData = await remoteDataSource.getNearestAppointment();
         if (remoteData != null) {
-          await db.appointmentsDao.insertOrUpdateAppointment(AppointmentsCompanion(
+          await db.appointmentsDao
+              .insertOrUpdateAppointment(AppointmentsCompanion(
             id: drift.Value(remoteData.id),
             title: drift.Value(remoteData.title),
             appointmentDate: drift.Value(remoteData.appointmentDate),
             hostPersonnelId: drift.Value(remoteData.hostPersonnel.id),
-            hostPersonnelUserName: drift.Value(remoteData.hostPersonnel.userName),
-            hostPersonnelFacilityName: drift.Value(remoteData.hostPersonnel.facility.name),
+            hostPersonnelUserName:
+                drift.Value(remoteData.hostPersonnel.userName),
+            hostPersonnelFacilityName:
+                drift.Value(remoteData.hostPersonnel.facility.name),
           ));
         } else {
           // Edge Case 27: Clear ghost nearest appointment from local cache if it doesn't exist remotely
@@ -148,12 +159,15 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     }
   }
 
-  Future<Either<String, AppointmentEntity?>> _fetchLocalNearestAppointment() async {
+  Future<Either<String, AppointmentEntity?>>
+      _fetchLocalNearestAppointment() async {
     try {
       final localApts = await db.appointmentsDao.getAllAppointments();
       final now = DateTime.now();
-      
-      final upcoming = localApts.where((a) => a.appointmentDate.isAfter(now)).toList()
+
+      final upcoming = localApts
+          .where((a) => a.appointmentDate.isAfter(now))
+          .toList()
         ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
 
       if (upcoming.isEmpty) {
@@ -179,16 +193,18 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Stream<List<AppointmentEntity>> watchAppointments() {
     return db.appointmentsDao.watchAllAppointments().map((localApts) {
-      return localApts.map((a) => AppointmentEntity(
-        id: a.id,
-        title: a.title,
-        appointmentDate: a.appointmentDate,
-        hostPersonnel: HostPersonnelEntity(
-          id: a.hostPersonnelId,
-          userName: a.hostPersonnelUserName,
-          facility: FacilityEntity(name: a.hostPersonnelFacilityName),
-        ),
-      )).toList();
+      return localApts
+          .map((a) => AppointmentEntity(
+                id: a.id,
+                title: a.title,
+                appointmentDate: a.appointmentDate,
+                hostPersonnel: HostPersonnelEntity(
+                  id: a.hostPersonnelId,
+                  userName: a.hostPersonnelUserName,
+                  facility: FacilityEntity(name: a.hostPersonnelFacilityName),
+                ),
+              ))
+          .toList();
     });
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-class RegistrationAppBar extends StatelessWidget implements PreferredSizeWidget {
+class RegistrationAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final int currentStep;
   final int totalSteps;
   final VoidCallback onClose;
@@ -39,7 +40,7 @@ class RegistrationAppBar extends StatelessWidget implements PreferredSizeWidget 
               ),
             ),
             const SizedBox(width: 16),
-            
+
             // Progress Bar
             Expanded(
               child: Row(
@@ -48,9 +49,12 @@ class RegistrationAppBar extends StatelessWidget implements PreferredSizeWidget 
                   return Expanded(
                     child: Container(
                       height: 4,
-                      margin: EdgeInsets.only(right: index == totalSteps - 1 ? 0 : 8),
+                      margin: EdgeInsets.only(
+                          right: index == totalSteps - 1 ? 0 : 8),
                       decoration: BoxDecoration(
-                        color: isCompleted ? const Color(0xFFFDBA74) : const Color(0xFFE2E8F0), // Orange vs Light Grey
+                        color: isCompleted
+                            ? const Color(0xFFFDBA74)
+                            : const Color(0xFFE2E8F0), // Orange vs Light Grey
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -59,7 +63,7 @@ class RegistrationAppBar extends StatelessWidget implements PreferredSizeWidget 
               ),
             ),
             const SizedBox(width: 16),
-            
+
             // Step Indicator Badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

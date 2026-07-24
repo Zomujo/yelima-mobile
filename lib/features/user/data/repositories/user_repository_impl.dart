@@ -51,23 +51,23 @@ class UserRepositoryImpl implements UserRepository {
 
           if (model != null) {
             /// Save to local cache.
-            await db.userProfilesDao.insertOrUpdateProfile(
-              UserProfilesCompanion.insert(
-                id: model.id,
-                email: model.email,
-                firstName: drift.Value(model.firstName),
-                lastName: drift.Value(model.lastName),
-                gender: drift.Value(model.gender),
-                dateOfBirth: drift.Value(model.dateOfBirth),
-                conditionsJson: drift.Value(jsonEncode(model.conditions)),
-                hasConsented: drift.Value(model.hasConsented),
-                registrationStatus: drift.Value(model.registrationStatus.name),
-                modeOfRegistration: drift.Value(model.modeOfRegistration),
-                createdAt: drift.Value(model.createdAt),
-              )
-            );
+            await db.userProfilesDao
+                .insertOrUpdateProfile(UserProfilesCompanion.insert(
+              id: model.id,
+              email: model.email,
+              firstName: drift.Value(model.firstName),
+              lastName: drift.Value(model.lastName),
+              gender: drift.Value(model.gender),
+              dateOfBirth: drift.Value(model.dateOfBirth),
+              conditionsJson: drift.Value(jsonEncode(model.conditions)),
+              hasConsented: drift.Value(model.hasConsented),
+              registrationStatus: drift.Value(model.registrationStatus.name),
+              modeOfRegistration: drift.Value(model.modeOfRegistration),
+              createdAt: drift.Value(model.createdAt),
+            ));
             return right(model.toDomain());
           }
+
           /// Check local cache if remote profile missing.
           final localProfile = await db.userProfilesDao.getProfile(uid);
           if (localProfile != null) {
@@ -79,7 +79,8 @@ class UserRepositoryImpl implements UserRepository {
           if (localProfile != null) {
             return right(_localProfileToEntity(localProfile));
           }
-          return left('Offline user profile not found. Please connect to the internet.');
+          return left(
+              'Offline user profile not found. Please connect to the internet.');
         }
         return right(null);
       },
@@ -91,7 +92,8 @@ class UserRepositoryImpl implements UserRepository {
   UserEntity _localProfileToEntity(dynamic localProfile) {
     List<String> conditionsList = [];
     try {
-      conditionsList = (jsonDecode(localProfile.conditionsJson) as List).cast<String>();
+      conditionsList =
+          (jsonDecode(localProfile.conditionsJson) as List).cast<String>();
     } catch (_) {}
     return UserEntity(
       id: localProfile.id,
@@ -123,13 +125,27 @@ class UserRepositoryImpl implements UserRepository {
           final updatedCompanion = UserProfilesCompanion(
             id: drift.Value(uid),
             email: drift.Value(data['email'] ?? currentProfile.email),
-            firstName: data.containsKey('firstName') ? drift.Value(data['firstName']) : drift.Value(currentProfile.firstName),
-            lastName: data.containsKey('lastName') ? drift.Value(data['lastName']) : drift.Value(currentProfile.lastName),
-            gender: data.containsKey('gender') ? drift.Value(data['gender']) : drift.Value(currentProfile.gender),
-            dateOfBirth: data.containsKey('dateOfBirth') ? drift.Value(DateTime.parse(data['dateOfBirth'])) : drift.Value(currentProfile.dateOfBirth),
-            conditionsJson: data.containsKey('conditions') ? drift.Value(jsonEncode(data['conditions'])) : drift.Value(currentProfile.conditionsJson),
-            hasConsented: data.containsKey('hasConsented') ? drift.Value(data['hasConsented']) : drift.Value(currentProfile.hasConsented),
-            registrationStatus: data.containsKey('registrationStatus') ? drift.Value(data['registrationStatus']) : drift.Value(currentProfile.registrationStatus),
+            firstName: data.containsKey('firstName')
+                ? drift.Value(data['firstName'])
+                : drift.Value(currentProfile.firstName),
+            lastName: data.containsKey('lastName')
+                ? drift.Value(data['lastName'])
+                : drift.Value(currentProfile.lastName),
+            gender: data.containsKey('gender')
+                ? drift.Value(data['gender'])
+                : drift.Value(currentProfile.gender),
+            dateOfBirth: data.containsKey('dateOfBirth')
+                ? drift.Value(DateTime.parse(data['dateOfBirth']))
+                : drift.Value(currentProfile.dateOfBirth),
+            conditionsJson: data.containsKey('conditions')
+                ? drift.Value(jsonEncode(data['conditions']))
+                : drift.Value(currentProfile.conditionsJson),
+            hasConsented: data.containsKey('hasConsented')
+                ? drift.Value(data['hasConsented'])
+                : drift.Value(currentProfile.hasConsented),
+            registrationStatus: data.containsKey('registrationStatus')
+                ? drift.Value(data['registrationStatus'])
+                : drift.Value(currentProfile.registrationStatus),
           );
           await db.userProfilesDao.insertOrUpdateProfile(updatedCompanion);
         } else {
@@ -137,13 +153,27 @@ class UserRepositoryImpl implements UserRepository {
           final newCompanion = UserProfilesCompanion.insert(
             id: uid,
             email: data['email'] ?? '',
-            firstName: data.containsKey('firstName') ? drift.Value(data['firstName']) : const drift.Value.absent(),
-            lastName: data.containsKey('lastName') ? drift.Value(data['lastName']) : const drift.Value.absent(),
-            gender: data.containsKey('gender') ? drift.Value(data['gender']) : const drift.Value.absent(),
-            dateOfBirth: data.containsKey('dateOfBirth') ? drift.Value(DateTime.parse(data['dateOfBirth'])) : const drift.Value.absent(),
-            conditionsJson: data.containsKey('conditions') ? drift.Value(jsonEncode(data['conditions'])) : const drift.Value.absent(),
-            hasConsented: data.containsKey('hasConsented') ? drift.Value(data['hasConsented']) : const drift.Value.absent(),
-            registrationStatus: data.containsKey('registrationStatus') ? drift.Value(data['registrationStatus']) : const drift.Value.absent(),
+            firstName: data.containsKey('firstName')
+                ? drift.Value(data['firstName'])
+                : const drift.Value.absent(),
+            lastName: data.containsKey('lastName')
+                ? drift.Value(data['lastName'])
+                : const drift.Value.absent(),
+            gender: data.containsKey('gender')
+                ? drift.Value(data['gender'])
+                : const drift.Value.absent(),
+            dateOfBirth: data.containsKey('dateOfBirth')
+                ? drift.Value(DateTime.parse(data['dateOfBirth']))
+                : const drift.Value.absent(),
+            conditionsJson: data.containsKey('conditions')
+                ? drift.Value(jsonEncode(data['conditions']))
+                : const drift.Value.absent(),
+            hasConsented: data.containsKey('hasConsented')
+                ? drift.Value(data['hasConsented'])
+                : const drift.Value.absent(),
+            registrationStatus: data.containsKey('registrationStatus')
+                ? drift.Value(data['registrationStatus'])
+                : const drift.Value.absent(),
           );
           await db.userProfilesDao.insertOrUpdateProfile(newCompanion);
         }
@@ -155,8 +185,7 @@ class UserRepositoryImpl implements UserRepository {
             action: 'updateUserProfile',
             payload: data,
           );
-          try {
-                      } catch (_) {}
+          try {} catch (_) {}
         } else {
           try {
             await remoteDataSource.updateUserProfile(uid, data);
@@ -172,13 +201,12 @@ class UserRepositoryImpl implements UserRepository {
             }
           }
         }
-        
+
         return right(null);
       },
       operationName: 'UserRepositoryImpl.updateUserProfile',
     );
   }
-
 
   @override
   AsyncResponseTyped<void> onboardUser(Map<String, dynamic> data) {

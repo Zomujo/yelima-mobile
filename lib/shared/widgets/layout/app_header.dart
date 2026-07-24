@@ -29,7 +29,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: automaticallyImplyLeading,
       leading: automaticallyImplyLeading
           ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1E293B), size: 20),
+              icon: const Icon(Icons.arrow_back_ios,
+                  color: Color(0xFF1E293B), size: 20),
               onPressed: onBackPressed ?? () => Navigator.maybePop(context),
             )
           : null,

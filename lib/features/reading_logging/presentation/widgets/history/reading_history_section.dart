@@ -97,7 +97,9 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
               pinned: true,
               delegate: _PaginationHeaderDelegate(
                 currentPage: _currentPage,
-                totalPages: totalPages > 0 ? totalPages : 1, // Fallback to 1 if no items, though handled by empty state
+                totalPages: totalPages > 0
+                    ? totalPages
+                    : 1, // Fallback to 1 if no items, though handled by empty state
                 onPrev: () => setState(() => _currentPage--),
                 onNext: () => setState(() => _currentPage++),
               ),

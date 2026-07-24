@@ -38,7 +38,8 @@ class ProgressGraphCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.5), width: 0.7),
+        border:
+            Border.all(color: Colors.grey.withValues(alpha: 0.5), width: 0.7),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(

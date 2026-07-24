@@ -7,32 +7,39 @@ import '../tables/medication_logs.dart';
 part 'adherence_dao.g.dart';
 
 @DriftAccessor(tables: [AdherenceGlobals, AdherenceGlobalDays, MedicationLogs])
-class AdherenceDao extends DatabaseAccessor<AppDatabase> with _$AdherenceDaoMixin {
+class AdherenceDao extends DatabaseAccessor<AppDatabase>
+    with _$AdherenceDaoMixin {
   AdherenceDao(super.db);
 
   // Global Adherence
-  Future<void> saveGlobalAdherence(String id, double rate, List<AdherenceGlobalDay> days) async {
+  Future<void> saveGlobalAdherence(
+      String id, double rate, List<AdherenceGlobalDay> days) async {
     await batch((batch) {
       batch.insert(
         adherenceGlobals,
         AdherenceGlobal(id: id, rate: rate, updatedAt: DateTime.now()),
         mode: InsertMode.insertOrReplace,
       );
-      batch.insertAll(adherenceGlobalDays, days, mode: InsertMode.insertOrReplace);
+      batch.insertAll(adherenceGlobalDays, days,
+          mode: InsertMode.insertOrReplace);
     });
   }
 
   Future<AdherenceGlobal?> getGlobalAdherenceRate(String id) {
-    return (select(adherenceGlobals)..where((t) => t.id.equals(id))).getSingleOrNull();
+    return (select(adherenceGlobals)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
   }
 
   Stream<AdherenceGlobal?> watchGlobalAdherenceRate(String id) {
-    return (select(adherenceGlobals)..where((t) => t.id.equals(id))).watchSingleOrNull();
+    return (select(adherenceGlobals)..where((t) => t.id.equals(id)))
+        .watchSingleOrNull();
   }
 
   Future<List<AdherenceGlobalDay>> getGlobalAdherenceDays() {
     // Return sorted by date
-    return (select(adherenceGlobalDays)..orderBy([(t) => OrderingTerm(expression: t.dateTakenStr)])).get();
+    return (select(adherenceGlobalDays)
+          ..orderBy([(t) => OrderingTerm(expression: t.dateTakenStr)]))
+        .get();
   }
 
   // Medication Logs
@@ -45,21 +52,26 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase> with _$AdherenceDaoMixi
   Future<List<MedicationLog>> getLogsForMedication(String medicationId) {
     return (select(medicationLogs)
           ..where((t) => t.medicationId.equals(medicationId))
-          ..orderBy([(t) => OrderingTerm(expression: t.takenAt, mode: OrderingMode.desc)]))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.takenAt, mode: OrderingMode.desc)
+          ]))
         .get();
   }
 
   // Optimistic updates
-  Future<void> markMedicationLogAsTakenOffline(String logId, String medicationId, DateTime date) async {
+  Future<void> markMedicationLogAsTakenOffline(
+      String logId, String medicationId, DateTime date) async {
     // Find the log for this exact medication on this exact day
     final logs = await (select(medicationLogs)
           ..where((t) => t.medicationId.equals(medicationId)))
         .get();
 
-    final existing = logs.where((l) =>
-        l.takenAt.year == date.year &&
-        l.takenAt.month == date.month &&
-        l.takenAt.day == date.day).firstOrNull;
+    final existing = logs
+        .where((l) =>
+            l.takenAt.year == date.year &&
+            l.takenAt.month == date.month &&
+            l.takenAt.day == date.day)
+        .firstOrNull;
 
     if (existing != null) {
       await update(medicationLogs).replace(existing.copyWith(taken: true));
@@ -78,7 +90,7 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase> with _$AdherenceDaoMixi
     final existing = await (select(adherenceGlobalDays)
           ..where((t) => t.dateTakenStr.like('$dateStr%')))
         .getSingleOrNull();
-        
+
     if (existing != null) {
       await update(adherenceGlobalDays)
           .replace(existing.copyWith(taken: const Value(true)));
@@ -97,8 +109,7 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase> with _$AdherenceDaoMixi
           .getSingleOrNull();
 
       if (globals != null) {
-        await update(adherenceGlobals)
-            .replace(globals.copyWith(rate: newRate));
+        await update(adherenceGlobals).replace(globals.copyWith(rate: newRate));
       }
     }
   }

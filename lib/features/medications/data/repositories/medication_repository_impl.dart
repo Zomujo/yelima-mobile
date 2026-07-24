@@ -11,6 +11,8 @@ import '../../../../core/services/connectivity_service.dart';
 
 import '../../../../core/utils/custom_types.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/services/notification_service.dart';
+import 'package:flutter/material.dart' show TimeOfDay;
 
 import '../../domain/entities/medication_adherence.dart';
 import '../../domain/entities/medication_count.dart';
@@ -29,12 +31,14 @@ class MedicationRepositoryImpl implements MedicationRepository {
   final ConnectivityService connectivityService;
   final MedicationLocalDataSource localDataSource;
   final MutationSyncManager mutationSyncManager;
+  final NotificationService notificationService;
 
   MedicationRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivityService,
     required this.localDataSource,
     required this.mutationSyncManager,
+    required this.notificationService,
   });
 
   /// Retrieves adherence rates directly from the local cache.
@@ -370,6 +374,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final medsToInsert = MedicationMapper.fromCreateModel(data, localId);
 
     await localDataSource.insertMedications(medsToInsert);
+    await _scheduleAlarmsForMeds(medsToInsert);
 
     final pending = PendingMutationsCompanion.insert(
       id: const Uuid().v4(),
@@ -442,10 +447,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final targetMeds = meds.where((m) => m.id == id).toList();
 
     if (targetMeds.isNotEmpty) {
+      await _cancelAlarmsForMed(id);
       await localDataSource.deleteMedication(id);
       final newMeds = MedicationMapper.fromUpdateModel(data, id, targetMeds);
 
       await localDataSource.insertMedications(newMeds);
+      await _scheduleAlarmsForMeds(newMeds);
     }
 
     final pending = PendingMutationsCompanion.insert(
@@ -476,5 +483,38 @@ class MedicationRepositoryImpl implements MedicationRepository {
       page: page,
       pageSize: limit,
     ));
+  }
+
+  /// Helper to safely schedule alarms for a list of newly constructed medication records.
+  Future<void> _scheduleAlarmsForMeds(List<Medication> meds) async {
+    for (final med in meds) {
+      if (med.toBeTakenAt != null) {
+        final notifId = (med.id + med.section).hashCode;
+        await notificationService.scheduleDailyReminder(
+          id: notifId,
+          title: 'Time for your medication!',
+          body: 'It is time to take ${med.dosage} of ${med.name}.',
+          time: TimeOfDay.fromDateTime(med.toBeTakenAt!),
+        );
+      }
+    }
+  }
+
+  /// Helper to completely wipe all section alarms for a given medication ID.
+  Future<void> _cancelAlarmsForMed(String medicationId) async {
+    final sections = ['MORNING', 'AFTERNOON', 'EVENING'];
+    for (final sec in sections) {
+      final notifId = (medicationId + sec).hashCode;
+      await notificationService.cancelReminder(notifId);
+    }
+  }
+
+  /// Syncs alarms for all existing local medications on startup.
+  @override
+  Future<void> syncLocalAlarms() async {
+    final allMeds = await localDataSource.getAllMedications();
+    await notificationService
+        .cancelAllReminders(); // Wipe everything to prevent orphans
+    await _scheduleAlarmsForMeds(allMeds);
   }
 }
