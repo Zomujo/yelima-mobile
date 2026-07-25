@@ -4,8 +4,10 @@ import '../../../../../core/constants/app_images.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../../../shared/widgets/layout/app_empty_state.dart';
+import '../../../../../shared/utils/app_snackbar.dart';
 import '../../controllers/all_medicines_controller.dart';
 import 'medicine_history_card.dart';
+import 'delete_medication_modal.dart';
 
 class MedicinesList extends StatelessWidget {
   const MedicinesList({super.key});
@@ -48,10 +50,34 @@ class MedicinesList extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           itemCount: medications.length,
           itemBuilder: (context, index) {
+            final medication = medications[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
-              child: MedicineHistoryCard(
-                medication: medications[index],
+              child: Dismissible(
+                key: Key(medication.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (direction) async {
+                  final result =
+                      await DeleteMedicationModal.show(context, medication);
+                  return result ?? false;
+                },
+                onDismissed: (direction) {
+                  controller.deleteMedication(medication.id);
+                  AppSnackBar.showSuccess(context,
+                      message: '${medication.name} deleted');
+                },
+                child: MedicineHistoryCard(
+                  medication: medication,
+                ),
               ),
             );
           },

@@ -172,6 +172,19 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
   }
 
   Future<bool> deleteMedication(String id) async {
+    if (listState.data != null) {
+      final updatedRows = listState.data!.rows.where((m) => m.id != id).toList();
+      final updatedData = MedicationListResponse(
+        rows: updatedRows,
+        total: updatedRows.length,
+        pageSize: listState.data!.pageSize,
+        page: listState.data!.page,
+        totalPages: listState.data!.totalPages,
+      );
+      listState = listState.copyWith(data: updatedData);
+      notifyListeners();
+    }
+
     formSubmitState = const MedicationState(isLoading: true);
     notifyListeners();
 
