@@ -17,9 +17,17 @@ import 'auth_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
 class AuthController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies                  |
+  // --------------------------------------------------------------------------
+
   final AuthRepository _repository;
   final SessionLifecycleService _sessionLifecycleService;
   StreamSubscription<User?>? _authStateSubscription;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle               |
+  // --------------------------------------------------------------------------
 
   AuthController({
     required AuthRepository repository,
@@ -75,6 +83,10 @@ class AuthController extends ChangeNotifier with SafeNotifier {
       }
     });
   }
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                    |
+  // --------------------------------------------------------------------------
 
   Future<void> _flushPendingSyncBeforeSessionEnd() async {
     try {

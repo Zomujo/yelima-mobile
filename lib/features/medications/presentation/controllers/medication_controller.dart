@@ -9,6 +9,10 @@ import '../states/medications_state.dart';
 import 'all_medicines_controller.dart';
 
 class MedicationController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies                  |
+  // --------------------------------------------------------------------------
+
   final MedicationRepository repository;
 
   MedicationController({required this.repository});
@@ -53,7 +57,13 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     }
   }
 
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                    |
+  // --------------------------------------------------------------------------
+
   /// Fetches the user's overall medication adherence rate from the backend.
+
   Future<void> fetchAdherence() async {
     if (state.adherence == null) {
       state = state.copyWith(isAdherenceLoading: true, adherenceError: null);

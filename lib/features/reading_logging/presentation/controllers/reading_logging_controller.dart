@@ -8,8 +8,16 @@ import '../states/reading_logging_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
 class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies      |
+  // --------------------------------------------------------------------------
+
   final HomeMetricsRepository _repository;
   final SaveVitalReadingUseCase _saveVitalReadingUseCase;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle   |
+  // --------------------------------------------------------------------------
 
   ReadingLoggingController({
     required HomeMetricsRepository repository,
@@ -28,6 +36,11 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Fetches the latest home metrics to prepopulate the reading forms.
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods        |
+  // --------------------------------------------------------------------------
+
   Future<void> init() async {
     final result = await _repository.getHomeMetrics();
 

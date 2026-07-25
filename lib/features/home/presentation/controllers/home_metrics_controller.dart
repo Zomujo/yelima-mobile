@@ -8,8 +8,16 @@ import '../../../../core/utils/safe_notifier.dart';
 import '../states/home_metrics_state.dart';
 
 class HomeMetricsController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies      |
+  // --------------------------------------------------------------------------
+
   final HomeMetricsRepository _repository;
   StreamSubscription? _adherenceSub;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle   |
+  // --------------------------------------------------------------------------
 
   HomeMetricsController({required HomeMetricsRepository repository})
       : _repository = repository {
@@ -50,6 +58,11 @@ class HomeMetricsController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Fetches the latest home metrics initially from the cache, followed by a network refresh.
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods        |
+  // --------------------------------------------------------------------------
+
   Future<void> fetchMetrics() async {
     if (_state.metrics == null) {
       state = state.copyWith(isLoading: true);

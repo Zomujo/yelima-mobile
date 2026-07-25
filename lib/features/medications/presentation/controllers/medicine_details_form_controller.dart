@@ -7,9 +7,17 @@ import 'all_medicines_controller.dart';
 import '../states/medicine_details_form_state.dart';
 
 class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies      |
+  // --------------------------------------------------------------------------
+
   final AllMedicinesController allMedicinesController;
   final UpdateMedicationUseCase updateMedicationUseCase;
   String medicationId;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle   |
+  // --------------------------------------------------------------------------
 
   MedicineDetailsFormController({
     required this.allMedicinesController,
@@ -120,7 +128,6 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     notifyListeners();
   }
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   void init() {
     Future.microtask(() {
@@ -171,7 +178,10 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     return hour;
   }
 
-  // ─── Save ─────────────────────────────────────────────────────────────────
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                    |
+  // --------------------------------------------------------------------------
 
   Future<String?> save() async {
     final formData = MedicineFormData(

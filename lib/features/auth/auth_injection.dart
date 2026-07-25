@@ -11,7 +11,6 @@ void initAuth(GetIt sl) {
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSource(
         firebaseAuth: FirebaseAuth.instance,
-        apiClient: sl(),
       ));
 
   // Repositories

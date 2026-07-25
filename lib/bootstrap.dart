@@ -20,8 +20,7 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
     {String? envFile}) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Apply system-wide UI overlay style so the status bar and Android navigation
-  // bar always match the app's cream background, even on screens without AppBars.
+  // Apply system-wide UI overlay style.
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Color(0xFFFDFAF4),
     statusBarIconBrightness: Brightness.dark,
@@ -40,19 +39,17 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
   // Initialize timezone data required for scheduled notifications
   tz.initializeTimeZones();
 
-  // Initialize Notification Service (Push Notifications). This only sets up
-  // local plugin/channel state and reads cold-start message info - it's
-  // fast and doesn't prompt the user, so it's safe to await here.
+  // Initialize Notification Service (Push Notifications).
   await NotificationService.instance.initialize();
 
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // Pass all uncaught "fatal" errors from the framework to Crashlytics
+  // Pass all uncaught framework errors to Crashlytics.
   FlutterError.onError = (errorDetails) {
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
   };
 
-  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+  // Pass all uncaught asynchronous errors to Crashlytics.
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
@@ -66,10 +63,6 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
 
   runApp(const MyApp());
 
-  // Request push notification permission after the UI is already rendering,
-  // instead of blocking the entire app - including the splash screen -
-  // behind the native OS prompt. `requestPermission()` awaits the user's
-  // tap, so awaiting it here would previously delay `runApp()` (and
-  // therefore the first frame) until they responded.
+  // Request push notification permissions non-blockingly after runApp.
   unawaited(NotificationService.instance.requestPermissions());
 }

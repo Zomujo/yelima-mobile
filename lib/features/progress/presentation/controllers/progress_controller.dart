@@ -5,6 +5,10 @@ import 'progress_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
 class ProgressController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies                  |
+  // --------------------------------------------------------------------------
+
   final ProgressRepository _repository;
 
   ProgressState<BPTrend> _bpTrendState = const ProgressState();
@@ -31,6 +35,11 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
   ProgressController(this._repository);
 
   /// Fetches the Blood Pressure trends for the specified date range.
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                    |
+  // --------------------------------------------------------------------------
+
   Future<void> fetchBPTrend({String dateRange = 'today'}) async {
     _currentBPRange = dateRange;
 

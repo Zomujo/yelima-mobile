@@ -540,8 +540,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Future<void> syncLocalAlarms() async {
     final allMeds = await localDataSource.getAllMedications();
-    await notificationService
-        .cancelAllReminders(); 
+    await notificationService.cancelAllReminders();
     await _scheduleAlarmsForMeds(allMeds);
   }
 }

@@ -10,8 +10,16 @@ import '../states/edit_profile_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
 class EditProfileController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies      |
+  // --------------------------------------------------------------------------
+
   final UserRepository _repository;
   final UserController _userController;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle   |
+  // --------------------------------------------------------------------------
 
   EditProfileController({
     required UserRepository repository,

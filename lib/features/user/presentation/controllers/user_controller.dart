@@ -13,9 +13,17 @@ import 'user_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
 class UserController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies                  |
+  // --------------------------------------------------------------------------
+
   final UserRepository _repository;
   StreamSubscription<User?>? _authStateSubscription;
   StreamSubscription<UserEntity?>? _userProfileSubscription;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle                |
+  // --------------------------------------------------------------------------
 
   UserController({
     required UserRepository repository,
@@ -72,6 +80,11 @@ class UserController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Refreshes the user profile from the network and subscribes to offline changes.
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                    |
+  // --------------------------------------------------------------------------
+
   Future<void> refreshProfile(User user) async {
     final profileResult = await _repository.getUserProfile(user.uid);
     profileResult.fold(

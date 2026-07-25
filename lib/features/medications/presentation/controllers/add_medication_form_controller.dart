@@ -6,6 +6,10 @@ import '../states/add_medication_form_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
 class AddMedicationFormController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies      |
+  // --------------------------------------------------------------------------
+
   final CreateMedicationUseCase createMedicationUseCase;
 
   AddMedicationFormController({required this.createMedicationUseCase});
@@ -86,6 +90,10 @@ class AddMedicationFormController extends ChangeNotifier with SafeNotifier {
   }
 
   // ─── Save ─────────────────────────────────────────────────────────────────
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods        |
+  // --------------------------------------------------------------------------
 
   Future<String?> save() async {
     if (!formKey.currentState!.validate()) return 'validation_failed';

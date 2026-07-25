@@ -9,9 +9,17 @@ import '../../../../core/utils/safe_notifier.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 
 class AiChatController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies                  |
+  // --------------------------------------------------------------------------
+
   final AiChatRepository _repository;
   final ConnectivityService _connectivityService;
   final MutationSyncManager _mutationSyncManager;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle               |
+  // --------------------------------------------------------------------------
 
   AiChatController(
       this._repository, this._connectivityService, this._mutationSyncManager) {
@@ -54,6 +62,10 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     _syncSubscription?.cancel();
     super.dispose();
   }
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                    |
+  // --------------------------------------------------------------------------
 
   Future<void> _init() async {
     final isConnected = await _connectivityService.isConnected;

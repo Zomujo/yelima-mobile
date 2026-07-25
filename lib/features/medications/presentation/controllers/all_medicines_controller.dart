@@ -15,8 +15,16 @@ import '../../../../core/utils/safe_notifier.dart';
 import '../states/medication_state.dart';
 
 class AllMedicinesController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies                  |
+  // --------------------------------------------------------------------------
+
   final MedicationRepository repository;
   StreamSubscription? _mutationSyncSub;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle               |
+  // --------------------------------------------------------------------------
 
   AllMedicinesController({required this.repository}) {
     _init();
@@ -88,6 +96,10 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
       },
     );
   }
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                    |
+  // --------------------------------------------------------------------------
 
   Future<void> fetchPreloadedMedications(
       {String? search, int page = 1, int limit = 10}) async {
@@ -173,7 +185,8 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
 
   Future<bool> deleteMedication(String id) async {
     if (listState.data != null) {
-      final updatedRows = listState.data!.rows.where((m) => m.id != id).toList();
+      final updatedRows =
+          listState.data!.rows.where((m) => m.id != id).toList();
       final updatedData = MedicationListResponse(
         rows: updatedRows,
         total: updatedRows.length,
@@ -196,7 +209,8 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
         return false;
       },
       (_) {
-        formSubmitState = const MedicationState(data: "Deleted", isLoading: false, error: null);
+        formSubmitState = const MedicationState(
+            data: "Deleted", isLoading: false, error: null);
         notifyListeners();
         fetchAllMedicines(forceRefresh: true);
         return true;

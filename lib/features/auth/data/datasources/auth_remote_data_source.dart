@@ -4,20 +4,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/exceptions/exceptions.dart';
-import '../../../../core/api/api_client.dart';
 
 class AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
-  final APIClient _apiClient;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   AuthRemoteDataSource({
     required FirebaseAuth firebaseAuth,
-    required APIClient apiClient,
-  })  : _firebaseAuth = firebaseAuth,
-        _apiClient = apiClient;
+  }) : _firebaseAuth = firebaseAuth;
 
   Stream<User?> get authStateChanges => _firebaseAuth.userChanges();
   User? get currentUser => _firebaseAuth.currentUser;
@@ -153,13 +149,6 @@ class AuthRemoteDataSource {
         }
         rethrow;
       }
-    }
-
-    /// Delete user data from the backend server first (while Firebase token is still valid).
-    try {
-      await _apiClient.delete('/api/v1/client/clean/${user.uid}');
-    } catch (e) {
-      rethrow;
     }
 
     /// Delete the user document from Firestore.

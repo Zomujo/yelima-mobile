@@ -6,10 +6,18 @@ import '../../../../core/utils/safe_notifier.dart';
 import '../states/appointment_state.dart';
 
 class AppointmentController extends ChangeNotifier with SafeNotifier {
+  // --------------------------------------------------------------------------
+  // |                                  State & Dependencies      |
+  // --------------------------------------------------------------------------
+
   final AppointmentRepository repository;
 
   StreamSubscription<List<AppointmentEntity>>? _appointmentSubscription;
   int _nearestFetchStamp = 0;
+
+  // --------------------------------------------------------------------------
+  // |                               Initialization & Lifecycle                |
+  // --------------------------------------------------------------------------
 
   AppointmentController({required this.repository}) {
     _initSubscription();
@@ -56,7 +64,13 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     fetchAppointments(filter: 'past', isRefresh: true);
   }
 
+
+  // --------------------------------------------------------------------------
+  // |                                   Actions & Methods                     |
+  // --------------------------------------------------------------------------
+
   /// Fetches the single nearest upcoming appointment for the dashboard.
+
   Future<void> fetchNearestAppointment() async {
     final stamp = ++_nearestFetchStamp;
     state = state.copyWith(isNearestLoading: true, nearestError: null);

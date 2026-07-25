@@ -3,10 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
-/// A centralized monitoring service for Firebase Analytics and Crashlytics.
-///
-/// This service is implemented as a singleton and provides methods for logging
-/// events, tracking screens, and recording errors.
+/// Centralized monitoring service for Firebase Analytics and Crashlytics.
 class MonitoringService {
   MonitoringService._internal();
 
@@ -21,9 +18,6 @@ class MonitoringService {
       FirebaseAnalyticsObserver(analytics: _analytics);
 
   /// Initializes the monitoring service.
-  ///
-  /// Disables Crashlytics collection in debug mode and enables Analytics collection.
-  /// Accepts an optional [userId] to identify the user.
   Future<void> initialize({String? userId}) async {
     try {
       await _crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
