@@ -27,10 +27,10 @@ abstract class MedicationRepository {
   AsyncResponse<String> createMedication(CreateMedicationModel data);
   AsyncResponse<MedicationDetailModel> getMedicationById(String id);
   AsyncResponse<String> updateMedication(String id, UpdateMedicationModel data);
+  AsyncResponse<void> deleteMedication(String id);
   AsyncResponse<SeededMedicationListResponseModel> getPreloadedMedications(
       {int page = 1, int limit = 10, String? search});
 
-  /// Syncs alarms for all existing local medications.
   Future<void> syncLocalAlarms();
 
   AsyncResponse<MedicationListResponse> getAllMedications(

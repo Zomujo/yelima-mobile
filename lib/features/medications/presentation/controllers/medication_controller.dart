@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:yelima/features/medications/domain/entities/medication_count.dart';
 import '../../domain/entities/medication_entity.dart';
 import 'package:get_it/get_it.dart';
 import '../../domain/repositories/medication_repository.dart';
@@ -16,6 +17,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   MedicationsState get state => _state;
 
   StreamSubscription<List<MedicationEntity>>? _medicationsSubscription;
+  StreamSubscription<MedicationCount>? _countsSubscription;
 
   set state(MedicationsState value) {
     if (_state == value) return;
@@ -39,7 +41,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   /// Initializes the controller by fetching adherence, counts, and medications.
   void init() {
     fetchAdherence();
-    fetchCounts();
+    _initCountsStream();
     fetchMedications();
   }
 
@@ -83,18 +85,21 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  /// Fetches the number of medications taken and missed for the day.
-  Future<void> fetchCounts() async {
+  void _initCountsStream() {
     if (state.counts == null) {
       state = state.copyWith(isCountsLoading: true, countsError: null);
     }
 
-    final result = await repository.getMedicationCounts();
-
-    state = result.fold(
-      (error) => state.copyWith(isCountsLoading: false, countsError: error),
-      (data) => state.copyWith(
-          isCountsLoading: false, counts: data, countsError: null),
+    _countsSubscription?.cancel();
+    _countsSubscription = repository.watchMedicationCounts().listen(
+      (data) {
+        state = state.copyWith(
+            isCountsLoading: false, counts: data, countsError: null);
+      },
+      onError: (error) {
+        state = state.copyWith(
+            isCountsLoading: false, countsError: error.toString());
+      },
     );
   }
 
@@ -175,7 +180,6 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
       (error) => error,
       (_) {
         fetchAdherence();
-        fetchCounts(); // Update local counts instantly too
         if (GetIt.instance.isRegistered<AllMedicinesController>()) {
           GetIt.instance<AllMedicinesController>().fetchMedicationHistory(id);
         }
@@ -197,6 +201,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   @override
   void dispose() {
     _medicationsSubscription?.cancel();
+    _countsSubscription?.cancel();
     super.dispose();
   }
 }

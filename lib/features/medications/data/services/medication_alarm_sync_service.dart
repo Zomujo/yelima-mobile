@@ -25,6 +25,5 @@ class MedicationAlarmSyncService implements SessionLifecycleHandler {
   @override
   Future<void> onSessionEnded() async {
     // Alarms are already wiped in AuthRepositoryImpl during logout,
-    // so nothing needs to be done here.
   }
 }

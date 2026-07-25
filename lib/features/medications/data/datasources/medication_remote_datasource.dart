@@ -24,6 +24,7 @@ abstract class MedicationRemoteDataSource {
   Future<String> updateMedication(String id, UpdateMedicationModel data);
   Future<SeededMedicationListResponseModel> getPreloadedMedications(
       {int page = 1, int limit = 10, String? search});
+  Future<void> deleteMedication(String id);
 }
 
 class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
@@ -131,6 +132,11 @@ class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
       data: payload,
     );
     return response['message'] as String? ?? 'Updated successfully';
+  }
+
+  @override
+  Future<void> deleteMedication(String id) async {
+    await apiClient.delete('/api/v1/client/medications/$id');
   }
 
   @override

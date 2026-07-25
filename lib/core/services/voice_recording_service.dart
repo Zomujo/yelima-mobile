@@ -87,8 +87,9 @@ class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
   }
 
   Future<void> resumeRecording() async {
-    if (_maxDurationReached)
+    if (_maxDurationReached) {
       return; // Recording was already finalized at the cap
+    }
     try {
       await _recorderController.record();
     } catch (e) {

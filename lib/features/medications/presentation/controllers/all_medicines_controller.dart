@@ -171,6 +171,26 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
     );
   }
 
+  Future<bool> deleteMedication(String id) async {
+    formSubmitState = const MedicationState(isLoading: true);
+    notifyListeners();
+
+    final result = await repository.deleteMedication(id);
+    return result.fold(
+      (failure) {
+        formSubmitState = MedicationState(error: failure, isLoading: false);
+        notifyListeners();
+        return false;
+      },
+      (_) {
+        formSubmitState = const MedicationState(data: "Deleted", isLoading: false, error: null);
+        notifyListeners();
+        fetchAllMedicines(forceRefresh: true);
+        return true;
+      },
+    );
+  }
+
   @override
   void dispose() {
     _mutationSyncSub?.cancel();

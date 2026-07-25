@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_it/get_it.dart';
+import '../../../../core/db/app_database.dart';
 
 class AudioCacheManager {
   static final AudioCacheManager _instance = AudioCacheManager._internal();
@@ -12,14 +13,15 @@ class AudioCacheManager {
   AudioCacheManager._internal();
 
   Future<void> savePath(String messageId, String absolutePath) async {
-    final prefs = await SharedPreferences.getInstance();
     final filename = absolutePath.split('/').last; // Only store filename
-    await prefs.setString('audio_cache_$messageId', filename);
+    await GetIt.instance<AppDatabase>()
+        .audioCacheDao
+        .savePath(messageId, filename);
   }
 
   Future<String?> getPath(String messageId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final filename = prefs.getString('audio_cache_$messageId');
+    final filename =
+        await GetIt.instance<AppDatabase>().audioCacheDao.getPath(messageId);
 
     if (filename != null) {
       final directory = await getApplicationDocumentsDirectory();
@@ -29,7 +31,7 @@ class AudioCacheManager {
       if (await file.exists()) {
         return fullPath;
       } else {
-        await prefs.remove('audio_cache_$messageId');
+        await GetIt.instance<AppDatabase>().audioCacheDao.removePath(messageId);
         return null;
       }
     }
@@ -37,27 +39,24 @@ class AudioCacheManager {
   }
 
   Future<void> clearCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    final keys =
-        prefs.getKeys().where((k) => k.startsWith('audio_cache_')).toList();
+    final filenames =
+        await GetIt.instance<AppDatabase>().audioCacheDao.getAllFilenames();
 
-    if (keys.isEmpty) return;
+    if (filenames.isEmpty) return;
 
     final directory = await getApplicationDocumentsDirectory();
 
-    for (final key in keys) {
-      final filename = prefs.getString(key);
-      if (filename != null) {
-        try {
-          final file = File('${directory.path}/$filename');
-          if (await file.exists()) {
-            await file.delete();
-          }
-        } catch (_) {
-          // Ignore deletion errors for individual files
+    for (final filename in filenames) {
+      try {
+        final file = File('${directory.path}/$filename');
+        if (await file.exists()) {
+          await file.delete();
         }
+      } catch (_) {
+        // Ignore deletion errors for individual files
       }
-      await prefs.remove(key);
     }
+
+    await GetIt.instance<AppDatabase>().audioCacheDao.clearCache();
   }
 }

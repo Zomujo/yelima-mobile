@@ -69,7 +69,14 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
   /// Subscribes to real-time updates for medication counts.
   @override
-  Stream<MedicationCount> watchMedicationCounts() => const Stream.empty();
+  Stream<MedicationCount> watchMedicationCounts() {
+    return localDataSource.watchAllMedications().map((meds) {
+      final m = meds.where((med) => med.section == 'MORNING').length;
+      final a = meds.where((med) => med.section == 'AFTERNOON').length;
+      final e = meds.where((med) => med.section == 'EVENING').length;
+      return MedicationCount(morning: m, afternoon: a, evening: e);
+    });
+  }
 
   /// Subscribes to local medication updates for a specific section and triggers a silent background sync.
   @override
@@ -470,6 +477,26 @@ class MedicationRepositoryImpl implements MedicationRepository {
     return right(id);
   }
 
+  @override
+  AsyncResponse<void> deleteMedication(String id) async {
+    await _cancelAlarmsForMed(id);
+    await localDataSource.deleteMedication(id);
+
+    final pending = PendingMutationsCompanion.insert(
+      id: const Uuid().v4(),
+      entityType: 'medication',
+      entityId: id,
+      action: 'deleteMedication',
+      payloadJson: '{}',
+      createdAt: DateTime.now(),
+    );
+
+    await localDataSource.addPendingMutation(pending);
+    mutationSyncManager.triggerSync();
+
+    return right(null);
+  }
+
   /// Retrieves preloaded seed medications exclusively from the local cache.
   @override
   AsyncResponse<SeededMedicationListResponseModel> getPreloadedMedications(
@@ -514,7 +541,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   Future<void> syncLocalAlarms() async {
     final allMeds = await localDataSource.getAllMedications();
     await notificationService
-        .cancelAllReminders(); // Wipe everything to prevent orphans
+        .cancelAllReminders(); 
     await _scheduleAlarmsForMeds(allMeds);
   }
 }

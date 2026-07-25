@@ -3992,6 +3992,196 @@ class MedicationLogsCompanion extends UpdateCompanion<MedicationLog> {
   }
 }
 
+class $AudioCacheTable extends AudioCache
+    with TableInfo<$AudioCacheTable, AudioCacheData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AudioCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _filenameMeta =
+      const VerificationMeta('filename');
+  @override
+  late final GeneratedColumn<String> filename = GeneratedColumn<String>(
+      'filename', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, filename];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'audio_cache';
+  @override
+  VerificationContext validateIntegrity(Insertable<AudioCacheData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('filename')) {
+      context.handle(_filenameMeta,
+          filename.isAcceptableOrUnknown(data['filename']!, _filenameMeta));
+    } else if (isInserting) {
+      context.missing(_filenameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AudioCacheData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AudioCacheData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      filename: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}filename'])!,
+    );
+  }
+
+  @override
+  $AudioCacheTable createAlias(String alias) {
+    return $AudioCacheTable(attachedDatabase, alias);
+  }
+}
+
+class AudioCacheData extends DataClass implements Insertable<AudioCacheData> {
+  final String id;
+  final String filename;
+  const AudioCacheData({required this.id, required this.filename});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['filename'] = Variable<String>(filename);
+    return map;
+  }
+
+  AudioCacheCompanion toCompanion(bool nullToAbsent) {
+    return AudioCacheCompanion(
+      id: Value(id),
+      filename: Value(filename),
+    );
+  }
+
+  factory AudioCacheData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AudioCacheData(
+      id: serializer.fromJson<String>(json['id']),
+      filename: serializer.fromJson<String>(json['filename']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'filename': serializer.toJson<String>(filename),
+    };
+  }
+
+  AudioCacheData copyWith({String? id, String? filename}) => AudioCacheData(
+        id: id ?? this.id,
+        filename: filename ?? this.filename,
+      );
+  AudioCacheData copyWithCompanion(AudioCacheCompanion data) {
+    return AudioCacheData(
+      id: data.id.present ? data.id.value : this.id,
+      filename: data.filename.present ? data.filename.value : this.filename,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AudioCacheData(')
+          ..write('id: $id, ')
+          ..write('filename: $filename')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, filename);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AudioCacheData &&
+          other.id == this.id &&
+          other.filename == this.filename);
+}
+
+class AudioCacheCompanion extends UpdateCompanion<AudioCacheData> {
+  final Value<String> id;
+  final Value<String> filename;
+  final Value<int> rowid;
+  const AudioCacheCompanion({
+    this.id = const Value.absent(),
+    this.filename = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AudioCacheCompanion.insert({
+    required String id,
+    required String filename,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        filename = Value(filename);
+  static Insertable<AudioCacheData> custom({
+    Expression<String>? id,
+    Expression<String>? filename,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (filename != null) 'filename': filename,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AudioCacheCompanion copyWith(
+      {Value<String>? id, Value<String>? filename, Value<int>? rowid}) {
+    return AudioCacheCompanion(
+      id: id ?? this.id,
+      filename: filename ?? this.filename,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (filename.present) {
+      map['filename'] = Variable<String>(filename.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AudioCacheCompanion(')
+          ..write('id: $id, ')
+          ..write('filename: $filename, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4012,6 +4202,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AdherenceGlobalDaysTable adherenceGlobalDays =
       $AdherenceGlobalDaysTable(this);
   late final $MedicationLogsTable medicationLogs = $MedicationLogsTable(this);
+  late final $AudioCacheTable audioCache = $AudioCacheTable(this);
   late final Index idxVitalHistoriesTypeDate = Index(
       'idx_vital_histories_type_date',
       'CREATE INDEX idx_vital_histories_type_date ON vital_histories (vital_type, recorded_at)');
@@ -4037,6 +4228,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final MedicationsDao medicationsDao =
       MedicationsDao(this as AppDatabase);
   late final AdherenceDao adherenceDao = AdherenceDao(this as AppDatabase);
+  late final AudioCacheDao audioCacheDao = AudioCacheDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4053,6 +4245,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         adherenceGlobals,
         adherenceGlobalDays,
         medicationLogs,
+        audioCache,
         idxVitalHistoriesTypeDate,
         idxAiChatConversationsCreatedAt,
         idxAiChatConversationsLocalChatId,
@@ -6181,6 +6374,132 @@ typedef $$MedicationLogsTableProcessedTableManager = ProcessedTableManager<
     ),
     MedicationLog,
     PrefetchHooks Function()>;
+typedef $$AudioCacheTableCreateCompanionBuilder = AudioCacheCompanion Function({
+  required String id,
+  required String filename,
+  Value<int> rowid,
+});
+typedef $$AudioCacheTableUpdateCompanionBuilder = AudioCacheCompanion Function({
+  Value<String> id,
+  Value<String> filename,
+  Value<int> rowid,
+});
+
+class $$AudioCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $AudioCacheTable> {
+  $$AudioCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get filename => $composableBuilder(
+      column: $table.filename, builder: (column) => ColumnFilters(column));
+}
+
+class $$AudioCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $AudioCacheTable> {
+  $$AudioCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get filename => $composableBuilder(
+      column: $table.filename, builder: (column) => ColumnOrderings(column));
+}
+
+class $$AudioCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AudioCacheTable> {
+  $$AudioCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get filename =>
+      $composableBuilder(column: $table.filename, builder: (column) => column);
+}
+
+class $$AudioCacheTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $AudioCacheTable,
+    AudioCacheData,
+    $$AudioCacheTableFilterComposer,
+    $$AudioCacheTableOrderingComposer,
+    $$AudioCacheTableAnnotationComposer,
+    $$AudioCacheTableCreateCompanionBuilder,
+    $$AudioCacheTableUpdateCompanionBuilder,
+    (
+      AudioCacheData,
+      BaseReferences<_$AppDatabase, $AudioCacheTable, AudioCacheData>
+    ),
+    AudioCacheData,
+    PrefetchHooks Function()> {
+  $$AudioCacheTableTableManager(_$AppDatabase db, $AudioCacheTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AudioCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AudioCacheTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AudioCacheTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> filename = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              AudioCacheCompanion(
+            id: id,
+            filename: filename,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String filename,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              AudioCacheCompanion.insert(
+            id: id,
+            filename: filename,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$AudioCacheTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $AudioCacheTable,
+    AudioCacheData,
+    $$AudioCacheTableFilterComposer,
+    $$AudioCacheTableOrderingComposer,
+    $$AudioCacheTableAnnotationComposer,
+    $$AudioCacheTableCreateCompanionBuilder,
+    $$AudioCacheTableUpdateCompanionBuilder,
+    (
+      AudioCacheData,
+      BaseReferences<_$AppDatabase, $AudioCacheTable, AudioCacheData>
+    ),
+    AudioCacheData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6207,4 +6526,6 @@ class $AppDatabaseManager {
       $$AdherenceGlobalDaysTableTableManager(_db, _db.adherenceGlobalDays);
   $$MedicationLogsTableTableManager get medicationLogs =>
       $$MedicationLogsTableTableManager(_db, _db.medicationLogs);
+  $$AudioCacheTableTableManager get audioCache =>
+      $$AudioCacheTableTableManager(_db, _db.audioCache);
 }

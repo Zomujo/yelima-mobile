@@ -54,7 +54,9 @@ class HomeMetricsEntity extends Equatable {
   (int, int)? get parsedBloodPressure {
     if (bloodPressure == null ||
         bloodPressure!.isEmpty ||
-        bloodPressure!.contains('--')) return null;
+        bloodPressure!.contains('--')) {
+      return null;
+    }
     final parts = bloodPressure!.split('/');
     if (parts.length != 2) return null;
     final sys = int.tryParse(parts[0].trim());
@@ -67,7 +69,9 @@ class HomeMetricsEntity extends Equatable {
   double? get parsedBloodGlucose {
     if (bloodGlucose == null ||
         bloodGlucose!.isEmpty ||
-        bloodGlucose!.contains('--')) return null;
+        bloodGlucose!.contains('--')) {
+      return null;
+    }
     return double.tryParse(bloodGlucose!.trim());
   }
 }

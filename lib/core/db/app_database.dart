@@ -22,7 +22,9 @@ import 'daos/medications_dao.dart';
 import 'tables/adherence_globals.dart';
 import 'tables/adherence_global_days.dart';
 import 'tables/medication_logs.dart';
+import 'tables/audio_cache.dart';
 import 'daos/adherence_dao.dart';
+import 'daos/audio_cache_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -37,7 +39,8 @@ part 'app_database.g.dart';
   PreloadedMedications,
   AdherenceGlobals,
   AdherenceGlobalDays,
-  MedicationLogs
+  MedicationLogs,
+  AudioCache
 ], daos: [
   VitalsDao,
   AiChatDao,
@@ -45,13 +48,14 @@ part 'app_database.g.dart';
   PendingMutationsDao,
   AppointmentsDao,
   MedicationsDao,
-  AdherenceDao
+  AdherenceDao,
+  AudioCacheDao
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration {
@@ -108,6 +112,9 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(adherenceGlobals);
           await m.createTable(adherenceGlobalDays);
           await m.createTable(medicationLogs);
+        }
+        if (from < 14) {
+          await m.createTable(audioCache);
         }
       },
     );

@@ -37,6 +37,10 @@ class MedicationRemoteMutationSource implements IRemoteMutationSource {
             date: date);
         return null;
 
+      case 'deleteMedication':
+        await _remoteDataSource.deleteMedication(entityId);
+        return null;
+
       default:
         throw UnimplementedError('Unknown action $action for medication');
     }
