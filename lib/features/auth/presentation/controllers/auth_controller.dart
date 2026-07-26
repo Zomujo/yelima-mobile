@@ -60,7 +60,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
           currentUser: null,
           isInitialized: true,
         ));
-        await _flushPendingSyncBeforeSessionEnd();
+        await _flushPendingMutations();
         try {
           _sessionLifecycleService.endSession();
         } catch (_) {}
@@ -88,7 +88,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   // |                                   Actions & Methods                    |
   // --------------------------------------------------------------------------
 
-  Future<void> _flushPendingSyncBeforeSessionEnd() async {
+  Future<void> _flushPendingMutations() async {
     try {
       if (!GetIt.instance.isRegistered<MutationSyncManager>()) return;
       if (!await GetIt.instance<ConnectivityService>().isConnected) return;
@@ -102,7 +102,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
 
   Future<void> _refreshAuthAndProfile(User user) async {
     try {
-      await user.reload();
+      await user.reload().timeout(const Duration(seconds: 5));
       if (FirebaseAuth.instance.currentUser == null) {
         _showSessionExpiredSnackbar();
         await _repository.signOut();
@@ -150,9 +150,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {
-        GlobalAsyncLoader.hide();
-      },
+      (_) {},
     );
   }
 
@@ -170,9 +168,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {
-        GlobalAsyncLoader.hide();
-      },
+      (_) {},
     );
   }
 
@@ -189,9 +185,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {
-        GlobalAsyncLoader.hide();
-      },
+      (_) {},
     );
   }
 
@@ -208,9 +202,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         GlobalAsyncLoader.hide();
         _showError(context, error);
       },
-      (_) {
-        GlobalAsyncLoader.hide();
-      },
+      (_) {},
     );
   }
 

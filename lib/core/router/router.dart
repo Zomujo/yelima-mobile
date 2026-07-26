@@ -73,10 +73,6 @@ class AppRouter {
           return withRedirect(RoutePaths.splash);
         }
 
-        if (isSplashRoute) {
-          return null;
-        }
-
         if (!isAuthenticated) {
           if (isAuthRoute) return null;
           return withRedirect(RoutePaths.signIn);
