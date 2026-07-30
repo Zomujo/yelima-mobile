@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'core/router/router.dart';
 import 'core/theme/app_theme.dart';
 import 'shared/widgets/app_startup_widget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'core/utils/globals.dart';
 import 'package:provider/provider.dart';
@@ -71,6 +72,8 @@ class _MyAppState extends State<MyApp> {
             scaffoldMessengerKey: scaffoldMessengerKey,
             routerConfig: _router,
             title: 'yelima',
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.theme,
             themeMode: ThemeMode.light,

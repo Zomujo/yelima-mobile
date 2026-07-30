@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
 
   # State Management
@@ -60,7 +62,7 @@ dependencies:
   equatable: ^2.0.8
   cloud_firestore: ^6.6.0
   internet_connection_checker_plus: ^3.1.0
-  intl: ^0.20.2
+  intl: any
   audio_waveforms:
     git: https://github.com/Mawuli-360/audio_waveforms.git
   permission_handler: ^11.3.1
@@ -85,6 +87,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     - .env

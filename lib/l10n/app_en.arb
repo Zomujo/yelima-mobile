@@ -1,0 +1,6 @@
+{
+  "appName": "Yelima",
+  "@appName": {
+    "description": "The name of the application"
+  }
+}
