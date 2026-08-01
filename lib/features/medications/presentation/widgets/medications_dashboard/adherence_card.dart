@@ -3,6 +3,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_adherence.dart';
 import '../../../../../core/utils/app_date_formats.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 enum DayStatus { taken, missed, future }
 
@@ -47,8 +48,8 @@ class AdherenceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppText.bodyMedium(
-            "This week's adherence",
+          AppText.bodyMedium(
+            context.l10n.thisWeeksAdherence,
             color: Colors.white,
           ),
           Text(
@@ -60,8 +61,8 @@ class AdherenceCard extends StatelessWidget {
               height: 1.1,
             ),
           ),
-          const AppText.bodyMedium(
-            "You're doing well — keep it up! 💪",
+          AppText.bodyMedium(
+            context.l10n.doingWellKeepItUp,
             color: Colors.white,
           ),
           const SizedBox(height: 14),

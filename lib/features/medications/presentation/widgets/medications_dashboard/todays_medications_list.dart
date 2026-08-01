@@ -7,6 +7,7 @@ import '../../../../../shared/widgets/layout/app_empty_state.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
 import '../../controllers/medication_controller.dart';
 import 'medication_card.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class TodaysMedicationsList extends StatelessWidget {
   final MedicationController controller;
@@ -53,7 +54,7 @@ class TodaysMedicationsList extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 48),
           child: AppEmptyState(
-            title: 'No medications scheduled.',
+            title: context.l10n.noMedicationsScheduled,
             iconAsset: AppImages.pillIcon.assetName,
           ),
         ),

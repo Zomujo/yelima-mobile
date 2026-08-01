@@ -9,6 +9,7 @@ import '../widgets/medications_dashboard/adherence_card.dart';
 import '../widgets/medications_dashboard/time_of_day_tabs.dart';
 import '../widgets/medications_dashboard/todays_medications_list.dart';
 import 'all_medicines_screen.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key});
@@ -30,7 +31,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.globalBackground,
-      appBar: const AppHeader(title: 'My Medications'),
+      appBar: AppHeader(title: context.l10n.myMedications),
       body: CustomScrollView(
         slivers: [
           SliverPadding(
@@ -65,9 +66,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                               ),
                             ),
                           ),
-                          child: const AppText.labelMedium(
-                            'All Medicines',
-                            color: Color(0xFF1E293B),
+                          child: AppText.labelMedium(
+                            context.l10n.allMedicines,
+                            color: const Color(0xFF1E293B),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -86,10 +87,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                     );
                   }),
                   const SizedBox(height: 32),
-                  const AppText.titleLarge(
-                    "Today's medications",
+                  AppText.titleLarge(
+                    context.l10n.todaysMedications,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: const Color(0xFF1E293B),
                   ),
                   const SizedBox(height: 16),
                   Consumer<MedicationController>(

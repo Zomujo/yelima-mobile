@@ -68,5 +68,14 @@
   "bloodPressureTrend": "Sɛnea wo mogya mmoroso te wɔ bere yi mu.",
   "bloodGlucose": "Mogya mu asikre",
   "inGoodRange": "Ɛyɛ",
-  "bloodGlucoseTrend": "Sɛnea wo mogya mu asikre te wɔ bere yi mu."
+  "bloodGlucoseTrend": "Sɛnea wo mogya mu asikre te wɔ bere yi mu.",
+  "myMedications": "Me Nnuru",
+  "allMedicines": "Nnuru Nyinaa",
+  "thisWeeksAdherence": "Nnawɔtwe yi nnuru nom",
+  "doingWellKeepItUp": "Woreyɛ no yiye \u2014 kɔ so ara! \ud83d\udcaa",
+  "todaysMedications": "Nnɛ nnuru",
+  "morning": "ANƆPA",
+  "afternoon": "AWIABERE",
+  "evening": "ANADWO",
+  "noMedicationsScheduled": "Wɔnhyehyɛɛ nnuru biara."
 }

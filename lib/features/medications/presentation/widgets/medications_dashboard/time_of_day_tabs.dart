@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class TimeOfDayTabs extends StatelessWidget {
   final int selectedIndex;
@@ -65,11 +66,11 @@ class TimeOfDayTabs extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildTab(0, 'MORNING', counts['MORNING'] ?? 0),
+          _buildTab(0, context.l10n.morning, counts['MORNING'] ?? 0),
           const SizedBox(width: 24),
-          _buildTab(1, 'AFTERNOON', counts['AFTERNOON'] ?? 0),
+          _buildTab(1, context.l10n.afternoon, counts['AFTERNOON'] ?? 0),
           const SizedBox(width: 24),
-          _buildTab(2, 'EVENING', counts['EVENING'] ?? 0),
+          _buildTab(2, context.l10n.evening, counts['EVENING'] ?? 0),
         ],
       ),
     );

@@ -75,5 +75,14 @@
   "bloodPressureTrend": "Your blood pressure trend over this period.",
   "bloodGlucose": "Blood Glucose",
   "inGoodRange": "In good range",
-  "bloodGlucoseTrend": "Your blood glucose trend over this period."
+  "bloodGlucoseTrend": "Your blood glucose trend over this period.",
+  "myMedications": "My Medications",
+  "allMedicines": "All Medicines",
+  "thisWeeksAdherence": "This week's adherence",
+  "doingWellKeepItUp": "You're doing well — keep it up! \ud83d\udcaa",
+  "todaysMedications": "Today's medications",
+  "morning": "MORNING",
+  "afternoon": "AFTERNOON",
+  "evening": "EVENING",
+  "noMedicationsScheduled": "No medications scheduled."
 }
