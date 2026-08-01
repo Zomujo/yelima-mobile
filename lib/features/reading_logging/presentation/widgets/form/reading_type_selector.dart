@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import 'log_type_card.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingTypeSelector extends StatelessWidget {
   final int selectedIndex;
@@ -20,8 +21,8 @@ class ReadingTypeSelector extends StatelessWidget {
           child: GestureDetector(
             onTap: () => onTypeSelected(0),
             child: LogTypeCard(
-              title: 'Blood pressure',
-              subtitle: 'Top & bottom number',
+              title: context.l10n.bloodPressure,
+              subtitle: context.l10n.topBottomNumber,
               icon: Icons.favorite_border,
               isSelected: selectedIndex == 0,
               iconColor:
@@ -34,8 +35,8 @@ class ReadingTypeSelector extends StatelessWidget {
           child: GestureDetector(
             onTap: () => onTypeSelected(1),
             child: LogTypeCard(
-              title: 'Sugar',
-              subtitle: 'mmol/L',
+              title: context.l10n.sugar,
+              subtitle: context.l10n.mmolL,
               icon: Icons.water_drop_outlined,
               isSelected: selectedIndex == 1,
               iconColor:

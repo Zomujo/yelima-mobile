@@ -6,6 +6,7 @@ import '../../../../../core/constants/app_images.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../daily_check_in_card.dart';
 import '../action_card.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class HomeNextStepSection extends StatelessWidget {
   const HomeNextStepSection({super.key});
@@ -18,7 +19,7 @@ class HomeNextStepSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: AppText.labelLarge(
-            'NEXT STEP',
+            context.l10n.nextStep,
             fontWeight: FontWeight.w500,
             color: AppColors.textBlack.withValues(alpha: 0.5),
           ),
@@ -38,7 +39,7 @@ class HomeNextStepSection extends StatelessWidget {
             children: [
               Expanded(
                 child: ActionCard(
-                  title: 'My Medicines',
+                  title: context.l10n.myMedicines,
                   iconPath: AppImages.pillIcon.assetName,
                   bgImagePath: AppImages.medicineBgIcon.assetName,
                   backgroundColor: const Color(0xFF20C7D3),
@@ -50,7 +51,7 @@ class HomeNextStepSection extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: ActionCard(
-                  title: 'Your Progress',
+                  title: context.l10n.yourProgress,
                   iconPath: AppImages.progressIcon.assetName,
                   bgImagePath: AppImages.progressBgIcon.assetName,
                   backgroundColor: const Color(0xFF37D2B8),

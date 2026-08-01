@@ -8,6 +8,7 @@ import '../../../../core/constants/app_sizes.dart';
 import 'package:provider/provider.dart';
 import '../controllers/appointment_controller.dart';
 import '../widgets/paginated_appointment_list.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class AppointmentsScreen extends StatelessWidget {
   const AppointmentsScreen({super.key});
@@ -21,12 +22,12 @@ class AppointmentsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: false,
-        title: const Padding(
-          padding: EdgeInsets.only(left: 8.0),
+        title: Padding(
+          padding: const EdgeInsets.only(left: 8.0),
           child: AppText.headlineSmall(
-            'Your appointments',
+            context.l10n.yourAppointments,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+            color: const Color(0xFF1E293B),
           ),
         ),
       ),
@@ -38,14 +39,14 @@ class AppointmentsScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
             children: [
-              const AppText.labelLarge(
-                'The clinic books these for you. You can ask for a new one.',
-                color: Color(0xFF6F7683),
+              AppText.labelLarge(
+                context.l10n.appointmentsDescription,
+                color: const Color(0xFF6F7683),
                 fontWeight: FontWeight.w200,
               ),
               const SizedBox(height: 24),
               AppButton(
-                text: 'Ask for an appointment',
+                text: context.l10n.askForAppointment,
                 prefixIcon:
                     const Icon(Icons.add, color: Colors.white, size: 20),
                 onPressed: () => RequestAppointmentModal.show(context),
@@ -54,8 +55,8 @@ class AppointmentsScreen extends StatelessWidget {
                 borderRadius: 24,
               ),
               const SizedBox(height: 32),
-              const AppText.labelMedium(
-                'COMING UP',
+              AppText.labelMedium(
+                context.l10n.comingUp,
                 color: AppColors.textGrey,
                 letterSpacing: 1.5,
               ),
@@ -63,13 +64,13 @@ class AppointmentsScreen extends StatelessWidget {
               PaginatedAppointmentList(
                 state: upcomingState,
                 isPast: false,
-                emptyMessage: 'No upcoming appointments.',
+                emptyMessage: context.l10n.noUpcomingAppointments,
                 filter: 'upcoming',
                 controller: controller,
               ),
               const SizedBox(height: 32),
-              const AppText.labelMedium(
-                'PAST VISITS',
+              AppText.labelMedium(
+                context.l10n.pastVisits,
                 color: AppColors.textGrey,
                 letterSpacing: 1.5,
               ),
@@ -77,7 +78,7 @@ class AppointmentsScreen extends StatelessWidget {
               PaginatedAppointmentList(
                 state: pastState,
                 isPast: true,
-                emptyMessage: 'No past appointments.',
+                emptyMessage: context.l10n.noPastAppointments,
                 filter: 'past',
                 controller: controller,
               ),

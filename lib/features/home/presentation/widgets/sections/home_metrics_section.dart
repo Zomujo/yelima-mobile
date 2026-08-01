@@ -5,6 +5,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../metric_card.dart';
 import '../medication_adherence_card.dart';
 import '../../controllers/home_metrics_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class HomeMetricsSection extends StatefulWidget {
   const HomeMetricsSection({super.key});
@@ -41,10 +42,10 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: AppText.labelLarge(
-            'LAST READINGS',
+            context.l10n.lastReadings,
             fontWeight: FontWeight.w500,
             color: AppColors.textGrey,
             letterSpacing: 1.2,
@@ -56,7 +57,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
             children: [
               Expanded(
                 child: MetricCard(
-                  title: 'Blood pressure',
+                  title: context.l10n.bloodPressure,
                   mainValue: bpMain,
                   subValue: bpSub,
                   unit: 'mmHg',
@@ -66,7 +67,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
               const SizedBox(width: 16),
               Expanded(
                 child: MetricCard(
-                  title: 'Blood glucose',
+                  title: context.l10n.bloodGlucose,
                   mainValue: bg,
                   unit: 'mmol/L',
                   isLoading: isLoading,
@@ -81,8 +82,8 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
           child: MedicationAdherenceCard(
             percentage: adherence,
             message: adherence >= 0.8
-                ? "Keep it up. You're doing great 💪"
-                : "Let's improve your adherence 🌟",
+                ? context.l10n.adherenceGreat
+                : context.l10n.adherenceImprove,
             isLoading: isLoading,
           ),
         ),

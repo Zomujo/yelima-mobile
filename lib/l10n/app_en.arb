@@ -1,6 +1,65 @@
 {
   "appName": "Yelima",
-  "@appName": {
-    "description": "The name of the application"
-  }
+  "welcomeName": "Welcome, {name}",
+  "@welcomeName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "welcome": "Welcome",
+  "lastReadings": "LAST READINGS",
+  "bloodPressure": "Blood pressure",
+  "bloodGlucose": "Blood glucose",
+  "medicationAdherence": "Medication adherence this month",
+  "adherenceGreat": "Keep it up. You're doing great 💪",
+  "adherenceImprove": "Let's improve your adherence 🌟",
+  "nextStep": "NEXT STEP",
+  "dailyCheckIn": "DAILY CHECK-IN",
+  "tellYelima": "Tell Yelima how you're feeling\ntoday?",
+  "takesTwoMins": "It only takes 2 minutes. Your nurse will see\nyour report.",
+  "startCheckIn": "Start check-in",
+  "myMedicines": "My Medicines",
+  "yourProgress": "Your Progress",
+  "chatTitle": "Chat",
+  "dailyCheckInAIChat": "Daily Check-in (AI Chat)",
+  "healthAssistant": "Health assistant",
+  "aiChatDescription": "Ask health questions, log how you're feeling,\nand get personalised guidance.",
+  "healthcareProfessional": "Healthcare Professional",
+  "directMessaging": "Direct messaging",
+  "hcpDescription": "Send a message directly to your assigned\nHealthcare Professional.",
+  "comingSoon": "Coming soon",
+  "recentMessages": "RECENT MESSAGES",
+  "noRecentMessages": "No recent messages.",
+  "logReading": "Log a reading",
+  "bloodPressure": "Blood pressure",
+  "topBottomNumber": "Top & bottom number",
+  "sugar": "Sugar",
+  "mmolL": "mmol/L",
+  "readingFromMeter": "Reading from your meter",
+  "systolic": "Systolic",
+  "diastolic": "Diastolic",
+  "day": "Day",
+  "today": "Today",
+  "save": "Save",
+  "yourAppointments": "Your appointments",
+  "appointmentsDescription": "The clinic books these for you. You can ask for a new one.",
+  "askForAppointment": "Ask for an appointment",
+  "comingUp": "COMING UP",
+  "noUpcomingAppointments": "No upcoming appointments.",
+  "pastVisits": "PAST VISITS",
+  "noPastAppointments": "No past appointments.",
+  "myAccount": "My Account",
+  "patient": "Patient",
+  "personal": "PERSONAL",
+  "editProfile": "Edit profile",
+  "settings": "Settings",
+  "healthSummary": "HEALTH SUMMARY",
+  "conditions": "Conditions",
+  "language": "LANGUAGE",
+  "english": "English",
+  "akanTwi": "Akan Twi",
+  "system": "SYSTEM",
+  "logOut": "Log Out"
 }

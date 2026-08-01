@@ -18,6 +18,8 @@ import 'features/appointment/presentation/controllers/appointment_controller.dar
 import 'features/reading_logging/presentation/controllers/reading_logging_controller.dart';
 import 'core/db/daos/vitals_dao.dart';
 import 'injection_container.dart';
+import 'core/controllers/locale_controller.dart';
+import 'core/localization/fallback_localization_delegates.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -56,6 +58,7 @@ class _MyAppState extends State<MyApp> {
           providers: [
             ChangeNotifierProvider.value(value: sl<AuthController>()),
             ChangeNotifierProvider.value(value: sl<UserController>()),
+            ChangeNotifierProvider.value(value: sl<LocaleController>()),
             ChangeNotifierProvider(
                 create: (_) => sl<HomeMetricsController>()..fetchMetrics()),
             ChangeNotifierProvider(create: (_) => sl<MedicationController>()),
@@ -68,15 +71,25 @@ class _MyAppState extends State<MyApp> {
                 create: (_) => sl<ReadingLoggingController>()),
             Provider<VitalsDao>(create: (_) => sl()),
           ],
-          child: MaterialApp.router(
-            scaffoldMessengerKey: scaffoldMessengerKey,
-            routerConfig: _router,
-            title: 'yelima',
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.theme,
-            themeMode: ThemeMode.light,
+          child: Consumer<LocaleController>(
+            builder: (context, localeController, child) {
+              return MaterialApp.router(
+                scaffoldMessengerKey: scaffoldMessengerKey,
+                routerConfig: _router,
+                title: 'yelima',
+                locale: localeController.locale,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  FallbackMaterialLocalizationDelegate(),
+                  FallbackCupertinoLocalizationDelegate(),
+                  FallbackWidgetsLocalizationDelegate(),
+                ],
+                supportedLocales: AppLocalizations.supportedLocales,
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.theme,
+                themeMode: ThemeMode.light,
+              );
+            },
           ),
         ),
       ),

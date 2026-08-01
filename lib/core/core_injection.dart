@@ -11,6 +11,7 @@ import 'services/connectivity_service.dart';
 import 'services/session_lifecycle_service.dart';
 import 'services/app_startup_service.dart';
 import 'services/file_service.dart';
+import 'controllers/locale_controller.dart';
 import 'managers/audio_player_manager.dart';
 import 'services/voice_recording_service.dart';
 import 'services/notification_service.dart';
@@ -42,6 +43,7 @@ void initCore(GetIt sl) {
   sl.registerLazySingleton(() => AppStartupService());
   sl.registerLazySingleton(() => NotificationService.instance);
   sl.registerLazySingleton(() => FCMTokenService(sl(), sl()));
+  sl.registerLazySingleton(() => LocaleController(sl()));
 
   // Register Lifecycle Handlers with SessionLifecycleService
   sl.registerLazySingleton(() => DatabaseLifecycleHandler(sl())

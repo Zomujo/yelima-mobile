@@ -8,6 +8,7 @@ import '../widgets/sections/home_next_step_section.dart';
 import '../widgets/sections/home_upcoming_visits_section.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -34,8 +35,8 @@ class HomeScreen extends StatelessWidget {
               HomeHeader(
                 date: formattedDate,
                 greeting: greetingName.isNotEmpty
-                    ? 'Akwaaba, $greetingName'
-                    : 'Akwaaba',
+                    ? context.l10n.welcomeName(greetingName)
+                    : context.l10n.welcome,
               ),
               const HomeMetricsSection(),
               const SizedBox(height: 32),

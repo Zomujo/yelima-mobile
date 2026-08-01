@@ -5,6 +5,7 @@ import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
 import '../../../../home/presentation/controllers/home_metrics_controller.dart';
 import '../../controllers/reading_logging_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingSaveButton extends StatelessWidget {
   const ReadingSaveButton({super.key});
@@ -14,7 +15,7 @@ class ReadingSaveButton extends StatelessWidget {
     return Consumer<ReadingLoggingController>(
       builder: (context, controller, child) {
         return AppButton(
-          text: controller.state.isSaving ? 'Saving...' : 'Save',
+          text: controller.state.isSaving ? '${context.l10n.save}...' : context.l10n.save,
           onPressed: () async {
             final result = await controller.saveReading();
             if (context.mounted) {

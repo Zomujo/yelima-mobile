@@ -3,6 +3,7 @@ import '../../../../core/constants/app_decoration.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class DailyCheckInCard extends StatelessWidget {
   final VoidCallback onStart;
@@ -47,29 +48,29 @@ class DailyCheckInCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AppText.labelMedium(
-                  'DAILY CHECK-IN',
-                  color: Color(0xD1FFFFFF),
+                AppText.labelMedium(
+                  context.l10n.dailyCheckIn,
+                  color: const Color(0xD1FFFFFF),
                   fontWeight: FontWeight.w600,
                 ),
                 const SizedBox(height: 8),
-                const AppText(
-                  "Tell Yelima how you're feeling\ntoday?",
+                AppText(
+                  context.l10n.tellYelima,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   variant: AppTextVariant.titleMedium,
                   height: 1.3,
                 ),
                 const SizedBox(height: 8),
-                const AppText.bodyMedium(
-                  "It only takes 2 minutes. Your nurse will see\nyour report.",
-                  color: Color.fromARGB(231, 255, 255, 255),
+                AppText.bodyMedium(
+                  context.l10n.takesTwoMins,
+                  color: const Color.fromARGB(231, 255, 255, 255),
                   height: 1.2,
                   fontWeight: FontWeight.w400,
                 ),
                 const SizedBox(height: 34),
                 AppButton(
-                  text: 'Start check-in',
+                  text: context.l10n.startCheckIn,
                   onPressed: onStart,
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.primary,

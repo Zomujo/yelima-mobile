@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingDaySelector extends StatelessWidget {
   final DateTime selectedDate;
@@ -11,12 +12,12 @@ class ReadingDaySelector extends StatelessWidget {
     required this.onTap,
   });
 
-  String _formatDate(DateTime date) {
+  String _formatDate(BuildContext context, DateTime date) {
     final now = DateTime.now();
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
-      return 'Today';
+      return context.l10n.today;
     }
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -31,11 +32,11 @@ class ReadingDaySelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppText(
-          'Day',
+        AppText(
+          context.l10n.day,
           fontWeight: FontWeight.w600,
           variant: AppTextVariant.titleLarge,
-          color: Color(0xFF1E293B),
+          color: const Color(0xFF1E293B),
         ),
         const SizedBox(height: 12),
         GestureDetector(
@@ -56,7 +57,7 @@ class ReadingDaySelector extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 AppText.bodyLarge(
-                  _formatDate(selectedDate),
+                  _formatDate(context, selectedDate),
                   color: isToday
                       ? const Color(0xFF94A3B8)
                       : const Color(0xFF1E293B),

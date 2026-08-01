@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class BloodPressureDisplay extends StatelessWidget {
   const BloodPressureDisplay({
@@ -22,7 +23,7 @@ class BloodPressureDisplay extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Column(
             children: [
-              const AppText.labelMedium('Systolic', color: AppColors.textGrey),
+              AppText.labelMedium(context.l10n.systolic, color: AppColors.textGrey),
               const SizedBox(height: 4),
               AppText.displaySmall(
                 systolic,
@@ -50,7 +51,7 @@ class BloodPressureDisplay extends StatelessWidget {
           ),
           child: Column(
             children: [
-              const AppText.labelMedium('Diastolic', color: AppColors.textGrey),
+              AppText.labelMedium(context.l10n.diastolic, color: AppColors.textGrey),
               const SizedBox(height: 4),
               AppText.displaySmall(
                 diastolic,

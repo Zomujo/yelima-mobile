@@ -9,6 +9,7 @@ import '../../../../injection_container.dart';
 import '../widgets/form/reading_logging_form.dart';
 import '../widgets/history/reading_history_section.dart';
 import '../../../../shared/widgets/forms/unsaved_changes_guard.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingLoggingScreen extends StatelessWidget {
   const ReadingLoggingScreen({super.key});
@@ -36,8 +37,8 @@ class _ReadingLoggingView extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const AppHeader(
-              title: 'Log a reading',
+            AppHeader(
+              title: context.l10n.logReading,
               automaticallyImplyLeading: false,
             ),
             Expanded(

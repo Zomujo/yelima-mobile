@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicationAdherenceCard extends StatelessWidget {
   final double percentage;
@@ -31,10 +32,10 @@ class MedicationAdherenceCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const AppText.bodyMedium(
-                'Medication adherence this month',
+              AppText.bodyMedium(
+                context.l10n.medicationAdherence,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF1E293B),
+                color: const Color(0xFF1E293B),
               ),
               if (isLoading)
                 AppShimmer.box(width: 48, height: 24)

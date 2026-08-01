@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/constants/app_decoration.dart';
 import '../../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingDisplayCard extends StatelessWidget {
   const ReadingDisplayCard({
@@ -24,8 +25,8 @@ class ReadingDisplayCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppText.labelLarge(
-            'Reading from your meter',
+          AppText.labelLarge(
+            context.l10n.readingFromMeter,
             color: AppColors.textGrey,
             fontWeight: FontWeight.normal,
           ),

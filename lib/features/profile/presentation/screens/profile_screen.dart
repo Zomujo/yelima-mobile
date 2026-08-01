@@ -8,6 +8,9 @@ import '../../../auth/presentation/widgets/logout_modal.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../shared/utils/app_snackbar.dart';
 import '../widgets/profile/profile_avatar.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/controllers/locale_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -21,12 +24,12 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 24, 24, 0),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               child: AppText.headlineSmall(
-                'My Account',
+                context.l10n.myAccount,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A), // Slate 900
+                color: const Color(0xFF0F172A), // Slate 900
               ),
             ),
             Expanded(
@@ -46,10 +49,10 @@ class ProfileScreen extends StatelessWidget {
                         builder: (context, snapshot) {
                           final isOnline = snapshot.data ?? true;
                           return OptionsBlock(
-                            title: 'Personal',
+                            title: context.l10n.personal,
                             blockItems: [
                               OptionBlockItem(
-                                label: 'Edit profile',
+                                label: context.l10n.editProfile,
                                 icon: Iconsax.profile_circle,
                                 onTap: isOnline
                                     ? () => context.push('/edit-profile')
@@ -58,7 +61,7 @@ class ProfileScreen extends StatelessWidget {
                                             'You must be online to edit your profile.'),
                               ),
                               OptionBlockItem(
-                                label: 'Settings',
+                                label: context.l10n.settings,
                                 icon: Iconsax.setting_2,
                                 onTap: () => context.push('/settings'),
                               ),
@@ -67,10 +70,10 @@ class ProfileScreen extends StatelessWidget {
                         }),
 
                     OptionsBlock(
-                      title: 'Health Summary',
+                      title: context.l10n.healthSummary,
                       blockItems: [
                         OptionBlockItem(
-                          label: 'Conditions',
+                          label: context.l10n.conditions,
                           icon: Iconsax.health,
                           onTap: () => context.push('/conditions'),
                         ),
@@ -78,10 +81,30 @@ class ProfileScreen extends StatelessWidget {
                     ),
 
                     OptionsBlock(
-                      title: 'System',
+                      title: context.l10n.language,
                       blockItems: [
                         OptionBlockItem(
-                          label: 'Log Out',
+                          label: context.l10n.english,
+                          icon: Iconsax.language_square,
+                          onTap: () => context
+                              .read<LocaleController>()
+                              .setLocale(const Locale('en')),
+                        ),
+                        OptionBlockItem(
+                          label: context.l10n.akanTwi,
+                          icon: Iconsax.language_circle,
+                          onTap: () => context
+                              .read<LocaleController>()
+                              .setLocale(const Locale('tw')),
+                        ),
+                      ],
+                    ),
+
+                    OptionsBlock(
+                      title: context.l10n.system,
+                      blockItems: [
+                        OptionBlockItem(
+                          label: context.l10n.logOut,
                           icon: Iconsax.logout,
                           iconColor: Colors.red,
                           labelColor: Colors.red,

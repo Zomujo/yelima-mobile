@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../user/presentation/controllers/user_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ProfileAvatar extends StatelessWidget {
   const ProfileAvatar({super.key});
@@ -45,9 +46,9 @@ class ProfileAvatar extends StatelessWidget {
             color: const Color(0xFF1E293B),
           ),
           const SizedBox(height: 4),
-          const AppText.bodyMedium(
-            'Patient',
-            color: Color(0xFF64748B),
+          AppText.bodyMedium(
+            context.l10n.patient,
+            color: const Color(0xFF64748B),
           ),
         ],
       ),
