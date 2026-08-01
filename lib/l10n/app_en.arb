@@ -61,5 +61,19 @@
   "english": "English",
   "akanTwi": "Akan Twi",
   "system": "SYSTEM",
-  "logOut": "Log Out"
+  "logOut": "Log Out",
+  "yourProgress": "Your Progress",
+  "last24Hours": "Last 24 hours",
+  "last7Days": "Last 7 days",
+  "last30Days": "Last 30 days",
+  "updatedToday": "updated today",
+  "twentyFourHours": "24 Hours",
+  "oneWeek": "1 Week",
+  "oneMonth": "1 Month",
+  "latestReading": "Latest reading",
+  "improving": "Improving",
+  "bloodPressureTrend": "Your blood pressure trend over this period.",
+  "bloodGlucose": "Blood Glucose",
+  "inGoodRange": "In good range",
+  "bloodGlucoseTrend": "Your blood glucose trend over this period."
 }

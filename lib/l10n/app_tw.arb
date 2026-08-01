@@ -54,5 +54,19 @@
   "english": "Borɔfo",
   "akanTwi": "Akan Twi",
   "system": "NHYEHYƐE",
-  "logOut": "Fi mu"
+  "logOut": "Fi mu",
+  "yourProgress": "Wo Nkɔso",
+  "last24Hours": "Dɔnhwere 24 a atwam",
+  "last7Days": "Nnawɔtwe 1 a atwam",
+  "last30Days": "Nnafua 30 a atwam",
+  "updatedToday": "wɔyɛɛ no foforo nnɛ",
+  "twentyFourHours": "Dɔnhwere 24",
+  "oneWeek": "Nnawɔtwe 1",
+  "oneMonth": "Bosome 1",
+  "latestReading": "Akenkan foforo",
+  "improving": "Ɛrekɔ yiye",
+  "bloodPressureTrend": "Sɛnea wo mogya mmoroso te wɔ bere yi mu.",
+  "bloodGlucose": "Mogya mu asikre",
+  "inGoodRange": "Ɛyɛ",
+  "bloodGlucoseTrend": "Sɛnea wo mogya mu asikre te wɔ bere yi mu."
 }

@@ -6,6 +6,7 @@ import '../controllers/progress_controller.dart';
 import '../screens/full_screen_graph_view.dart';
 import 'graphs/glucose_graph.dart';
 import 'progress_graph_card.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class BloodGlucoseSection extends StatelessWidget {
   final String durationLabel;
@@ -17,15 +18,15 @@ class BloodGlucoseSection extends StatelessWidget {
     return Consumer<ProgressController>(
       builder: (context, controller, child) {
         return ProgressGraphCard(
-          title: 'Blood Glucose',
+          title: context.l10n.bloodGlucose,
           latestValue: _getLatestGlucose(controller.glucoseTrendState.data),
-          latestSubtext: 'mmol/L',
-          badgeText: 'In good range',
+          latestSubtext: context.l10n.mmolL,
+          badgeText: context.l10n.inGoodRange,
           badgeIcon: Icons.check,
           badgeColor: const Color(0xFFDCFCE7),
           badgeTextColor: const Color(0xFF166534),
           badgeTrailingIcon: Icons.arrow_downward,
-          description: 'Your blood glucose trend over this period.',
+          description: context.l10n.bloodGlucoseTrend,
           graph: _buildGlucoseGraph(controller),
           onExpand: () => _openFullScreen(context, controller, 'glucose'),
         );

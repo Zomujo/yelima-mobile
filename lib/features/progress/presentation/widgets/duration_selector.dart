@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class DurationSelector extends StatelessWidget {
   final String duration;
@@ -17,9 +18,9 @@ class DurationSelector extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: Row(
         children: [
-          _buildDurationButton('24h', '24 Hours'),
-          _buildDurationButton('1w', '1 Week'),
-          _buildDurationButton('1m', '1 Month'),
+          _buildDurationButton('24h', context.l10n.twentyFourHours),
+          _buildDurationButton('1w', context.l10n.oneWeek),
+          _buildDurationButton('1m', context.l10n.oneMonth),
         ],
       ),
     );

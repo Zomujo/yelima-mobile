@@ -8,6 +8,7 @@ import '../controllers/progress_controller.dart';
 import '../widgets/duration_selector.dart';
 import '../widgets/blood_glucose_section.dart';
 import '../widgets/blood_pressure_section.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -46,10 +47,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
   }
 
-  String getDurationLabel() {
-    if (duration == '24h') return 'Last 24 hours';
-    if (duration == '1w') return 'Last 7 days';
-    return 'Last 30 days';
+  String getDurationLabel(BuildContext context) {
+    if (duration == '24h') return context.l10n.last24Hours;
+    if (duration == '1w') return context.l10n.last7Days;
+    return context.l10n.last30Days;
   }
 
   @override
@@ -59,7 +60,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFFAF9F6),
         appBar: AppHeader(
-          title: 'Your Progress',
+          title: context.l10n.yourProgress,
           onBackPressed: () => Navigator.of(context).pop(),
           backgroundColor: Colors.transparent,
         ),
@@ -67,7 +68,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           children: [
             AppText.labelMedium(
-              '${getDurationLabel()} • updated today',
+              '${getDurationLabel(context)} • ${context.l10n.updatedToday}',
               color: AppColors.textGrey,
             ),
             const SizedBox(height: 16),
@@ -85,11 +86,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
             const SizedBox(height: 24),
 
             // Blood Pressure Card
-            BloodPressureSection(durationLabel: getDurationLabel()),
+            BloodPressureSection(durationLabel: getDurationLabel(context)),
             const SizedBox(height: 24),
 
             // Blood Glucose Card
-            BloodGlucoseSection(durationLabel: getDurationLabel()),
+            BloodGlucoseSection(durationLabel: getDurationLabel(context)),
             const SizedBox(height: 24),
           ],
         ),

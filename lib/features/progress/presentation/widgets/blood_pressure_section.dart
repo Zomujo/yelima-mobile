@@ -7,6 +7,7 @@ import '../screens/full_screen_graph_view.dart';
 import 'graphs/bp_graph.dart';
 import 'progress_graph_card.dart';
 import 'progress_legend_item.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class BloodPressureSection extends StatelessWidget {
   final String durationLabel;
@@ -18,21 +19,21 @@ class BloodPressureSection extends StatelessWidget {
     return Consumer<ProgressController>(
       builder: (context, controller, child) {
         return ProgressGraphCard(
-          title: 'Blood Pressure',
+          title: context.l10n.bloodPressure,
           latestValue: _getLatestBP(controller.bpTrendState.data),
-          latestSubtext: 'Latest reading',
-          badgeText: 'Improving',
+          latestSubtext: context.l10n.latestReading,
+          badgeText: context.l10n.improving,
           badgeIcon: Icons.check,
           badgeColor: const Color(0xFFDCFCE7),
           badgeTextColor: const Color(0xFF166534),
-          description: 'Your blood pressure trend over this period.',
+          description: context.l10n.bloodPressureTrend,
           graph: _buildBPGraph(controller),
           onExpand: () => _openFullScreen(context, controller, 'bp'),
-          legend: const Row(
+          legend: Row(
             children: [
-              ProgressLegendItem(color: Color(0xFFEF4444), label: 'Systolic'),
-              SizedBox(width: 16),
-              ProgressLegendItem(color: Color(0xFF3B82F6), label: 'Diastolic'),
+              ProgressLegendItem(color: const Color(0xFFEF4444), label: context.l10n.systolic),
+              const SizedBox(width: 16),
+              ProgressLegendItem(color: const Color(0xFF3B82F6), label: context.l10n.diastolic),
             ],
           ),
         );
