@@ -65,9 +65,13 @@ class AdherenceCard extends StatelessWidget {
             color: Colors.white,
           ),
           const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: dayWidgets.isNotEmpty ? dayWidgets : _buildDefaultDays(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Wrap(
+              spacing: 12,
+              children:
+                  dayWidgets.isNotEmpty ? dayWidgets : _buildDefaultDays(),
+            ),
           ),
         ],
       ),
