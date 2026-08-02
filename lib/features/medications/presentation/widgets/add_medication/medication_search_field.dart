@@ -5,6 +5,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../data/models/seeded_medication_model.dart';
 import '../../controllers/add_medication_form_controller.dart';
 import '../../controllers/all_medicines_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicationSearchField extends StatefulWidget {
   const MedicationSearchField({super.key});
@@ -109,8 +110,8 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
             controller: textEditingController,
             focusNode: focusNode,
             onFieldSubmitted: (_) => onFieldSubmitted(),
-            label: 'Medication',
-            hintText: 'Search or enter medication name',
+            label: context.l10n.medicationLabel,
+            hintText: context.l10n.searchOrEnterMedicationName,
             prefixIcon: Icons.search,
             isRequired: true,
             autovalidateMode: AutovalidateMode.onUserInteraction,

@@ -5,6 +5,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../../../../shared/widgets/modals/app_modal.dart';
 import '../../../../../core/extensions/context_extensions.dart';
+import '../../../../../core/extensions/l10n_extension.dart';
 import '../controllers/appointment_controller.dart';
 
 class RequestAppointmentModal extends StatefulWidget {
@@ -80,11 +81,11 @@ class _RequestAppointmentModalState extends State<RequestAppointmentModal> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: AppText.headlineSmall(
-                      'Request an appointment',
+                      context.l10n.requestAppointment,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
+                      color: const Color(0xFF1E293B),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -106,8 +107,8 @@ class _RequestAppointmentModalState extends State<RequestAppointmentModal> {
                 ],
               ),
               const SizedBox(height: 12),
-              const AppText.bodyMedium(
-                'Describe what you need so your HCP can prepare.',
+              AppText.bodyMedium(
+                context.l10n.describeWhatYouNeed,
                 color: AppColors.textGrey,
               ),
               const SizedBox(height: 20),
@@ -132,7 +133,7 @@ class _RequestAppointmentModalState extends State<RequestAppointmentModal> {
                     return null;
                   },
                   decoration: InputDecoration(
-                    hintText: 'e.g. My BP readings have been high this week...',
+                    hintText: context.l10n.requestAppointmentHint,
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.all(16),
@@ -153,7 +154,9 @@ class _RequestAppointmentModalState extends State<RequestAppointmentModal> {
                 builder: (context, value, child) {
                   final isValid = value.text.trim().length > 5;
                   return AppButton(
-                    text: isLoading ? 'Sending...' : 'Send request',
+                    text: isLoading
+                        ? context.l10n.sending
+                        : context.l10n.sendRequest,
                     isDisabled: !isValid || isLoading,
                     onPressed: (isValid && !isLoading) ? _sendRequest : null,
                     backgroundColor: AppColors.primary,

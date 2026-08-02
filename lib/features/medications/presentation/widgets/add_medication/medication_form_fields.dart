@@ -4,6 +4,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../controllers/add_medication_form_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicationFormFields extends StatelessWidget {
   const MedicationFormFields({super.key});
@@ -17,8 +18,8 @@ class MedicationFormFields extends StatelessWidget {
           children: [
             AppFormField(
               controller: controller.dosageController,
-              label: 'Dosage Strength (e.g. 500mg, 10ml)',
-              hintText: 'Enter dosage strength',
+              label: context.l10n.dosageStrengthLabel,
+              hintText: context.l10n.enterDosageStrength,
               isRequired: true,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
@@ -60,8 +61,8 @@ class MedicationFormFields extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 24),
-            const AppText.titleMedium('Medication Form / Unit',
-                fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            AppText.titleMedium(context.l10n.medicationFormUnit,
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
             const SizedBox(height: 12),
             PopupMenuButton<String>(
               initialValue: controller.state.selectedUnit,
@@ -126,8 +127,8 @@ class MedicationFormFields extends StatelessWidget {
             const SizedBox(height: 24),
             AppFormField(
               controller: controller.notesController,
-              label: 'Notes (Instructions)',
-              hintText: 'e.g. To be taken before meals...',
+              label: context.l10n.notesInstructions,
+              hintText: context.l10n.notesInstructionsHint,
               maxLines: 4,
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../controllers/add_medication_form_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicationDosingSchedule extends StatelessWidget {
   const MedicationDosingSchedule({super.key});
@@ -138,15 +139,15 @@ class MedicationDosingSchedule extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const AppText.titleLarge('Dosing Schedule',
-                fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            AppText.titleLarge(context.l10n.dosingSchedule,
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
             const SizedBox(height: 8),
-            const AppText.bodyMedium('Select when and how much to take.',
-                color: Color(0xFF64748B)),
+            AppText.bodyMedium(context.l10n.selectWhenAndHowMuch,
+                color: const Color(0xFF64748B)),
             const SizedBox(height: 24),
             _buildDosageToggle(
               context,
-              label: 'Morning',
+              label: context.l10n.morningLabel,
               isEnabled: controller.state.hasMorning,
               time: controller.state.morningTime,
               quantity: controller.state.morningQuantity,
@@ -162,7 +163,7 @@ class MedicationDosingSchedule extends StatelessWidget {
             const SizedBox(height: 16),
             _buildDosageToggle(
               context,
-              label: 'Afternoon',
+              label: context.l10n.afternoonLabel,
               isEnabled: controller.state.hasAfternoon,
               time: controller.state.afternoonTime,
               quantity: controller.state.afternoonQuantity,
@@ -180,7 +181,7 @@ class MedicationDosingSchedule extends StatelessWidget {
             const SizedBox(height: 16),
             _buildDosageToggle(
               context,
-              label: 'Evening',
+              label: context.l10n.eveningLabel,
               isEnabled: controller.state.hasEvening,
               time: controller.state.eveningTime,
               quantity: controller.state.eveningQuantity,

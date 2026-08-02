@@ -8,6 +8,7 @@ import '../../../../../shared/utils/app_snackbar.dart';
 import '../../controllers/all_medicines_controller.dart';
 import 'medicine_history_card.dart';
 import 'delete_medication_modal.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicinesList extends StatelessWidget {
   const MedicinesList({super.key});
@@ -41,7 +42,7 @@ class MedicinesList extends StatelessWidget {
 
         if (medications.isEmpty) {
           return AppEmptyState(
-            title: 'No medicines found.',
+            title: context.l10n.noMedicinesFound,
             iconAsset: AppImages.pillIcon.assetName,
           );
         }

@@ -5,6 +5,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
 import '../../../../core/router/route_paths.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../controllers/auth_controller.dart';
 
 class LogoutModal extends StatelessWidget {
@@ -27,13 +28,13 @@ class LogoutModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ModalContainer(
-      title: 'Log Out',
+      title: context.l10n.logOut,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppText.titleMedium(
-            'Are you sure you want to log out of your account?',
+          AppText.titleMedium(
+            context.l10n.logOutConfirmation,
             color: Colors.black54,
           ),
           const SizedBox(height: 36),
@@ -41,7 +42,7 @@ class LogoutModal extends StatelessWidget {
             children: [
               Expanded(
                 child: AppButton(
-                  text: 'Cancel',
+                  text: context.l10n.cancel,
                   backgroundColor: const Color(0xFFF1F5F9), // Slate 100
                   foregroundColor: const Color(0xFF475569), // Slate 600
                   onPressed: () => Navigator.of(context).pop(),
@@ -50,7 +51,7 @@ class LogoutModal extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: AppButton(
-                  text: 'Log Out',
+                  text: context.l10n.logOut,
                   backgroundColor: const Color(0xFFEF4444), // Red 500
                   onPressed: () {
                     final controller = context.read<AuthController>();

@@ -6,6 +6,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../controllers/all_medicines_controller.dart';
 import '../widgets/all_medicines/medicines_list.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class AllMedicinesScreen extends StatefulWidget {
   const AllMedicinesScreen({super.key});
@@ -28,7 +29,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> {
     return Scaffold(
       backgroundColor: AppColors.globalBackground,
       appBar: AppHeader(
-        title: 'All Medicines',
+        title: context.l10n.allMedicines,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -45,8 +46,8 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> {
                     color: const Color(0xFFFDBA74),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const AppText.bodyMedium(
-                    'Add',
+                  child: AppText.bodyMedium(
+                    context.l10n.add,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),

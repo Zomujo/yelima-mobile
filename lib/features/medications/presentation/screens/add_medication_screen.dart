@@ -13,6 +13,7 @@ import '../controllers/add_medication_form_controller.dart';
 import '../widgets/add_medication/medication_search_field.dart';
 import '../widgets/add_medication/medication_dosing_schedule.dart';
 import '../widgets/add_medication/medication_form_fields.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class AddMedicationScreen extends StatelessWidget {
   const AddMedicationScreen({super.key});
@@ -48,26 +49,26 @@ class AddMedicationScreen extends StatelessWidget {
             hasUnsavedChanges: formController.hasUnsavedChanges,
             child: Scaffold(
               backgroundColor: AppColors.globalBackground,
-              appBar: const AppHeader(title: 'Add Medication'),
+              appBar: AppHeader(title: context.l10n.addMedication),
               body: Form(
                 key: formController.formKey,
-                child: const SingleChildScrollView(
-                  padding: EdgeInsets.only(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(
                       left: 24.0, right: 24.0, top: 24.0, bottom: 40.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AppText.titleMedium('Medication Details',
+                      AppText.titleMedium(context.l10n.medicationDetails,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B)),
-                      SizedBox(height: 16),
-                      MedicationSearchField(),
-                      SizedBox(height: 24),
-                      MedicationFormFields(),
-                      SizedBox(height: 40),
-                      Divider(color: Color(0xFFE2E8F0)),
-                      SizedBox(height: 32),
-                      MedicationDosingSchedule(),
+                          color: const Color(0xFF1E293B)),
+                      const SizedBox(height: 16),
+                      const MedicationSearchField(),
+                      const SizedBox(height: 24),
+                      const MedicationFormFields(),
+                      const SizedBox(height: 40),
+                      const Divider(color: Color(0xFFE2E8F0)),
+                      const SizedBox(height: 32),
+                      const MedicationDosingSchedule(),
                     ],
                   ),
                 ),
@@ -76,7 +77,7 @@ class AddMedicationScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: AppButton(
-                    text: 'Save Medication',
+                    text: context.l10n.saveMedication,
                     isLoading: isSaving,
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
