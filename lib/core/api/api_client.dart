@@ -47,9 +47,9 @@ class APIClient {
     ]);
   }
 
-  Future<dynamic> get(String path, {JSON? queryParameters}) async {
+  Future<dynamic> get(String path, {JSON? queryParameters, Options? options}) async {
     try {
-      final response = await _dio.get(path, queryParameters: queryParameters);
+      final response = await _dio.get(path, queryParameters: queryParameters, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);
@@ -57,10 +57,10 @@ class APIClient {
   }
 
   Future<dynamic> post(String path,
-      {dynamic data, JSON? queryParameters}) async {
+      {dynamic data, JSON? queryParameters, Options? options}) async {
     try {
       final response =
-          await _dio.post(path, data: data, queryParameters: queryParameters);
+          await _dio.post(path, data: data, queryParameters: queryParameters, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);
@@ -94,28 +94,28 @@ class APIClient {
   }
 
   Future<dynamic> put(String path,
-      {dynamic data, JSON? queryParameters}) async {
+      {dynamic data, JSON? queryParameters, Options? options}) async {
     try {
       final response =
-          await _dio.put(path, data: data, queryParameters: queryParameters);
+          await _dio.put(path, data: data, queryParameters: queryParameters, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);
     }
   }
 
-  Future<dynamic> patch(String path, {dynamic data}) async {
+  Future<dynamic> patch(String path, {dynamic data, Options? options}) async {
     try {
-      final response = await _dio.patch(path, data: data);
+      final response = await _dio.patch(path, data: data, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);
     }
   }
 
-  Future<dynamic> delete(String path, {dynamic data}) async {
+  Future<dynamic> delete(String path, {dynamic data, Options? options}) async {
     try {
-      final response = await _dio.delete(path, data: data);
+      final response = await _dio.delete(path, data: data, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);

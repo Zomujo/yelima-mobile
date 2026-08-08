@@ -11,10 +11,8 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
   PendingMutationsDao(super.db);
 
   Future<List<PendingMutation>> getAllPendingMutations() {
-    // Order matters: sync handlers resolve offline-created entity ids by
-    // processing mutations in creation order (e.g. create before a
-    // subsequent update/confirm for the same entity).
     return (select(pendingMutations)
+          ..where((t) => t.retryCount.isSmallerThanValue(3))
           ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
         .get();
   }

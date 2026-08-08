@@ -113,10 +113,14 @@ class AuthInterceptor extends Interceptor {
             _refreshCompleter = null;
           });
         }
-        try {
-          await _tokenManager.clearTokens();
-          await FirebaseAuth.instance.signOut();
-        } catch (_) {}
+        if (e is FirebaseAuthException && e.code == 'network-request-failed') {
+          AppLogger.w('AuthInterceptor: Network error during token refresh. Keeping session alive.');
+        } else {
+          try {
+            await _tokenManager.clearTokens();
+            await FirebaseAuth.instance.signOut();
+          } catch (_) {}
+        }
         return handler.next(err);
       }
     } else {

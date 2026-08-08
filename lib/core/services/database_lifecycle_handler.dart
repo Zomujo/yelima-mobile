@@ -38,7 +38,6 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
         await _db.vitalsDao.clearAllVitals();
         await _db.appointmentsDao.clearAppointments();
         await _db.userProfilesDao.clearProfiles();
-        await _db.pendingMutationsDao.clearPendingMutations();
         await _db.medicationsDao.clearMedications();
         await _db.medicationsDao.clearPreloadedMedications();
       });

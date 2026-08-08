@@ -186,20 +186,12 @@ class MutationSyncManager implements SessionLifecycleHandler {
     } on ApiException catch (e) {
       if (e.code == '409' || e.code == '404' || e.code == '400') {
         debugPrint(
-            "Mutation ${mutation.id} rejected by server (${e.code}). Removing from local queue.");
+            "Mutation ${mutation.id} rejected by server (${e.code}). Marking as blocked instead of silently deleting.");
 
-        await _db.transaction(() async {
-          await _db.pendingMutationsDao.removePendingMutation(mutation.id);
+        await _db.pendingMutationsDao.updatePendingMutation(
+            mutation.copyWith(retryCount: 9999));
 
-          if (mutation.action.startsWith('create')) {
-            debugPrint(
-                "Deleting orphaned optimistic record ${mutation.entityId} for type ${mutation.entityType}");
-            await _db.pendingMutationsDao
-                .removeMutationsForEntity(mutation.entityId);
-          }
-        });
-
-        return _MutationOutcome.resolved;
+        return _MutationOutcome.blocked;
       }
 
       if (e.code == '401' || e.code == '403') {
@@ -235,8 +227,9 @@ class MutationSyncManager implements SessionLifecycleHandler {
 
     if (newRetryCount >= 3) {
       debugPrint(
-          "Mutation ${mutation.id} failed 3 times. Dropping from queue to prevent infinite retry loop.");
-      await _db.pendingMutationsDao.removePendingMutation(mutation.id);
+          "Mutation ${mutation.id} failed 3 times. Marking as blocked to prevent infinite retry loop, but preserving data.");
+      await _db.pendingMutationsDao
+          .updatePendingMutation(mutation.copyWith(retryCount: newRetryCount));
     } else {
       await _db.pendingMutationsDao
           .updatePendingMutation(mutation.copyWith(retryCount: newRetryCount));
