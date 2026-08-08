@@ -14,6 +14,7 @@ class VitalHistoryModel extends VitalHistoryEntity {
     required super.unit,
     required super.severity,
     required super.vitalName,
+    super.vitalSubType,
     super.recordedAt,
   });
 
@@ -30,6 +31,7 @@ class VitalHistoryModel extends VitalHistoryEntity {
       unit: vitalHistory.unit,
       severity: vitalHistory.severity,
       vitalName: vitalHistory.vitalName,
+      vitalSubType: vitalHistory.vitalSubType,
       recordedAt: vitalHistory.recordedAt,
     );
   }
@@ -42,6 +44,7 @@ class VitalHistoryModel extends VitalHistoryEntity {
       unit: unit,
       severity: severity,
       vitalName: vitalName,
+      vitalSubType: drift.Value(vitalSubType),
       recordedAt: drift.Value(recordedAt),
     );
   }

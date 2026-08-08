@@ -1,4 +1,3 @@
-import 'package:yelima/core/constants/cache_keys.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -39,7 +38,7 @@ class TokenManager {
   // Retrieves a valid auth token, falling back to cache when offline.
   Future<String?> getValidAuthToken() async {
     try {
-      _cachedAuthToken ??= await _secureStorage.read(key: CacheKeys.authToken);
+      _cachedAuthToken ??= await _secureStorage.read(key: "cached_auth_token");
 
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
@@ -47,7 +46,7 @@ class TokenManager {
 
       if (token != _cachedAuthToken) {
         _cachedAuthToken = token;
-        await _secureStorage.write(key: CacheKeys.authToken, value: token!);
+        await _secureStorage.write(key: "cached_auth_token", value: token!);
       }
       return token;
     } on FirebaseAuthException catch (e) {
@@ -68,7 +67,7 @@ class TokenManager {
   // Fetches the device FCM token.
   Future<String?> getFCMToken() async {
     // Restore cached token from storage first
-    _cachedFCMToken = await _secureStorage.read(key: CacheKeys.fcmToken);
+    _cachedFCMToken = await _secureStorage.read(key: "cached_fcm_token");
     if (_cachedFCMToken != null) {
       AppLogger.d('TokenManager: Restored cached FCM token from storage.');
     }
@@ -99,7 +98,7 @@ class TokenManager {
     final currentToken = await _firebaseMessaging.getToken();
     if (currentToken != null && currentToken != _cachedFCMToken) {
       _cachedFCMToken = currentToken;
-      await _secureStorage.write(key: CacheKeys.fcmToken, value: currentToken);
+      await _secureStorage.write(key: "cached_fcm_token", value: currentToken);
       AppLogger.i('TokenManager: FCM token updated and saved.');
     }
 
@@ -110,7 +109,7 @@ class TokenManager {
         _firebaseMessaging.onTokenRefresh.listen((newToken) async {
       AppLogger.i('TokenManager: FCM token refreshed.');
       _cachedFCMToken = newToken;
-      await _secureStorage.write(key: CacheKeys.fcmToken, value: newToken);
+      await _secureStorage.write(key: "cached_fcm_token", value: newToken);
 
       try {
         if (GetIt.instance.isRegistered<FCMTokenService>()) {
@@ -134,8 +133,8 @@ class TokenManager {
     _cachedFCMToken = null;
     await _tokenRefreshSubscription?.cancel();
     _tokenRefreshSubscription = null;
-    await _secureStorage.delete(key: CacheKeys.fcmToken);
-    await _secureStorage.delete(key: CacheKeys.authToken);
+    await _secureStorage.delete(key: "cached_fcm_token");
+    await _secureStorage.delete(key: "cached_auth_token");
     AppLogger.d('TokenManager: All tokens cleared.');
   }
 

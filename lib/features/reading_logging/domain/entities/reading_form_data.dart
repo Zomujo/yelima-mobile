@@ -2,6 +2,7 @@
 class ReadingFormData {
   /// 0 = Blood Pressure, 1 = Blood Glucose
   final int selectedTypeIndex;
+  final String vitalSubType;
   final int systolic;
   final int diastolic;
   final double sugarLevel;
@@ -9,6 +10,7 @@ class ReadingFormData {
 
   const ReadingFormData({
     required this.selectedTypeIndex,
+    this.vitalSubType = 'fasting',
     required this.systolic,
     required this.diastolic,
     required this.sugarLevel,

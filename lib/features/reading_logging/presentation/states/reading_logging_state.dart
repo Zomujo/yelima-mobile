@@ -6,6 +6,7 @@ part 'reading_logging_state.freezed.dart';
 abstract class ReadingLoggingState with _$ReadingLoggingState {
   const factory ReadingLoggingState({
     @Default(0) int selectedTypeIndex,
+    @Default('fasting') String vitalSubType,
     @Default(120) int systolic,
     @Default(80) int diastolic,
     @Default(5.5) double sugarLevel,

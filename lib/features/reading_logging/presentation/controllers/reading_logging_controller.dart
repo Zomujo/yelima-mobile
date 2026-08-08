@@ -63,6 +63,13 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
     }
   }
 
+  /// Sets the vital sub type for blood glucose.
+  void setVitalSubType(String subType) {
+    if (state.vitalSubType != subType) {
+      state = state.copyWith(vitalSubType: subType, hasChanged: true);
+    }
+  }
+
   /// Sets the blood pressure readings (systolic and diastolic).
   void setBloodPressure(int sys, int dia) {
     if (state.systolic != sys || state.diastolic != dia) {
@@ -94,6 +101,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
       () async {
         final formData = ReadingFormData(
           selectedTypeIndex: state.selectedTypeIndex,
+          vitalSubType: state.vitalSubType,
           systolic: state.systolic,
           diastolic: state.diastolic,
           sugarLevel: state.sugarLevel,

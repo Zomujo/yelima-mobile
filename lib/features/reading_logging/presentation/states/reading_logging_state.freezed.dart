@@ -16,6 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ReadingLoggingState {
   int get selectedTypeIndex;
+  String get vitalSubType;
   int get systolic;
   int get diastolic;
   double get sugarLevel;
@@ -38,6 +39,8 @@ mixin _$ReadingLoggingState {
             other is ReadingLoggingState &&
             (identical(other.selectedTypeIndex, selectedTypeIndex) ||
                 other.selectedTypeIndex == selectedTypeIndex) &&
+            (identical(other.vitalSubType, vitalSubType) ||
+                other.vitalSubType == vitalSubType) &&
             (identical(other.systolic, systolic) ||
                 other.systolic == systolic) &&
             (identical(other.diastolic, diastolic) ||
@@ -53,12 +56,12 @@ mixin _$ReadingLoggingState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, selectedTypeIndex, systolic,
-      diastolic, sugarLevel, selectedDate, hasChanged, isSaving);
+  int get hashCode => Object.hash(runtimeType, selectedTypeIndex, vitalSubType,
+      systolic, diastolic, sugarLevel, selectedDate, hasChanged, isSaving);
 
   @override
   String toString() {
-    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving)';
+    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving)';
   }
 }
 
@@ -70,6 +73,7 @@ abstract mixin class $ReadingLoggingStateCopyWith<$Res> {
   @useResult
   $Res call(
       {int selectedTypeIndex,
+      String vitalSubType,
       int systolic,
       int diastolic,
       double sugarLevel,
@@ -92,6 +96,7 @@ class _$ReadingLoggingStateCopyWithImpl<$Res>
   @override
   $Res call({
     Object? selectedTypeIndex = null,
+    Object? vitalSubType = null,
     Object? systolic = null,
     Object? diastolic = null,
     Object? sugarLevel = null,
@@ -104,6 +109,10 @@ class _$ReadingLoggingStateCopyWithImpl<$Res>
           ? _self.selectedTypeIndex
           : selectedTypeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      vitalSubType: null == vitalSubType
+          ? _self.vitalSubType
+          : vitalSubType // ignore: cast_nullable_to_non_nullable
+              as String,
       systolic: null == systolic
           ? _self.systolic
           : systolic // ignore: cast_nullable_to_non_nullable
@@ -137,6 +146,7 @@ class _$ReadingLoggingStateCopyWithImpl<$Res>
 class _ReadingLoggingState implements ReadingLoggingState {
   const _ReadingLoggingState(
       {this.selectedTypeIndex = 0,
+      this.vitalSubType = 'fasting',
       this.systolic = 120,
       this.diastolic = 80,
       this.sugarLevel = 5.5,
@@ -147,6 +157,9 @@ class _ReadingLoggingState implements ReadingLoggingState {
   @override
   @JsonKey()
   final int selectedTypeIndex;
+  @override
+  @JsonKey()
+  final String vitalSubType;
   @override
   @JsonKey()
   final int systolic;
@@ -181,6 +194,8 @@ class _ReadingLoggingState implements ReadingLoggingState {
             other is _ReadingLoggingState &&
             (identical(other.selectedTypeIndex, selectedTypeIndex) ||
                 other.selectedTypeIndex == selectedTypeIndex) &&
+            (identical(other.vitalSubType, vitalSubType) ||
+                other.vitalSubType == vitalSubType) &&
             (identical(other.systolic, systolic) ||
                 other.systolic == systolic) &&
             (identical(other.diastolic, diastolic) ||
@@ -196,12 +211,12 @@ class _ReadingLoggingState implements ReadingLoggingState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, selectedTypeIndex, systolic,
-      diastolic, sugarLevel, selectedDate, hasChanged, isSaving);
+  int get hashCode => Object.hash(runtimeType, selectedTypeIndex, vitalSubType,
+      systolic, diastolic, sugarLevel, selectedDate, hasChanged, isSaving);
 
   @override
   String toString() {
-    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving)';
+    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving)';
   }
 }
 
@@ -215,6 +230,7 @@ abstract mixin class _$ReadingLoggingStateCopyWith<$Res>
   @useResult
   $Res call(
       {int selectedTypeIndex,
+      String vitalSubType,
       int systolic,
       int diastolic,
       double sugarLevel,
@@ -237,6 +253,7 @@ class __$ReadingLoggingStateCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   $Res call({
     Object? selectedTypeIndex = null,
+    Object? vitalSubType = null,
     Object? systolic = null,
     Object? diastolic = null,
     Object? sugarLevel = null,
@@ -249,6 +266,10 @@ class __$ReadingLoggingStateCopyWithImpl<$Res>
           ? _self.selectedTypeIndex
           : selectedTypeIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      vitalSubType: null == vitalSubType
+          ? _self.vitalSubType
+          : vitalSubType // ignore: cast_nullable_to_non_nullable
+              as String,
       systolic: null == systolic
           ? _self.systolic
           : systolic // ignore: cast_nullable_to_non_nullable

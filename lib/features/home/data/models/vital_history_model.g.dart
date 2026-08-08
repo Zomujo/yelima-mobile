@@ -14,6 +14,7 @@ VitalHistoryModel _$VitalHistoryModelFromJson(Map<String, dynamic> json) =>
       unit: json['unit'] as String,
       severity: json['severity'] as String,
       vitalName: json['vitalName'] as String,
+      vitalSubType: json['vitalSubType'] as String?,
       recordedAt: json['recordedAt'] == null
           ? null
           : DateTime.parse(json['recordedAt'] as String),
@@ -27,6 +28,7 @@ Map<String, dynamic> _$VitalHistoryModelToJson(VitalHistoryModel instance) =>
       'unit': instance.unit,
       'severity': instance.severity,
       'vitalName': instance.vitalName,
+      if (instance.vitalSubType case final value?) 'vitalSubType': value,
       if (instance.recordedAt?.toIso8601String() case final value?)
         'recordedAt': value,
     };

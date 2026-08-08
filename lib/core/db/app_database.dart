@@ -1,4 +1,3 @@
-import 'package:yelima/core/constants/cache_keys.dart';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -58,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration {
@@ -119,6 +118,9 @@ class AppDatabase extends _$AppDatabase {
         if (from < 14) {
           await m.createTable(audioCache);
         }
+        if (from < 15) {
+          await m.addColumn(vitalHistories, vitalHistories.vitalSubType);
+        }
       },
     );
   }
@@ -131,7 +133,7 @@ LazyDatabase _openConnection() {
 
     // Setup encryption key
     const secureStorage = FlutterSecureStorage();
-    const keyString = CacheKeys.dbEncryptionKey;
+    const keyString = "db_encryption_key";
     String? encryptionKey = await secureStorage.read(key: keyString);
     if (encryptionKey == null) {
       final random = Random.secure();

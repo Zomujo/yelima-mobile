@@ -5,6 +5,7 @@ import 'interactive_reading_card.dart';
 import 'reading_day_selector.dart';
 import 'reading_save_button.dart';
 import '../../../../../shared/widgets/modals/custom_calendar_modal.dart';
+import '../../../../../shared/widgets/forms/app_dropdown.dart';
 import '../../controllers/reading_logging_controller.dart';
 
 class ReadingLoggingForm extends StatelessWidget {
@@ -18,10 +19,39 @@ class ReadingLoggingForm extends StatelessWidget {
         Selector<ReadingLoggingController, int>(
           selector: (context, controller) => controller.state.selectedTypeIndex,
           builder: (context, selectedTypeIndex, child) {
-            return ReadingTypeSelector(
-              selectedIndex: selectedTypeIndex,
-              onTypeSelected:
-                  context.read<ReadingLoggingController>().setTypeIndex,
+            return Column(
+              children: [
+                ReadingTypeSelector(
+                  selectedIndex: selectedTypeIndex,
+                  onTypeSelected:
+                      context.read<ReadingLoggingController>().setTypeIndex,
+                ),
+                if (selectedTypeIndex == 1) ...[
+                  const SizedBox(height: 16),
+                  Selector<ReadingLoggingController, String>(
+                    selector: (context, controller) =>
+                        controller.state.vitalSubType,
+                    builder: (context, vitalSubType, child) {
+                      return AppDropdown<String>(
+                        value: vitalSubType,
+                        hintText: 'Measurement Context',
+                        items: const ['fasting', 'postprandial', 'random'],
+                        itemLabelBuilder: (val) {
+                          if (val == 'fasting') return 'Fasting';
+                          if (val == 'postprandial') return 'Post-Meal';
+                          if (val == 'random') return 'Random';
+                          return val;
+                        },
+                        onChanged: (value) {
+                          context
+                              .read<ReadingLoggingController>()
+                              .setVitalSubType(value);
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ],
             );
           },
         ),

@@ -7,6 +7,7 @@ class VitalHistoryEntity extends Equatable {
   final String unit;
   final String severity;
   final String vitalName;
+  final String? vitalSubType;
   final DateTime? recordedAt;
 
   const VitalHistoryEntity({
@@ -16,12 +17,13 @@ class VitalHistoryEntity extends Equatable {
     required this.unit,
     required this.severity,
     required this.vitalName,
+    this.vitalSubType,
     this.recordedAt,
   });
 
   @override
   List<Object?> get props =>
-      [id, vitalType, value, unit, severity, vitalName, recordedAt];
+      [id, vitalType, value, unit, severity, vitalName, vitalSubType, recordedAt];
 }
 
 class HomeMetricsEntity extends Equatable {

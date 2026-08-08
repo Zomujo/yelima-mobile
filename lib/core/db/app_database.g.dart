@@ -42,6 +42,12 @@ class $VitalHistoriesTable extends VitalHistories
   late final GeneratedColumn<String> vitalName = GeneratedColumn<String>(
       'vital_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _vitalSubTypeMeta =
+      const VerificationMeta('vitalSubType');
+  @override
+  late final GeneratedColumn<String> vitalSubType = GeneratedColumn<String>(
+      'vital_sub_type', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _recordedAtMeta =
       const VerificationMeta('recordedAt');
   @override
@@ -49,8 +55,16 @@ class $VitalHistoriesTable extends VitalHistories
       'recorded_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, vitalType, value, unit, severity, vitalName, recordedAt];
+  List<GeneratedColumn> get $columns => [
+        id,
+        vitalType,
+        value,
+        unit,
+        severity,
+        vitalName,
+        vitalSubType,
+        recordedAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -96,6 +110,12 @@ class $VitalHistoriesTable extends VitalHistories
     } else if (isInserting) {
       context.missing(_vitalNameMeta);
     }
+    if (data.containsKey('vital_sub_type')) {
+      context.handle(
+          _vitalSubTypeMeta,
+          vitalSubType.isAcceptableOrUnknown(
+              data['vital_sub_type']!, _vitalSubTypeMeta));
+    }
     if (data.containsKey('recorded_at')) {
       context.handle(
           _recordedAtMeta,
@@ -123,6 +143,8 @@ class $VitalHistoriesTable extends VitalHistories
           .read(DriftSqlType.string, data['${effectivePrefix}severity'])!,
       vitalName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}vital_name'])!,
+      vitalSubType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}vital_sub_type']),
       recordedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}recorded_at']),
     );
@@ -141,6 +163,7 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
   final String unit;
   final String severity;
   final String vitalName;
+  final String? vitalSubType;
   final DateTime? recordedAt;
   const VitalHistory(
       {required this.id,
@@ -149,6 +172,7 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
       required this.unit,
       required this.severity,
       required this.vitalName,
+      this.vitalSubType,
       this.recordedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -159,6 +183,9 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
     map['unit'] = Variable<String>(unit);
     map['severity'] = Variable<String>(severity);
     map['vital_name'] = Variable<String>(vitalName);
+    if (!nullToAbsent || vitalSubType != null) {
+      map['vital_sub_type'] = Variable<String>(vitalSubType);
+    }
     if (!nullToAbsent || recordedAt != null) {
       map['recorded_at'] = Variable<DateTime>(recordedAt);
     }
@@ -173,6 +200,9 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
       unit: Value(unit),
       severity: Value(severity),
       vitalName: Value(vitalName),
+      vitalSubType: vitalSubType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(vitalSubType),
       recordedAt: recordedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(recordedAt),
@@ -189,6 +219,7 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
       unit: serializer.fromJson<String>(json['unit']),
       severity: serializer.fromJson<String>(json['severity']),
       vitalName: serializer.fromJson<String>(json['vitalName']),
+      vitalSubType: serializer.fromJson<String?>(json['vitalSubType']),
       recordedAt: serializer.fromJson<DateTime?>(json['recordedAt']),
     );
   }
@@ -202,6 +233,7 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
       'unit': serializer.toJson<String>(unit),
       'severity': serializer.toJson<String>(severity),
       'vitalName': serializer.toJson<String>(vitalName),
+      'vitalSubType': serializer.toJson<String?>(vitalSubType),
       'recordedAt': serializer.toJson<DateTime?>(recordedAt),
     };
   }
@@ -213,6 +245,7 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
           String? unit,
           String? severity,
           String? vitalName,
+          Value<String?> vitalSubType = const Value.absent(),
           Value<DateTime?> recordedAt = const Value.absent()}) =>
       VitalHistory(
         id: id ?? this.id,
@@ -221,6 +254,8 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
         unit: unit ?? this.unit,
         severity: severity ?? this.severity,
         vitalName: vitalName ?? this.vitalName,
+        vitalSubType:
+            vitalSubType.present ? vitalSubType.value : this.vitalSubType,
         recordedAt: recordedAt.present ? recordedAt.value : this.recordedAt,
       );
   VitalHistory copyWithCompanion(VitalHistoriesCompanion data) {
@@ -231,6 +266,9 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
       unit: data.unit.present ? data.unit.value : this.unit,
       severity: data.severity.present ? data.severity.value : this.severity,
       vitalName: data.vitalName.present ? data.vitalName.value : this.vitalName,
+      vitalSubType: data.vitalSubType.present
+          ? data.vitalSubType.value
+          : this.vitalSubType,
       recordedAt:
           data.recordedAt.present ? data.recordedAt.value : this.recordedAt,
     );
@@ -245,14 +283,15 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
           ..write('unit: $unit, ')
           ..write('severity: $severity, ')
           ..write('vitalName: $vitalName, ')
+          ..write('vitalSubType: $vitalSubType, ')
           ..write('recordedAt: $recordedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, vitalType, value, unit, severity, vitalName, recordedAt);
+  int get hashCode => Object.hash(id, vitalType, value, unit, severity,
+      vitalName, vitalSubType, recordedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -263,6 +302,7 @@ class VitalHistory extends DataClass implements Insertable<VitalHistory> {
           other.unit == this.unit &&
           other.severity == this.severity &&
           other.vitalName == this.vitalName &&
+          other.vitalSubType == this.vitalSubType &&
           other.recordedAt == this.recordedAt);
 }
 
@@ -273,6 +313,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
   final Value<String> unit;
   final Value<String> severity;
   final Value<String> vitalName;
+  final Value<String?> vitalSubType;
   final Value<DateTime?> recordedAt;
   final Value<int> rowid;
   const VitalHistoriesCompanion({
@@ -282,6 +323,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
     this.unit = const Value.absent(),
     this.severity = const Value.absent(),
     this.vitalName = const Value.absent(),
+    this.vitalSubType = const Value.absent(),
     this.recordedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -292,6 +334,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
     required String unit,
     required String severity,
     required String vitalName,
+    this.vitalSubType = const Value.absent(),
     this.recordedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -307,6 +350,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
     Expression<String>? unit,
     Expression<String>? severity,
     Expression<String>? vitalName,
+    Expression<String>? vitalSubType,
     Expression<DateTime>? recordedAt,
     Expression<int>? rowid,
   }) {
@@ -317,6 +361,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
       if (unit != null) 'unit': unit,
       if (severity != null) 'severity': severity,
       if (vitalName != null) 'vital_name': vitalName,
+      if (vitalSubType != null) 'vital_sub_type': vitalSubType,
       if (recordedAt != null) 'recorded_at': recordedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -329,6 +374,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
       Value<String>? unit,
       Value<String>? severity,
       Value<String>? vitalName,
+      Value<String?>? vitalSubType,
       Value<DateTime?>? recordedAt,
       Value<int>? rowid}) {
     return VitalHistoriesCompanion(
@@ -338,6 +384,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
       unit: unit ?? this.unit,
       severity: severity ?? this.severity,
       vitalName: vitalName ?? this.vitalName,
+      vitalSubType: vitalSubType ?? this.vitalSubType,
       recordedAt: recordedAt ?? this.recordedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -364,6 +411,9 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
     if (vitalName.present) {
       map['vital_name'] = Variable<String>(vitalName.value);
     }
+    if (vitalSubType.present) {
+      map['vital_sub_type'] = Variable<String>(vitalSubType.value);
+    }
     if (recordedAt.present) {
       map['recorded_at'] = Variable<DateTime>(recordedAt.value);
     }
@@ -382,6 +432,7 @@ class VitalHistoriesCompanion extends UpdateCompanion<VitalHistory> {
           ..write('unit: $unit, ')
           ..write('severity: $severity, ')
           ..write('vitalName: $vitalName, ')
+          ..write('vitalSubType: $vitalSubType, ')
           ..write('recordedAt: $recordedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -4262,6 +4313,7 @@ typedef $$VitalHistoriesTableCreateCompanionBuilder = VitalHistoriesCompanion
   required String unit,
   required String severity,
   required String vitalName,
+  Value<String?> vitalSubType,
   Value<DateTime?> recordedAt,
   Value<int> rowid,
 });
@@ -4273,6 +4325,7 @@ typedef $$VitalHistoriesTableUpdateCompanionBuilder = VitalHistoriesCompanion
   Value<String> unit,
   Value<String> severity,
   Value<String> vitalName,
+  Value<String?> vitalSubType,
   Value<DateTime?> recordedAt,
   Value<int> rowid,
 });
@@ -4303,6 +4356,9 @@ class $$VitalHistoriesTableFilterComposer
 
   ColumnFilters<String> get vitalName => $composableBuilder(
       column: $table.vitalName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get vitalSubType => $composableBuilder(
+      column: $table.vitalSubType, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get recordedAt => $composableBuilder(
       column: $table.recordedAt, builder: (column) => ColumnFilters(column));
@@ -4335,6 +4391,10 @@ class $$VitalHistoriesTableOrderingComposer
   ColumnOrderings<String> get vitalName => $composableBuilder(
       column: $table.vitalName, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get vitalSubType => $composableBuilder(
+      column: $table.vitalSubType,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get recordedAt => $composableBuilder(
       column: $table.recordedAt, builder: (column) => ColumnOrderings(column));
 }
@@ -4365,6 +4425,9 @@ class $$VitalHistoriesTableAnnotationComposer
 
   GeneratedColumn<String> get vitalName =>
       $composableBuilder(column: $table.vitalName, builder: (column) => column);
+
+  GeneratedColumn<String> get vitalSubType => $composableBuilder(
+      column: $table.vitalSubType, builder: (column) => column);
 
   GeneratedColumn<DateTime> get recordedAt => $composableBuilder(
       column: $table.recordedAt, builder: (column) => column);
@@ -4403,6 +4466,7 @@ class $$VitalHistoriesTableTableManager extends RootTableManager<
             Value<String> unit = const Value.absent(),
             Value<String> severity = const Value.absent(),
             Value<String> vitalName = const Value.absent(),
+            Value<String?> vitalSubType = const Value.absent(),
             Value<DateTime?> recordedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -4413,6 +4477,7 @@ class $$VitalHistoriesTableTableManager extends RootTableManager<
             unit: unit,
             severity: severity,
             vitalName: vitalName,
+            vitalSubType: vitalSubType,
             recordedAt: recordedAt,
             rowid: rowid,
           ),
@@ -4423,6 +4488,7 @@ class $$VitalHistoriesTableTableManager extends RootTableManager<
             required String unit,
             required String severity,
             required String vitalName,
+            Value<String?> vitalSubType = const Value.absent(),
             Value<DateTime?> recordedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -4433,6 +4499,7 @@ class $$VitalHistoriesTableTableManager extends RootTableManager<
             unit: unit,
             severity: severity,
             vitalName: vitalName,
+            vitalSubType: vitalSubType,
             recordedAt: recordedAt,
             rowid: rowid,
           ),

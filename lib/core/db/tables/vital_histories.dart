@@ -9,6 +9,7 @@ class VitalHistories extends Table {
   TextColumn get unit => text()();
   TextColumn get severity => text()();
   TextColumn get vitalName => text()();
+  TextColumn get vitalSubType => text().nullable()();
   DateTimeColumn get recordedAt => dateTime().nullable()();
 
   @override

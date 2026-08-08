@@ -101,6 +101,8 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           "vitalType": entity.vitalType,
           "value": entity.value,
           "unit": entity.unit,
+          "severity": entity.severity,
+          if (entity.vitalSubType != null) "vitalSubType": entity.vitalSubType,
           "recordedAt": entity.recordedAt?.toUtc().toIso8601String() ??
               DateTime.now().toUtc().toIso8601String(),
         };
@@ -116,6 +118,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           unit: entity.unit,
           severity: entity.severity,
           vitalName: entity.vitalName,
+          vitalSubType: entity.vitalSubType,
           recordedAt: entity.recordedAt ?? DateTime.now(),
         );
 
