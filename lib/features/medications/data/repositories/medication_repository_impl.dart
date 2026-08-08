@@ -328,7 +328,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final hasPending =
         await localDataSource.hasPendingMutationsForEntity(medicationId);
 
-    if (await connectivityService.isConnected && !hasPending) {
+    if (await connectivityService.isConnected &&
+        !hasPending &&
+        !medicationId.contains('-')) {
       try {
         final result = await remoteDataSource.getMedicationHistory(medicationId,
             date: date);

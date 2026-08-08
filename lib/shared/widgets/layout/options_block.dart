@@ -4,16 +4,18 @@ import 'app_text.dart';
 class OptionBlockItem {
   final String label;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color? labelColor;
   final Color? iconColor;
+  final Widget? trailing;
 
   OptionBlockItem({
     required this.label,
     required this.icon,
-    required this.onTap,
+    this.onTap,
     this.labelColor,
     this.iconColor,
+    this.trailing,
   });
 }
 
@@ -95,11 +97,12 @@ class _OptionBlockTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: option.iconColor ?? const Color(0xFF0F172A), // Slate 900
-                size: 20,
-              ),
+              option.trailing ??
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: option.iconColor ?? const Color(0xFF0F172A), // Slate 900
+                    size: 20,
+                  ),
             ],
           ),
         ),

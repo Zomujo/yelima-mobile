@@ -11,6 +11,7 @@ import '../widgets/profile/profile_avatar.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/controllers/locale_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -84,18 +85,23 @@ class ProfileScreen extends StatelessWidget {
                       title: context.l10n.language,
                       blockItems: [
                         OptionBlockItem(
-                          label: context.l10n.english,
+                          label: '${context.l10n.english} / ${context.l10n.akanTwi}',
                           icon: Iconsax.language_square,
-                          onTap: () => context
-                              .read<LocaleController>()
-                              .setLocale(const Locale('en')),
-                        ),
-                        OptionBlockItem(
-                          label: context.l10n.akanTwi,
-                          icon: Iconsax.language_circle,
-                          onTap: () => context
-                              .read<LocaleController>()
-                              .setLocale(const Locale('tw')),
+                          trailing: Switch(
+                            activeColor: AppColors.primary,
+                            value: context.watch<LocaleController>().locale?.languageCode == 'tw',
+                            onChanged: (isTwi) {
+                              context.read<LocaleController>().setLocale(
+                                isTwi ? const Locale('tw') : const Locale('en')
+                              );
+                            },
+                          ),
+                          onTap: () {
+                            final current = context.read<LocaleController>().locale?.languageCode ?? 'en';
+                            context.read<LocaleController>().setLocale(
+                              current == 'tw' ? const Locale('en') : const Locale('tw')
+                            );
+                          },
                         ),
                       ],
                     ),
