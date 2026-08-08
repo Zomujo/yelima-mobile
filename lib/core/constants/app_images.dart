@@ -18,6 +18,8 @@ class AppImages {
       AssetImage('assets/icons/appointment.svg');
   static const AssetImage calendarIcon =
       AssetImage('assets/icons/calendar.svg');
+  static const AssetImage symptoms = AssetImage('assets/icons/symptoms.svg');
+  static const AssetImage numbers = AssetImage('assets/icons/numbers.svg');
   static const AssetImage callIcon = AssetImage('assets/icons/call.svg');
   static const AssetImage homeIcon = AssetImage('assets/icons/home.svg');
   static const AssetImage logIcon = AssetImage('assets/icons/log.svg');
@@ -33,8 +35,4 @@ class AppImages {
   static const AssetImage tickedAppointIcon =
       AssetImage('assets/icons/ticked_appoint.svg');
   static const AssetImage profileDp = AssetImage('assets/icons/dp.png');
-
-  // --------------------------------------------------------------------------
-  // |                            Avatars / Characters                         |
-  // --------------------------------------------------------------------------
 }

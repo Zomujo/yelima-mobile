@@ -102,5 +102,7 @@
   "sending": "Ɛremana...",
   "logOut": "Fi mu",
   "logOutConfirmation": "Wopɛ sɛ wofi wo akontaabu mu ampa?",
-  "cancel": "Twa mu"
+  "cancel": "Twa mu",
+  "reportSymptom": "Report Symptom",
+  "recordVitals": "Record Vitals"
 }

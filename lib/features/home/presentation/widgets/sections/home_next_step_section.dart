@@ -6,6 +6,7 @@ import '../../../../../core/constants/app_images.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../daily_check_in_card.dart';
 import '../action_card.dart';
+import '../report_symptom_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class HomeNextStepSection extends StatelessWidget {
@@ -33,6 +34,37 @@ class HomeNextStepSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            children: [
+              Expanded(
+                child: ActionCard(
+                  title: context.l10n.reportSymptom,
+                  iconPath: AppImages.symptoms.assetName,
+                  bgImagePath: AppImages.medicineBgIcon.assetName,
+                  backgroundColor: const Color(0xFF6750A4),
+                  onTap: () {
+                    ReportSymptomModal.show(context);
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ActionCard(
+                  title: context.l10n.recordVitals,
+                  iconPath: AppImages.numbers.assetName,
+                  bgImagePath: AppImages.progressBgIcon.assetName,
+                  backgroundColor: const Color(0xFFE8B931),
+                  onTap: () {
+                    context.push(RoutePaths.readingLogging);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Row(
