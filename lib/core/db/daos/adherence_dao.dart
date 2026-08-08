@@ -14,14 +14,16 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
   // Global Adherence
   Future<void> saveGlobalAdherence(
       String id, double rate, List<AdherenceGlobalDay> days) async {
-    await batch((batch) {
-      batch.insert(
-        adherenceGlobals,
+    await transaction(() async {
+      await into(adherenceGlobals).insert(
         AdherenceGlobal(id: id, rate: rate, updatedAt: DateTime.now()),
         mode: InsertMode.insertOrReplace,
       );
-      batch.insertAll(adherenceGlobalDays, days,
-          mode: InsertMode.insertOrReplace);
+      await (delete(adherenceGlobalDays)..where((t) => t.type.equals(id))).go();
+      await batch((batch) {
+        batch.insertAll(adherenceGlobalDays, days,
+            mode: InsertMode.insertOrReplace);
+      });
     });
   }
 

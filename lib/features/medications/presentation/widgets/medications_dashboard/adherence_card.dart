@@ -68,7 +68,9 @@ class AdherenceCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: dayWidgets.isNotEmpty ? dayWidgets : _buildDefaultDays(),
+            children: dayWidgets.isNotEmpty
+                ? dayWidgets.take(7).toList()
+                : _buildDefaultDays(),
           ),
         ],
       ),
