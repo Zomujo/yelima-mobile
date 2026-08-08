@@ -1,3 +1,4 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import 'dart:convert';
 import 'dart:isolate';
 import 'package:fpdart/fpdart.dart';
@@ -50,7 +51,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
 
           final cacheModel = VitalHistoriesCompanion(
             id: drift.Value('bp_trend_cache_$dateRange'),
-            vitalType: const drift.Value('PROGRESS_BP_TREND'),
+            vitalType: const drift.Value(CacheKeys.progressBpTrend),
             vitalName: drift.Value('BP Trend $dateRange'),
             value: drift.Value(trendJson),
             unit: const drift.Value('json'),
@@ -105,7 +106,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
 
           final cacheModel = VitalHistoriesCompanion(
             id: drift.Value('vital_trend_cache_${vitalType}_$dateRange'),
-            vitalType: const drift.Value('PROGRESS_VITAL_TREND'),
+            vitalType: const drift.Value(CacheKeys.progressVitalTrend),
             vitalName: drift.Value('Vital Trend $vitalType $dateRange'),
             value: drift.Value(trendJson),
             unit: const drift.Value('json'),

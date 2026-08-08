@@ -41,6 +41,7 @@ class AuthInterceptor extends Interceptor {
         AppLogger.w(
             'AuthInterceptor: 401 Unauthorized received on RETRY. Logging out user.');
         try {
+          await _tokenManager.clearTokens();
           await FirebaseAuth.instance.signOut();
         } catch (e) {
           AppLogger.e('AuthInterceptor: Error signing out on 401', e);
@@ -113,6 +114,7 @@ class AuthInterceptor extends Interceptor {
           });
         }
         try {
+          await _tokenManager.clearTokens();
           await FirebaseAuth.instance.signOut();
         } catch (_) {}
         return handler.next(err);

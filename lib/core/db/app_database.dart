@@ -1,8 +1,11 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 
 import 'tables/vital_histories.dart';
@@ -125,6 +128,21 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
-    return NativeDatabase.createInBackground(file);
+
+    // Setup encryption key
+    const secureStorage = FlutterSecureStorage();
+    const keyString = CacheKeys.dbEncryptionKey;
+    String? encryptionKey = await secureStorage.read(key: keyString);
+    if (encryptionKey == null) {
+      final random = Random.secure();
+      final values = List<int>.generate(32, (i) => random.nextInt(256));
+      encryptionKey =
+          values.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+      await secureStorage.write(key: keyString, value: encryptionKey);
+    }
+
+    return NativeDatabase.createInBackground(file, setup: (db) {
+      db.execute("PRAGMA key = '$encryptionKey';");
+    });
   });
 }

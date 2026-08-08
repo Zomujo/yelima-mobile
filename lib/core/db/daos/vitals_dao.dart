@@ -1,3 +1,4 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import 'package:drift/drift.dart';
 import '../app_database.dart';
 import '../tables/vital_histories.dart';
@@ -23,8 +24,8 @@ class VitalsDao extends DatabaseAccessor<AppDatabase> with _$VitalsDaoMixin {
 
   Future<void> clearVitals() {
     return (delete(vitalHistories)
-          ..where((t) => t.vitalType.like('%CACHE%').not())
-          ..where((t) => t.vitalType.like('%TREND%').not())
+          ..where((t) => t.vitalType.like('%${CacheKeys.cacheIdentifier}%').not())
+          ..where((t) => t.vitalType.like('%${CacheKeys.trendIdentifier}%').not())
           ..where((t) => t.id.like('offline_%').not()))
         .go();
   }

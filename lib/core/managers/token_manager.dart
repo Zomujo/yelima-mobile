@@ -1,32 +1,33 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
 import '../services/fcm_token_service.dart';
 import '../utils/logger.dart';
 
-/// Manages retrieval of authentication and FCM tokens.
+// Manages retrieval of authentication and FCM tokens.
 class TokenManager {
   static final TokenManager _instance = TokenManager._internal();
   factory TokenManager() => _instance;
   TokenManager._internal();
 
-  static const String _fcmTokenKey = 'cached_fcm_token';
-  static const String _authTokenKey = 'cached_auth_token';
+  
+  
   String? _cachedAuthToken;
   String? _cachedFCMToken;
   StreamSubscription? _tokenRefreshSubscription;
   final _firebaseMessaging = FirebaseMessaging.instance;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   // ---------------------------------------------------------------------------
   // Auth Token
   // ---------------------------------------------------------------------------
 
-  /// Retrieves the current Firebase Auth JWT token.
-  /// Firebase automatically handles refreshing the token if it's expired.
+  // Retrieves the current Firebase Auth JWT token.
   Future<String?> getAuthToken() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -35,14 +36,10 @@ class TokenManager {
     return null;
   }
 
-  /// Retrieves a valid auth token, using the in-memory cache as a fallback
-  /// when there's no network. Firebase SDK refreshes it automatically if needed.
+  // Retrieves a valid auth token, falling back to cache when offline.
   Future<String?> getValidAuthToken() async {
     try {
-      if (_cachedAuthToken == null) {
-        final prefs = await SharedPreferences.getInstance();
-        _cachedAuthToken = prefs.getString(_authTokenKey);
-      }
+      _cachedAuthToken ??= await _secureStorage.read(key: CacheKeys.authToken);
 
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
@@ -50,8 +47,7 @@ class TokenManager {
 
       if (token != _cachedAuthToken) {
         _cachedAuthToken = token;
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_authTokenKey, token!);
+        await _secureStorage.write(key: CacheKeys.authToken, value: token!);
       }
       return token;
     } on FirebaseAuthException catch (e) {
@@ -69,15 +65,10 @@ class TokenManager {
   // FCM Token
   // ---------------------------------------------------------------------------
 
-  /// Fetches the device FCM token from Firebase Messaging.
-  ///
-  /// On iOS, waits for the APNs token to be available first (up to 5 retries)
-  /// before requesting the FCM token, as FCM requires APNs to be ready.
-  /// Caches the token in SharedPreferences and listens for refreshes.
+  // Fetches the device FCM token.
   Future<String?> getFCMToken() async {
     // Restore cached token from storage first
-    final prefs = await SharedPreferences.getInstance();
-    _cachedFCMToken = prefs.getString(_fcmTokenKey);
+    _cachedFCMToken = await _secureStorage.read(key: CacheKeys.fcmToken);
     if (_cachedFCMToken != null) {
       AppLogger.d('TokenManager: Restored cached FCM token from storage.');
     }
@@ -108,7 +99,7 @@ class TokenManager {
     final currentToken = await _firebaseMessaging.getToken();
     if (currentToken != null && currentToken != _cachedFCMToken) {
       _cachedFCMToken = currentToken;
-      await prefs.setString(_fcmTokenKey, currentToken);
+      await _secureStorage.write(key: CacheKeys.fcmToken, value: currentToken);
       AppLogger.i('TokenManager: FCM token updated and saved.');
     }
 
@@ -119,8 +110,7 @@ class TokenManager {
         _firebaseMessaging.onTokenRefresh.listen((newToken) async {
       AppLogger.i('TokenManager: FCM token refreshed.');
       _cachedFCMToken = newToken;
-      final p = await SharedPreferences.getInstance();
-      await p.setString(_fcmTokenKey, newToken);
+      await _secureStorage.write(key: CacheKeys.fcmToken, value: newToken);
 
       try {
         if (GetIt.instance.isRegistered<FCMTokenService>()) {
@@ -138,25 +128,24 @@ class TokenManager {
   // Lifecycle
   // ---------------------------------------------------------------------------
 
-  /// Clears all cached tokens (call on sign out).
+  // Clears all cached tokens.
   Future<void> clearTokens() async {
     _cachedAuthToken = null;
     _cachedFCMToken = null;
     await _tokenRefreshSubscription?.cancel();
     _tokenRefreshSubscription = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_fcmTokenKey);
-    await prefs.remove(_authTokenKey);
+    await _secureStorage.delete(key: CacheKeys.fcmToken);
+    await _secureStorage.delete(key: CacheKeys.authToken);
     AppLogger.d('TokenManager: All tokens cleared.');
   }
 
-  /// Alias for [clearTokens].
+  // Alias for clearTokens.
   Future<void> clearToken() => clearTokens();
 
-  /// No-op — Firebase handles token storage internally.
+  // No-op
   Future<void> saveTokens(
       {required String auth, required String refresh}) async {}
 
-  /// No-op — Firebase handles refresh token internally.
+  // No-op
   Future<String?> getRefreshToken() async => null;
 }

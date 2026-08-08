@@ -1,3 +1,4 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -52,7 +53,7 @@ class _ReadingLoggingView extends StatelessWidget {
                         List<VitalHistory>.from(snapshot.data ?? []);
                     final hasHistory = allVitals.any((v) {
                       final type = v.vitalType.toUpperCase();
-                      return !type.contains('CACHE') && !type.contains('TREND');
+                      return !type.contains(CacheKeys.cacheIdentifier) && !type.contains(CacheKeys.trendIdentifier);
                     });
 
                     // No history: simple non-scrollable column

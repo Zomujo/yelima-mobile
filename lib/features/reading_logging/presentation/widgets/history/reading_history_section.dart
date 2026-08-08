@@ -1,3 +1,4 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import 'reading_history_item.dart';
@@ -48,7 +49,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
         final allVitals = List<VitalHistory>.from(snapshot.data ?? []);
         final vitals = allVitals.where((v) {
           final type = v.vitalType.toUpperCase();
-          return !type.contains('CACHE') && !type.contains('TREND');
+          return !type.contains(CacheKeys.cacheIdentifier) && !type.contains(CacheKeys.trendIdentifier);
         }).toList();
 
         if (vitals.isEmpty) {

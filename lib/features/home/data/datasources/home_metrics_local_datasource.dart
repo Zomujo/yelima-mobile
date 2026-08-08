@@ -1,3 +1,4 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import '../../../../core/db/app_database.dart';
 import '../models/vital_history_model.dart';
 
@@ -21,7 +22,7 @@ class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
     final vitals = await _database.vitalsDao.getAllVitals();
     // Exclude cache and trend rows to retrieve only actual vital readings.
     final realVitals = vitals.where((v) =>
-        !v.vitalType.contains('CACHE') && !v.vitalType.contains('TREND'));
+        !v.vitalType.contains(CacheKeys.cacheIdentifier) && !v.vitalType.contains(CacheKeys.trendIdentifier));
     return realVitals.map((v) => VitalHistoryModel.fromDrift(v)).toList();
   }
 
@@ -42,7 +43,7 @@ class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
   Future<double?> getCachedAdherence() async {
     final vitals = await _database.vitalsDao.getAllVitals();
     final adherenceVital =
-        vitals.where((v) => v.vitalType == 'HOME_ADHERENCE_CACHE').firstOrNull;
+        vitals.where((v) => v.vitalType == CacheKeys.homeAdherenceCache).firstOrNull;
     if (adherenceVital != null) {
       return double.tryParse(adherenceVital.value);
     }
@@ -53,7 +54,7 @@ class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
   Future<void> cacheAdherence(double adherence) async {
     final adherenceModel = VitalHistoryModel(
       id: 'home_adherence_cache_key',
-      vitalType: 'HOME_ADHERENCE_CACHE',
+      vitalType: CacheKeys.homeAdherenceCache,
       vitalName: 'Medication Adherence',
       value: adherence.toString(),
       unit: 'fraction',
@@ -66,7 +67,7 @@ class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
   @override
   Future<void> clearCachedAdherence() async {
     await (_database.delete(_database.vitalHistories)
-          ..where((t) => t.vitalType.equals('HOME_ADHERENCE_CACHE')))
+          ..where((t) => t.vitalType.equals(CacheKeys.homeAdherenceCache)))
         .go();
   }
 }

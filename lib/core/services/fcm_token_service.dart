@@ -1,5 +1,6 @@
+import 'package:yelima/core/constants/cache_keys.dart';
 import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/api_client.dart';
 import '../managers/token_manager.dart';
 import '../utils/logger.dart';
@@ -76,8 +77,8 @@ class FCMTokenService {
         AppLogger.d(
             'FCMTokenService: Using in-memory cached token for deletion.');
       } else {
-        final prefs = await SharedPreferences.getInstance();
-        final stored = prefs.getString('cached_fcm_token');
+        const secureStorage = FlutterSecureStorage();
+        final stored = await secureStorage.read(key: CacheKeys.fcmToken);
         token = stored?.replaceAll('"', '');
       }
 

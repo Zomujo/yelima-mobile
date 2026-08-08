@@ -27,6 +27,7 @@ dependencies:
   # Services & Utils
 
   shared_preferences: ^2.3.4
+  flutter_secure_storage: ^9.2.2
 
   flutter_dotenv: ^5.2.1
 
@@ -41,7 +42,7 @@ dependencies:
   # Local Database
 
   drift: ^2.23.1
-  sqlite3_flutter_libs: ^0.5.28
+  sqlcipher_flutter_libs: ^0.5.2
 
   # Auth & Cloud
 
