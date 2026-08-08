@@ -57,7 +57,7 @@ class HomeNextStepSection extends StatelessWidget {
                   bgImagePath: AppImages.progressBgIcon.assetName,
                   backgroundColor: const Color(0xFFE8B931),
                   onTap: () {
-                    context.push(RoutePaths.readingLogging);
+                    context.go(RoutePaths.readingLogging);
                   },
                 ),
               ),

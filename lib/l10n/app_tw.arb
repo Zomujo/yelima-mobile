@@ -103,6 +103,11 @@
   "logOut": "Fi mu",
   "logOutConfirmation": "Wopɛ sɛ wofi wo akontaabu mu ampa?",
   "cancel": "Twa mu",
-  "reportSymptom": "Report Symptom",
-  "recordVitals": "Record Vitals"
+  "reportSymptom": "Ka Wo Yareɛ",
+  "recordVitals": "Kyerɛw Vitals",
+  "describeHowYouAreFeeling": "Kyerɛkyerɛ mu yiye, sɛnea wo ho te.",
+  "reportSymptomHint": "e.g. M'atifi ayɛ me ya kem fi anɔpa...",
+  "submit": "Mane",
+  "submitting": "Ɛremane...",
+  "symptomReportedSuccess": "Woabɔ wo yareɛ amanneɛ yiye!"
 }

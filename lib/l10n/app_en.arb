@@ -111,5 +111,10 @@
   "logOutConfirmation": "Are you sure you want to log out of your account?",
   "cancel": "Cancel",
   "reportSymptom": "Report Symptom",
-  "recordVitals": "Record Vitals"
+  "recordVitals": "Record Vitals",
+  "describeHowYouAreFeeling": "Describe in detail, how you are feeling.",
+  "reportSymptomHint": "e.g. I have had a headache since this morning...",
+  "submit": "Submit",
+  "submitting": "Submitting...",
+  "symptomReportedSuccess": "Symptom reported successfully!"
 }

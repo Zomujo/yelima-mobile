@@ -4,6 +4,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../../../../shared/widgets/modals/app_modal.dart';
 import '../../../../../core/extensions/context_extensions.dart';
+import '../../../../../core/extensions/l10n_extension.dart';
 
 class ReportSymptomModal extends StatefulWidget {
   const ReportSymptomModal({super.key});
@@ -44,7 +45,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
 
     if (!mounted) return;
 
-    context.showSuccessSnackBar('Symptom reported successfully!');
+    context.showSuccessSnackBar(context.l10n.symptomReportedSuccess);
     context.removeModal();
   }
 
@@ -63,11 +64,11 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Expanded(
+              Expanded(
                 child: AppText.headlineSmall(
-                  'Report Symptom',
+                  context.l10n.reportSymptom,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
+                  color: const Color(0xFF1E293B),
                 ),
               ),
               const SizedBox(width: 16),
@@ -88,8 +89,8 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
             ],
           ),
           const SizedBox(height: 12),
-          const AppText.bodyMedium(
-            'Describe in detail, how you are feeling.',
+          AppText.bodyMedium(
+            context.l10n.describeHowYouAreFeeling,
             color: AppColors.textGrey,
           ),
           const SizedBox(height: 20),
@@ -113,7 +114,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
                 return null;
               },
               decoration: InputDecoration(
-                hintText: 'e.g. I have had a headache since this morning...',
+                hintText: context.l10n.reportSymptomHint,
                 hintStyle: TextStyle(color: Colors.grey.shade400),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.all(16),
@@ -126,7 +127,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
             builder: (context, value, child) {
               final isValid = value.text.trim().length > 5;
               return AppButton(
-                text: _isLoading ? 'Submitting...' : 'Submit',
+                text: _isLoading ? context.l10n.submitting : context.l10n.submit,
                 isDisabled: !isValid || _isLoading,
                 onPressed: (isValid && !_isLoading) ? _sendRequest : null,
                 backgroundColor: AppColors.primary,
