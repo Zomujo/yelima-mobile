@@ -8,6 +8,7 @@ import '../models/dosing_schedule_model.dart';
 import '../models/medication_detail_model.dart';
 import '../models/update_medication_model.dart';
 import '../models/seeded_medication_model.dart';
+import '../models/medication_model.dart';
 
 class MedicationMapper {
   /// Maps a Drift [Medication] model to a Domain [MedicationEntity].
@@ -184,6 +185,42 @@ class MedicationMapper {
           : [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Merges a remote [MedicationModel] with an existing local Drift [Medication],
+  /// preserving local state where appropriate and setting fallback times.
+  static Medication mergeRemoteWithLocal(
+    MedicationModel remote,
+    Medication? existing,
+    String section,
+  ) {
+    DateTime derivedTime = existing?.toBeTakenAt ?? remote.toBeTakenAt;
+    
+    // If existing is null and remote.toBeTakenAt is exactly now (defaulted), try to set a sensible fallback based on section
+    if (existing == null && DateTime.now().difference(remote.toBeTakenAt).inSeconds.abs() < 5) {
+      final now = DateTime.now();
+      if (section == 'MORNING') {
+        derivedTime = DateTime(now.year, now.month, now.day, 8, 0);
+      } else if (section == 'AFTERNOON') {
+        derivedTime = DateTime(now.year, now.month, now.day, 13, 0);
+      } else if (section == 'EVENING') {
+        derivedTime = DateTime(now.year, now.month, now.day, 20, 0);
+      }
+    }
+
+    return Medication(
+      id: remote.id,
+      name: remote.name,
+      dosage: remote.dosage,
+      purpose: existing?.purpose ?? remote.purpose,
+      toBeTakenAt: derivedTime,
+      taken: remote.taken,
+      section: section,
+      notes: existing?.notes,
+      morningJson: existing?.morningJson,
+      afternoonJson: existing?.afternoonJson,
+      eveningJson: existing?.eveningJson,
     );
   }
 }

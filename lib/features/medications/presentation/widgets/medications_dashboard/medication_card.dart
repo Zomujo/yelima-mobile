@@ -12,6 +12,7 @@ class MedicationCard extends StatelessWidget {
   final String time;
   final bool isTaken;
   final bool isOverdue;
+  final bool isEarly;
   final bool isConfirming;
   final VoidCallback? onConfirm;
 
@@ -23,6 +24,7 @@ class MedicationCard extends StatelessWidget {
     required this.time,
     required this.isTaken,
     this.isOverdue = false,
+    this.isEarly = false,
     this.isConfirming = false,
     this.onConfirm,
   });
@@ -138,13 +140,16 @@ class MedicationCard extends StatelessWidget {
             )
           else
             AppButton(
-              text: 'Confirm',
+              text: isEarly ? 'Wait' : 'Confirm',
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               borderRadius: 20,
-              onPressed: onConfirm ?? () {},
+              isDisabled: isEarly,
+              onPressed: isEarly ? null : (onConfirm ?? () {}),
               fontSize: 14,
-              backgroundColor: isOverdue ? Colors.red : AppColors.primary,
+              backgroundColor: isEarly
+                  ? Colors.grey.shade400
+                  : (isOverdue ? Colors.red : AppColors.primary),
             ),
         ],
       ),

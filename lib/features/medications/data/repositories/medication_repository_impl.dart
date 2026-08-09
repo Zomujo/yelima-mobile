@@ -109,19 +109,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
         final localMeds = remoteMeds.map((m) {
           final existing = existingMap['${m.id}_$section'];
-          return Medication(
-            id: m.id,
-            name: m.name,
-            dosage: m.dosage,
-            purpose: existing?.purpose ?? m.purpose,
-            toBeTakenAt: m.toBeTakenAt,
-            taken: m.taken,
-            section: section,
-            notes: existing?.notes,
-            morningJson: existing?.morningJson,
-            afternoonJson: existing?.afternoonJson,
-            eveningJson: existing?.eveningJson,
-          );
+          return MedicationMapper.mergeRemoteWithLocal(m, existing, section);
         }).toList();
 
         final pendingMutations = await localDataSource.getAllPendingMutations();

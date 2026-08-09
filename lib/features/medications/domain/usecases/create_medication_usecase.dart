@@ -18,6 +18,26 @@ class CreateMedicationUseCase {
       return left('Please select at least one dosing schedule.');
     }
 
+    // Check for duplicates
+    final allMedsRes = await repository.getAllMedications(pageSize: 1000);
+    bool isDuplicate = false;
+    allMedsRes.fold(
+      (l) => null,
+      (r) {
+        for (final med in r.rows) {
+          if (med.name.toLowerCase().trim() == medicationName.toLowerCase().trim() &&
+              med.dosage.toLowerCase().trim() == data.dosage.toLowerCase().trim()) {
+            isDuplicate = true;
+            break;
+          }
+        }
+      },
+    );
+
+    if (isDuplicate) {
+      return left('A medication with this name and dosage already exists.');
+    }
+
     final createModel = CreateMedicationModel(
       name: medicationName,
       dosage: data.dosage,

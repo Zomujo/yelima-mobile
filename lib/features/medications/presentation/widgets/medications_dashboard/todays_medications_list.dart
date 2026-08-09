@@ -83,6 +83,8 @@ class TodaysMedicationsList extends StatelessWidget {
                 isTaken: med.taken,
                 isOverdue:
                     !med.taken && DateTime.now().isAfter(med.toBeTakenAt),
+                isEarly:
+                    !med.taken && DateTime.now().isBefore(med.toBeTakenAt),
                 isConfirming:
                     controller.state.confirmingMedicationIds.contains(med.id),
                 onConfirm: () async {
