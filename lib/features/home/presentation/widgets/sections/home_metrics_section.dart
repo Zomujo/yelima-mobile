@@ -6,6 +6,9 @@ import '../metric_card.dart';
 import '../medication_adherence_card.dart';
 import '../../controllers/home_metrics_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../../../../../core/services/shared_prefs_service.dart';
+import '../../../../../injection_container.dart';
+import '../../../../../shared/utils/app_snackbar.dart';
 
 class HomeMetricsSection extends StatefulWidget {
   const HomeMetricsSection({super.key});
@@ -62,6 +65,15 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
                   subValue: bpSub,
                   unit: 'mmHg',
                   isLoading: isLoading,
+                  onTap: () async {
+                    await sl<SharedPrefsService>().clearAllTutorials();
+                    if (context.mounted) {
+                      AppSnackBar.showSuccess(
+                        context,
+                        message: 'Tutorials cache cleared! Please restart the app.',
+                      );
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 16),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
@@ -10,6 +11,7 @@ import '../widgets/medications_dashboard/time_of_day_tabs.dart';
 import '../widgets/medications_dashboard/todays_medications_list.dart';
 import 'all_medicines_screen.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/core/utils/app_tutorial_service.dart';
 
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key});
@@ -24,7 +26,31 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MedicationController>().init();
+      if (mounted) {
+        _showTutorial();
+      }
     });
+  }
+
+  void _showTutorial() {
+    AppTutorialService.showTutorial(
+      context: context,
+      tutorialId: 'medications_screen_intro',
+      targets: [
+        AppTutorialService.createTarget(
+          identify: 'medications_adherence',
+          key: AppTutorialService.medicationsAdherenceKey,
+          title: context.l10n.tutorialMedicationsAdherenceTitle,
+          description: context.l10n.tutorialMedicationsAdherenceDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'medications_list',
+          key: AppTutorialService.medicationsListKey,
+          title: context.l10n.tutorialMedicationsListTitle,
+          description: context.l10n.tutorialMedicationsListDesc,
+        ),
+      ],
+    );
   }
 
   @override
@@ -82,8 +108,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       isLoading: controller.state.isAdherenceLoading,
                       shimmer:
                           AppShimmer.box(width: double.infinity, height: 150),
-                      child:
-                          AdherenceCard(adherence: controller.state.adherence),
+                      child: AdherenceCard(
+                        key: AppTutorialService.medicationsAdherenceKey,
+                        adherence: controller.state.adherence,
+                      ),
                     );
                   }),
                   const SizedBox(height: 32),
@@ -114,7 +142,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             sliver: Consumer<MedicationController>(
                 builder: (context, controller, child) {
-              return TodaysMedicationsList(controller: controller);
+              return TodaysMedicationsList(
+                key: AppTutorialService.medicationsListKey,
+                controller: controller,
+              );
             }),
           ),
           const SliverToBoxAdapter(

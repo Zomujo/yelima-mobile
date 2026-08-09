@@ -6,6 +6,7 @@ import '../../../../../shared/widgets/forms/app_dropdown.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../user/presentation/controllers/user_controller.dart';
 import '../../controllers/edit_profile_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class EditProfileForm extends StatefulWidget {
   const EditProfileForm({super.key});
@@ -58,21 +59,21 @@ class _EditProfileFormState extends State<EditProfileForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppFormField(
-          label: 'First Name',
-          hintText: 'Enter your first name',
+          label: context.l10n.firstName,
+          hintText: context.l10n.enterFirstName,
           controller: _firstNameController,
         ),
         const SizedBox(height: 24),
         AppFormField(
-          label: 'Last Name',
-          hintText: 'Enter your last name',
+          label: context.l10n.lastName,
+          hintText: context.l10n.enterLastName,
           controller: _lastNameController,
         ),
         const SizedBox(height: 24),
-        const AppText.labelLarge(
-          'Gender',
+        AppText.labelLarge(
+          context.l10n.gender,
           fontWeight: FontWeight.w400,
-          color: Color(0xFF6A7282), // Slate 700
+          color: const Color(0xFF6A7282), // Slate 700
         ),
         const SizedBox(height: 8),
         Selector<EditProfileController, String?>(
@@ -80,8 +81,12 @@ class _EditProfileFormState extends State<EditProfileForm> {
           builder: (context, gender, child) {
             return AppDropdown<String>(
               value: gender,
-              hintText: 'Select gender',
-              items: const ['Male', 'Female', 'Other'],
+              hintText: context.l10n.selectGender,
+              items: [
+                context.l10n.male,
+                context.l10n.female,
+                context.l10n.otherGender
+              ],
               itemLabelBuilder: (item) => item,
               onChanged: (value) {
                 context.read<EditProfileController>().updateForm(gender: value);
@@ -91,12 +96,12 @@ class _EditProfileFormState extends State<EditProfileForm> {
         ),
         const SizedBox(height: 24),
         AppFormField(
-          label: 'Email Address',
-          hintText: 'Enter your email',
+          label: context.l10n.emailAddress,
+          hintText: context.l10n.enterEmail,
           controller: _emailController,
           enabled: false,
           keyboardType: TextInputType.emailAddress,
-          helperText: 'Your email address cannot be changed.',
+          helperText: context.l10n.emailCannotBeChanged,
         ),
       ],
     );

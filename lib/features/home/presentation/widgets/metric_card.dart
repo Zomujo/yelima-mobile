@@ -9,6 +9,7 @@ class MetricCard extends StatelessWidget {
   final String? subValue;
   final String unit;
   final bool isLoading;
+  final VoidCallback? onTap;
 
   const MetricCard({
     super.key,
@@ -17,12 +18,15 @@ class MetricCard extends StatelessWidget {
     this.subValue,
     required this.unit,
     this.isLoading = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -66,6 +70,6 @@ class MetricCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

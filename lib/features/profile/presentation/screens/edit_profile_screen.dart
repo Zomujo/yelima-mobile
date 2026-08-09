@@ -9,6 +9,7 @@ import '../../../user/presentation/controllers/user_controller.dart';
 import '../controllers/edit_profile_controller.dart';
 import '../widgets/edit_profile/edit_profile_avatar.dart';
 import '../widgets/edit_profile/edit_profile_form.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class EditProfileScreen extends StatelessWidget {
   const EditProfileScreen({super.key});
@@ -35,7 +36,7 @@ class _EditProfileView extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6),
       appBar: AppHeader(
-        title: 'Edit Profile',
+        title: context.l10n.editProfile,
         onBackPressed: () => context.pop(),
         backgroundColor: Colors.transparent,
       ),
@@ -61,8 +62,8 @@ class _EditProfileView extends StatelessWidget {
                 builder: (context, controller, child) {
                   return AppButton(
                     text: controller.state.isSaving
-                        ? 'Saving...'
-                        : 'Save Changes',
+                        ? context.l10n.savingChanges
+                        : context.l10n.saveChanges,
                     isDisabled: !controller.state.isButtonEnabled ||
                         controller.state.isSaving,
                     isLoading: controller.state.isSaving,
@@ -76,7 +77,7 @@ class _EditProfileView extends StatelessWidget {
                               AppSnackBar.showError(context, message: failure),
                           (_) {
                             AppSnackBar.showSuccess(context,
-                                message: 'Profile updated successfully');
+                                message: context.l10n.profileUpdatedSuccessfully);
                             context.pop();
                           },
                         );

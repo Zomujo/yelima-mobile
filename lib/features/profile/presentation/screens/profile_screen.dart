@@ -11,10 +11,41 @@ import '../widgets/profile/profile_avatar.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/controllers/locale_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/utils/app_tutorial_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _showTutorial();
+      }
+    });
+  }
+
+  void _showTutorial() {
+    AppTutorialService.showTutorial(
+      context: context,
+      tutorialId: 'profile_screen_intro',
+      targets: [
+        AppTutorialService.createTarget(
+          identify: 'profile_avatar',
+          key: AppTutorialService.profileAvatarKey,
+          title: context.l10n.tutorialProfileAvatarTitle,
+          description: context.l10n.tutorialProfileAvatarDesc,
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +71,9 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const ProfileAvatar(),
+                    ProfileAvatar(
+                      key: AppTutorialService.profileAvatarKey,
+                    ),
                     const SizedBox(height: 40),
 
                     // Options Blocks

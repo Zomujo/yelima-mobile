@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
@@ -9,9 +10,40 @@ import 'package:provider/provider.dart';
 import '../controllers/appointment_controller.dart';
 import '../widgets/paginated_appointment_list.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/core/utils/app_tutorial_service.dart';
 
-class AppointmentsScreen extends StatelessWidget {
+class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
+
+  @override
+  State<AppointmentsScreen> createState() => _AppointmentsScreenState();
+}
+
+class _AppointmentsScreenState extends State<AppointmentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _showTutorial();
+      }
+    });
+  }
+
+  void _showTutorial() {
+    AppTutorialService.showTutorial(
+      context: context,
+      tutorialId: 'appointments_screen_intro',
+      targets: [
+        AppTutorialService.createTarget(
+          identify: 'appointments_list',
+          key: AppTutorialService.appointmentListKey,
+          title: context.l10n.tutorialAppointmentListTitle,
+          description: context.l10n.tutorialAppointmentListDesc,
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +94,7 @@ class AppointmentsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               PaginatedAppointmentList(
+                key: AppTutorialService.appointmentListKey,
                 state: upcomingState,
                 isPast: false,
                 emptyMessage: context.l10n.noUpcomingAppointments,

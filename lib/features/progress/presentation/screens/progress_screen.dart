@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
@@ -9,6 +10,7 @@ import '../widgets/duration_selector.dart';
 import '../widgets/blood_glucose_section.dart';
 import '../widgets/blood_pressure_section.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/core/utils/app_tutorial_service.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -27,7 +29,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
     _controller = sl<ProgressController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchData();
+      if (mounted) {
+        _showTutorial();
+      }
     });
+  }
+
+  void _showTutorial() {
+    AppTutorialService.showTutorial(
+      context: context,
+      tutorialId: 'progress_screen_intro',
+      targets: [
+        AppTutorialService.createTarget(
+          identify: 'progress_graph',
+          key: AppTutorialService.progressGraphKey,
+          title: context.l10n.tutorialProgressGraphTitle,
+          description: context.l10n.tutorialProgressGraphDesc,
+        ),
+      ],
+    );
   }
 
   void _fetchData() {
@@ -86,7 +106,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
             const SizedBox(height: 24),
 
             // Blood Pressure Card
-            BloodPressureSection(durationLabel: getDurationLabel(context)),
+            BloodPressureSection(
+              key: AppTutorialService.progressGraphKey,
+              durationLabel: getDurationLabel(context),
+            ),
             const SizedBox(height: 24),
 
             // Blood Glucose Card

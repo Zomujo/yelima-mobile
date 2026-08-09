@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/home_header.dart';
@@ -9,9 +10,46 @@ import '../widgets/sections/home_upcoming_visits_section.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/core/utils/app_tutorial_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _showTutorial();
+      }
+    });
+  }
+
+  void _showTutorial() {
+    AppTutorialService.showTutorial(
+      context: context,
+      tutorialId: 'home_screen_intro',
+      targets: [
+        AppTutorialService.createTarget(
+          identify: 'home_metrics',
+          key: AppTutorialService.homeMetricsKey,
+          title: context.l10n.tutorialHomeMetricsTitle,
+          description: context.l10n.tutorialHomeMetricsDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'home_next_steps',
+          key: AppTutorialService.homeNextStepKey,
+          title: context.l10n.tutorialHomeNextStepTitle,
+          description: context.l10n.tutorialHomeNextStepDesc,
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +76,13 @@ class HomeScreen extends StatelessWidget {
                     ? context.l10n.welcomeName(greetingName)
                     : context.l10n.welcome,
               ),
-              const HomeMetricsSection(),
+              HomeMetricsSection(
+                key: AppTutorialService.homeMetricsKey,
+              ),
               const SizedBox(height: 32),
-              const HomeNextStepSection(),
+              HomeNextStepSection(
+                key: AppTutorialService.homeNextStepKey,
+              ),
               const SizedBox(height: 24),
               const HomeUpcomingVisitsSection(),
             ],
