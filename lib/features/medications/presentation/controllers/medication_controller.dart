@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:yelima/features/medications/domain/entities/medication_count.dart';
-import '../../domain/entities/medication_entity.dart';
 import 'package:get_it/get_it.dart';
-import '../../domain/repositories/medication_repository.dart';
-import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
 import '../states/medications_state.dart';
+import '../../domain/repositories/medication_repository.dart';
+import '../../domain/entities/medication_entity.dart';
+import '../../domain/entities/medication_count.dart';
+import '../../../../core/utils/safe_notifier.dart';
 import 'all_medicines_controller.dart';
 
 class MedicationController extends ChangeNotifier with SafeNotifier {
@@ -14,6 +15,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   final MedicationRepository repository;
+  StreamSubscription? _mutationSyncSub;
 
   MedicationController({required this.repository});
 
@@ -44,6 +46,16 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
 
   /// Initializes the controller by fetching adherence, counts, and medications.
   void init() {
+    if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+      _mutationSyncSub = GetIt.instance<MutationSyncManager>()
+          .onMutationSynced
+          .listen((event) {
+        if (event.contains('medication') || event.contains('confirmMedication') || event.contains('deleteMedication')) {
+          fetchAdherence();
+        }
+      });
+    }
+
     fetchAdherence();
     _initCountsStream();
     fetchMedications();
@@ -174,7 +186,10 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     final med = currentList[index];
     if (med.taken) return null;
 
-    if (DateTime.now().isBefore(med.toBeTakenAt)) {
+    final now = DateTime.now();
+    final todayScheduledTime = DateTime(now.year, now.month, now.day, med.toBeTakenAt.hour, med.toBeTakenAt.minute);
+
+    if (now.isBefore(todayScheduledTime)) {
       return 'Cannot confirm dose — it\'s not yet time.';
     }
 
@@ -212,6 +227,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   void dispose() {
     _medicationsSubscription?.cancel();
     _countsSubscription?.cancel();
+    _mutationSyncSub?.cancel();
     super.dispose();
   }
 }

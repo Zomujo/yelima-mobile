@@ -1,4 +1,5 @@
 import '../../../../core/db/app_database.dart';
+import 'package:drift/drift.dart';
 
 abstract class MedicationLocalDataSource {
   // Adherence
@@ -125,7 +126,8 @@ class MedicationLocalDataSourceImpl implements MedicationLocalDataSource {
   @override
   Future<bool> hasPendingMutationsForEntity(String entityId) async {
     final list = await (db.select(db.pendingMutations)
-          ..where((t) => t.entityId.equals(entityId)))
+          ..where((t) =>
+              t.entityId.equals(entityId) & t.retryCount.isSmallerThanValue(3)))
         .get();
     return list.isNotEmpty;
   }
@@ -133,7 +135,8 @@ class MedicationLocalDataSourceImpl implements MedicationLocalDataSource {
   @override
   Future<bool> hasPendingMutationsForType(String type) async {
     final list = await (db.select(db.pendingMutations)
-          ..where((t) => t.entityType.equals(type)))
+          ..where((t) =>
+              t.entityType.equals(type) & t.retryCount.isSmallerThanValue(3)))
         .get();
     return list.isNotEmpty;
   }

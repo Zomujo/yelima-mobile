@@ -66,6 +66,10 @@ class TodaysMedicationsList extends StatelessWidget {
         (context, index) {
           final med = meds[index];
           final timeString = AppDateFormats.timeShort.format(med.toBeTakenAt);
+          final now = DateTime.now();
+          final todayScheduledTime = DateTime(
+              now.year, now.month, now.day, med.toBeTakenAt.hour, med.toBeTakenAt.minute);
+              
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: GestureDetector(
@@ -81,10 +85,8 @@ class TodaysMedicationsList extends StatelessWidget {
                 purpose: med.purpose,
                 time: timeString,
                 isTaken: med.taken,
-                isOverdue:
-                    !med.taken && DateTime.now().isAfter(med.toBeTakenAt),
-                isEarly:
-                    !med.taken && DateTime.now().isBefore(med.toBeTakenAt),
+                isOverdue: !med.taken && now.isAfter(todayScheduledTime),
+                isEarly: !med.taken && now.isBefore(todayScheduledTime),
                 isConfirming:
                     controller.state.confirmingMedicationIds.contains(med.id),
                 onConfirm: () async {
