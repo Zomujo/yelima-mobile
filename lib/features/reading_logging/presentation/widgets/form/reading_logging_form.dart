@@ -7,6 +7,7 @@ import 'reading_save_button.dart';
 import '../../../../../shared/widgets/modals/custom_calendar_modal.dart';
 import '../../../../../shared/widgets/forms/app_dropdown.dart';
 import '../../controllers/reading_logging_controller.dart';
+import '../../../../../core/utils/app_tutorial_service.dart';
 
 class ReadingLoggingForm extends StatelessWidget {
   const ReadingLoggingForm({super.key});
@@ -22,6 +23,7 @@ class ReadingLoggingForm extends StatelessWidget {
             return Column(
               children: [
                 ReadingTypeSelector(
+                  key: AppTutorialService.logReadingTypeKey,
                   selectedIndex: selectedTypeIndex,
                   onTypeSelected:
                       context.read<ReadingLoggingController>().setTypeIndex,
@@ -56,12 +58,15 @@ class ReadingLoggingForm extends StatelessWidget {
           },
         ),
         const SizedBox(height: 24),
-        const InteractiveReadingCard(),
+        InteractiveReadingCard(
+          key: AppTutorialService.logReadingInputKey,
+        ),
         const SizedBox(height: 24),
         Selector<ReadingLoggingController, DateTime>(
           selector: (context, controller) => controller.state.selectedDate,
           builder: (context, selectedDate, child) {
             return ReadingDaySelector(
+              key: AppTutorialService.logReadingDateKey,
               selectedDate: selectedDate,
               onTap: () async {
                 final controller = context.read<ReadingLoggingController>();
@@ -75,7 +80,9 @@ class ReadingLoggingForm extends StatelessWidget {
           },
         ),
         const SizedBox(height: 32),
-        const ReadingSaveButton(),
+        ReadingSaveButton(
+          key: AppTutorialService.logReadingSaveKey,
+        ),
       ],
     );
   }

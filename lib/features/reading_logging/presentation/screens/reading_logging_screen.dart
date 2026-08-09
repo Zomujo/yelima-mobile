@@ -10,6 +10,7 @@ import '../widgets/form/reading_logging_form.dart';
 import '../widgets/history/reading_history_section.dart';
 import '../../../../shared/widgets/forms/unsaved_changes_guard.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../../../../core/utils/app_tutorial_service.dart';
 
 class ReadingLoggingScreen extends StatelessWidget {
   const ReadingLoggingScreen({super.key});
@@ -27,8 +28,56 @@ class ReadingLoggingScreen extends StatelessWidget {
   }
 }
 
-class _ReadingLoggingView extends StatelessWidget {
+class _ReadingLoggingView extends StatefulWidget {
   const _ReadingLoggingView();
+
+  @override
+  State<_ReadingLoggingView> createState() => _ReadingLoggingViewState();
+}
+
+class _ReadingLoggingViewState extends State<_ReadingLoggingView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _showTutorial();
+      }
+    });
+  }
+
+  void _showTutorial() {
+    AppTutorialService.showTutorial(
+      context: context,
+      tutorialId: 'log_reading_screen',
+      targets: [
+        AppTutorialService.createTarget(
+          identify: 'log_reading_type',
+          key: AppTutorialService.logReadingTypeKey,
+          title: context.l10n.tutorialLogReadingTypeTitle,
+          description: context.l10n.tutorialLogReadingTypeDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'log_reading_input',
+          key: AppTutorialService.logReadingInputKey,
+          title: context.l10n.tutorialLogReadingInputTitle,
+          description: context.l10n.tutorialLogReadingInputDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'log_reading_date',
+          key: AppTutorialService.logReadingDateKey,
+          title: context.l10n.tutorialLogReadingDateTitle,
+          description: context.l10n.tutorialLogReadingDateDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'log_reading_save',
+          key: AppTutorialService.logReadingSaveKey,
+          title: context.l10n.tutorialLogReadingSaveTitle,
+          description: context.l10n.tutorialLogReadingSaveDesc,
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

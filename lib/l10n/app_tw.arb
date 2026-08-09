@@ -157,7 +157,15 @@
   "tutorialProgressGraphTitle": "Apɔwmuden Nteɛsoɔ",
   "tutorialProgressGraphDesc": "Hwɛ sɛnea w'apɔwmuden rekɔ so.",
   "tutorialAppointmentListTitle": "Wo Nhyiamu",
-  "tutorialAppointmentListDesc": "Hwɛ mmerɛ a wubekɔ ayaresabea.",
-  "tutorialProfileAvatarTitle": "Wo Ho Nsɛm",
-  "tutorialProfileAvatarDesc": "Siesie wo ho nsɛm ne w'apɔwmuden ho nsɛm."
+  "tutorialAppointmentListDesc": "Hwɛ nea edidi so a wobɛkɔ ayaresabea.",
+  "tutorialProfileAvatarTitle": "Wo Profile",
+  "tutorialProfileAvatarDesc": "Hwɛ wo ho nsɛm ne w'apɔwmuden ho nsɛm so.",
+  "tutorialLogReadingTypeTitle": "Yi Nteɛsoɔ",
+  "tutorialLogReadingTypeDesc": "Yi sɛ wopɛ sɛ wokyerɛw Mogya Mmorosoɔ anaa Asikre.",
+  "tutorialLogReadingInputTitle": "Kyerɛw Wo Nteɛsoɔ",
+  "tutorialLogReadingInputDesc": "Kyerɛw nɔma no pɛpɛɛpɛ sɛnea ɛte wɔ mita no so.",
+  "tutorialLogReadingDateTitle": "Yi Da",
+  "tutorialLogReadingDateDesc": "Yi berɛ a woyɛɛ nteɛsoɔ yi.",
+  "tutorialLogReadingSaveTitle": "Kora Nteɛsoɔ",
+  "tutorialLogReadingSaveDesc": "Kora wo nteɛsoɔ no sɛnea ɛbɛyɛ a wobɛhwɛ w'animkɔ."
 }

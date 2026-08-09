@@ -170,5 +170,13 @@
   "tutorialAppointmentListTitle": "Your Appointments",
   "tutorialAppointmentListDesc": "Keep track of your upcoming clinic visits.",
   "tutorialProfileAvatarTitle": "Your Profile",
-  "tutorialProfileAvatarDesc": "Manage your personal information and health details."
+  "tutorialProfileAvatarDesc": "Manage your personal information and health details.",
+  "tutorialLogReadingTypeTitle": "Select Reading Type",
+  "tutorialLogReadingTypeDesc": "Choose whether you want to log Blood Pressure or Blood Sugar.",
+  "tutorialLogReadingInputTitle": "Enter Your Reading",
+  "tutorialLogReadingInputDesc": "Type in the numbers from your meter exactly as they appear.",
+  "tutorialLogReadingDateTitle": "Select Date",
+  "tutorialLogReadingDateDesc": "Choose when you took this reading.",
+  "tutorialLogReadingSaveTitle": "Save Reading",
+  "tutorialLogReadingSaveDesc": "Save your reading to update your progress."
 }

@@ -20,6 +20,11 @@ class AppTutorialService {
   static final GlobalKey appointmentListKey = GlobalKey();
   static final GlobalKey profileAvatarKey = GlobalKey();
 
+  static final GlobalKey logReadingTypeKey = GlobalKey();
+  static final GlobalKey logReadingInputKey = GlobalKey();
+  static final GlobalKey logReadingDateKey = GlobalKey();
+  static final GlobalKey logReadingSaveKey = GlobalKey();
+
   static Future<void> showTutorial({
     required BuildContext context,
     required String tutorialId,
