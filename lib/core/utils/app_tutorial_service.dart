@@ -17,7 +17,9 @@ class AppTutorialService {
   static final GlobalKey medicationsAdherenceKey = GlobalKey();
   static final GlobalKey medicationsListKey = GlobalKey();
   static final GlobalKey progressGraphKey = GlobalKey();
+  static final GlobalKey appointmentAskKey = GlobalKey();
   static final GlobalKey appointmentListKey = GlobalKey();
+  static final GlobalKey appointmentPastListKey = GlobalKey();
   static final GlobalKey profileAvatarKey = GlobalKey();
 
   static final GlobalKey logReadingTypeKey = GlobalKey();

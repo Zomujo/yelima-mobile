@@ -35,10 +35,22 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       tutorialId: 'appointments_screen_intro',
       targets: [
         AppTutorialService.createTarget(
+          identify: 'appointments_ask',
+          key: AppTutorialService.appointmentAskKey,
+          title: context.l10n.tutorialAppointmentAskTitle,
+          description: context.l10n.tutorialAppointmentAskDesc,
+        ),
+        AppTutorialService.createTarget(
           identify: 'appointments_list',
           key: AppTutorialService.appointmentListKey,
           title: context.l10n.tutorialAppointmentListTitle,
           description: context.l10n.tutorialAppointmentListDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'appointments_past_list',
+          key: AppTutorialService.appointmentPastListKey,
+          title: context.l10n.tutorialAppointmentPastListTitle,
+          description: context.l10n.tutorialAppointmentPastListDesc,
         ),
       ],
     );
@@ -77,6 +89,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               ),
               const SizedBox(height: 24),
               AppButton(
+                key: AppTutorialService.appointmentAskKey,
                 text: context.l10n.askForAppointment,
                 prefixIcon:
                     const Icon(Icons.add, color: Colors.white, size: 20),
@@ -108,6 +121,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               ),
               const SizedBox(height: 16),
               PaginatedAppointmentList(
+                key: AppTutorialService.appointmentPastListKey,
                 state: pastState,
                 isPast: true,
                 emptyMessage: context.l10n.noPastAppointments,
