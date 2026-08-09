@@ -9,6 +9,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../core/services/shared_prefs_service.dart';
 import '../../../../../injection_container.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
+import '../../../../../core/utils/app_tutorial_service.dart';
 
 class HomeMetricsSection extends StatefulWidget {
   const HomeMetricsSection({super.key});
@@ -57,6 +58,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Row(
+            key: AppTutorialService.homeMetricsKey,
             children: [
               Expanded(
                 child: MetricCard(
@@ -92,6 +94,7 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: MedicationAdherenceCard(
+            key: AppTutorialService.homeAdherenceKey,
             percentage: adherence,
             message: adherence >= 0.8
                 ? context.l10n.adherenceGreat

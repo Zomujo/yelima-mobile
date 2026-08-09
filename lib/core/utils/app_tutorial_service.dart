@@ -10,7 +10,10 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class AppTutorialService {
   static final GlobalKey homeMetricsKey = GlobalKey();
+  static final GlobalKey homeAdherenceKey = GlobalKey();
   static final GlobalKey homeNextStepKey = GlobalKey();
+  static final GlobalKey homeDailyCheckInKey = GlobalKey();
+  static final GlobalKey homeActionCardsKey = GlobalKey();
   static final GlobalKey medicationsAdherenceKey = GlobalKey();
   static final GlobalKey medicationsListKey = GlobalKey();
   static final GlobalKey progressGraphKey = GlobalKey();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/home_header.dart';
@@ -42,10 +41,22 @@ class _HomeScreenState extends State<HomeScreen> {
           description: context.l10n.tutorialHomeMetricsDesc,
         ),
         AppTutorialService.createTarget(
-          identify: 'home_next_steps',
-          key: AppTutorialService.homeNextStepKey,
-          title: context.l10n.tutorialHomeNextStepTitle,
-          description: context.l10n.tutorialHomeNextStepDesc,
+          identify: 'home_adherence',
+          key: AppTutorialService.homeAdherenceKey,
+          title: context.l10n.tutorialMedicationsAdherenceTitle,
+          description: context.l10n.tutorialMedicationsAdherenceDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'home_daily_check_in',
+          key: AppTutorialService.homeDailyCheckInKey,
+          title: context.l10n.tutorialHomeDailyCheckInTitle,
+          description: context.l10n.tutorialHomeDailyCheckInDesc,
+        ),
+        AppTutorialService.createTarget(
+          identify: 'home_action_cards',
+          key: AppTutorialService.homeActionCardsKey,
+          title: context.l10n.tutorialHomeActionCardsTitle,
+          description: context.l10n.tutorialHomeActionCardsDesc,
         ),
       ],
     );
@@ -76,13 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? context.l10n.welcomeName(greetingName)
                     : context.l10n.welcome,
               ),
-              HomeMetricsSection(
-                key: AppTutorialService.homeMetricsKey,
-              ),
-              const SizedBox(height: 32),
-              HomeNextStepSection(
-                key: AppTutorialService.homeNextStepKey,
-              ),
+              const HomeMetricsSection(),
+              const SizedBox(height: 16),
+              const HomeNextStepSection(),
               const SizedBox(height: 24),
               const HomeUpcomingVisitsSection(),
             ],

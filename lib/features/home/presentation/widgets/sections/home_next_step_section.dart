@@ -8,6 +8,7 @@ import '../daily_check_in_card.dart';
 import '../action_card.dart';
 import '../report_symptom_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../../../../../core/utils/app_tutorial_service.dart';
 
 class HomeNextStepSection extends StatelessWidget {
   const HomeNextStepSection({super.key});
@@ -28,72 +29,78 @@ class HomeNextStepSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: DailyCheckInCard(
+            key: AppTutorialService.homeDailyCheckInKey,
             onStart: () {
               context.push(RoutePaths.aiChat);
             },
           ),
         ),
         const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            children: [
-              Expanded(
-                child: ActionCard(
-                  title: context.l10n.reportSymptom,
-                  iconPath: AppImages.symptoms.assetName,
-                  bgImagePath: AppImages.medicineBgIcon.assetName,
-                  backgroundColor: const Color(0xFF6750A4),
-                  onTap: () {
-                    ReportSymptomModal.show(context);
-                  },
-                ),
+        Column(
+          key: AppTutorialService.homeActionCardsKey,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ActionCard(
+                      title: context.l10n.reportSymptom,
+                      iconPath: AppImages.symptoms.assetName,
+                      bgImagePath: AppImages.medicineBgIcon.assetName,
+                      backgroundColor: const Color(0xFF6750A4),
+                      onTap: () {
+                        ReportSymptomModal.show(context);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ActionCard(
+                      title: context.l10n.recordVitals,
+                      iconPath: AppImages.numbers.assetName,
+                      bgImagePath: AppImages.progressBgIcon.assetName,
+                      backgroundColor: const Color(0xFFE8B931),
+                      onTap: () {
+                        context.go(RoutePaths.readingLogging);
+                      },
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ActionCard(
-                  title: context.l10n.recordVitals,
-                  iconPath: AppImages.numbers.assetName,
-                  bgImagePath: AppImages.progressBgIcon.assetName,
-                  backgroundColor: const Color(0xFFE8B931),
-                  onTap: () {
-                    context.go(RoutePaths.readingLogging);
-                  },
-                ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ActionCard(
+                      title: context.l10n.myMedicines,
+                      iconPath: AppImages.pillIcon.assetName,
+                      bgImagePath: AppImages.medicineBgIcon.assetName,
+                      backgroundColor: const Color(0xFF20C7D3),
+                      onTap: () {
+                        context.push(RoutePaths.medications);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ActionCard(
+                      title: context.l10n.yourProgress,
+                      iconPath: AppImages.progressIcon.assetName,
+                      bgImagePath: AppImages.progressBgIcon.assetName,
+                      backgroundColor: const Color(0xFF37D2B8),
+                      onTap: () {
+                        context.push(RoutePaths.progress);
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            children: [
-              Expanded(
-                child: ActionCard(
-                  title: context.l10n.myMedicines,
-                  iconPath: AppImages.pillIcon.assetName,
-                  bgImagePath: AppImages.medicineBgIcon.assetName,
-                  backgroundColor: const Color(0xFF20C7D3),
-                  onTap: () {
-                    context.push(RoutePaths.medications);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ActionCard(
-                  title: context.l10n.yourProgress,
-                  iconPath: AppImages.progressIcon.assetName,
-                  bgImagePath: AppImages.progressBgIcon.assetName,
-                  backgroundColor: const Color(0xFF37D2B8),
-                  onTap: () {
-                    context.push(RoutePaths.progress);
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
