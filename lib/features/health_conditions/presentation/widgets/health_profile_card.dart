@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../user/domain/entities/user_entity.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class HealthProfileCard extends StatelessWidget {
   final UserEntity user;
@@ -11,11 +12,18 @@ class HealthProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final initial =
         user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U';
-    final ageStr = user.age != null ? '${user.age} yrs' : 'N/A';
-    final genderStr = user.gender != null && user.gender!.isNotEmpty
-        ? user.gender![0].toUpperCase() +
-            user.gender!.substring(1).toLowerCase()
-        : 'N/A';
+    final ageStr = user.age != null ? '${user.age} ${context.l10n.yrs}' : context.l10n.notAvailable;
+    String genderStr = context.l10n.notAvailable;
+    if (user.gender != null && user.gender!.isNotEmpty) {
+      final g = user.gender!.toLowerCase();
+      if (g == 'male') {
+        genderStr = context.l10n.male;
+      } else if (g == 'female') {
+        genderStr = context.l10n.female;
+      } else {
+        genderStr = user.gender![0].toUpperCase() + user.gender!.substring(1).toLowerCase();
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -58,7 +66,7 @@ class HealthProfileCard extends StatelessWidget {
                     AppText.titleMedium(user.fullName,
                         fontWeight: FontWeight.w600),
                     const SizedBox(height: 4),
-                    AppText.bodySmall('Patient ID: ${user.patientId}',
+                    AppText.bodySmall('${context.l10n.patientId}: ${user.patientId}',
                         color: const Color(0xFF64748B)),
                   ],
                 ),
@@ -71,10 +79,10 @@ class HealthProfileCard extends StatelessWidget {
           IntrinsicHeight(
             child: Row(
               children: [
-                Expanded(child: _InfoStat(label: 'Age', value: ageStr)),
+                Expanded(child: _InfoStat(label: context.l10n.age, value: ageStr)),
                 const VerticalDivider(
                     color: Color(0xFFE2E8F0), thickness: 1, width: 32),
-                Expanded(child: _InfoStat(label: 'Gender', value: genderStr)),
+                Expanded(child: _InfoStat(label: context.l10n.gender, value: genderStr)),
               ],
             ),
           ),

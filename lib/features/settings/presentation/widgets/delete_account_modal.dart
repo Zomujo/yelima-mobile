@@ -6,6 +6,7 @@ import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../../shared/widgets/forms/app_text_field.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class DeleteAccountModal extends StatefulWidget {
   const DeleteAccountModal({super.key});
@@ -59,20 +60,20 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
   @override
   Widget build(BuildContext context) {
     return ModalContainer(
-      title: 'Delete Account',
+      title: context.l10n.deleteAccount,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppText.titleMedium(
-            'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
+          AppText.titleMedium(
+            context.l10n.deleteAccountConfirmation,
             color: Colors.black54,
           ),
           if (_isPasswordProvider) ...[
             const SizedBox(height: 24),
             AppTextField(
-              labelText: 'Password',
-              hintText: 'Enter your password to confirm',
+              labelText: context.l10n.password,
+              hintText: context.l10n.enterPasswordToConfirm,
               controller: _passwordController,
               isPassword: true,
             ),
@@ -82,7 +83,7 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
             children: [
               Expanded(
                 child: AppButton(
-                  text: 'Cancel',
+                  text: context.l10n.cancel,
                   backgroundColor: const Color(0xFFF1F5F9), // Slate 100
                   foregroundColor: const Color(0xFF475569), // Slate 600
                   onPressed: () => Navigator.of(context).pop(),
@@ -91,7 +92,7 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
               const SizedBox(width: 16),
               Expanded(
                 child: AppButton(
-                  text: 'Delete',
+                  text: context.l10n.delete,
                   backgroundColor: _isButtonEnabled
                       ? const Color(0xFFEF4444)
                       : Colors.grey, // Red 500

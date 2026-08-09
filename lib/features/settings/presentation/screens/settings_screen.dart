@@ -5,6 +5,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/options_block.dart';
 import '../../../../core/utils/legal_links.dart';
 import '../widgets/delete_account_modal.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -23,10 +24,10 @@ class SettingsScreen extends StatelessWidget {
               color: Color(0xFF0F172A), size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const AppText.headlineSmall(
-          'Settings',
+        title: AppText.headlineSmall(
+          context.l10n.settings,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF0F172A),
+          color: const Color(0xFF0F172A),
         ),
       ),
       body: SafeArea(
@@ -37,25 +38,25 @@ class SettingsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               OptionsBlock(
-                title: "Legal",
+                title: context.l10n.legal,
                 blockItems: [
                   OptionBlockItem(
-                    label: "Terms and Conditions",
+                    label: context.l10n.termsAndConditions,
                     icon: Iconsax.document_upload,
                     onTap: () => LegalLinks.launchTerms(),
                   ),
                   OptionBlockItem(
-                    label: "Privacy Policy",
+                    label: context.l10n.privacyPolicy,
                     icon: Iconsax.security,
                     onTap: () => LegalLinks.launchPrivacy(),
                   ),
                 ],
               ),
               OptionsBlock(
-                title: "Account",
+                title: context.l10n.account,
                 blockItems: [
                   OptionBlockItem(
-                    label: "Delete Account",
+                    label: context.l10n.deleteAccount,
                     icon: Iconsax.trash,
                     onTap: () => DeleteAccountModal.show(context),
                   ),

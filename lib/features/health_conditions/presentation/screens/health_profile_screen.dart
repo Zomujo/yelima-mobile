@@ -8,6 +8,7 @@ import '../../../user/presentation/controllers/user_controller.dart';
 import '../widgets/health_profile_card.dart';
 import '../widgets/health_expansion_card.dart';
 import '../widgets/health_info_card.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class HealthProfileScreen extends StatelessWidget {
   const HealthProfileScreen({super.key});
@@ -19,7 +20,7 @@ class HealthProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F6),
       appBar: AppHeader(
-        title: 'Health Profile',
+        title: context.l10n.healthProfile,
         onBackPressed: () => context.pop(),
         backgroundColor: Colors.transparent,
       ),
@@ -34,7 +35,7 @@ class HealthProfileScreen extends StatelessWidget {
               // Chronic Conditions
               if (user != null && user.conditions.isNotEmpty)
                 HealthExpansionCard(
-                  title: 'Chronic Conditions',
+                  title: context.l10n.chronicConditions,
                   icon: Iconsax.activity,
                   child: Column(
                     children: user.conditions.map((condition) {
@@ -43,19 +44,19 @@ class HealthProfileScreen extends StatelessWidget {
                         child: HealthInfoCard(
                           title: condition[0].toUpperCase() +
                               condition.substring(1),
-                          status: 'Active',
+                          status: context.l10n.active,
                         ),
                       );
                     }).toList(),
                   ),
                 ),
               if (user != null && user.conditions.isEmpty)
-                const HealthExpansionCard(
-                  title: 'Chronic Conditions',
+                HealthExpansionCard(
+                  title: context.l10n.chronicConditions,
                   icon: Iconsax.activity,
                   child: AppText.bodyMedium(
-                    'No chronic conditions reported.',
-                    color: Color(0xFF64748B),
+                    context.l10n.noChronicConditionsReported,
+                    color: const Color(0xFF64748B),
                   ),
                 ),
             ],

@@ -47,6 +47,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   /// Initializes the controller by fetching adherence, counts, and medications.
   void init() {
     if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+      _mutationSyncSub?.cancel();
       _mutationSyncSub = GetIt.instance<MutationSyncManager>()
           .onMutationSynced
           .listen((event) {
@@ -59,6 +60,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     fetchAdherence();
     _initCountsStream();
     fetchMedications();
+    repository.getAllMedications(forceRefresh: true);
   }
 
   /// Updates the selected tab index and refreshes the medication list for that time of day.
