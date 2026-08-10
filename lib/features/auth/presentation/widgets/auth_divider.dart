@@ -13,7 +13,7 @@ class AuthDivider extends StatelessWidget {
           child: Divider(color: Color(0xFFE2E8F0), thickness: 1),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: AppText.bodyMedium(
             context.l10n.orUseEmail,
             color: const Color(0xFF94A3B8),

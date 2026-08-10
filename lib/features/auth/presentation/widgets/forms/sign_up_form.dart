@@ -5,6 +5,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/validators.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
+import '../../../../../core/extensions/l10n_extension.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({
@@ -58,8 +59,8 @@ class _SignUpFormState extends State<SignUpForm> {
       children: [
         AppFormField(
           controller: _emailController,
-          label: 'Email',
-          hintText: 'you@example.com',
+          label: context.l10n.emailLabel,
+          hintText: context.l10n.emailHint,
           prefixIcon: Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -68,8 +69,8 @@ class _SignUpFormState extends State<SignUpForm> {
         const SizedBox(height: 24),
         AppFormField(
           controller: _passwordController,
-          label: 'Password',
-          hintText: 'At least 6 characters',
+          label: context.l10n.passwordLabel,
+          hintText: context.l10n.passwordHint,
           prefixIcon: Icons.lock_outline,
           obscureText: _obscurePassword,
           suffixIcon: IconButton(
@@ -89,7 +90,7 @@ class _SignUpFormState extends State<SignUpForm> {
         ),
         const SizedBox(height: 32),
         AppButton(
-          text: 'Create account',
+          text: context.l10n.createAccount,
           isDisabled: !_isButtonEnabled || widget.isAuthLoading,
           onPressed: (_isButtonEnabled && !widget.isAuthLoading)
               ? () {

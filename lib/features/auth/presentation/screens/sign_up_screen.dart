@@ -10,6 +10,7 @@ import '../widgets/social_auth_button.dart';
 import '../widgets/auth_divider.dart';
 import '../widgets/forms/sign_up_form.dart';
 import '../widgets/terms_and_privacy_text.dart';
+import '../../../../core/extensions/l10n_extension.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -17,8 +18,8 @@ class SignUpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AuthLayout(
-      title: 'Create your account',
-      subtitle: 'Join Yelima to support your patients.',
+      title: context.l10n.signUpTitle,
+      subtitle: context.l10n.signUpSubtitle,
       child: Consumer<AuthController>(
         builder: (context, authController, child) {
           final isLoading = authController.isAuthLoading;
@@ -29,7 +30,7 @@ class SignUpScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 SocialAuthButton(
                   icon: AppImages.google,
-                  text: 'Sign up with Google',
+                  text: context.l10n.signUpWithGoogle,
                   onPressed: isLoading
                       ? null
                       : () => authController.signInWithGoogle(context),
@@ -40,8 +41,8 @@ class SignUpScreen extends StatelessWidget {
                 SignUpForm(isAuthLoading: isLoading),
                 const SizedBox(height: 32),
                 AuthFooter(
-                  text: 'Already have an account? ',
-                  actionText: 'Sign in',
+                  text: context.l10n.alreadyHaveAccount,
+                  actionText: context.l10n.signInTitle,
                   onActionTap:
                       isLoading ? null : () => context.go(RoutePaths.signIn),
                 ),
