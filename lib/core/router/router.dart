@@ -21,10 +21,13 @@ import '../../features/medications/presentation/screens/medications_screen.dart'
 import '../../features/medications/presentation/screens/add_medication_screen.dart';
 import '../../features/medications/presentation/screens/medicine_details_screen.dart';
 import '../../features/progress/presentation/screens/progress_screen.dart';
+import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../shared/screens/not_found_screen.dart';
 import '../../shared/screens/main_scaffold.dart';
 import 'route_paths.dart';
 import '../services/monitoring_service.dart';
+import '../services/shared_prefs_service.dart';
+import '../../injection_container.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -53,12 +56,13 @@ class AppRouter {
         final isRegistrationRoute =
             state.matchedLocation == RoutePaths.registration;
         final isSplashRoute = state.matchedLocation == RoutePaths.splash;
+        final isWelcomeRoute = state.matchedLocation == RoutePaths.welcome;
 
         final redirectParam = state.uri.queryParameters['redirect'];
         final currentUri = state.uri.toString();
         // Determine the original user intent.
         final intendedPath = redirectParam ??
-            (isAuthRoute || isRegistrationRoute || isSplashRoute
+            (isAuthRoute || isRegistrationRoute || isSplashRoute || isWelcomeRoute
                 ? null
                 : currentUri);
 
@@ -69,8 +73,14 @@ class AppRouter {
 
         // ── Still initializing or syncing profile → hold navigation ──
         if (!isInitialized || isSyncInProgress) {
-          if (isAuthRoute || isSplashRoute) return null;
+          if (isAuthRoute || isSplashRoute || isWelcomeRoute) return null;
           return withRedirect(RoutePaths.splash);
+        }
+
+        final hasCompletedOnboarding = sl<SharedPrefsService>().hasCompletedOnboarding();
+        if (!hasCompletedOnboarding) {
+          if (isWelcomeRoute) return null;
+          return RoutePaths.welcome;
         }
 
         if (!isAuthenticated) {
@@ -99,6 +109,10 @@ class AppRouter {
         GoRoute(
           path: RoutePaths.splash,
           builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.welcome,
+          builder: (context, state) => const WelcomeScreen(),
         ),
         GoRoute(
           path: RoutePaths.signIn,

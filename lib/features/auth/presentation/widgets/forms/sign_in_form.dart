@@ -7,6 +7,7 @@ import '../../../../../core/utils/validators.dart';
 import '../../../../../core/router/route_paths.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
+import '../../../../../core/extensions/l10n_extension.dart';
 
 class SignInForm extends StatefulWidget {
   const SignInForm({
@@ -60,8 +61,8 @@ class _SignInFormState extends State<SignInForm> {
       children: [
         AppFormField(
           controller: _emailController,
-          label: 'Email',
-          hintText: 'you@example.com',
+          label: context.l10n.emailLabel,
+          hintText: context.l10n.emailHint,
           prefixIcon: Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -70,8 +71,8 @@ class _SignInFormState extends State<SignInForm> {
         const SizedBox(height: 24),
         AppFormField(
           controller: _passwordController,
-          label: 'Password',
-          hintText: 'At least 6 characters',
+          label: context.l10n.passwordLabel,
+          hintText: context.l10n.passwordHint,
           prefixIcon: Icons.lock_outline,
           obscureText: _obscurePassword,
           suffixIcon: IconButton(
@@ -99,9 +100,9 @@ class _SignInFormState extends State<SignInForm> {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text(
-              'Forgot Password?',
-              style: TextStyle(
+            child: Text(
+              context.l10n.forgotPassword,
+              style: const TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w500,
                 fontSize: 13,
@@ -111,7 +112,7 @@ class _SignInFormState extends State<SignInForm> {
         ),
         const SizedBox(height: 32),
         AppButton(
-          text: 'Sign In',
+          text: context.l10n.signInTitle,
           isDisabled: !_isButtonEnabled || widget.isAuthLoading,
           onPressed: (_isButtonEnabled && !widget.isAuthLoading)
               ? () {
