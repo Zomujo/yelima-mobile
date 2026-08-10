@@ -33,7 +33,7 @@ class MedicationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = isOverdue
         ? Colors.red.shade300
-        : (isTaken ? const Color(0xFF82C76F) : Colors.transparent);
+        : (isTaken ? const Color(0xFF82C76F) : const Color(0xFFF1F5F9));
     final backgroundColor = isOverdue ? const Color(0xFFFEF2F2) : Colors.white;
     final timeColor = isOverdue ? Colors.red : AppColors.textGrey;
 
@@ -42,7 +42,7 @@ class MedicationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
+        border: Border.all(color: borderColor, width: 1.0),
         boxShadow: [
           if (!isTaken)
             BoxShadow(

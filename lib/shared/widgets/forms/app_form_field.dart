@@ -78,7 +78,11 @@ class AppFormField extends StatelessWidget {
           textCapitalization: textCapitalization,
           validator: validator,
           autovalidateMode: autovalidateMode,
-          style: const TextStyle(color: Color(0xFF1E293B), fontSize: 16),
+          style: TextStyle(
+              color: enabled
+                  ? const Color(0xFF1E293B)
+                  : const Color(0xFF94A3B8), // Slate 400 for disabled
+              fontSize: 16),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: const TextStyle(color: Color(0xFF94A3B8)), // Slate 400
@@ -91,7 +95,8 @@ class AppFormField extends StatelessWidget {
                 : null,
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: Colors.white,
+            fillColor:
+                enabled ? Colors.white : const Color(0xFFF1F5F9), // Slate 100
             contentPadding: EdgeInsets.symmetric(
                 vertical: 16, horizontal: prefixIcon == null ? 16 : 0),
             border: OutlineInputBorder(
@@ -102,6 +107,10 @@ class AppFormField extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0x45B7B3B3)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),

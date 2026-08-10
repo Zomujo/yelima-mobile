@@ -76,7 +76,11 @@ class TodaysMedicationsList extends StatelessWidget {
               onTap: () async {
                 final error = await controller.toggleMedicationStatus(med.id);
                 if (error != null && context.mounted) {
-                  AppSnackBar.showError(context, message: error);
+                  if (error.contains('not yet time')) {
+                    AppSnackBar.showInfo(context, message: error);
+                  } else {
+                    AppSnackBar.showError(context, message: error);
+                  }
                 }
               },
               child: MedicationCard(
@@ -92,7 +96,11 @@ class TodaysMedicationsList extends StatelessWidget {
                 onConfirm: () async {
                   final error = await controller.toggleMedicationStatus(med.id);
                   if (error != null && context.mounted) {
-                    AppSnackBar.showError(context, message: error);
+                    if (error.contains('not yet time')) {
+                      AppSnackBar.showInfo(context, message: error);
+                    } else {
+                      AppSnackBar.showError(context, message: error);
+                    }
                   }
                 },
               ),

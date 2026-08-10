@@ -398,7 +398,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
       localDetail = MedicationMapper.toDetailModel(localMeds.first);
     }
 
-    if (await connectivityService.isConnected && !id.contains('-')) {
+    final hasPending = await localDataSource.hasPendingMutationsForEntity(id);
+
+    if (await connectivityService.isConnected && !id.contains('-') && !hasPending) {
       try {
         final result = await remoteDataSource.getMedicationById(id);
 
