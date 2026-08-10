@@ -1,31 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:yelima/core/constants/app_decoration.dart';
-import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/core/services/shared_prefs_service.dart';
-import 'package:yelima/shared/widgets/layout/app_button.dart';
-import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/injection_container.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
-class AppTutorialService {
-  static final GlobalKey homeMetricsKey = GlobalKey();
-  static final GlobalKey homeAdherenceKey = GlobalKey();
-  static final GlobalKey homeNextStepKey = GlobalKey();
-  static final GlobalKey homeDailyCheckInKey = GlobalKey();
-  static final GlobalKey homeActionCardsKey = GlobalKey();
-  static final GlobalKey medicationsAdherenceKey = GlobalKey();
-  static final GlobalKey medicationsListKey = GlobalKey();
-  static final GlobalKey progressGraphKey = GlobalKey();
-  static final GlobalKey appointmentAskKey = GlobalKey();
-  static final GlobalKey appointmentListKey = GlobalKey();
-  static final GlobalKey appointmentPastListKey = GlobalKey();
-  static final GlobalKey profileAvatarKey = GlobalKey();
+import 'package:yelima/core/utils/app_tutorial_keys.dart';
+import 'package:yelima/core/utils/app_tutorial_target.dart';
 
-  static final GlobalKey logReadingTypeKey = GlobalKey();
-  static final GlobalKey logReadingInputKey = GlobalKey();
-  static final GlobalKey logReadingDateKey = GlobalKey();
-  static final GlobalKey logReadingSaveKey = GlobalKey();
+class AppTutorialService {
 
   static Future<void> showTutorial({
     required BuildContext context,
@@ -58,99 +40,169 @@ class AppTutorialService {
     ).show(context: context, rootOverlay: true);
   }
 
-  static TargetFocus createTarget({
-    required String identify,
-    required GlobalKey key,
-    required String title,
-    required String description,
-    ContentAlign? align,
-    ShapeLightFocus shape = ShapeLightFocus.RRect,
-    double radius = 16.0,
-  }) {
-    ContentAlign computedAlign = ContentAlign.bottom;
+  static Future<void> showHomeTutorial(BuildContext context) async {
+    await showTutorial(
+      context: context,
+      tutorialId: 'home_screen_intro',
+      targets: [
+        AppTutorialTarget.create(
+          identify: 'home_metrics',
+          key: AppTutorialKeys.homeMetricsKey,
+          title: context.l10n.tutorialHomeMetricsTitle,
+          description: context.l10n.tutorialHomeMetricsDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'home_adherence',
+          key: AppTutorialKeys.homeAdherenceKey,
+          title: context.l10n.tutorialMedicationsAdherenceTitle,
+          description: context.l10n.tutorialMedicationsAdherenceDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'home_daily_check_in',
+          key: AppTutorialKeys.homeDailyCheckInKey,
+          title: context.l10n.tutorialHomeDailyCheckInTitle,
+          description: context.l10n.tutorialHomeDailyCheckInDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'home_action_cards',
+          key: AppTutorialKeys.homeActionCardsKey,
+          title: context.l10n.tutorialHomeActionCardsTitle,
+          description: context.l10n.tutorialHomeActionCardsDesc,
+        ),
+      ],
+    );
+  }
 
-    if (align != null) {
-      computedAlign = align;
-    } else {
-      final context = key.currentContext;
-      if (context != null) {
-        final box = context.findRenderObject() as RenderBox?;
-        if (box != null) {
-          final position = box.localToGlobal(Offset.zero);
-          final screenHeight = MediaQuery.of(context).size.height;
-          // Auto-align: if target is in bottom half, show text on top
-          if (position.dy > (screenHeight / 2)) {
-            computedAlign = ContentAlign.top;
-          } else {
-            computedAlign = ContentAlign.bottom;
-          }
-        }
-      }
-    }
+  static Future<void> showMedicationsTutorial(BuildContext context) async {
+    await showTutorial(
+      context: context,
+      tutorialId: 'medications_screen_intro',
+      targets: [
+        AppTutorialTarget.create(
+          identify: 'medications_adherence',
+          key: AppTutorialKeys.medicationsAdherenceKey,
+          title: context.l10n.tutorialMedicationsAdherenceTitle,
+          description: context.l10n.tutorialMedicationsAdherenceDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'medications_list',
+          key: AppTutorialKeys.medicationsListKey,
+          title: context.l10n.tutorialMedicationsListTitle,
+          description: context.l10n.tutorialMedicationsListDesc,
+        ),
+      ],
+    );
+  }
 
-    return TargetFocus(
-      identify: identify,
-      keyTarget: key,
-      shape: shape,
-      radius: radius,
-      contents: [
-        TargetContent(
-          align: computedAlign,
-          builder: (context, controller) {
-            final screenWidth = MediaQuery.of(context).size.width;
-            final isSmallDevice = screenWidth < 360;
+  static Future<void> showAppointmentsTutorial(BuildContext context) async {
+    await showTutorial(
+      context: context,
+      tutorialId: 'appointments_screen_intro',
+      targets: [
+        AppTutorialTarget.create(
+          identify: 'appointments_ask',
+          key: AppTutorialKeys.appointmentAskKey,
+          title: context.l10n.tutorialAppointmentAskTitle,
+          description: context.l10n.tutorialAppointmentAskDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'appointments_list',
+          key: AppTutorialKeys.appointmentListKey,
+          title: context.l10n.tutorialAppointmentListTitle,
+          description: context.l10n.tutorialAppointmentListDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'appointments_past_list',
+          key: AppTutorialKeys.appointmentPastListKey,
+          title: context.l10n.tutorialAppointmentPastListTitle,
+          description: context.l10n.tutorialAppointmentPastListDesc,
+        ),
+      ],
+    );
+  }
 
-            return Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: isSmallDevice ? screenWidth * 0.9 : 400,
-                ),
-                child: Container(
-                  padding: EdgeInsets.all(isSmallDevice ? 16 : 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: AppDecoration.shadowSm,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppText.titleLarge(
-                        title,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(height: 10),
-                      AppText.bodyMedium(
-                        description,
-                        color: Colors.black.withValues(alpha: 0.7),
-                      ),
-                      const SizedBox(height: 20),
-                      OverflowBar(
-                        alignment: MainAxisAlignment.end,
-                        spacing: 10,
-                        overflowSpacing: 10,
-                        children: [
-                          AppButton(
-                            text: context.l10n.skip,
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.grey[600],
-                            onPressed: () => controller.skip(),
-                          ),
-                          AppButton(
-                            text: context.l10n.continueText,
-                            backgroundColor: AppColors.primary,
-                            onPressed: () => controller.next(),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
+  static Future<void> showProgressTutorial(BuildContext context) async {
+    await showTutorial(
+      context: context,
+      tutorialId: 'progress_screen_intro',
+      targets: [
+        AppTutorialTarget.create(
+          identify: 'progress_graph',
+          key: AppTutorialKeys.progressGraphKey,
+          title: context.l10n.tutorialProgressGraphTitle,
+          description: context.l10n.tutorialProgressGraphDesc,
+        ),
+      ],
+    );
+  }
+
+  static Future<void> showLogReadingTutorial(BuildContext context) async {
+    await showTutorial(
+      context: context,
+      tutorialId: 'log_reading_screen',
+      targets: [
+        AppTutorialTarget.create(
+          identify: 'log_reading_type',
+          key: AppTutorialKeys.logReadingTypeKey,
+          title: context.l10n.tutorialLogReadingTypeTitle,
+          description: context.l10n.tutorialLogReadingTypeDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'log_reading_input',
+          key: AppTutorialKeys.logReadingInputKey,
+          title: context.l10n.tutorialLogReadingInputTitle,
+          description: context.l10n.tutorialLogReadingInputDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'log_reading_date',
+          key: AppTutorialKeys.logReadingDateKey,
+          title: context.l10n.tutorialLogReadingDateTitle,
+          description: context.l10n.tutorialLogReadingDateDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'log_reading_save',
+          key: AppTutorialKeys.logReadingSaveKey,
+          title: context.l10n.tutorialLogReadingSaveTitle,
+          description: context.l10n.tutorialLogReadingSaveDesc,
+        ),
+      ],
+    );
+  }
+
+  static Future<void> showProfileTutorial(BuildContext context) async {
+    await showTutorial(
+      context: context,
+      tutorialId: 'profile_screen_intro',
+      targets: [
+        AppTutorialTarget.create(
+          identify: 'profile_avatar',
+          key: AppTutorialKeys.profileAvatarKey,
+          title: context.l10n.tutorialProfileAvatarTitle,
+          description: context.l10n.tutorialProfileAvatarDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'profile_personal_options',
+          key: AppTutorialKeys.profilePersonalOptionsKey,
+          title: context.l10n.tutorialProfilePersonalTitle,
+          description: context.l10n.tutorialProfilePersonalDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'profile_health_summary_options',
+          key: AppTutorialKeys.profileHealthSummaryOptionsKey,
+          title: context.l10n.tutorialProfileHealthTitle,
+          description: context.l10n.tutorialProfileHealthDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'profile_language_options',
+          key: AppTutorialKeys.profileLanguageOptionsKey,
+          title: context.l10n.tutorialProfileLanguageTitle,
+          description: context.l10n.tutorialProfileLanguageDesc,
+        ),
+        AppTutorialTarget.create(
+          identify: 'profile_system_options',
+          key: AppTutorialKeys.profileSystemOptionsKey,
+          title: context.l10n.tutorialProfileSystemTitle,
+          description: context.l10n.tutorialProfileSystemDesc,
         ),
       ],
     );

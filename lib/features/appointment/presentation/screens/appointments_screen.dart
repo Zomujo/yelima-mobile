@@ -10,6 +10,7 @@ import '../controllers/appointment_controller.dart';
 import '../widgets/paginated_appointment_list.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
+import 'package:yelima/core/utils/app_tutorial_keys.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
@@ -24,36 +25,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _showTutorial();
+        AppTutorialService.showAppointmentsTutorial(context);
       }
     });
-  }
-
-  void _showTutorial() {
-    AppTutorialService.showTutorial(
-      context: context,
-      tutorialId: 'appointments_screen_intro',
-      targets: [
-        AppTutorialService.createTarget(
-          identify: 'appointments_ask',
-          key: AppTutorialService.appointmentAskKey,
-          title: context.l10n.tutorialAppointmentAskTitle,
-          description: context.l10n.tutorialAppointmentAskDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'appointments_list',
-          key: AppTutorialService.appointmentListKey,
-          title: context.l10n.tutorialAppointmentListTitle,
-          description: context.l10n.tutorialAppointmentListDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'appointments_past_list',
-          key: AppTutorialService.appointmentPastListKey,
-          title: context.l10n.tutorialAppointmentPastListTitle,
-          description: context.l10n.tutorialAppointmentPastListDesc,
-        ),
-      ],
-    );
   }
 
   @override
@@ -89,7 +63,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               ),
               const SizedBox(height: 24),
               AppButton(
-                key: AppTutorialService.appointmentAskKey,
+                key: AppTutorialKeys.appointmentAskKey,
                 text: context.l10n.askForAppointment,
                 prefixIcon:
                     const Icon(Icons.add, color: Colors.white, size: 20),
@@ -106,7 +80,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               ),
               const SizedBox(height: 16),
               PaginatedAppointmentList(
-                key: AppTutorialService.appointmentListKey,
+                key: AppTutorialKeys.appointmentListKey,
                 state: upcomingState,
                 isPast: false,
                 emptyMessage: context.l10n.noUpcomingAppointments,
@@ -121,7 +95,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               ),
               const SizedBox(height: 16),
               PaginatedAppointmentList(
-                key: AppTutorialService.appointmentPastListKey,
+                key: AppTutorialKeys.appointmentPastListKey,
                 state: pastState,
                 isPast: true,
                 emptyMessage: context.l10n.noPastAppointments,

@@ -13,6 +13,7 @@ import '../../../../core/controllers/locale_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
+import 'package:yelima/core/utils/app_tutorial_keys.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,24 +28,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _showTutorial();
+        AppTutorialService.showProfileTutorial(context);
       }
     });
-  }
-
-  void _showTutorial() {
-    AppTutorialService.showTutorial(
-      context: context,
-      tutorialId: 'profile_screen_intro',
-      targets: [
-        AppTutorialService.createTarget(
-          identify: 'profile_avatar',
-          key: AppTutorialService.profileAvatarKey,
-          title: context.l10n.tutorialProfileAvatarTitle,
-          description: context.l10n.tutorialProfileAvatarDesc,
-        ),
-      ],
-    );
   }
 
   @override
@@ -72,7 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ProfileAvatar(
-                      key: AppTutorialService.profileAvatarKey,
+                      key: AppTutorialKeys.profileAvatarKey,
                     ),
                     const SizedBox(height: 40),
 
@@ -83,6 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         builder: (context, snapshot) {
                           final isOnline = snapshot.data ?? true;
                           return OptionsBlock(
+                            key: AppTutorialKeys.profilePersonalOptionsKey,
                             title: context.l10n.personal,
                             blockItems: [
                               OptionBlockItem(
@@ -104,6 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         }),
 
                     OptionsBlock(
+                      key: AppTutorialKeys.profileHealthSummaryOptionsKey,
                       title: context.l10n.healthSummary,
                       blockItems: [
                         OptionBlockItem(
@@ -115,6 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
 
                     OptionsBlock(
+                      key: AppTutorialKeys.profileLanguageOptionsKey,
                       title: context.l10n.language,
                       blockItems: [
                         OptionBlockItem(
@@ -140,6 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
 
                     OptionsBlock(
+                      key: AppTutorialKeys.profileSystemOptionsKey,
                       title: context.l10n.system,
                       blockItems: [
                         OptionBlockItem(

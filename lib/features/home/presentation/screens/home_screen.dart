@@ -24,42 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _showTutorial();
+        AppTutorialService.showHomeTutorial(context);
       }
     });
-  }
-
-  void _showTutorial() {
-    AppTutorialService.showTutorial(
-      context: context,
-      tutorialId: 'home_screen_intro',
-      targets: [
-        AppTutorialService.createTarget(
-          identify: 'home_metrics',
-          key: AppTutorialService.homeMetricsKey,
-          title: context.l10n.tutorialHomeMetricsTitle,
-          description: context.l10n.tutorialHomeMetricsDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'home_adherence',
-          key: AppTutorialService.homeAdherenceKey,
-          title: context.l10n.tutorialMedicationsAdherenceTitle,
-          description: context.l10n.tutorialMedicationsAdherenceDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'home_daily_check_in',
-          key: AppTutorialService.homeDailyCheckInKey,
-          title: context.l10n.tutorialHomeDailyCheckInTitle,
-          description: context.l10n.tutorialHomeDailyCheckInDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'home_action_cards',
-          key: AppTutorialService.homeActionCardsKey,
-          title: context.l10n.tutorialHomeActionCardsTitle,
-          description: context.l10n.tutorialHomeActionCardsDesc,
-        ),
-      ],
-    );
   }
 
   @override

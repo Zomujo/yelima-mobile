@@ -10,6 +10,7 @@ import '../widgets/blood_glucose_section.dart';
 import '../widgets/blood_pressure_section.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
+import 'package:yelima/core/utils/app_tutorial_keys.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -29,24 +30,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchData();
       if (mounted) {
-        _showTutorial();
+        AppTutorialService.showProgressTutorial(context);
       }
     });
-  }
-
-  void _showTutorial() {
-    AppTutorialService.showTutorial(
-      context: context,
-      tutorialId: 'progress_screen_intro',
-      targets: [
-        AppTutorialService.createTarget(
-          identify: 'progress_graph',
-          key: AppTutorialService.progressGraphKey,
-          title: context.l10n.tutorialProgressGraphTitle,
-          description: context.l10n.tutorialProgressGraphDesc,
-        ),
-      ],
-    );
   }
 
   void _fetchData() {
@@ -106,7 +92,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
             // Blood Pressure Card
             BloodPressureSection(
-              key: AppTutorialService.progressGraphKey,
+              key: AppTutorialKeys.progressGraphKey,
               durationLabel: getDurationLabel(context),
             ),
             const SizedBox(height: 24),

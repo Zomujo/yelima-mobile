@@ -41,42 +41,9 @@ class _ReadingLoggingViewState extends State<_ReadingLoggingView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _showTutorial();
+        AppTutorialService.showLogReadingTutorial(context);
       }
     });
-  }
-
-  void _showTutorial() {
-    AppTutorialService.showTutorial(
-      context: context,
-      tutorialId: 'log_reading_screen',
-      targets: [
-        AppTutorialService.createTarget(
-          identify: 'log_reading_type',
-          key: AppTutorialService.logReadingTypeKey,
-          title: context.l10n.tutorialLogReadingTypeTitle,
-          description: context.l10n.tutorialLogReadingTypeDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'log_reading_input',
-          key: AppTutorialService.logReadingInputKey,
-          title: context.l10n.tutorialLogReadingInputTitle,
-          description: context.l10n.tutorialLogReadingInputDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'log_reading_date',
-          key: AppTutorialService.logReadingDateKey,
-          title: context.l10n.tutorialLogReadingDateTitle,
-          description: context.l10n.tutorialLogReadingDateDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'log_reading_save',
-          key: AppTutorialService.logReadingSaveKey,
-          title: context.l10n.tutorialLogReadingSaveTitle,
-          description: context.l10n.tutorialLogReadingSaveDesc,
-        ),
-      ],
-    );
   }
 
   @override

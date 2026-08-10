@@ -8,7 +8,7 @@ import '../daily_check_in_card.dart';
 import '../action_card.dart';
 import '../report_symptom_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../../core/utils/app_tutorial_service.dart';
+import '../../../../../core/utils/app_tutorial_keys.dart';
 
 class HomeNextStepSection extends StatelessWidget {
   const HomeNextStepSection({super.key});
@@ -29,7 +29,7 @@ class HomeNextStepSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: DailyCheckInCard(
-            key: AppTutorialService.homeDailyCheckInKey,
+            key: AppTutorialKeys.homeDailyCheckInKey,
             onStart: () {
               context.push(RoutePaths.aiChat);
             },
@@ -37,7 +37,7 @@ class HomeNextStepSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Column(
-          key: AppTutorialService.homeActionCardsKey,
+          key: AppTutorialKeys.homeActionCardsKey,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),

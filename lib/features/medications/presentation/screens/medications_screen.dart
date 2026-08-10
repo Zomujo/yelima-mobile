@@ -11,6 +11,7 @@ import '../widgets/medications_dashboard/todays_medications_list.dart';
 import 'all_medicines_screen.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
+import 'package:yelima/core/utils/app_tutorial_keys.dart';
 
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key});
@@ -26,30 +27,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MedicationController>().init();
       if (mounted) {
-        _showTutorial();
+        AppTutorialService.showMedicationsTutorial(context);
       }
     });
-  }
-
-  void _showTutorial() {
-    AppTutorialService.showTutorial(
-      context: context,
-      tutorialId: 'medications_screen_intro',
-      targets: [
-        AppTutorialService.createTarget(
-          identify: 'medications_adherence',
-          key: AppTutorialService.medicationsAdherenceKey,
-          title: context.l10n.tutorialMedicationsAdherenceTitle,
-          description: context.l10n.tutorialMedicationsAdherenceDesc,
-        ),
-        AppTutorialService.createTarget(
-          identify: 'medications_list',
-          key: AppTutorialService.medicationsListKey,
-          title: context.l10n.tutorialMedicationsListTitle,
-          description: context.l10n.tutorialMedicationsListDesc,
-        ),
-      ],
-    );
   }
 
   @override
@@ -108,7 +88,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       shimmer:
                           AppShimmer.box(width: double.infinity, height: 150),
                       child: AdherenceCard(
-                        key: AppTutorialService.medicationsAdherenceKey,
+                        key: AppTutorialKeys.medicationsAdherenceKey,
                         adherence: controller.state.adherence,
                       ),
                     );
@@ -142,7 +122,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
             sliver: Consumer<MedicationController>(
                 builder: (context, controller, child) {
               return TodaysMedicationsList(
-                key: AppTutorialService.medicationsListKey,
+                key: AppTutorialKeys.medicationsListKey,
                 controller: controller,
               );
             }),
