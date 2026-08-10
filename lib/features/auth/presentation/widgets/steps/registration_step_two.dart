@@ -6,6 +6,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../../../../../shared/widgets/forms/app_date_picker_field.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
+import '../../../../../core/extensions/l10n_extension.dart';
 
 class RegistrationStepTwo extends StatefulWidget {
   const RegistrationStepTwo({
@@ -69,15 +70,15 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
       if (!_isEnteringAge && _selectedDate != null) {
         // Form is invalid despite having a date, meaning they are under 18
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('You must be at least 18 years old to register')),
+          SnackBar(
+              content: Text(context.l10n.ageRequirementSnackBar)),
         );
       } else if (_isEnteringAge && _ageController.text.isNotEmpty) {
         final age = int.tryParse(_ageController.text);
         if (age != null && age < 18) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('You must be at least 18 years old to register')),
+            SnackBar(
+                content: Text(context.l10n.ageRequirementSnackBar)),
           );
         }
       }
@@ -118,10 +119,9 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
   @override
   Widget build(BuildContext context) {
     return StepLayout(
-      title: 'When were you born?',
-      subtitle:
-          'We need your date of birth to personalize your care plan. You must be 18 or older.',
-      continueText: _isSubmitting ? 'Saving...' : 'Continue',
+      title: context.l10n.whenWereYouBorn,
+      subtitle: context.l10n.dobSubtitle,
+      continueText: _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
       isContinueEnabled: _isFormValid,
       isSubmitting: _isSubmitting,
       onBack: widget.onBack,
@@ -150,7 +150,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
                               : const Color(0xFFE2E8F0)),
                     ),
                     alignment: Alignment.center,
-                    child: AppText.bodyMedium('Date of Birth',
+                    child: AppText.bodyMedium(context.l10n.dateOfBirthTab,
                         color: !_isEnteringAge
                             ? Colors.white
                             : const Color(0xFF64748B),
@@ -175,7 +175,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
                               : const Color(0xFFE2E8F0)),
                     ),
                     alignment: Alignment.center,
-                    child: AppText.bodyMedium('Enter Age',
+                    child: AppText.bodyMedium(context.l10n.enterAgeTab,
                         color: _isEnteringAge
                             ? Colors.white
                             : const Color(0xFF64748B),
@@ -188,8 +188,8 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
           const SizedBox(height: 32),
           if (!_isEnteringAge)
             AppDatePickerField(
-              label: 'Date of Birth',
-              hintText: '2nd August 1979',
+              label: context.l10n.dateOfBirthLabel,
+              hintText: context.l10n.dobHint,
               isRequired: true,
               initialDate: _selectedDate,
               onDateSelected: (date) {
@@ -201,8 +201,8 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
           else
             AppFormField(
               controller: _ageController,
-              label: 'Age',
-              hintText: 'e.g. 35',
+              label: context.l10n.ageLabel,
+              hintText: context.l10n.enterAgeHint,
               isRequired: true,
               keyboardType: TextInputType.number,
             ),

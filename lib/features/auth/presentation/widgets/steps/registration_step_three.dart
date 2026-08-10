@@ -7,6 +7,7 @@ import '../../../../../shared/utils/app_snackbar.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../condition_selection_card.dart';
+import '../../../../../core/extensions/l10n_extension.dart';
 
 class RegistrationStepThree extends StatefulWidget {
   const RegistrationStepThree({
@@ -42,7 +43,7 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
 
     if (_selectedCondition == null) {
       AppSnackBar.showError(context,
-          message: 'Please select a condition to continue.');
+          message: context.l10n.pleaseSelectCondition);
       return;
     }
 
@@ -74,10 +75,9 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
   @override
   Widget build(BuildContext context) {
     return StepLayout(
-      title: 'What are you living with?',
-      subtitle:
-          'To personalize your medication tracking and provide relevant health insights, please tell us what conditions you are living with.',
-      continueText: _isSubmitting ? 'Completing...' : 'Continue',
+      title: context.l10n.whatAreYouLivingWith,
+      subtitle: context.l10n.healthConditionsSubtitle,
+      continueText: _isSubmitting ? context.l10n.completingText : context.l10n.continueText,
       isContinueEnabled: _hasConsented,
       isSubmitting: _isSubmitting,
       onBack: widget.onBack,
@@ -85,23 +85,23 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
       child: Column(
         children: [
           ConditionSelectionCard(
-            title: 'Hypertension',
-            subtitle: 'High Blood Pressure',
+            title: context.l10n.hypertension,
+            subtitle: context.l10n.highBloodPressure,
             isSelected:
                 _selectedCondition == HealthConditionCategory.hypertension,
             onTap: () => _toggleCondition(HealthConditionCategory.hypertension),
           ),
           const SizedBox(height: 16),
           ConditionSelectionCard(
-            title: 'Diabetes',
-            subtitle: 'Sugars',
+            title: context.l10n.diabetes,
+            subtitle: context.l10n.sugars,
             isSelected: _selectedCondition == HealthConditionCategory.diabetes,
             onTap: () => _toggleCondition(HealthConditionCategory.diabetes),
           ),
           const SizedBox(height: 16),
           ConditionSelectionCard(
-            title: 'Both',
-            subtitle: 'High Blood Pressure and Sugars',
+            title: context.l10n.bothConditions,
+            subtitle: context.l10n.bothConditionsSubtitle,
             isSelected: _selectedCondition == HealthConditionCategory.both,
             onTap: () => _toggleCondition(HealthConditionCategory.both),
           ),
@@ -127,10 +127,10 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: AppText.bodyMedium(
-                  'I consent to Yelima processing my health data for the purposes of managing my care and personalizing my experience.',
-                  color: Color(0xFF475569),
+                  context.l10n.healthDataConsent,
+                  color: const Color(0xFF475569),
                   height: 1.5,
                 ),
               ),

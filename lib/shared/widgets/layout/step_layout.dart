@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/extensions/l10n_extension.dart';
 import 'app_text.dart';
 import 'app_button.dart';
 
@@ -62,7 +63,7 @@ class StepLayout extends StatelessWidget {
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildBackButton(),
+                      _buildBackButton(context),
                       _buildContinueButton(),
                     ],
                   )
@@ -76,7 +77,7 @@ class StepLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildBackButton() {
+  Widget _buildBackButton(BuildContext context) {
     return GestureDetector(
       onTap: isSubmitting ? null : onBack,
       child: Container(
@@ -87,14 +88,14 @@ class StepLayout extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE2E8F0)),
           borderRadius: BorderRadius.circular(28),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.chevron_left, color: Color(0xFF64748B), size: 20),
-            SizedBox(width: 8),
+            const Icon(Icons.chevron_left, color: Color(0xFF64748B), size: 20),
+            const SizedBox(width: 8),
             AppText.bodyLarge(
-              'Back',
+              context.l10n.backText,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF475569),
+              color: const Color(0xFF475569),
             ),
           ],
         ),

@@ -6,6 +6,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/forms/app_dropdown.dart';
+import '../../../../../core/extensions/l10n_extension.dart';
 
 class RegistrationStepOne extends StatefulWidget {
   const RegistrationStepOne({
@@ -75,9 +76,9 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
   @override
   Widget build(BuildContext context) {
     return StepLayout(
-      title: 'Let\'s get to know you',
-      subtitle: 'Please provide your basic information to get started.',
-      continueText: _isSubmitting ? 'Saving...' : 'Continue',
+      title: context.l10n.letsGetToKnowYou,
+      subtitle: context.l10n.provideBasicInfo,
+      continueText: _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
       isContinueEnabled: _isFormValid,
       isSubmitting: _isSubmitting,
       onContinue: _handleContinue,
@@ -86,28 +87,28 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
         children: [
           AppFormField(
             controller: _firstNameController,
-            label: 'First name',
+            label: context.l10n.firstName,
             hintText: "John",
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 24),
           AppFormField(
             controller: _lastNameController,
-            label: 'Last name',
+            label: context.l10n.lastName,
             hintText: "Doe",
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 24),
-          const AppText.labelMedium(
-            'Gender',
+          AppText.labelMedium(
+            context.l10n.genderLabel,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF64748B),
+            color: const Color(0xFF64748B),
           ),
           const SizedBox(height: 8),
           AppDropdown<String>(
             value: _selectedGender,
-            hintText: 'Select Gender',
-            items: const ['Male', 'Female'],
+            hintText: context.l10n.selectGender,
+            items: [context.l10n.male, context.l10n.female],
             itemLabelBuilder: (gender) => gender,
             onChanged: (value) {
               setState(() {
