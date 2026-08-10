@@ -16,6 +16,7 @@ abstract class UserModel with _$UserModel {
     String? gender,
     DateTime? dateOfBirth,
     @Default([]) List<String> conditions,
+    @Default([]) List<String> completedTutorials,
     @Default(false) bool hasConsented,
     @Default(RegistrationStatus.personalDetails)
     RegistrationStatus registrationStatus,
@@ -36,6 +37,7 @@ abstract class UserModel with _$UserModel {
       gender: gender,
       dateOfBirth: dateOfBirth,
       conditions: conditions,
+      completedTutorials: completedTutorials,
       hasConsented: hasConsented,
       registrationStatus: registrationStatus,
       modeOfRegistration: modeOfRegistration,
@@ -53,6 +55,7 @@ abstract class UserModel with _$UserModel {
       gender: entity.gender,
       dateOfBirth: entity.dateOfBirth,
       conditions: entity.conditions,
+      completedTutorials: entity.completedTutorials,
       hasConsented: entity.hasConsented,
       registrationStatus: entity.registrationStatus,
       modeOfRegistration: entity.modeOfRegistration,

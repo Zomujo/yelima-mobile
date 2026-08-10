@@ -22,6 +22,7 @@ mixin _$UserModel {
   String? get gender;
   DateTime? get dateOfBirth;
   List<String> get conditions;
+  List<String> get completedTutorials;
   bool get hasConsented;
   RegistrationStatus get registrationStatus;
   String? get modeOfRegistration;
@@ -53,6 +54,8 @@ mixin _$UserModel {
                 other.dateOfBirth == dateOfBirth) &&
             const DeepCollectionEquality()
                 .equals(other.conditions, conditions) &&
+            const DeepCollectionEquality()
+                .equals(other.completedTutorials, completedTutorials) &&
             (identical(other.hasConsented, hasConsented) ||
                 other.hasConsented == hasConsented) &&
             (identical(other.registrationStatus, registrationStatus) ||
@@ -74,6 +77,7 @@ mixin _$UserModel {
       gender,
       dateOfBirth,
       const DeepCollectionEquality().hash(conditions),
+      const DeepCollectionEquality().hash(completedTutorials),
       hasConsented,
       registrationStatus,
       modeOfRegistration,
@@ -81,7 +85,7 @@ mixin _$UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
+    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
   }
 }
 
@@ -98,6 +102,7 @@ abstract mixin class $UserModelCopyWith<$Res> {
       String? gender,
       DateTime? dateOfBirth,
       List<String> conditions,
+      List<String> completedTutorials,
       bool hasConsented,
       RegistrationStatus registrationStatus,
       String? modeOfRegistration,
@@ -123,6 +128,7 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
     Object? gender = freezed,
     Object? dateOfBirth = freezed,
     Object? conditions = null,
+    Object? completedTutorials = null,
     Object? hasConsented = null,
     Object? registrationStatus = null,
     Object? modeOfRegistration = freezed,
@@ -157,6 +163,10 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
           ? _self.conditions
           : conditions // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      completedTutorials: null == completedTutorials
+          ? _self.completedTutorials
+          : completedTutorials // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       hasConsented: null == hasConsented
           ? _self.hasConsented
           : hasConsented // ignore: cast_nullable_to_non_nullable
@@ -188,11 +198,13 @@ class _UserModel extends UserModel {
       this.gender,
       this.dateOfBirth,
       final List<String> conditions = const [],
+      final List<String> completedTutorials = const [],
       this.hasConsented = false,
       this.registrationStatus = RegistrationStatus.personalDetails,
       this.modeOfRegistration,
       this.createdAt})
       : _conditions = conditions,
+        _completedTutorials = completedTutorials,
         super._();
   factory _UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
@@ -216,6 +228,16 @@ class _UserModel extends UserModel {
     if (_conditions is EqualUnmodifiableListView) return _conditions;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_conditions);
+  }
+
+  final List<String> _completedTutorials;
+  @override
+  @JsonKey()
+  List<String> get completedTutorials {
+    if (_completedTutorials is EqualUnmodifiableListView)
+      return _completedTutorials;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_completedTutorials);
   }
 
   @override
@@ -260,6 +282,8 @@ class _UserModel extends UserModel {
                 other.dateOfBirth == dateOfBirth) &&
             const DeepCollectionEquality()
                 .equals(other._conditions, _conditions) &&
+            const DeepCollectionEquality()
+                .equals(other._completedTutorials, _completedTutorials) &&
             (identical(other.hasConsented, hasConsented) ||
                 other.hasConsented == hasConsented) &&
             (identical(other.registrationStatus, registrationStatus) ||
@@ -281,6 +305,7 @@ class _UserModel extends UserModel {
       gender,
       dateOfBirth,
       const DeepCollectionEquality().hash(_conditions),
+      const DeepCollectionEquality().hash(_completedTutorials),
       hasConsented,
       registrationStatus,
       modeOfRegistration,
@@ -288,7 +313,7 @@ class _UserModel extends UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
+    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
   }
 }
 
@@ -308,6 +333,7 @@ abstract mixin class _$UserModelCopyWith<$Res>
       String? gender,
       DateTime? dateOfBirth,
       List<String> conditions,
+      List<String> completedTutorials,
       bool hasConsented,
       RegistrationStatus registrationStatus,
       String? modeOfRegistration,
@@ -333,6 +359,7 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
     Object? gender = freezed,
     Object? dateOfBirth = freezed,
     Object? conditions = null,
+    Object? completedTutorials = null,
     Object? hasConsented = null,
     Object? registrationStatus = null,
     Object? modeOfRegistration = freezed,
@@ -366,6 +393,10 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
       conditions: null == conditions
           ? _self._conditions
           : conditions // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      completedTutorials: null == completedTutorials
+          ? _self._completedTutorials
+          : completedTutorials // ignore: cast_nullable_to_non_nullable
               as List<String>,
       hasConsented: null == hasConsented
           ? _self.hasConsented

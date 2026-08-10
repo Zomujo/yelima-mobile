@@ -66,6 +66,7 @@ abstract class UserEntity with _$UserEntity {
     String? gender,
     DateTime? dateOfBirth,
     @Default([]) List<String> conditions,
+    @Default([]) List<String> completedTutorials,
     @Default(false) bool hasConsented,
     @Default(RegistrationStatus.personalDetails)
     RegistrationStatus registrationStatus,

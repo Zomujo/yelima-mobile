@@ -11,6 +11,10 @@ class UserProfiles extends Table {
   // Store conditions as JSON string list
   TextColumn get conditionsJson => text().withDefault(const Constant('[]'))();
 
+  // Store completedTutorials as JSON string list
+  TextColumn get completedTutorialsJson =>
+      text().withDefault(const Constant('[]'))();
+
   BoolColumn get hasConsented => boolean().withDefault(const Constant(false))();
   TextColumn get registrationStatus =>
       text().withDefault(const Constant('personalDetails'))();

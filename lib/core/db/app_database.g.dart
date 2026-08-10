@@ -1155,6 +1155,14 @@ class $UserProfilesTable extends UserProfiles
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('[]'));
+  static const VerificationMeta _completedTutorialsJsonMeta =
+      const VerificationMeta('completedTutorialsJson');
+  @override
+  late final GeneratedColumn<String> completedTutorialsJson =
+      GeneratedColumn<String>('completed_tutorials_json', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant('[]'));
   static const VerificationMeta _hasConsentedMeta =
       const VerificationMeta('hasConsented');
   @override
@@ -1194,6 +1202,7 @@ class $UserProfilesTable extends UserProfiles
         gender,
         dateOfBirth,
         conditionsJson,
+        completedTutorialsJson,
         hasConsented,
         registrationStatus,
         modeOfRegistration,
@@ -1244,6 +1253,12 @@ class $UserProfilesTable extends UserProfiles
           conditionsJson.isAcceptableOrUnknown(
               data['conditions_json']!, _conditionsJsonMeta));
     }
+    if (data.containsKey('completed_tutorials_json')) {
+      context.handle(
+          _completedTutorialsJsonMeta,
+          completedTutorialsJson.isAcceptableOrUnknown(
+              data['completed_tutorials_json']!, _completedTutorialsJsonMeta));
+    }
     if (data.containsKey('has_consented')) {
       context.handle(
           _hasConsentedMeta,
@@ -1289,6 +1304,9 @@ class $UserProfilesTable extends UserProfiles
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date_of_birth']),
       conditionsJson: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}conditions_json'])!,
+      completedTutorialsJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}completed_tutorials_json'])!,
       hasConsented: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}has_consented'])!,
       registrationStatus: attachedDatabase.typeMapping.read(
@@ -1314,6 +1332,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
   final String? gender;
   final DateTime? dateOfBirth;
   final String conditionsJson;
+  final String completedTutorialsJson;
   final bool hasConsented;
   final String registrationStatus;
   final String? modeOfRegistration;
@@ -1326,6 +1345,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       this.gender,
       this.dateOfBirth,
       required this.conditionsJson,
+      required this.completedTutorialsJson,
       required this.hasConsented,
       required this.registrationStatus,
       this.modeOfRegistration,
@@ -1348,6 +1368,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       map['date_of_birth'] = Variable<DateTime>(dateOfBirth);
     }
     map['conditions_json'] = Variable<String>(conditionsJson);
+    map['completed_tutorials_json'] = Variable<String>(completedTutorialsJson);
     map['has_consented'] = Variable<bool>(hasConsented);
     map['registration_status'] = Variable<String>(registrationStatus);
     if (!nullToAbsent || modeOfRegistration != null) {
@@ -1375,6 +1396,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           ? const Value.absent()
           : Value(dateOfBirth),
       conditionsJson: Value(conditionsJson),
+      completedTutorialsJson: Value(completedTutorialsJson),
       hasConsented: Value(hasConsented),
       registrationStatus: Value(registrationStatus),
       modeOfRegistration: modeOfRegistration == null && nullToAbsent
@@ -1397,6 +1419,8 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       gender: serializer.fromJson<String?>(json['gender']),
       dateOfBirth: serializer.fromJson<DateTime?>(json['dateOfBirth']),
       conditionsJson: serializer.fromJson<String>(json['conditionsJson']),
+      completedTutorialsJson:
+          serializer.fromJson<String>(json['completedTutorialsJson']),
       hasConsented: serializer.fromJson<bool>(json['hasConsented']),
       registrationStatus:
           serializer.fromJson<String>(json['registrationStatus']),
@@ -1416,6 +1440,8 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       'gender': serializer.toJson<String?>(gender),
       'dateOfBirth': serializer.toJson<DateTime?>(dateOfBirth),
       'conditionsJson': serializer.toJson<String>(conditionsJson),
+      'completedTutorialsJson':
+          serializer.toJson<String>(completedTutorialsJson),
       'hasConsented': serializer.toJson<bool>(hasConsented),
       'registrationStatus': serializer.toJson<String>(registrationStatus),
       'modeOfRegistration': serializer.toJson<String?>(modeOfRegistration),
@@ -1431,6 +1457,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           Value<String?> gender = const Value.absent(),
           Value<DateTime?> dateOfBirth = const Value.absent(),
           String? conditionsJson,
+          String? completedTutorialsJson,
           bool? hasConsented,
           String? registrationStatus,
           Value<String?> modeOfRegistration = const Value.absent(),
@@ -1443,6 +1470,8 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
         gender: gender.present ? gender.value : this.gender,
         dateOfBirth: dateOfBirth.present ? dateOfBirth.value : this.dateOfBirth,
         conditionsJson: conditionsJson ?? this.conditionsJson,
+        completedTutorialsJson:
+            completedTutorialsJson ?? this.completedTutorialsJson,
         hasConsented: hasConsented ?? this.hasConsented,
         registrationStatus: registrationStatus ?? this.registrationStatus,
         modeOfRegistration: modeOfRegistration.present
@@ -1462,6 +1491,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       conditionsJson: data.conditionsJson.present
           ? data.conditionsJson.value
           : this.conditionsJson,
+      completedTutorialsJson: data.completedTutorialsJson.present
+          ? data.completedTutorialsJson.value
+          : this.completedTutorialsJson,
       hasConsented: data.hasConsented.present
           ? data.hasConsented.value
           : this.hasConsented,
@@ -1485,6 +1517,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           ..write('gender: $gender, ')
           ..write('dateOfBirth: $dateOfBirth, ')
           ..write('conditionsJson: $conditionsJson, ')
+          ..write('completedTutorialsJson: $completedTutorialsJson, ')
           ..write('hasConsented: $hasConsented, ')
           ..write('registrationStatus: $registrationStatus, ')
           ..write('modeOfRegistration: $modeOfRegistration, ')
@@ -1502,6 +1535,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       gender,
       dateOfBirth,
       conditionsJson,
+      completedTutorialsJson,
       hasConsented,
       registrationStatus,
       modeOfRegistration,
@@ -1517,6 +1551,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           other.gender == this.gender &&
           other.dateOfBirth == this.dateOfBirth &&
           other.conditionsJson == this.conditionsJson &&
+          other.completedTutorialsJson == this.completedTutorialsJson &&
           other.hasConsented == this.hasConsented &&
           other.registrationStatus == this.registrationStatus &&
           other.modeOfRegistration == this.modeOfRegistration &&
@@ -1531,6 +1566,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
   final Value<String?> gender;
   final Value<DateTime?> dateOfBirth;
   final Value<String> conditionsJson;
+  final Value<String> completedTutorialsJson;
   final Value<bool> hasConsented;
   final Value<String> registrationStatus;
   final Value<String?> modeOfRegistration;
@@ -1544,6 +1580,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     this.gender = const Value.absent(),
     this.dateOfBirth = const Value.absent(),
     this.conditionsJson = const Value.absent(),
+    this.completedTutorialsJson = const Value.absent(),
     this.hasConsented = const Value.absent(),
     this.registrationStatus = const Value.absent(),
     this.modeOfRegistration = const Value.absent(),
@@ -1558,6 +1595,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     this.gender = const Value.absent(),
     this.dateOfBirth = const Value.absent(),
     this.conditionsJson = const Value.absent(),
+    this.completedTutorialsJson = const Value.absent(),
     this.hasConsented = const Value.absent(),
     this.registrationStatus = const Value.absent(),
     this.modeOfRegistration = const Value.absent(),
@@ -1573,6 +1611,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     Expression<String>? gender,
     Expression<DateTime>? dateOfBirth,
     Expression<String>? conditionsJson,
+    Expression<String>? completedTutorialsJson,
     Expression<bool>? hasConsented,
     Expression<String>? registrationStatus,
     Expression<String>? modeOfRegistration,
@@ -1587,6 +1626,8 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       if (gender != null) 'gender': gender,
       if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
       if (conditionsJson != null) 'conditions_json': conditionsJson,
+      if (completedTutorialsJson != null)
+        'completed_tutorials_json': completedTutorialsJson,
       if (hasConsented != null) 'has_consented': hasConsented,
       if (registrationStatus != null) 'registration_status': registrationStatus,
       if (modeOfRegistration != null)
@@ -1604,6 +1645,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       Value<String?>? gender,
       Value<DateTime?>? dateOfBirth,
       Value<String>? conditionsJson,
+      Value<String>? completedTutorialsJson,
       Value<bool>? hasConsented,
       Value<String>? registrationStatus,
       Value<String?>? modeOfRegistration,
@@ -1617,6 +1659,8 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       gender: gender ?? this.gender,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       conditionsJson: conditionsJson ?? this.conditionsJson,
+      completedTutorialsJson:
+          completedTutorialsJson ?? this.completedTutorialsJson,
       hasConsented: hasConsented ?? this.hasConsented,
       registrationStatus: registrationStatus ?? this.registrationStatus,
       modeOfRegistration: modeOfRegistration ?? this.modeOfRegistration,
@@ -1649,6 +1693,10 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     if (conditionsJson.present) {
       map['conditions_json'] = Variable<String>(conditionsJson.value);
     }
+    if (completedTutorialsJson.present) {
+      map['completed_tutorials_json'] =
+          Variable<String>(completedTutorialsJson.value);
+    }
     if (hasConsented.present) {
       map['has_consented'] = Variable<bool>(hasConsented.value);
     }
@@ -1677,6 +1725,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
           ..write('gender: $gender, ')
           ..write('dateOfBirth: $dateOfBirth, ')
           ..write('conditionsJson: $conditionsJson, ')
+          ..write('completedTutorialsJson: $completedTutorialsJson, ')
           ..write('hasConsented: $hasConsented, ')
           ..write('registrationStatus: $registrationStatus, ')
           ..write('modeOfRegistration: $modeOfRegistration, ')
@@ -4903,6 +4952,7 @@ typedef $$UserProfilesTableCreateCompanionBuilder = UserProfilesCompanion
   Value<String?> gender,
   Value<DateTime?> dateOfBirth,
   Value<String> conditionsJson,
+  Value<String> completedTutorialsJson,
   Value<bool> hasConsented,
   Value<String> registrationStatus,
   Value<String?> modeOfRegistration,
@@ -4918,6 +4968,7 @@ typedef $$UserProfilesTableUpdateCompanionBuilder = UserProfilesCompanion
   Value<String?> gender,
   Value<DateTime?> dateOfBirth,
   Value<String> conditionsJson,
+  Value<String> completedTutorialsJson,
   Value<bool> hasConsented,
   Value<String> registrationStatus,
   Value<String?> modeOfRegistration,
@@ -4954,6 +5005,10 @@ class $$UserProfilesTableFilterComposer
 
   ColumnFilters<String> get conditionsJson => $composableBuilder(
       column: $table.conditionsJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get completedTutorialsJson => $composableBuilder(
+      column: $table.completedTutorialsJson,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get hasConsented => $composableBuilder(
@@ -5002,6 +5057,10 @@ class $$UserProfilesTableOrderingComposer
       column: $table.conditionsJson,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get completedTutorialsJson => $composableBuilder(
+      column: $table.completedTutorialsJson,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get hasConsented => $composableBuilder(
       column: $table.hasConsented,
       builder: (column) => ColumnOrderings(column));
@@ -5047,6 +5106,9 @@ class $$UserProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get conditionsJson => $composableBuilder(
       column: $table.conditionsJson, builder: (column) => column);
+
+  GeneratedColumn<String> get completedTutorialsJson => $composableBuilder(
+      column: $table.completedTutorialsJson, builder: (column) => column);
 
   GeneratedColumn<bool> get hasConsented => $composableBuilder(
       column: $table.hasConsented, builder: (column) => column);
@@ -5094,6 +5156,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             Value<String?> gender = const Value.absent(),
             Value<DateTime?> dateOfBirth = const Value.absent(),
             Value<String> conditionsJson = const Value.absent(),
+            Value<String> completedTutorialsJson = const Value.absent(),
             Value<bool> hasConsented = const Value.absent(),
             Value<String> registrationStatus = const Value.absent(),
             Value<String?> modeOfRegistration = const Value.absent(),
@@ -5108,6 +5171,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             gender: gender,
             dateOfBirth: dateOfBirth,
             conditionsJson: conditionsJson,
+            completedTutorialsJson: completedTutorialsJson,
             hasConsented: hasConsented,
             registrationStatus: registrationStatus,
             modeOfRegistration: modeOfRegistration,
@@ -5122,6 +5186,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             Value<String?> gender = const Value.absent(),
             Value<DateTime?> dateOfBirth = const Value.absent(),
             Value<String> conditionsJson = const Value.absent(),
+            Value<String> completedTutorialsJson = const Value.absent(),
             Value<bool> hasConsented = const Value.absent(),
             Value<String> registrationStatus = const Value.absent(),
             Value<String?> modeOfRegistration = const Value.absent(),
@@ -5136,6 +5201,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             gender: gender,
             dateOfBirth: dateOfBirth,
             conditionsJson: conditionsJson,
+            completedTutorialsJson: completedTutorialsJson,
             hasConsented: hasConsented,
             registrationStatus: registrationStatus,
             modeOfRegistration: modeOfRegistration,

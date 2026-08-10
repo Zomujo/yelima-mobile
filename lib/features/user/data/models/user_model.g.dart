@@ -19,6 +19,10 @@ _UserModel _$UserModelFromJson(Map<String, dynamic> json) => _UserModel(
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      completedTutorials: (json['completedTutorials'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       hasConsented: json['hasConsented'] as bool? ?? false,
       registrationStatus: $enumDecodeNullable(
               _$RegistrationStatusEnumMap, json['registrationStatus']) ??
@@ -39,6 +43,7 @@ Map<String, dynamic> _$UserModelToJson(_UserModel instance) =>
       if (instance.dateOfBirth?.toIso8601String() case final value?)
         'dateOfBirth': value,
       'conditions': instance.conditions,
+      'completedTutorials': instance.completedTutorials,
       'hasConsented': instance.hasConsented,
       'registrationStatus':
           _$RegistrationStatusEnumMap[instance.registrationStatus]!,

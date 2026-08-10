@@ -116,6 +116,31 @@ class UserController extends ChangeNotifier with SafeNotifier {
     AppSnackBar.showError(context, message: message);
   }
 
+  /// Marks a tutorial as completed by the user
+  Future<void> markTutorialCompleted(String tutorialId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || state.userEntity == null) return;
+
+    final currentTutorials =
+        List<String>.from(state.userEntity!.completedTutorials);
+    if (currentTutorials.contains(tutorialId)) return;
+
+    currentTutorials.add(tutorialId);
+
+    // Update state immediately for fast UI feedback
+    state = state.copyWith(
+      userEntity: state.userEntity!.copyWith(
+        completedTutorials: currentTutorials,
+      ),
+    );
+
+    // Persist to backend and local DB
+    final data = {
+      'completedTutorials': currentTutorials,
+    };
+    await _repository.updateUserProfile(user.uid, data);
+  }
+
   /// Updates the user's basic information such as name and gender.
   AsyncResponse<void> updateBasicInfo(
     BuildContext context, {

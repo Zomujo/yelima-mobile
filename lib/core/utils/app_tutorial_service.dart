@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:yelima/core/services/shared_prefs_service.dart';
 import 'package:yelima/injection_container.dart';
+import 'package:provider/provider.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 
 import 'package:yelima/core/utils/app_tutorial_keys.dart';
 import 'package:yelima/core/utils/app_tutorial_target.dart';
@@ -16,11 +18,18 @@ class AppTutorialService {
     VoidCallback? onFinish,
     VoidCallback? onSkip,
   }) async {
-    final prefsService = sl<SharedPrefsService>();
-    final bool isCompleted = prefsService.isTutorialCompleted(tutorialId);
-    if (isCompleted) return;
-
     if (!context.mounted) return;
+
+    final userController = context.read<UserController>();
+    final user = userController.userEntity;
+    
+    final prefsService = sl<SharedPrefsService>();
+    final String localKey = '${user?.id}_$tutorialId';
+
+    final bool isCompletedLocally = prefsService.isTutorialCompleted(localKey);
+    final bool isCompletedInProfile = user?.completedTutorials.contains(tutorialId) ?? false;
+
+    if (isCompletedLocally || isCompletedInProfile) return;
 
     TutorialCoachMark(
       targets: targets,
@@ -29,11 +38,13 @@ class AppTutorialService {
       opacityShadow: 0.85,
       hideSkip: true,
       onFinish: () {
-        prefsService.setTutorialCompleted(tutorialId);
+        prefsService.setTutorialCompleted(localKey);
+        userController.markTutorialCompleted(tutorialId);
         onFinish?.call();
       },
       onSkip: () {
-        prefsService.setTutorialCompleted(tutorialId);
+        prefsService.setTutorialCompleted(localKey);
+        userController.markTutorialCompleted(tutorialId);
         onSkip?.call();
         return true;
       },

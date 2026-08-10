@@ -60,6 +60,8 @@ class UserRepositoryImpl implements UserRepository {
               gender: drift.Value(model.gender),
               dateOfBirth: drift.Value(model.dateOfBirth),
               conditionsJson: drift.Value(jsonEncode(model.conditions)),
+              completedTutorialsJson:
+                  drift.Value(jsonEncode(model.completedTutorials)),
               hasConsented: drift.Value(model.hasConsented),
               registrationStatus: drift.Value(model.registrationStatus.name),
               modeOfRegistration: drift.Value(model.modeOfRegistration),
@@ -91,9 +93,14 @@ class UserRepositoryImpl implements UserRepository {
   /// Converts a local DB profile row into a [UserEntity].
   UserEntity _localProfileToEntity(dynamic localProfile) {
     List<String> conditionsList = [];
+    List<String> tutorialsList = [];
     try {
       conditionsList =
           (jsonDecode(localProfile.conditionsJson) as List).cast<String>();
+    } catch (_) {}
+    try {
+      tutorialsList = (jsonDecode(localProfile.completedTutorialsJson) as List)
+          .cast<String>();
     } catch (_) {}
     return UserEntity(
       id: localProfile.id,
@@ -103,6 +110,7 @@ class UserRepositoryImpl implements UserRepository {
       gender: localProfile.gender,
       dateOfBirth: localProfile.dateOfBirth,
       conditions: conditionsList,
+      completedTutorials: tutorialsList,
       hasConsented: localProfile.hasConsented,
       registrationStatus: RegistrationStatus.values.firstWhere(
         (e) => e.name == localProfile.registrationStatus,
@@ -140,6 +148,9 @@ class UserRepositoryImpl implements UserRepository {
             conditionsJson: data.containsKey('conditions')
                 ? drift.Value(jsonEncode(data['conditions']))
                 : drift.Value(currentProfile.conditionsJson),
+            completedTutorialsJson: data.containsKey('completedTutorials')
+                ? drift.Value(jsonEncode(data['completedTutorials']))
+                : drift.Value(currentProfile.completedTutorialsJson),
             hasConsented: data.containsKey('hasConsented')
                 ? drift.Value(data['hasConsented'])
                 : drift.Value(currentProfile.hasConsented),
@@ -167,6 +178,9 @@ class UserRepositoryImpl implements UserRepository {
                 : const drift.Value.absent(),
             conditionsJson: data.containsKey('conditions')
                 ? drift.Value(jsonEncode(data['conditions']))
+                : const drift.Value.absent(),
+            completedTutorialsJson: data.containsKey('completedTutorials')
+                ? drift.Value(jsonEncode(data['completedTutorials']))
                 : const drift.Value.absent(),
             hasConsented: data.containsKey('hasConsented')
                 ? drift.Value(data['hasConsented'])
