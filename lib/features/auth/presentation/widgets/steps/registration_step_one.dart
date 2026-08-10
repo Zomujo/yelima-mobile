@@ -29,6 +29,16 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
   @override
   void initState() {
     super.initState();
+    
+    final user = context.read<UserController>().userEntity;
+    if (user != null) {
+      _firstNameController.text = user.firstName ?? '';
+      _lastNameController.text = user.lastName ?? '';
+      if (user.gender != null && user.gender!.isNotEmpty) {
+        _selectedGender = user.gender;
+      }
+    }
+
     _firstNameController.addListener(() => setState(() {}));
     _lastNameController.addListener(() => setState(() {}));
   }

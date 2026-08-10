@@ -31,6 +31,13 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
   @override
   void initState() {
     super.initState();
+    
+    final user = context.read<UserController>().userEntity;
+    if (user != null && user.dateOfBirth != null) {
+      _selectedDate = user.dateOfBirth;
+      _isEnteringAge = false;
+    }
+
     _ageController.addListener(() {
       if (_isEnteringAge) setState(() {});
     });

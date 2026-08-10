@@ -28,6 +28,23 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
   bool _hasConsented = false;
   bool _isSubmitting = false;
 
+  @override
+  void initState() {
+    super.initState();
+    final user = context.read<UserController>().userEntity;
+    if (user != null) {
+      if (user.conditions.contains('hypertension') && user.conditions.contains('diabetes')) {
+        _selectedCondition = HealthConditionCategory.both;
+      } else if (user.conditions.contains('hypertension')) {
+        _selectedCondition = HealthConditionCategory.hypertension;
+      } else if (user.conditions.contains('diabetes')) {
+        _selectedCondition = HealthConditionCategory.diabetes;
+      }
+      
+      _hasConsented = user.hasConsented;
+    }
+  }
+
   void _toggleCondition(HealthConditionCategory condition) {
     setState(() {
       if (_selectedCondition == condition) {
