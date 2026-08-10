@@ -8,6 +8,7 @@ import '../../../../../shared/widgets/modals/custom_calendar_modal.dart';
 import '../../../../../shared/widgets/forms/app_dropdown.dart';
 import '../../controllers/reading_logging_controller.dart';
 import '../../../../../core/utils/app_tutorial_keys.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingLoggingForm extends StatelessWidget {
   const ReadingLoggingForm({super.key});
@@ -36,12 +37,12 @@ class ReadingLoggingForm extends StatelessWidget {
                     builder: (context, vitalSubType, child) {
                       return AppDropdown<String>(
                         value: vitalSubType,
-                        hintText: 'Measurement Context',
+                        hintText: context.l10n.measurementContext,
                         items: const ['fasting', 'postprandial', 'random'],
                         itemLabelBuilder: (val) {
-                          if (val == 'fasting') return 'Fasting';
-                          if (val == 'postprandial') return 'Post-Meal';
-                          if (val == 'random') return 'Random';
+                          if (val == 'fasting') return context.l10n.fasting;
+                          if (val == 'postprandial') return context.l10n.postMeal;
+                          if (val == 'random') return context.l10n.randomReading;
                           return val;
                         },
                         onChanged: (value) {

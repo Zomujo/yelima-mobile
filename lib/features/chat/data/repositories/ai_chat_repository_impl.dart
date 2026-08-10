@@ -264,7 +264,7 @@ class AiChatRepositoryImpl
 
         final messagesToKeep =
             _getPendingAndFailedLocalMessages(localMessages, remoteMessages);
-        _mergeAudioUrlsFromLocal(remoteMessages, localMessages);
+        _mergeLocalDataIntoRemote(remoteMessages, localMessages);
         messagesToKeep
             .addAll(_getOldLocalMessages(localMessages, remoteMessages));
 
@@ -310,7 +310,7 @@ class AiChatRepositoryImpl
     return messagesToKeep;
   }
 
-  void _mergeAudioUrlsFromLocal(
+  void _mergeLocalDataIntoRemote(
       List<AiChatMessage> remoteMessages, List<AiChatMessage> localMessages) {
     for (int i = 0; i < remoteMessages.length; i++) {
       final remoteMsg = remoteMessages[i];
@@ -320,10 +320,11 @@ class AiChatRepositoryImpl
               (m.localChatId != null && m.localChatId == remoteMsg.localChatId))
           .firstOrNull;
 
-      if (localMsg != null && localMsg.type == MessageType.audio) {
+      if (localMsg != null) {
         remoteMessages[i] = remoteMsg.copyWith(
-          type: MessageType.audio,
+          type: localMsg.type == MessageType.audio ? MessageType.audio : remoteMsg.type,
           audioUrl: remoteMsg.audioUrl ?? localMsg.audioUrl,
+          suggestions: remoteMsg.suggestions.isEmpty ? localMsg.suggestions : remoteMsg.suggestions,
         );
       }
     }

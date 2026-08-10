@@ -118,8 +118,12 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
           AppDropdown<String>(
             value: _selectedGender,
             hintText: context.l10n.selectGender,
-            items: [context.l10n.male, context.l10n.female],
-            itemLabelBuilder: (gender) => gender,
+            items: const ['Male', 'Female'],
+            itemLabelBuilder: (gender) {
+              if (gender == 'Male') return context.l10n.male;
+              if (gender == 'Female') return context.l10n.female;
+              return gender;
+            },
             onChanged: (value) {
               setState(() {
                 _selectedGender = value;
