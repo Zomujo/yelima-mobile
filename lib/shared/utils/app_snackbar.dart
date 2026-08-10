@@ -109,7 +109,7 @@ class AppSnackBar {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF3B82F6), // Blue 500
+          backgroundColor: const Color(0xFF1E3A8A), // Deep Blue
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

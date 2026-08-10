@@ -22,6 +22,13 @@ class StartupStatus {
 }
 
 class AppStartupService extends ValueNotifier<StartupStatus> {
+  bool isAnimationComplete = false;
+
+  void markAnimationComplete() {
+    isAnimationComplete = true;
+    notifyListeners();
+  }
+
   AppStartupService() : super(StartupStatus(phase: StartupPhase.idle));
 
   Future<void> start() async {

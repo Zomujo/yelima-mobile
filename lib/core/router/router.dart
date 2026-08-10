@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/user/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../features/user/presentation/controllers/user_controller.dart';
+import '../services/app_startup_service.dart';
 import '../../shared/screens/splash_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
@@ -38,7 +39,8 @@ class AppRouter {
     return GoRouter(
       navigatorKey: rootNavigatorKey,
       initialLocation: RoutePaths.splash,
-      refreshListenable: Listenable.merge([authController, userController]),
+      refreshListenable: Listenable.merge(
+          [authController, userController, sl<AppStartupService>()]),
       observers: [MonitoringService.instance.analyticsObserver],
       redirect: (context, state) {
         final isInitialized =
@@ -71,8 +73,11 @@ class AppRouter {
           return '$path?redirect=${Uri.encodeComponent(intendedPath)}';
         }
 
+        final isSplashAnimationComplete =
+            sl<AppStartupService>().isAnimationComplete;
+
         // ── Still initializing or syncing profile → hold navigation ──
-        if (!isInitialized || isSyncInProgress) {
+        if (!isInitialized || isSyncInProgress || !isSplashAnimationComplete) {
           if (isAuthRoute || isSplashRoute || isWelcomeRoute) return null;
           return withRedirect(RoutePaths.splash);
         }
