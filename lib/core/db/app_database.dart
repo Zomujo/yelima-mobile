@@ -57,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration {
@@ -120,6 +120,9 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 15) {
           await m.addColumn(vitalHistories, vitalHistories.vitalSubType);
+        }
+        if (from < 16) {
+          await m.addColumn(userProfiles, userProfiles.completedTutorialsJson);
         }
       },
     );

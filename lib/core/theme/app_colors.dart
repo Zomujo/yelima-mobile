@@ -45,13 +45,13 @@ class AppColors {
     end: Alignment.topRight,
     colors: [
       Color(0x92CCFEFC),
-      Color(0xFFFFFFFF),
+      Color(0xFFFDFAF4),
       Color(0xBCFFF5E2),
     ],
     stops: [
-      0.17,
-      0.34,
-      0.66,
+      0.0,
+      0.5,
+      1.0,
     ],
   );
 }

@@ -101,48 +101,89 @@ class _SplashScreenState extends State<SplashScreen>
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFFAF9F6),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Image(
-                image: AppImages.logoPng,
-                height: 280,
-                width: 280,
-                fit: BoxFit.fill,
+        body: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Image(
+                    image: AppImages.logoPng,
+                    height: 280,
+                    width: 280,
+                    fit: BoxFit.fill,
+                  )
+                      .animate(controller: _controller)
+                      .fadeIn(duration: 1200.ms, curve: Curves.easeOut)
+                      .scaleXY(
+                          begin: 0.8,
+                          end: 1.0,
+                          duration: 1200.ms,
+                          curve: Curves.easeOutCubic)
+                      .shimmer(
+                          delay: 600.ms,
+                          duration: 1200.ms,
+                          color: Colors.white54),
+                  Transform.translate(
+                    offset: const Offset(0, -30),
+                    child: const Text(
+                      'Yelima',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        letterSpacing: 2.0,
+                        height: 1.1,
+                      ),
+                    )
+                        .animate(controller: _controller)
+                        .fadeIn(duration: 800.ms, delay: 600.ms)
+                        .slideY(
+                            begin: 0.3,
+                            end: 0,
+                            duration: 800.ms,
+                            delay: 600.ms,
+                            curve: Curves.easeOutQuart),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 48,
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'supported by',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'AYA Integrated Healthcare Initiative',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
               )
                   .animate(controller: _controller)
-                  .fadeIn(duration: 1200.ms, curve: Curves.easeOut)
-                  .scaleXY(
-                      begin: 0.8,
-                      end: 1.0,
-                      duration: 1200.ms,
-                      curve: Curves.easeOutCubic)
-                  .shimmer(
-                      delay: 600.ms, duration: 1200.ms, color: Colors.white54),
-              Transform.translate(
-                offset: const Offset(0, -30),
-                child: const Text(
-                  'Yelima',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                    letterSpacing: 2.0,
-                    height: 1.1,
-                  ),
-                )
-                    .animate(controller: _controller)
-                    .fadeIn(duration: 800.ms, delay: 600.ms)
-                    .slideY(
-                        begin: 0.3,
-                        end: 0,
-                        duration: 800.ms,
-                        delay: 600.ms,
-                        curve: Curves.easeOutQuart),
-              ),
-            ],
-          ),
+                  .fadeIn(duration: 800.ms, delay: 1200.ms)
+                  .slideY(
+                      begin: 0.2,
+                      end: 0,
+                      duration: 800.ms,
+                      delay: 1200.ms,
+                      curve: Curves.easeOutQuart),
+            ),
+          ],
         ),
       ),
     );

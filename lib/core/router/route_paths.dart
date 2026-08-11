@@ -11,6 +11,7 @@ class RoutePaths {
   static const String appointments = '/appointments';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
+  static const String symptoms = '/symptoms';
   static const String healthProfile = '/conditions';
   static const String medications = '/medications';
   static const String medicineDetails = '/medications/:id';

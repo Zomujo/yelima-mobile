@@ -18,6 +18,7 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/health_conditions/presentation/screens/health_profile_screen.dart';
+import '../../features/symptoms/presentation/screens/all_symptoms_screen.dart';
 import '../../features/medications/presentation/screens/medications_screen.dart';
 import '../../features/medications/presentation/screens/add_medication_screen.dart';
 import '../../features/medications/presentation/screens/medicine_details_screen.dart';
@@ -169,6 +170,10 @@ class AppRouter {
         GoRoute(
           path: RoutePaths.healthProfile,
           builder: (context, state) => const HealthProfileScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.symptoms,
+          builder: (context, state) => const AllSymptomsScreen(),
         ),
         ShellRoute(
           navigatorKey: shellNavigatorKey,

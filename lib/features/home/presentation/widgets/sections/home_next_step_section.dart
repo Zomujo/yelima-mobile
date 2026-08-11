@@ -6,7 +6,6 @@ import '../../../../../core/constants/app_images.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../daily_check_in_card.dart';
 import '../action_card.dart';
-import '../report_symptom_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../core/utils/app_tutorial_keys.dart';
 
@@ -50,7 +49,7 @@ class HomeNextStepSection extends StatelessWidget {
                       bgImagePath: AppImages.medicineBgIcon.assetName,
                       backgroundColor: const Color(0xFF6750A4),
                       onTap: () {
-                        ReportSymptomModal.show(context);
+                        context.push(RoutePaths.symptoms);
                       },
                     ),
                   ),
