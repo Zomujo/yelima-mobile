@@ -5,6 +5,8 @@ import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../../../../shared/widgets/modals/app_modal.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:provider/provider.dart';
+import '../../../symptoms/presentation/controllers/symptoms_controller.dart';
 
 class ReportSymptomModal extends StatefulWidget {
   const ReportSymptomModal({super.key});
@@ -40,12 +42,17 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
       });
     }
 
-    // Simulate network request
-    await Future.delayed(const Duration(seconds: 1));
+    // Submit via backend
+    await context.read<SymptomsController>().createSymptom(context, note);
 
     if (!mounted) return;
 
-    context.showSuccessSnackBar(context.l10n.symptomReportedSuccess);
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+
     context.removeModal();
   }
 

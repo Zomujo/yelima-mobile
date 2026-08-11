@@ -10,6 +10,7 @@ import 'features/home/home_injection.dart';
 import 'features/medications/medications_injection.dart';
 import 'features/appointment/appointment_injection.dart';
 import 'features/reading_logging/reading_logging_injection.dart';
+import 'features/symptoms/symptoms_injection.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/shared_prefs_service.dart';
@@ -35,6 +36,7 @@ Future<void> init() async {
   initMedications(sl);
   initAppointment(sl);
   initReadingLogging(sl);
+  initSymptoms();
 
   // Wait for async singletons if any
   // await sl.allReady();

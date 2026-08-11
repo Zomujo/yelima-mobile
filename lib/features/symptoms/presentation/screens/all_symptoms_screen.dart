@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../home/presentation/widgets/report_symptom_modal.dart';
+import '../controllers/symptoms_controller.dart';
 import '../widgets/symptom_card.dart';
 
 class AllSymptomsScreen extends StatefulWidget {
@@ -13,19 +15,20 @@ class AllSymptomsScreen extends StatefulWidget {
 }
 
 class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
-  // Mock data for UI presentation
-  final Map<String, List<String>> _mockSymptoms = {
-    'Yesterday': [
-      'I feel a slight headache after taking my medication today.',
-      'I feel a slight headache after taking my BP medication today.',
-    ],
-    '10th July 2026': [
-      'I feel a slight headache after taking my medication today. I had not taken any food yet. I took just the BP medication. I have taken a pain killer, yet I can still feel it.',
-    ],
-  };
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SymptomsController>().fetchSymptoms();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.watch<SymptomsController>();
+    final state = controller.state;
+    final groupedSymptoms = controller.groupedSymptoms;
+
     return Scaffold(
         body: Container(
       decoration: const BoxDecoration(
@@ -75,30 +78,42 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
 
             // Content List
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: _mockSymptoms.keys.length,
-                itemBuilder: (context, index) {
-                  final dateKey = _mockSymptoms.keys.elementAt(index);
-                  final symptomsList = _mockSymptoms[dateKey]!;
+              child: state.isLoading && !state.isInitialized
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.symptoms.isEmpty
+                      ? const Center(
+                          child: AppText.bodyMedium(
+                            'No symptoms reported yet.',
+                            color: AppColors.textGrey,
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          itemCount: groupedSymptoms.keys.length,
+                          itemBuilder: (context, index) {
+                            final dateKey =
+                                groupedSymptoms.keys.elementAt(index);
+                            final symptomsList = groupedSymptoms[dateKey]!;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8, top: 16),
-                        child: AppText.bodyMedium(
-                          dateKey,
-                          color: AppColors.textGrey,
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(bottom: 8, top: 16),
+                                  child: AppText.bodyMedium(
+                                    dateKey,
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                                ...symptomsList.map((symptom) {
+                                  return SymptomCard(
+                                      content: symptom.description);
+                                }),
+                              ],
+                            );
+                          },
                         ),
-                      ),
-                      ...symptomsList.map((symptom) {
-                        return SymptomCard(content: symptom);
-                      }),
-                    ],
-                  );
-                },
-              ),
             ),
           ],
         ),
