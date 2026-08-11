@@ -4282,6 +4282,237 @@ class AudioCacheCompanion extends UpdateCompanion<AudioCacheData> {
   }
 }
 
+class $SymptomsTable extends Symptoms with TableInfo<$SymptomsTable, Symptom> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SymptomsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _onsetDateMeta =
+      const VerificationMeta('onsetDate');
+  @override
+  late final GeneratedColumn<DateTime> onsetDate = GeneratedColumn<DateTime>(
+      'onset_date', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, description, onsetDate];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'symptoms';
+  @override
+  VerificationContext validateIntegrity(Insertable<Symptom> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('onset_date')) {
+      context.handle(_onsetDateMeta,
+          onsetDate.isAcceptableOrUnknown(data['onset_date']!, _onsetDateMeta));
+    } else if (isInserting) {
+      context.missing(_onsetDateMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Symptom map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Symptom(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      onsetDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}onset_date'])!,
+    );
+  }
+
+  @override
+  $SymptomsTable createAlias(String alias) {
+    return $SymptomsTable(attachedDatabase, alias);
+  }
+}
+
+class Symptom extends DataClass implements Insertable<Symptom> {
+  final String id;
+  final String description;
+  final DateTime onsetDate;
+  const Symptom(
+      {required this.id, required this.description, required this.onsetDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['description'] = Variable<String>(description);
+    map['onset_date'] = Variable<DateTime>(onsetDate);
+    return map;
+  }
+
+  SymptomsCompanion toCompanion(bool nullToAbsent) {
+    return SymptomsCompanion(
+      id: Value(id),
+      description: Value(description),
+      onsetDate: Value(onsetDate),
+    );
+  }
+
+  factory Symptom.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Symptom(
+      id: serializer.fromJson<String>(json['id']),
+      description: serializer.fromJson<String>(json['description']),
+      onsetDate: serializer.fromJson<DateTime>(json['onsetDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'description': serializer.toJson<String>(description),
+      'onsetDate': serializer.toJson<DateTime>(onsetDate),
+    };
+  }
+
+  Symptom copyWith({String? id, String? description, DateTime? onsetDate}) =>
+      Symptom(
+        id: id ?? this.id,
+        description: description ?? this.description,
+        onsetDate: onsetDate ?? this.onsetDate,
+      );
+  Symptom copyWithCompanion(SymptomsCompanion data) {
+    return Symptom(
+      id: data.id.present ? data.id.value : this.id,
+      description:
+          data.description.present ? data.description.value : this.description,
+      onsetDate: data.onsetDate.present ? data.onsetDate.value : this.onsetDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Symptom(')
+          ..write('id: $id, ')
+          ..write('description: $description, ')
+          ..write('onsetDate: $onsetDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, description, onsetDate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Symptom &&
+          other.id == this.id &&
+          other.description == this.description &&
+          other.onsetDate == this.onsetDate);
+}
+
+class SymptomsCompanion extends UpdateCompanion<Symptom> {
+  final Value<String> id;
+  final Value<String> description;
+  final Value<DateTime> onsetDate;
+  final Value<int> rowid;
+  const SymptomsCompanion({
+    this.id = const Value.absent(),
+    this.description = const Value.absent(),
+    this.onsetDate = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SymptomsCompanion.insert({
+    required String id,
+    required String description,
+    required DateTime onsetDate,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        description = Value(description),
+        onsetDate = Value(onsetDate);
+  static Insertable<Symptom> custom({
+    Expression<String>? id,
+    Expression<String>? description,
+    Expression<DateTime>? onsetDate,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (description != null) 'description': description,
+      if (onsetDate != null) 'onset_date': onsetDate,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SymptomsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? description,
+      Value<DateTime>? onsetDate,
+      Value<int>? rowid}) {
+    return SymptomsCompanion(
+      id: id ?? this.id,
+      description: description ?? this.description,
+      onsetDate: onsetDate ?? this.onsetDate,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (onsetDate.present) {
+      map['onset_date'] = Variable<DateTime>(onsetDate.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SymptomsCompanion(')
+          ..write('id: $id, ')
+          ..write('description: $description, ')
+          ..write('onsetDate: $onsetDate, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4303,6 +4534,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $AdherenceGlobalDaysTable(this);
   late final $MedicationLogsTable medicationLogs = $MedicationLogsTable(this);
   late final $AudioCacheTable audioCache = $AudioCacheTable(this);
+  late final $SymptomsTable symptoms = $SymptomsTable(this);
   late final Index idxVitalHistoriesTypeDate = Index(
       'idx_vital_histories_type_date',
       'CREATE INDEX idx_vital_histories_type_date ON vital_histories (vital_type, recorded_at)');
@@ -4329,6 +4561,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       MedicationsDao(this as AppDatabase);
   late final AdherenceDao adherenceDao = AdherenceDao(this as AppDatabase);
   late final AudioCacheDao audioCacheDao = AudioCacheDao(this as AppDatabase);
+  late final SymptomsDao symptomsDao = SymptomsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4346,6 +4579,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         adherenceGlobalDays,
         medicationLogs,
         audioCache,
+        symptoms,
         idxVitalHistoriesTypeDate,
         idxAiChatConversationsCreatedAt,
         idxAiChatConversationsLocalChatId,
@@ -6633,6 +6867,141 @@ typedef $$AudioCacheTableProcessedTableManager = ProcessedTableManager<
     ),
     AudioCacheData,
     PrefetchHooks Function()>;
+typedef $$SymptomsTableCreateCompanionBuilder = SymptomsCompanion Function({
+  required String id,
+  required String description,
+  required DateTime onsetDate,
+  Value<int> rowid,
+});
+typedef $$SymptomsTableUpdateCompanionBuilder = SymptomsCompanion Function({
+  Value<String> id,
+  Value<String> description,
+  Value<DateTime> onsetDate,
+  Value<int> rowid,
+});
+
+class $$SymptomsTableFilterComposer
+    extends Composer<_$AppDatabase, $SymptomsTable> {
+  $$SymptomsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get onsetDate => $composableBuilder(
+      column: $table.onsetDate, builder: (column) => ColumnFilters(column));
+}
+
+class $$SymptomsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SymptomsTable> {
+  $$SymptomsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get onsetDate => $composableBuilder(
+      column: $table.onsetDate, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SymptomsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SymptomsTable> {
+  $$SymptomsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get onsetDate =>
+      $composableBuilder(column: $table.onsetDate, builder: (column) => column);
+}
+
+class $$SymptomsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SymptomsTable,
+    Symptom,
+    $$SymptomsTableFilterComposer,
+    $$SymptomsTableOrderingComposer,
+    $$SymptomsTableAnnotationComposer,
+    $$SymptomsTableCreateCompanionBuilder,
+    $$SymptomsTableUpdateCompanionBuilder,
+    (Symptom, BaseReferences<_$AppDatabase, $SymptomsTable, Symptom>),
+    Symptom,
+    PrefetchHooks Function()> {
+  $$SymptomsTableTableManager(_$AppDatabase db, $SymptomsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SymptomsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SymptomsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SymptomsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> description = const Value.absent(),
+            Value<DateTime> onsetDate = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SymptomsCompanion(
+            id: id,
+            description: description,
+            onsetDate: onsetDate,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String description,
+            required DateTime onsetDate,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SymptomsCompanion.insert(
+            id: id,
+            description: description,
+            onsetDate: onsetDate,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SymptomsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SymptomsTable,
+    Symptom,
+    $$SymptomsTableFilterComposer,
+    $$SymptomsTableOrderingComposer,
+    $$SymptomsTableAnnotationComposer,
+    $$SymptomsTableCreateCompanionBuilder,
+    $$SymptomsTableUpdateCompanionBuilder,
+    (Symptom, BaseReferences<_$AppDatabase, $SymptomsTable, Symptom>),
+    Symptom,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6661,4 +7030,6 @@ class $AppDatabaseManager {
       $$MedicationLogsTableTableManager(_db, _db.medicationLogs);
   $$AudioCacheTableTableManager get audioCache =>
       $$AudioCacheTableTableManager(_db, _db.audioCache);
+  $$SymptomsTableTableManager get symptoms =>
+      $$SymptomsTableTableManager(_db, _db.symptoms);
 }

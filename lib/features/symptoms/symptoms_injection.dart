@@ -15,7 +15,11 @@ void initSymptoms() {
 
   // Repository
   sl.registerLazySingleton<SymptomsRepository>(
-    () => SymptomsRepositoryImpl(remoteDataSource: sl()),
+    () => SymptomsRepositoryImpl(
+      remoteDataSource: sl(),
+      connectivityService: sl(),
+      db: sl(),
+    ),
   );
 
   // Controllers
