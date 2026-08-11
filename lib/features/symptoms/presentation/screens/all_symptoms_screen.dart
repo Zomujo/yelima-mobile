@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
+import '../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../home/presentation/widgets/report_symptom_modal.dart';
 import '../controllers/symptoms_controller.dart';
 import '../widgets/symptom_card.dart';
@@ -79,7 +80,25 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
             // Content List
             Expanded(
               child: state.isLoading && !state.isInitialized
-                  ? const Center(child: CircularProgressIndicator())
+                  ? ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      itemCount: 3,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppShimmer.box(width: 100, height: 16),
+                              const SizedBox(height: 16),
+                              AppShimmer.box(height: 64, borderRadius: 16),
+                              const SizedBox(height: 16),
+                              AppShimmer.box(height: 64, borderRadius: 16),
+                            ],
+                          ),
+                        );
+                      },
+                    )
                   : state.symptoms.isEmpty
                       ? const Center(
                           child: AppText.bodyMedium(

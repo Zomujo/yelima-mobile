@@ -27,6 +27,7 @@ Future<void> init() async {
   initCore(sl);
 
   // --- Features ---
+  initSymptoms();
   initAuth(sl);
   initUser(sl);
   initChat(sl);
@@ -36,7 +37,6 @@ Future<void> init() async {
   initMedications(sl);
   initAppointment(sl);
   initReadingLogging(sl);
-  initSymptoms();
 
   // Wait for async singletons if any
   // await sl.allReady();
