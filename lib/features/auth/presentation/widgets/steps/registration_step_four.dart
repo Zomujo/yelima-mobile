@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import '../../../../user/presentation/controllers/user_controller.dart';
 import '../../../../user/domain/repositories/user_repository.dart';
@@ -71,7 +71,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
 
   @override
   Widget build(BuildContext context) {
-    final userRepository = context.read<UserRepository>();
+    final userRepository = GetIt.instance<UserRepository>();
 
     return StepLayout(
       title: context.l10n.selectFacilityTitle,

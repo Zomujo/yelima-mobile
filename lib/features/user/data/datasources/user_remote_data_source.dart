@@ -60,7 +60,7 @@ class UserRemoteDataSource {
     }
 
     final response = await _apiClient.get("/api/v1/client/facilities",
-        queryParameters: queryParams);
-    return FacilityListResponse.fromJson(response.data);
+        queryParameters: queryParams) as Map<String, dynamic>;
+    return FacilityListResponse.fromJson(response['data']);
   }
 }
