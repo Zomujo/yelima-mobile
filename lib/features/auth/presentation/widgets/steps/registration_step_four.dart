@@ -8,6 +8,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
+import '../../../../../core/theme/app_colors.dart';
 
 class RegistrationStepFour extends StatefulWidget {
   const RegistrationStepFour({
@@ -100,11 +101,17 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
               final result = await userRepository.getFacilities(search: query, pageSize: 20);
               return result.fold(
                 (l) => const Iterable<FacilityModel>.empty(),
-                (r) => r.rows,
+                (r) {
+                  if (r.rows.isEmpty) {
+                    return [FacilityModel(id: 'empty_result', name: context.l10n.noFacilitiesFound)];
+                  }
+                  return r.rows;
+                },
               );
             },
             displayStringForOption: (FacilityModel option) => option.name,
             onSelected: (FacilityModel selection) {
+              if (selection.id == 'empty_result') return;
               setState(() {
                 _selectedFacility = selection;
               });
@@ -134,6 +141,18 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                               const Divider(height: 1, color: Color(0xFFE2E8F0)),
                           itemBuilder: (BuildContext context, int index) {
                             final FacilityModel option = options.elementAt(index);
+                            
+                            if (option.id == 'empty_result') {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 16.0),
+                                child: AppText.bodyMedium(
+                                  option.name,
+                                  color: AppColors.textGrey,
+                                ),
+                              );
+                            }
+
                             return InkWell(
                               onTap: () => onSelected(option),
                               borderRadius: BorderRadius.circular(16),

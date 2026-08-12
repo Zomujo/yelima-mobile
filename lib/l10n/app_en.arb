@@ -151,6 +151,7 @@
   "selectFacilitySubtitle": "Search for your registered healthcare facility.",
   "facilityLabel": "Facility",
   "searchFacilityHint": "Search or enter facility name...",
+  "noFacilitiesFound": "No facilities found.",
   "allSymptoms": "All Symptoms",
   "add": "Add",
   "noSymptomsReported": "No symptoms reported yet.",
