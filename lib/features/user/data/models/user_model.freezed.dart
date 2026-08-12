@@ -26,6 +26,7 @@ mixin _$UserModel {
   bool get hasConsented;
   RegistrationStatus get registrationStatus;
   String? get modeOfRegistration;
+  String? get facilityId;
   DateTime? get createdAt;
 
   /// Create a copy of UserModel
@@ -62,6 +63,8 @@ mixin _$UserModel {
                 other.registrationStatus == registrationStatus) &&
             (identical(other.modeOfRegistration, modeOfRegistration) ||
                 other.modeOfRegistration == modeOfRegistration) &&
+            (identical(other.facilityId, facilityId) ||
+                other.facilityId == facilityId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -81,11 +84,12 @@ mixin _$UserModel {
       hasConsented,
       registrationStatus,
       modeOfRegistration,
+      facilityId,
       createdAt);
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
+    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -106,6 +110,7 @@ abstract mixin class $UserModelCopyWith<$Res> {
       bool hasConsented,
       RegistrationStatus registrationStatus,
       String? modeOfRegistration,
+      String? facilityId,
       DateTime? createdAt});
 }
 
@@ -132,6 +137,7 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
     Object? hasConsented = null,
     Object? registrationStatus = null,
     Object? modeOfRegistration = freezed,
+    Object? facilityId = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(_self.copyWith(
@@ -179,6 +185,10 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
           ? _self.modeOfRegistration
           : modeOfRegistration // ignore: cast_nullable_to_non_nullable
               as String?,
+      facilityId: freezed == facilityId
+          ? _self.facilityId
+          : facilityId // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -202,6 +212,7 @@ class _UserModel extends UserModel {
       this.hasConsented = false,
       this.registrationStatus = RegistrationStatus.personalDetails,
       this.modeOfRegistration,
+      this.facilityId,
       this.createdAt})
       : _conditions = conditions,
         _completedTutorials = completedTutorials,
@@ -249,6 +260,8 @@ class _UserModel extends UserModel {
   @override
   final String? modeOfRegistration;
   @override
+  final String? facilityId;
+  @override
   final DateTime? createdAt;
 
   /// Create a copy of UserModel
@@ -290,6 +303,8 @@ class _UserModel extends UserModel {
                 other.registrationStatus == registrationStatus) &&
             (identical(other.modeOfRegistration, modeOfRegistration) ||
                 other.modeOfRegistration == modeOfRegistration) &&
+            (identical(other.facilityId, facilityId) ||
+                other.facilityId == facilityId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -309,11 +324,12 @@ class _UserModel extends UserModel {
       hasConsented,
       registrationStatus,
       modeOfRegistration,
+      facilityId,
       createdAt);
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
+    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -337,6 +353,7 @@ abstract mixin class _$UserModelCopyWith<$Res>
       bool hasConsented,
       RegistrationStatus registrationStatus,
       String? modeOfRegistration,
+      String? facilityId,
       DateTime? createdAt});
 }
 
@@ -363,6 +380,7 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
     Object? hasConsented = null,
     Object? registrationStatus = null,
     Object? modeOfRegistration = freezed,
+    Object? facilityId = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(_UserModel(
@@ -409,6 +427,10 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
       modeOfRegistration: freezed == modeOfRegistration
           ? _self.modeOfRegistration
           : modeOfRegistration // ignore: cast_nullable_to_non_nullable
+              as String?,
+      facilityId: freezed == facilityId
+          ? _self.facilityId
+          : facilityId // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: freezed == createdAt
           ? _self.createdAt

@@ -28,6 +28,7 @@ _UserModel _$UserModelFromJson(Map<String, dynamic> json) => _UserModel(
               _$RegistrationStatusEnumMap, json['registrationStatus']) ??
           RegistrationStatus.personalDetails,
       modeOfRegistration: json['modeOfRegistration'] as String?,
+      facilityId: json['facilityId'] as String?,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -49,6 +50,7 @@ Map<String, dynamic> _$UserModelToJson(_UserModel instance) =>
           _$RegistrationStatusEnumMap[instance.registrationStatus]!,
       if (instance.modeOfRegistration case final value?)
         'modeOfRegistration': value,
+      if (instance.facilityId case final value?) 'facilityId': value,
       if (instance.createdAt?.toIso8601String() case final value?)
         'createdAt': value,
     };
@@ -57,5 +59,6 @@ const _$RegistrationStatusEnumMap = {
   RegistrationStatus.personalDetails: 'personalDetails',
   RegistrationStatus.dob: 'dob',
   RegistrationStatus.healthConditions: 'healthConditions',
+  RegistrationStatus.facilitySelection: 'facilitySelection',
   RegistrationStatus.complete: 'complete',
 };

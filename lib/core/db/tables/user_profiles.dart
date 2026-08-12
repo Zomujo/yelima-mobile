@@ -19,6 +19,7 @@ class UserProfiles extends Table {
   TextColumn get registrationStatus =>
       text().withDefault(const Constant('personalDetails'))();
   TextColumn get modeOfRegistration => text().nullable()();
+  TextColumn get facilityId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable()();
 
   @override

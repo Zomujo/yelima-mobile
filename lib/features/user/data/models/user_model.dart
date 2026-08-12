@@ -21,6 +21,7 @@ abstract class UserModel with _$UserModel {
     @Default(RegistrationStatus.personalDetails)
     RegistrationStatus registrationStatus,
     String? modeOfRegistration,
+    String? facilityId,
     DateTime? createdAt,
   }) = _UserModel;
 
@@ -41,6 +42,7 @@ abstract class UserModel with _$UserModel {
       hasConsented: hasConsented,
       registrationStatus: registrationStatus,
       modeOfRegistration: modeOfRegistration,
+      facilityId: facilityId,
       createdAt: createdAt,
     );
   }
@@ -59,6 +61,7 @@ abstract class UserModel with _$UserModel {
       hasConsented: entity.hasConsented,
       registrationStatus: entity.registrationStatus,
       modeOfRegistration: entity.modeOfRegistration,
+      facilityId: entity.facilityId,
       createdAt: entity.createdAt,
     );
   }

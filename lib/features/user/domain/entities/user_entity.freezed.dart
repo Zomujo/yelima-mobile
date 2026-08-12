@@ -26,6 +26,7 @@ mixin _$UserEntity {
   bool get hasConsented;
   RegistrationStatus get registrationStatus;
   String? get modeOfRegistration; // 'google', 'apple', 'email'
+  String? get facilityId;
   DateTime? get createdAt;
 
   /// Create a copy of UserEntity
@@ -62,6 +63,8 @@ mixin _$UserEntity {
                 other.registrationStatus == registrationStatus) &&
             (identical(other.modeOfRegistration, modeOfRegistration) ||
                 other.modeOfRegistration == modeOfRegistration) &&
+            (identical(other.facilityId, facilityId) ||
+                other.facilityId == facilityId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -81,11 +84,12 @@ mixin _$UserEntity {
       hasConsented,
       registrationStatus,
       modeOfRegistration,
+      facilityId,
       createdAt);
 
   @override
   String toString() {
-    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
+    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -107,6 +111,7 @@ abstract mixin class $UserEntityCopyWith<$Res> {
       bool hasConsented,
       RegistrationStatus registrationStatus,
       String? modeOfRegistration,
+      String? facilityId,
       DateTime? createdAt});
 }
 
@@ -133,6 +138,7 @@ class _$UserEntityCopyWithImpl<$Res> implements $UserEntityCopyWith<$Res> {
     Object? hasConsented = null,
     Object? registrationStatus = null,
     Object? modeOfRegistration = freezed,
+    Object? facilityId = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(_self.copyWith(
@@ -180,6 +186,10 @@ class _$UserEntityCopyWithImpl<$Res> implements $UserEntityCopyWith<$Res> {
           ? _self.modeOfRegistration
           : modeOfRegistration // ignore: cast_nullable_to_non_nullable
               as String?,
+      facilityId: freezed == facilityId
+          ? _self.facilityId
+          : facilityId // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -203,6 +213,7 @@ class _UserEntity extends UserEntity {
       this.hasConsented = false,
       this.registrationStatus = RegistrationStatus.personalDetails,
       this.modeOfRegistration,
+      this.facilityId,
       this.createdAt})
       : _conditions = conditions,
         _completedTutorials = completedTutorials,
@@ -251,6 +262,8 @@ class _UserEntity extends UserEntity {
   final String? modeOfRegistration;
 // 'google', 'apple', 'email'
   @override
+  final String? facilityId;
+  @override
   final DateTime? createdAt;
 
   /// Create a copy of UserEntity
@@ -292,6 +305,8 @@ class _UserEntity extends UserEntity {
                 other.registrationStatus == registrationStatus) &&
             (identical(other.modeOfRegistration, modeOfRegistration) ||
                 other.modeOfRegistration == modeOfRegistration) &&
+            (identical(other.facilityId, facilityId) ||
+                other.facilityId == facilityId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -311,11 +326,12 @@ class _UserEntity extends UserEntity {
       hasConsented,
       registrationStatus,
       modeOfRegistration,
+      facilityId,
       createdAt);
 
   @override
   String toString() {
-    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, createdAt: $createdAt)';
+    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -339,6 +355,7 @@ abstract mixin class _$UserEntityCopyWith<$Res>
       bool hasConsented,
       RegistrationStatus registrationStatus,
       String? modeOfRegistration,
+      String? facilityId,
       DateTime? createdAt});
 }
 
@@ -365,6 +382,7 @@ class __$UserEntityCopyWithImpl<$Res> implements _$UserEntityCopyWith<$Res> {
     Object? hasConsented = null,
     Object? registrationStatus = null,
     Object? modeOfRegistration = freezed,
+    Object? facilityId = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(_UserEntity(
@@ -411,6 +429,10 @@ class __$UserEntityCopyWithImpl<$Res> implements _$UserEntityCopyWith<$Res> {
       modeOfRegistration: freezed == modeOfRegistration
           ? _self.modeOfRegistration
           : modeOfRegistration // ignore: cast_nullable_to_non_nullable
+              as String?,
+      facilityId: freezed == facilityId
+          ? _self.facilityId
+          : facilityId // ignore: cast_nullable_to_non_nullable
               as String?,
       createdAt: freezed == createdAt
           ? _self.createdAt

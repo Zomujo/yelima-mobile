@@ -99,7 +99,6 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
     DateTime finalDob;
     if (_isEnteringAge) {
       final age = int.parse(_ageController.text);
-      // Create a mock DOB so the user is exactly 'age' years old
       finalDob = DateTime(DateTime.now().year - age, 1, 1);
     } else {
       finalDob = _selectedDate!;

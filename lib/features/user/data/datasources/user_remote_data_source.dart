@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/user_model.dart';
+import '../models/facility_model.dart';
 
 class UserRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
@@ -43,5 +44,23 @@ class UserRemoteDataSource {
 
   Future<void> onboardUser(Map<String, dynamic> data) async {
     await _apiClient.post("/api/v1/auth/onboard", data: data);
+  }
+
+  Future<FacilityListResponse> getFacilities({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'pageSize': pageSize,
+    };
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    final response = await _apiClient.get("/api/v1/client/facilities",
+        queryParameters: queryParams);
+    return FacilityListResponse.fromJson(response.data);
   }
 }

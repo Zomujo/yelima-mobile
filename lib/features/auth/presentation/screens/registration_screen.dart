@@ -9,6 +9,7 @@ import '../widgets/registration_app_bar.dart';
 import '../widgets/steps/registration_step_one.dart';
 import '../widgets/steps/registration_step_two.dart';
 import '../widgets/steps/registration_step_three.dart';
+import '../widgets/steps/registration_step_four.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -29,8 +30,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final status = userController.userEntity?.registrationStatus ??
         RegistrationStatus.personalDetails;
 
-    /// Clamp initial page to 0-2 range to prevent out-of-bounds error.
-    final initialPage = status.index.clamp(0, 2);
+    /// Clamp initial page to 0-3 range to prevent out-of-bounds error.
+    final initialPage = status.index.clamp(0, 3);
     _currentPage = ValueNotifier<int>(initialPage);
     _pageController = PageController(initialPage: initialPage);
   }
@@ -38,7 +39,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void _nextStep() {
     final page = (_pageController.page ?? 0).toInt();
 
-    if (page < 2) {
+    if (page < 3) {
       _pageController.nextPage(
         curve: Curves.easeOutExpo,
         duration: const Duration(milliseconds: 300),
@@ -89,7 +90,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               builder: (context, currentPage, _) {
                 return RegistrationAppBar(
                   currentStep: currentPage + 1,
-                  totalSteps: 3,
+                  totalSteps: 4,
                   onClose: () async {
                     final authController = context.read<AuthController>();
                     context.go(RoutePaths
@@ -108,6 +109,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   RegistrationStepTwo(
                       onBack: _previousStep, onContinue: _nextStep),
                   RegistrationStepThree(
+                      onBack: _previousStep, onContinue: _nextStep),
+                  RegistrationStepFour(
                       onBack: _previousStep, onContinue: _nextStep),
                 ],
               ),

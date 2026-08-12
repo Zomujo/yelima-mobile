@@ -1,5 +1,6 @@
 import '../../../../core/utils/custom_types.dart';
 import '../entities/user_entity.dart';
+import '../../data/models/facility_model.dart';
 
 abstract class UserRepository {
   /// Updates specific fields of the user profile in the backend
@@ -16,4 +17,11 @@ abstract class UserRepository {
 
   /// Watches the user profile from the local database
   Stream<UserEntity?> watchUserProfile(String uid);
+
+  /// Gets a paginated list of facilities
+  AsyncResponse<FacilityListResponse> getFacilities({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+  });
 }

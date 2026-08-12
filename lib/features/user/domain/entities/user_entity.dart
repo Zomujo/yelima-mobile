@@ -10,6 +10,8 @@ enum RegistrationStatus {
   dob,
   @JsonValue('healthConditions')
   healthConditions,
+  @JsonValue('facilitySelection')
+  facilitySelection,
   @JsonValue('complete')
   complete
 }
@@ -71,6 +73,7 @@ abstract class UserEntity with _$UserEntity {
     @Default(RegistrationStatus.personalDetails)
     RegistrationStatus registrationStatus,
     String? modeOfRegistration, // 'google', 'apple', 'email'
+    String? facilityId,
     DateTime? createdAt,
   }) = _UserEntity;
 

@@ -7,6 +7,7 @@ import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/utils/custom_types.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/user_repository.dart';
+import '../models/facility_model.dart';
 import '../datasources/user_remote_data_source.dart';
 
 class UserRepositoryImpl implements UserRepository {
@@ -65,6 +66,7 @@ class UserRepositoryImpl implements UserRepository {
               hasConsented: drift.Value(model.hasConsented),
               registrationStatus: drift.Value(model.registrationStatus.name),
               modeOfRegistration: drift.Value(model.modeOfRegistration),
+              facilityId: drift.Value(model.facilityId),
               createdAt: drift.Value(model.createdAt),
             ));
             return right(model.toDomain());
@@ -117,6 +119,7 @@ class UserRepositoryImpl implements UserRepository {
         orElse: () => RegistrationStatus.personalDetails,
       ),
       modeOfRegistration: localProfile.modeOfRegistration,
+      facilityId: localProfile.facilityId,
       createdAt: localProfile.createdAt,
     );
   }
@@ -157,6 +160,9 @@ class UserRepositoryImpl implements UserRepository {
             registrationStatus: data.containsKey('registrationStatus')
                 ? drift.Value(data['registrationStatus'])
                 : drift.Value(currentProfile.registrationStatus),
+            facilityId: data.containsKey('facilityId')
+                ? drift.Value(data['facilityId'])
+                : drift.Value(currentProfile.facilityId),
           );
           await db.userProfilesDao.insertOrUpdateProfile(updatedCompanion);
         } else {
@@ -187,6 +193,9 @@ class UserRepositoryImpl implements UserRepository {
                 : const drift.Value.absent(),
             registrationStatus: data.containsKey('registrationStatus')
                 ? drift.Value(data['registrationStatus'])
+                : const drift.Value.absent(),
+            facilityId: data.containsKey('facilityId')
+                ? drift.Value(data['facilityId'])
                 : const drift.Value.absent(),
           );
           await db.userProfilesDao.insertOrUpdateProfile(newCompanion);
@@ -233,6 +242,28 @@ class UserRepositoryImpl implements UserRepository {
         return right(null);
       },
       operationName: 'UserRepositoryImpl.onboardUser',
+    );
+  }
+
+  @override
+  AsyncResponse<FacilityListResponse> getFacilities({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+  }) {
+    return ExceptionWrapper.runAsync<FacilityListResponse>(
+      () async {
+        if (!await connectivityService.isConnected) {
+          throw const NetworkException();
+        }
+        final result = await remoteDataSource.getFacilities(
+          page: page,
+          pageSize: pageSize,
+          search: search,
+        );
+        return right(result);
+      },
+      operationName: 'UserRepositoryImpl.getFacilities',
     );
   }
 }

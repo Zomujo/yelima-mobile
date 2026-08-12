@@ -1187,6 +1187,12 @@ class $UserProfilesTable extends UserProfiles
   late final GeneratedColumn<String> modeOfRegistration =
       GeneratedColumn<String>('mode_of_registration', aliasedName, true,
           type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _facilityIdMeta =
+      const VerificationMeta('facilityId');
+  @override
+  late final GeneratedColumn<String> facilityId = GeneratedColumn<String>(
+      'facility_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -1206,6 +1212,7 @@ class $UserProfilesTable extends UserProfiles
         hasConsented,
         registrationStatus,
         modeOfRegistration,
+        facilityId,
         createdAt
       ];
   @override
@@ -1277,6 +1284,12 @@ class $UserProfilesTable extends UserProfiles
           modeOfRegistration.isAcceptableOrUnknown(
               data['mode_of_registration']!, _modeOfRegistrationMeta));
     }
+    if (data.containsKey('facility_id')) {
+      context.handle(
+          _facilityIdMeta,
+          facilityId.isAcceptableOrUnknown(
+              data['facility_id']!, _facilityIdMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -1313,6 +1326,8 @@ class $UserProfilesTable extends UserProfiles
           DriftSqlType.string, data['${effectivePrefix}registration_status'])!,
       modeOfRegistration: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}mode_of_registration']),
+      facilityId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}facility_id']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
     );
@@ -1336,6 +1351,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
   final bool hasConsented;
   final String registrationStatus;
   final String? modeOfRegistration;
+  final String? facilityId;
   final DateTime? createdAt;
   const UserProfile(
       {required this.id,
@@ -1349,6 +1365,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       required this.hasConsented,
       required this.registrationStatus,
       this.modeOfRegistration,
+      this.facilityId,
       this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1373,6 +1390,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     map['registration_status'] = Variable<String>(registrationStatus);
     if (!nullToAbsent || modeOfRegistration != null) {
       map['mode_of_registration'] = Variable<String>(modeOfRegistration);
+    }
+    if (!nullToAbsent || facilityId != null) {
+      map['facility_id'] = Variable<String>(facilityId);
     }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
@@ -1402,6 +1422,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       modeOfRegistration: modeOfRegistration == null && nullToAbsent
           ? const Value.absent()
           : Value(modeOfRegistration),
+      facilityId: facilityId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(facilityId),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -1426,6 +1449,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           serializer.fromJson<String>(json['registrationStatus']),
       modeOfRegistration:
           serializer.fromJson<String?>(json['modeOfRegistration']),
+      facilityId: serializer.fromJson<String?>(json['facilityId']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
   }
@@ -1445,6 +1469,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       'hasConsented': serializer.toJson<bool>(hasConsented),
       'registrationStatus': serializer.toJson<String>(registrationStatus),
       'modeOfRegistration': serializer.toJson<String?>(modeOfRegistration),
+      'facilityId': serializer.toJson<String?>(facilityId),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
   }
@@ -1461,6 +1486,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           bool? hasConsented,
           String? registrationStatus,
           Value<String?> modeOfRegistration = const Value.absent(),
+          Value<String?> facilityId = const Value.absent(),
           Value<DateTime?> createdAt = const Value.absent()}) =>
       UserProfile(
         id: id ?? this.id,
@@ -1477,6 +1503,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
         modeOfRegistration: modeOfRegistration.present
             ? modeOfRegistration.value
             : this.modeOfRegistration,
+        facilityId: facilityId.present ? facilityId.value : this.facilityId,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
   UserProfile copyWithCompanion(UserProfilesCompanion data) {
@@ -1503,6 +1530,8 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       modeOfRegistration: data.modeOfRegistration.present
           ? data.modeOfRegistration.value
           : this.modeOfRegistration,
+      facilityId:
+          data.facilityId.present ? data.facilityId.value : this.facilityId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1521,6 +1550,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           ..write('hasConsented: $hasConsented, ')
           ..write('registrationStatus: $registrationStatus, ')
           ..write('modeOfRegistration: $modeOfRegistration, ')
+          ..write('facilityId: $facilityId, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1539,6 +1569,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       hasConsented,
       registrationStatus,
       modeOfRegistration,
+      facilityId,
       createdAt);
   @override
   bool operator ==(Object other) =>
@@ -1555,6 +1586,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           other.hasConsented == this.hasConsented &&
           other.registrationStatus == this.registrationStatus &&
           other.modeOfRegistration == this.modeOfRegistration &&
+          other.facilityId == this.facilityId &&
           other.createdAt == this.createdAt);
 }
 
@@ -1570,6 +1602,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
   final Value<bool> hasConsented;
   final Value<String> registrationStatus;
   final Value<String?> modeOfRegistration;
+  final Value<String?> facilityId;
   final Value<DateTime?> createdAt;
   final Value<int> rowid;
   const UserProfilesCompanion({
@@ -1584,6 +1617,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     this.hasConsented = const Value.absent(),
     this.registrationStatus = const Value.absent(),
     this.modeOfRegistration = const Value.absent(),
+    this.facilityId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1599,6 +1633,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     this.hasConsented = const Value.absent(),
     this.registrationStatus = const Value.absent(),
     this.modeOfRegistration = const Value.absent(),
+    this.facilityId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -1615,6 +1650,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     Expression<bool>? hasConsented,
     Expression<String>? registrationStatus,
     Expression<String>? modeOfRegistration,
+    Expression<String>? facilityId,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -1632,6 +1668,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       if (registrationStatus != null) 'registration_status': registrationStatus,
       if (modeOfRegistration != null)
         'mode_of_registration': modeOfRegistration,
+      if (facilityId != null) 'facility_id': facilityId,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1649,6 +1686,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       Value<bool>? hasConsented,
       Value<String>? registrationStatus,
       Value<String?>? modeOfRegistration,
+      Value<String?>? facilityId,
       Value<DateTime?>? createdAt,
       Value<int>? rowid}) {
     return UserProfilesCompanion(
@@ -1664,6 +1702,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       hasConsented: hasConsented ?? this.hasConsented,
       registrationStatus: registrationStatus ?? this.registrationStatus,
       modeOfRegistration: modeOfRegistration ?? this.modeOfRegistration,
+      facilityId: facilityId ?? this.facilityId,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1706,6 +1745,9 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     if (modeOfRegistration.present) {
       map['mode_of_registration'] = Variable<String>(modeOfRegistration.value);
     }
+    if (facilityId.present) {
+      map['facility_id'] = Variable<String>(facilityId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1729,6 +1771,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
           ..write('hasConsented: $hasConsented, ')
           ..write('registrationStatus: $registrationStatus, ')
           ..write('modeOfRegistration: $modeOfRegistration, ')
+          ..write('facilityId: $facilityId, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -5190,6 +5233,7 @@ typedef $$UserProfilesTableCreateCompanionBuilder = UserProfilesCompanion
   Value<bool> hasConsented,
   Value<String> registrationStatus,
   Value<String?> modeOfRegistration,
+  Value<String?> facilityId,
   Value<DateTime?> createdAt,
   Value<int> rowid,
 });
@@ -5206,6 +5250,7 @@ typedef $$UserProfilesTableUpdateCompanionBuilder = UserProfilesCompanion
   Value<bool> hasConsented,
   Value<String> registrationStatus,
   Value<String?> modeOfRegistration,
+  Value<String?> facilityId,
   Value<DateTime?> createdAt,
   Value<int> rowid,
 });
@@ -5255,6 +5300,9 @@ class $$UserProfilesTableFilterComposer
   ColumnFilters<String> get modeOfRegistration => $composableBuilder(
       column: $table.modeOfRegistration,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get facilityId => $composableBuilder(
+      column: $table.facilityId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -5307,6 +5355,9 @@ class $$UserProfilesTableOrderingComposer
       column: $table.modeOfRegistration,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get facilityId => $composableBuilder(
+      column: $table.facilityId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -5353,6 +5404,9 @@ class $$UserProfilesTableAnnotationComposer
   GeneratedColumn<String> get modeOfRegistration => $composableBuilder(
       column: $table.modeOfRegistration, builder: (column) => column);
 
+  GeneratedColumn<String> get facilityId => $composableBuilder(
+      column: $table.facilityId, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
@@ -5394,6 +5448,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             Value<bool> hasConsented = const Value.absent(),
             Value<String> registrationStatus = const Value.absent(),
             Value<String?> modeOfRegistration = const Value.absent(),
+            Value<String?> facilityId = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -5409,6 +5464,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             hasConsented: hasConsented,
             registrationStatus: registrationStatus,
             modeOfRegistration: modeOfRegistration,
+            facilityId: facilityId,
             createdAt: createdAt,
             rowid: rowid,
           ),
@@ -5424,6 +5480,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             Value<bool> hasConsented = const Value.absent(),
             Value<String> registrationStatus = const Value.absent(),
             Value<String?> modeOfRegistration = const Value.absent(),
+            Value<String?> facilityId = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -5439,6 +5496,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             hasConsented: hasConsented,
             registrationStatus: registrationStatus,
             modeOfRegistration: modeOfRegistration,
+            facilityId: facilityId,
             createdAt: createdAt,
             rowid: rowid,
           ),

@@ -261,6 +261,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Finalizes onboarding by updating the user's health conditions and consent.
+  /// Saves health conditions and transitions to facility selection.
   AsyncResponse<void> updateHealthConditions(
     BuildContext context, {
     required HealthConditionCategory? category,
@@ -271,9 +272,68 @@ class UserController extends ChangeNotifier with SafeNotifier {
       return left('Invalid user state or missing category');
     }
 
-    GlobalAsyncLoader.show(context, message: "Completing profile...");
+    GlobalAsyncLoader.show(context, message: "Saving health conditions...");
 
     final conditionsPayload = category.toBackendPayload;
+
+    final response = await ExceptionWrapper.runAsync<void>(
+      () async {
+        final currentStatusIndex =
+            state.userEntity?.registrationStatus.index ?? 0;
+        final newStatus =
+            currentStatusIndex > RegistrationStatus.facilitySelection.index
+                ? state.userEntity!.registrationStatus
+                : RegistrationStatus.facilitySelection;
+
+        final data = {
+          'conditions': conditionsPayload,
+          'hasConsented': consented,
+          'registrationStatus': newStatus.name,
+        };
+
+        return await _repository.updateUserProfile(user.uid, data);
+      },
+      operationName: 'updateHealthConditions',
+    );
+
+    GlobalAsyncLoader.hide();
+
+    return response.fold(
+      (error) {
+        _showError(context, error);
+        return left(error);
+      },
+      (_) {
+        final currentStatusIndex =
+            state.userEntity?.registrationStatus.index ?? 0;
+        final newStatus =
+            currentStatusIndex > RegistrationStatus.facilitySelection.index
+                ? state.userEntity!.registrationStatus
+                : RegistrationStatus.facilitySelection;
+
+        state = state.copyWith(
+          userEntity: state.userEntity!.copyWith(
+            conditions: conditionsPayload,
+            hasConsented: consented,
+            registrationStatus: newStatus,
+          ),
+        );
+        return right(null);
+      },
+    );
+  }
+
+  /// Finalizes onboarding by updating the user's facility and calling the onboard API.
+  AsyncResponse<void> submitOnboarding(
+    BuildContext context, {
+    required String facilityId,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || state.userEntity == null) {
+      return left('Invalid user state');
+    }
+
+    GlobalAsyncLoader.show(context, message: "Completing profile...");
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
@@ -287,7 +347,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
                   DateTime.now().toUtc().toIso8601String(),
           "age": state.userEntity!.age ?? 0,
           "chronicConditions":
-              conditionsPayload.map((c) => c.toLowerCase()).toList(),
+              state.userEntity!.conditions.map((c) => c.toLowerCase()).toList(),
+          "facilityId": facilityId,
         };
 
         final onboardResult = await _repository.onboardUser(onboardData);
@@ -298,8 +359,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
             final msg = error.message?.toLowerCase() ?? '';
             if (msg.contains('409') || msg.contains('already exists')) {
               final data = {
-                'conditions': conditionsPayload,
-                'hasConsented': consented,
+                'facilityId': facilityId,
                 'registrationStatus': RegistrationStatus.complete.name,
                 'createdAt': DateTime.now().toIso8601String(),
               };
@@ -309,8 +369,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
           },
           (_) async {
             final data = {
-              'conditions': conditionsPayload,
-              'hasConsented': consented,
+              'facilityId': facilityId,
               'registrationStatus': RegistrationStatus.complete.name,
               'createdAt': DateTime.now().toIso8601String(),
             };
@@ -319,7 +378,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
           },
         );
       },
-      operationName: 'updateHealthConditions',
+      operationName: 'submitOnboarding',
     );
 
     GlobalAsyncLoader.hide();
@@ -332,8 +391,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
       (_) {
         state = state.copyWith(
           userEntity: state.userEntity!.copyWith(
-            conditions: conditionsPayload,
-            hasConsented: consented,
+            facilityId: facilityId,
             registrationStatus: RegistrationStatus.complete,
             createdAt: DateTime.now(),
           ),
