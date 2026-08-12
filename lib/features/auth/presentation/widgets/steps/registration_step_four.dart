@@ -33,7 +33,6 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill if needed, but facility might not be available yet.
   }
 
   @override
@@ -77,7 +76,8 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
     return StepLayout(
       title: context.l10n.selectFacilityTitle,
       subtitle: context.l10n.selectFacilitySubtitle,
-      continueText: _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
+      continueText:
+          _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
       isContinueEnabled: _isFormValid,
       isSubmitting: _isSubmitting,
       onContinue: _handleContinue,
@@ -98,12 +98,17 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                 return const Iterable<FacilityModel>.empty();
               }
 
-              final result = await userRepository.getFacilities(search: query, pageSize: 20);
+              final result = await userRepository.getFacilities(
+                  search: query, pageSize: 20);
               return result.fold(
                 (l) => const Iterable<FacilityModel>.empty(),
                 (r) {
                   if (r.rows.isEmpty) {
-                    return [FacilityModel(id: 'empty_result', name: context.l10n.noFacilitiesFound)];
+                    return [
+                      FacilityModel(
+                          id: 'empty_result',
+                          name: context.l10n.noFacilitiesFound)
+                    ];
                   }
                   return r.rows;
                 },
@@ -137,11 +142,12 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                           padding: EdgeInsets.zero,
                           shrinkWrap: true,
                           itemCount: options.length,
-                          separatorBuilder: (context, index) =>
-                              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                          separatorBuilder: (context, index) => const Divider(
+                              height: 1, color: Color(0xFFE2E8F0)),
                           itemBuilder: (BuildContext context, int index) {
-                            final FacilityModel option = options.elementAt(index);
-                            
+                            final FacilityModel option =
+                                options.elementAt(index);
+
                             if (option.id == 'empty_result') {
                               return Padding(
                                 padding: const EdgeInsets.symmetric(

@@ -8,10 +8,10 @@ import '../../../auth/presentation/widgets/logout_modal.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../shared/utils/app_snackbar.dart';
 import '../widgets/profile/profile_avatar.dart';
+import '../widgets/language_picker_modal.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/controllers/locale_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
 import 'package:yelima/core/utils/app_tutorial_keys.dart';
 
@@ -107,22 +107,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: context.l10n.language,
                       blockItems: [
                         OptionBlockItem(
-                          label: '${context.l10n.english} / ${context.l10n.akanTwi}',
+                          label: (() {
+                            final currentLangCode = context.watch<LocaleController>().locale?.languageCode ?? 'en';
+                            if (currentLangCode == 'tw') return context.l10n.akanTwi;
+                            if (currentLangCode == 'ee') return context.l10n.ewe;
+                            if (currentLangCode == 'ga') return context.l10n.ga;
+                            return context.l10n.english;
+                          })(),
                           icon: Iconsax.language_square,
-                          trailing: Switch(
-                            activeColor: AppColors.primary,
-                            value: context.watch<LocaleController>().locale?.languageCode == 'tw',
-                            onChanged: (isTwi) {
-                              context.read<LocaleController>().setLocale(
-                                isTwi ? const Locale('tw') : const Locale('en')
-                              );
-                            },
-                          ),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF64748B)),
                           onTap: () {
-                            final current = context.read<LocaleController>().locale?.languageCode ?? 'en';
-                            context.read<LocaleController>().setLocale(
-                              current == 'tw' ? const Locale('en') : const Locale('tw')
-                            );
+                            LanguagePickerModal.show(context);
                           },
                         ),
                       ],
