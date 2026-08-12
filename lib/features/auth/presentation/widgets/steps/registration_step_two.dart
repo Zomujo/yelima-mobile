@@ -31,7 +31,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
   @override
   void initState() {
     super.initState();
-    
+
     final user = context.read<UserController>().userEntity;
     if (user != null && user.dateOfBirth != null) {
       _selectedDate = user.dateOfBirth;
@@ -77,15 +77,13 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
       if (!_isEnteringAge && _selectedDate != null) {
         // Form is invalid despite having a date, meaning they are under 18
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(context.l10n.ageRequirementSnackBar)),
+          SnackBar(content: Text(context.l10n.ageRequirementSnackBar)),
         );
       } else if (_isEnteringAge && _ageController.text.isNotEmpty) {
         final age = int.tryParse(_ageController.text);
         if (age != null && age < 18) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(context.l10n.ageRequirementSnackBar)),
+            SnackBar(content: Text(context.l10n.ageRequirementSnackBar)),
           );
         }
       }
@@ -128,7 +126,8 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
     return StepLayout(
       title: context.l10n.whenWereYouBorn,
       subtitle: context.l10n.dobSubtitle,
-      continueText: _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
+      continueText:
+          _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
       isContinueEnabled: _isFormValid,
       isSubmitting: _isSubmitting,
       onBack: widget.onBack,
@@ -136,63 +135,6 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    _isEnteringAge = false;
-                    FocusScope.of(context).unfocus();
-                  }),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: !_isEnteringAge
-                          ? AppColors.primary
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                          color: !_isEnteringAge
-                              ? AppColors.primary
-                              : const Color(0xFFE2E8F0)),
-                    ),
-                    alignment: Alignment.center,
-                    child: AppText.bodyMedium(context.l10n.dateOfBirthTab,
-                        color: !_isEnteringAge
-                            ? Colors.white
-                            : const Color(0xFF64748B),
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _isEnteringAge = true),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _isEnteringAge
-                          ? AppColors.primary
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                          color: _isEnteringAge
-                              ? AppColors.primary
-                              : const Color(0xFFE2E8F0)),
-                    ),
-                    alignment: Alignment.center,
-                    child: AppText.bodyMedium(context.l10n.enterAgeTab,
-                        color: _isEnteringAge
-                            ? Colors.white
-                            : const Color(0xFF64748B),
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
           if (!_isEnteringAge)
             AppDatePickerField(
               label: context.l10n.dateOfBirthLabel,
@@ -213,6 +155,27 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
               isRequired: true,
               keyboardType: TextInputType.number,
             ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isEnteringAge = !_isEnteringAge;
+                  FocusScope.of(context).unfocus();
+                });
+              },
+              child: AppText.bodyMedium(
+                _isEnteringAge
+                    ? 'I know my exact Date of Birth'
+                    : 'I don\'t know my exact Date of Birth',
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.underline,
+                decorationColor: AppColors.primary.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
         ],
       ),
     );

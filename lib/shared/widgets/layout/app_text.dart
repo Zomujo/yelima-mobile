@@ -29,6 +29,7 @@ class AppText extends StatelessWidget {
   final FontWeight? fontWeight;
   final bool softWrap;
   final TextDecoration? decoration;
+  final Color? decorationColor;
   final double? letterSpacing;
 
   const AppText(
@@ -43,6 +44,7 @@ class AppText extends StatelessWidget {
     this.fontWeight,
     this.softWrap = true,
     this.decoration,
+    this.decorationColor,
     this.letterSpacing,
   });
 
@@ -57,6 +59,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.displayLarge;
   const AppText.displayMedium(this.text,
@@ -69,6 +72,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.displayMedium;
   const AppText.displaySmall(this.text,
@@ -81,6 +85,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.displaySmall;
 
@@ -95,6 +100,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.headlineLarge;
   const AppText.headlineMedium(this.text,
@@ -107,6 +113,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.headlineMedium;
   const AppText.headlineSmall(this.text,
@@ -119,6 +126,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.headlineSmall;
 
@@ -133,6 +141,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.titleLarge;
   const AppText.titleMedium(this.text,
@@ -145,6 +154,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.titleMedium;
   const AppText.titleSmall(this.text,
@@ -157,6 +167,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.titleSmall;
 
@@ -171,6 +182,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.bodyLarge;
   const AppText.bodyMedium(this.text,
@@ -183,6 +195,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.bodyMedium;
   const AppText.bodySmall(this.text,
@@ -195,6 +208,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.bodySmall;
 
@@ -209,6 +223,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.labelLarge;
   const AppText.labelMedium(this.text,
@@ -221,6 +236,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.labelMedium;
   const AppText.labelSmall(this.text,
@@ -233,6 +249,7 @@ class AppText extends StatelessWidget {
       this.fontWeight,
       this.softWrap = true,
       this.decoration,
+      this.decorationColor,
       this.letterSpacing})
       : variant = AppTextVariant.labelSmall;
 
@@ -283,6 +300,7 @@ class AppText extends StatelessWidget {
         height: height,
         fontWeight: fontWeight,
         decoration: decoration,
+        decorationColor: decorationColor,
         letterSpacing: letterSpacing,
       );
     }

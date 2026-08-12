@@ -40,6 +40,8 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
         await _db.userProfilesDao.clearProfiles();
         await _db.medicationsDao.clearMedications();
         await _db.medicationsDao.clearPreloadedMedications();
+        await _db.symptomsDao.clearSymptoms();
+        await _db.pendingMutationsDao.clearPendingMutations();
       });
       await AudioCacheManager().clearCache();
       AppLogger.i('DatabaseLifecycleHandler: SQLite data successfully wiped.');
