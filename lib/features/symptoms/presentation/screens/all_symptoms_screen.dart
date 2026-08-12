@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
+import '../../../../core/extensions/l10n_extension.dart';
 import '../../../home/presentation/widgets/report_symptom_modal.dart';
 import '../controllers/symptoms_controller.dart';
 import '../widgets/symptom_card.dart';
@@ -49,9 +50,9 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                     child: const Icon(Icons.arrow_back_ios_new, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: AppText.headlineSmall(
-                      'All Symptoms',
+                      context.l10n.allSymptoms,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -66,8 +67,8 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const AppText.bodyMedium(
-                        'Add',
+                      child: AppText.bodyMedium(
+                        context.l10n.add,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -100,9 +101,9 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                       },
                     )
                   : state.symptoms.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: AppText.bodyMedium(
-                            'No symptoms reported yet.',
+                            context.l10n.noSymptomsReported,
                             color: AppColors.textGrey,
                           ),
                         )

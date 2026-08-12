@@ -116,7 +116,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
                 if (value != null &&
                     value.isNotEmpty &&
                     value.trim().length <= 5) {
-                  return 'Please enter more than 5 characters.';
+                  return context.l10n.enterMoreThanFiveChars;
                 }
                 return null;
               },
