@@ -187,6 +187,13 @@ LazyDatabase _openConnection() {
 
     return NativeDatabase.createInBackground(
       file,
+      isolateSetup: () async {
+        if (Platform.isAndroid) {
+          open.overrideFor(OperatingSystem.android, () {
+            return DynamicLibrary.open('libsqlcipher.so');
+          });
+        }
+      },
       setup: (db) {
         db.execute("PRAGMA key = '$encryptionKey';");
       },

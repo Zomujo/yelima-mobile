@@ -25,6 +25,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        context.read<AppointmentController>().initialize();
         AppTutorialService.showAppointmentsTutorial(context);
       }
     });
