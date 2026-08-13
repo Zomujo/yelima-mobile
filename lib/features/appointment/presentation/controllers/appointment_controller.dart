@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../domain/entities/appointment_entity.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../states/appointment_state.dart';
@@ -11,17 +10,13 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   final AppointmentRepository repository;
-
-  StreamSubscription<List<AppointmentEntity>>? _appointmentSubscription;
   int _nearestFetchStamp = 0;
 
   // --------------------------------------------------------------------------
   // |                               Initialization & Lifecycle                |
   // --------------------------------------------------------------------------
 
-  AppointmentController({required this.repository}) {
-    _initSubscription();
-  }
+  AppointmentController({required this.repository});
 
   AppointmentState _state = const AppointmentState();
   AppointmentState get state => _state;
@@ -32,34 +27,8 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     notifyListeners();
   }
 
-  /// Sets up a listener for real-time updates to the local appointments cache.
-  void _initSubscription() {
-    _appointmentSubscription =
-        repository.watchAppointments().listen((appointments) {
-      final now = DateTime.now();
-
-      final upcoming =
-          appointments.where((a) => a.appointmentDate.isAfter(now)).toList();
-      final past =
-          appointments.where((a) => a.appointmentDate.isBefore(now)).toList();
-
-      state = state.copyWith(
-        upcomingState:
-            state.upcomingState.copyWith(items: upcoming, isLoading: false),
-        pastState: state.pastState.copyWith(items: past, isLoading: false),
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _appointmentSubscription?.cancel();
-    super.dispose();
-  }
-
-  /// Initializes the controller by fetching nearest and paginated appointments.
+  /// Initializes the controller by fetching paginated appointments.
   void initialize() {
-    fetchNearestAppointment();
     fetchAppointments(filter: 'upcoming', isRefresh: true);
     fetchAppointments(filter: 'past', isRefresh: true);
   }
@@ -73,8 +42,24 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
 
   Future<void> fetchNearestAppointment() async {
     final stamp = ++_nearestFetchStamp;
-    state = state.copyWith(isNearestLoading: true, nearestError: null);
+    
+    // 1. Instantly display local cache if available
+    final localResult = await repository.getLocalNearestAppointment();
+    localResult.fold(
+      (_) {},
+      (data) {
+        if (data != null) {
+          state = state.copyWith(nearestAppointment: data, isNearestLoading: false);
+        }
+      },
+    );
 
+    // Show loading only if we have no local data
+    if (state.nearestAppointment == null) {
+      state = state.copyWith(isNearestLoading: true, nearestError: null);
+    }
+
+    // 2. Fetch from remote in background
     final result = await repository.getNearestAppointment();
 
     if (stamp != _nearestFetchStamp) return;
@@ -82,7 +67,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     state = result.fold(
       (error) => state.copyWith(isNearestLoading: false, nearestError: error),
       (data) =>
-          state.copyWith(isNearestLoading: false, nearestAppointment: data),
+          state.copyWith(isNearestLoading: false, nearestAppointment: data, nearestError: null),
     );
   }
 
@@ -100,7 +85,28 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
         targetPage ?? (isRefresh ? 1 : currentPaginatedState.page + 1);
 
     if (isRefresh || targetPage != null) {
-      currentPaginatedState = currentPaginatedState.copyWith(isLoading: true);
+      // 1. SWR: Try to load instantly from local DB
+      final localRes = await repository.getLocalAppointments(
+          page: pageToFetch, pageSize: 10, filter: filter);
+          
+      localRes.fold((_) {}, (data) {
+        if (data.rows.isNotEmpty) {
+          currentPaginatedState = currentPaginatedState.copyWith(
+            items: data.rows,
+            isLoading: false,
+            page: data.page,
+            totalPages: data.totalPages,
+            hasNextPage: data.nextPage != null,
+          );
+          _updatePaginatedState(filter, currentPaginatedState);
+        }
+      });
+
+      // Show loading spinner only if local DB was empty
+      if (currentPaginatedState.items.isEmpty) {
+        currentPaginatedState = currentPaginatedState.copyWith(isLoading: true);
+        _updatePaginatedState(filter, currentPaginatedState);
+      }
     } else {
       if (!currentPaginatedState.hasNextPage ||
           currentPaginatedState.isLoading ||
@@ -109,9 +115,8 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
       }
       currentPaginatedState =
           currentPaginatedState.copyWith(isFetchingMore: true);
+      _updatePaginatedState(filter, currentPaginatedState);
     }
-
-    _updatePaginatedState(filter, currentPaginatedState);
 
     final result = await repository.getAppointments(
       page: pageToFetch,

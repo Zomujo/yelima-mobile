@@ -3,14 +3,14 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 
 class ReadingHistoryItem extends StatelessWidget {
   final String date;
-  final String bp;
-  final String sugar;
+  final String vitalName;
+  final String vitalValue;
 
   const ReadingHistoryItem({
     super.key,
     required this.date,
-    required this.bp,
-    required this.sugar,
+    required this.vitalName,
+    required this.vitalValue,
   });
 
   @override
@@ -25,27 +25,13 @@ class ReadingHistoryItem extends StatelessWidget {
         const SizedBox(height: 4),
         Row(
           children: [
-            const AppText.bodyMedium(
-              'BP - ',
+            AppText.bodyMedium(
+              '$vitalName - ',
               fontWeight: FontWeight.bold,
-              color: Color(0xFF475569), // Slate 600
+              color: const Color(0xFF475569), // Slate 600
             ),
             AppText.bodyMedium(
-              bp,
-              color: const Color(0xFF475569),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Row(
-          children: [
-            const AppText.bodyMedium(
-              'Sugar - ',
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF475569),
-            ),
-            AppText.bodyMedium(
-              sugar,
+              vitalValue,
               color: const Color(0xFF475569),
             ),
           ],

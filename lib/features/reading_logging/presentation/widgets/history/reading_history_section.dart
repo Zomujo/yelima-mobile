@@ -129,12 +129,12 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                         "${months[date.month - 1]} ${date.day}, ${date.year}";
                     final typeLower = vital.vitalType.toLowerCase();
                     final isBP = typeLower == 'bloodpressure';
-                    final isSugar = typeLower == 'bloodsugar' || typeLower == 'blood_sugar';
+                    final vitalName = isBP ? 'BP' : 'Sugar';
 
                     return ReadingHistoryItem(
                       date: dateStr,
-                      bp: isBP ? "${vital.value} ${vital.unit}" : "-- mmHg",
-                      sugar: isSugar ? "${vital.value} ${vital.unit}" : "-- mmol/L",
+                      vitalName: vitalName,
+                      vitalValue: "${vital.value} ${vital.unit}",
                     );
                   },
                   childCount: displayVitals.length,

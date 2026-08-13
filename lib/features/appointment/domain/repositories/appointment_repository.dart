@@ -9,11 +9,15 @@ abstract class AppointmentRepository {
     required String filter,
   });
 
-  Stream<List<AppointmentEntity>> watchAppointments();
+  AsyncResponse<AppointmentListResponse> getLocalAppointments({
+    required int page,
+    required int pageSize,
+    required String filter,
+  });
 
   AsyncResponse<AppointmentEntity?> getNearestAppointment();
 
-  AsyncResponse<void> requestAppointment({required String note});
+  AsyncResponse<AppointmentEntity?> getLocalNearestAppointment();
 
-  void invalidateCache();
+  AsyncResponse<void> requestAppointment({required String note});
 }

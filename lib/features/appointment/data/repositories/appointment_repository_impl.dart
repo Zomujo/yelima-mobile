@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:yelima/core/exceptions/exceptions.dart';
 import '../../../../core/services/connectivity_service.dart';
@@ -21,9 +20,6 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     required this.db,
   });
 
-  DateTime? _lastFetchTime;
-  static const Duration _cacheDuration = Duration(minutes: 5);
-
   @override
   AsyncResponse<AppointmentListResponse> getAppointments({
     required int page,
@@ -31,14 +27,6 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     required String filter,
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh && _lastFetchTime != null) {
-      final now = DateTime.now();
-      if (now.difference(_lastFetchTime!) < _cacheDuration) {
-        debugPrint("Skipping remote fetch for Appointments. Cache is fresh.");
-        return _fetchLocalAppointments(page, pageSize, filter);
-      }
-    }
-
     if (await connectivityService.isConnected) {
       try {
         final remoteData = await remoteDataSource.getAppointments(
@@ -70,18 +58,18 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           }
         });
 
-        _lastFetchTime = DateTime.now();
-        return Right(remoteData);
+        return getLocalAppointments(page: page, pageSize: pageSize, filter: filter);
       } catch (e) {
-        return _fetchLocalAppointments(page, pageSize, filter);
+        return getLocalAppointments(page: page, pageSize: pageSize, filter: filter);
       }
     } else {
-      return _fetchLocalAppointments(page, pageSize, filter);
+      return getLocalAppointments(page: page, pageSize: pageSize, filter: filter);
     }
   }
 
-  Future<Either<String, AppointmentListResponse>> _fetchLocalAppointments(
-      int page, int pageSize, String filter) async {
+  @override
+  AsyncResponse<AppointmentListResponse> getLocalAppointments({
+      required int page, required int pageSize, required String filter}) async {
     try {
       final localAppointments = await db.appointmentsDao.getAllAppointments();
       final now = DateTime.now();
@@ -152,15 +140,16 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         }
         return Right(remoteData);
       } catch (e) {
-        return _fetchLocalNearestAppointment();
+        return getLocalNearestAppointment();
       }
     } else {
-      return _fetchLocalNearestAppointment();
+      return getLocalNearestAppointment();
     }
   }
 
-  Future<Either<String, AppointmentEntity?>>
-      _fetchLocalNearestAppointment() async {
+  @override
+  AsyncResponse<AppointmentEntity?>
+      getLocalNearestAppointment() async {
     try {
       final localApts = await db.appointmentsDao.getAllAppointments();
       final now = DateTime.now();
@@ -191,24 +180,6 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Stream<List<AppointmentEntity>> watchAppointments() {
-    return db.appointmentsDao.watchAllAppointments().map((localApts) {
-      return localApts
-          .map((a) => AppointmentEntity(
-                id: a.id,
-                title: a.title,
-                appointmentDate: a.appointmentDate,
-                hostPersonnel: HostPersonnelEntity(
-                  id: a.hostPersonnelId,
-                  userName: a.hostPersonnelUserName,
-                  facility: FacilityEntity(name: a.hostPersonnelFacilityName),
-                ),
-              ))
-          .toList();
-    });
-  }
-
-  @override
   AsyncResponse<void> requestAppointment({required String note}) async {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
       () async {
@@ -217,10 +188,5 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       },
       connectivityService: connectivityService,
     );
-  }
-
-  @override
-  void invalidateCache() {
-    _lastFetchTime = null;
   }
 }
