@@ -5,12 +5,14 @@ class ReadingHistoryItem extends StatelessWidget {
   final String date;
   final String bp;
   final String sugar;
+  final String hr;
 
   const ReadingHistoryItem({
     super.key,
     required this.date,
     required this.bp,
     required this.sugar,
+    required this.hr,
   });
 
   @override
@@ -46,6 +48,20 @@ class ReadingHistoryItem extends StatelessWidget {
             ),
             AppText.bodyMedium(
               sugar,
+              color: const Color(0xFF475569),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            const AppText.bodyMedium(
+              'Heart Rate - ',
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF475569),
+            ),
+            AppText.bodyMedium(
+              hr,
               color: const Color(0xFF475569),
             ),
           ],

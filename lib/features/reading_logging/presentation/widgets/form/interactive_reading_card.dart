@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
 import '../displays/reading_display_card.dart';
 import '../displays/blood_pressure_display.dart';
 import '../displays/sugar_display.dart';
@@ -13,6 +14,16 @@ class InteractiveReadingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ReadingLoggingController>(
       builder: (context, controller, child) {
+        if (controller.state.isInitializing) {
+          return ReadingDisplayCard(
+            child: AppShimmer.box(
+              width: double.infinity,
+              height: 100,
+              borderRadius: 12,
+            ),
+          );
+        }
+
         return ReadingDisplayCard(
           child: InkWell(
             onTap: () {

@@ -31,9 +31,12 @@ class BloodPressureSection extends StatelessWidget {
           onExpand: () => _openFullScreen(context, controller, 'bp'),
           legend: Row(
             children: [
-              ProgressLegendItem(color: const Color(0xFFEF4444), label: context.l10n.systolic),
+              ProgressLegendItem(
+                  color: const Color(0xFFEF4444), label: context.l10n.systolic),
               const SizedBox(width: 16),
-              ProgressLegendItem(color: const Color(0xFF3B82F6), label: context.l10n.diastolic),
+              ProgressLegendItem(
+                  color: const Color(0xFF3B82F6),
+                  label: context.l10n.diastolic),
             ],
           ),
         );

@@ -36,6 +36,7 @@ class BloodGlucoseSection extends StatelessWidget {
 
   String _getLatestGlucose(VitalTrend? data) {
     if (data == null) return '--';
+    if (data.latestValue != null) return data.latestValue!.toStringAsFixed(1);
     final valid = data.values.where((v) => v != null).toList();
     if (valid.isEmpty) return '--';
     return valid.last!.toStringAsFixed(1);

@@ -23,6 +23,7 @@ mixin _$ReadingLoggingState {
   DateTime get selectedDate;
   bool get hasChanged;
   bool get isSaving;
+  bool get isInitializing;
 
   /// Create a copy of ReadingLoggingState
   /// with the given fields replaced by the non-null parameter values.
@@ -52,16 +53,27 @@ mixin _$ReadingLoggingState {
             (identical(other.hasChanged, hasChanged) ||
                 other.hasChanged == hasChanged) &&
             (identical(other.isSaving, isSaving) ||
-                other.isSaving == isSaving));
+                other.isSaving == isSaving) &&
+            (identical(other.isInitializing, isInitializing) ||
+                other.isInitializing == isInitializing));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, selectedTypeIndex, vitalSubType,
-      systolic, diastolic, sugarLevel, selectedDate, hasChanged, isSaving);
+  int get hashCode => Object.hash(
+      runtimeType,
+      selectedTypeIndex,
+      vitalSubType,
+      systolic,
+      diastolic,
+      sugarLevel,
+      selectedDate,
+      hasChanged,
+      isSaving,
+      isInitializing);
 
   @override
   String toString() {
-    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving)';
+    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving, isInitializing: $isInitializing)';
   }
 }
 
@@ -79,7 +91,8 @@ abstract mixin class $ReadingLoggingStateCopyWith<$Res> {
       double sugarLevel,
       DateTime selectedDate,
       bool hasChanged,
-      bool isSaving});
+      bool isSaving,
+      bool isInitializing});
 }
 
 /// @nodoc
@@ -103,6 +116,7 @@ class _$ReadingLoggingStateCopyWithImpl<$Res>
     Object? selectedDate = null,
     Object? hasChanged = null,
     Object? isSaving = null,
+    Object? isInitializing = null,
   }) {
     return _then(_self.copyWith(
       selectedTypeIndex: null == selectedTypeIndex
@@ -137,6 +151,10 @@ class _$ReadingLoggingStateCopyWithImpl<$Res>
           ? _self.isSaving
           : isSaving // ignore: cast_nullable_to_non_nullable
               as bool,
+      isInitializing: null == isInitializing
+          ? _self.isInitializing
+          : isInitializing // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -152,7 +170,8 @@ class _ReadingLoggingState implements ReadingLoggingState {
       this.sugarLevel = 5.5,
       required this.selectedDate,
       this.hasChanged = false,
-      this.isSaving = false});
+      this.isSaving = false,
+      this.isInitializing = true});
 
   @override
   @JsonKey()
@@ -177,6 +196,9 @@ class _ReadingLoggingState implements ReadingLoggingState {
   @override
   @JsonKey()
   final bool isSaving;
+  @override
+  @JsonKey()
+  final bool isInitializing;
 
   /// Create a copy of ReadingLoggingState
   /// with the given fields replaced by the non-null parameter values.
@@ -207,16 +229,27 @@ class _ReadingLoggingState implements ReadingLoggingState {
             (identical(other.hasChanged, hasChanged) ||
                 other.hasChanged == hasChanged) &&
             (identical(other.isSaving, isSaving) ||
-                other.isSaving == isSaving));
+                other.isSaving == isSaving) &&
+            (identical(other.isInitializing, isInitializing) ||
+                other.isInitializing == isInitializing));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, selectedTypeIndex, vitalSubType,
-      systolic, diastolic, sugarLevel, selectedDate, hasChanged, isSaving);
+  int get hashCode => Object.hash(
+      runtimeType,
+      selectedTypeIndex,
+      vitalSubType,
+      systolic,
+      diastolic,
+      sugarLevel,
+      selectedDate,
+      hasChanged,
+      isSaving,
+      isInitializing);
 
   @override
   String toString() {
-    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving)';
+    return 'ReadingLoggingState(selectedTypeIndex: $selectedTypeIndex, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving, isInitializing: $isInitializing)';
   }
 }
 
@@ -236,7 +269,8 @@ abstract mixin class _$ReadingLoggingStateCopyWith<$Res>
       double sugarLevel,
       DateTime selectedDate,
       bool hasChanged,
-      bool isSaving});
+      bool isSaving,
+      bool isInitializing});
 }
 
 /// @nodoc
@@ -260,6 +294,7 @@ class __$ReadingLoggingStateCopyWithImpl<$Res>
     Object? selectedDate = null,
     Object? hasChanged = null,
     Object? isSaving = null,
+    Object? isInitializing = null,
   }) {
     return _then(_ReadingLoggingState(
       selectedTypeIndex: null == selectedTypeIndex
@@ -293,6 +328,10 @@ class __$ReadingLoggingStateCopyWithImpl<$Res>
       isSaving: null == isSaving
           ? _self.isSaving
           : isSaving // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isInitializing: null == isInitializing
+          ? _self.isInitializing
+          : isInitializing // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }

@@ -13,5 +13,6 @@ abstract class ReadingLoggingState with _$ReadingLoggingState {
     required DateTime selectedDate,
     @Default(false) bool hasChanged,
     @Default(false) bool isSaving,
+    @Default(true) bool isInitializing,
   }) = _ReadingLoggingState;
 }

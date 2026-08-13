@@ -13,11 +13,13 @@ class BPTrend extends Equatable {
   final List<String> labels;
   final List<int?> systolic;
   final List<int?> diastolic;
+  final String? note;
 
   const BPTrend({
     required this.labels,
     required this.systolic,
     required this.diastolic,
+    this.note,
   });
 
   factory BPTrend.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class BPTrend extends Equatable {
       labels: List<String>.from(json['labels'] ?? []),
       systolic: List<int?>.from(json['systolic'] ?? []),
       diastolic: List<int?>.from(json['diastolic'] ?? []),
+      note: json['note'] as String?,
     );
   }
 
@@ -71,16 +74,20 @@ class BPTrend extends Equatable {
   List<String> get formattedLabels => labelMetadata.map((m) => m.main).toList();
 
   @override
-  List<Object?> get props => [labels, systolic, diastolic];
+  List<Object?> get props => [labels, systolic, diastolic, note];
 }
 
 class VitalTrend extends Equatable {
   final List<String> labels;
   final List<double?> values;
+  final double? latestValue;
+  final String? note;
 
   const VitalTrend({
     required this.labels,
     required this.values,
+    this.latestValue,
+    this.note,
   });
 
   factory VitalTrend.fromJson(Map<String, dynamic> json) {
@@ -89,6 +96,10 @@ class VitalTrend extends Equatable {
       values: List<double?>.from(json['values']
               ?.map((x) => x != null ? (x as num).toDouble() : null) ??
           []),
+      latestValue: json['latestValue'] != null
+          ? (json['latestValue'] as num).toDouble()
+          : null,
+      note: json['note'] as String?,
     );
   }
 
@@ -133,5 +144,5 @@ class VitalTrend extends Equatable {
   List<String> get formattedLabels => labelMetadata.map((m) => m.main).toList();
 
   @override
-  List<Object?> get props => [labels, values];
+  List<Object?> get props => [labels, values, latestValue, note];
 }

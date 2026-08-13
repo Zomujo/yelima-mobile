@@ -52,6 +52,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
         systolic: bp?.$1 ?? state.systolic,
         diastolic: bp?.$2 ?? state.diastolic,
         sugarLevel: sugar ?? state.sugarLevel,
+        isInitializing: false,
       );
     });
   }
