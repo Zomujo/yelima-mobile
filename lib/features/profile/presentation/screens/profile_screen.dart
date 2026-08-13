@@ -64,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // Options Blocks
                     StreamBuilder<bool>(
-                        stream: ConnectivityService().onConnectivityChanged,
+                        stream: ConnectivityService().onNetworkInterfaceChanged,
                         initialData: true,
                         builder: (context, snapshot) {
                           final isOnline = snapshot.data ?? true;

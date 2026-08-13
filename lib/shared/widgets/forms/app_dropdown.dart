@@ -21,9 +21,12 @@ class AppDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return PopupMenuButton<T>(
+    return Focus(
+      child: Builder(
+        builder: (context) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return PopupMenuButton<T>(
           initialValue: value,
           position: PopupMenuPosition.under,
           padding: EdgeInsets.zero,
@@ -47,9 +50,11 @@ class AppDropdown<T> extends StatelessWidget {
                 ),
               )
               .toList(),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Listener(
+            onPointerDown: (_) => Focus.of(context).requestFocus(),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               border: Border.all(
                 color: hasBorder ? const Color(0xFFE2E8F0) : Colors.transparent,
@@ -72,9 +77,13 @@ class AppDropdown<T> extends StatelessWidget {
                 ),
               ],
             ),
+            ),
           ),
         );
       },
+          );
+        }
+      ),
     );
   }
 }

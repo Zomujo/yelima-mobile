@@ -22,7 +22,7 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
 
   // Apply system-wide UI overlay style.
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Color(0xFFFDFAF4),
+    statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,
     systemNavigationBarColor: Color(0xFFFDFAF4),

@@ -36,6 +36,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      
+      // FocusManager doesn't work here on hot restart because the focus tree is rebuilt
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
 
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) _controller.forward();

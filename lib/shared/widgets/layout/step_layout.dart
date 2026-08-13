@@ -30,47 +30,51 @@ class StepLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          AppText.headlineMedium(
-            title,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF1E293B),
-          ),
-          const SizedBox(height: 8),
-          AppText.bodyLarge(
-            subtitle,
-            color: const Color(0xFF6A7282),
-            height: 1.5,
-          ),
-          const SizedBox(height: 32),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  child,
-                  const SizedBox(height: 48),
-                ],
-              ),
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                AppText.headlineMedium(
+                  title,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF1E293B),
+                ),
+                const SizedBox(height: 8),
+                AppText.bodyLarge(
+                  subtitle,
+                  color: const Color(0xFF6A7282),
+                  height: 1.5,
+                ),
+                const SizedBox(height: 32),
+                child,
+              ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24, top: 16),
-            child: onBack != null
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildBackButton(context),
-                      _buildContinueButton(),
-                    ],
-                  )
-                : Align(
-                    alignment: Alignment.centerRight,
-                    child: _buildContinueButton(),
-                  ),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24, top: 16),
+                  child: onBack != null
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildBackButton(context),
+                            _buildContinueButton(),
+                          ],
+                        )
+                      : Align(
+                          alignment: Alignment.centerRight,
+                          child: _buildContinueButton(),
+                        ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

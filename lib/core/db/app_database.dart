@@ -3,6 +3,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'dart:ffi';
+// ignore: depend_on_referenced_packages
+import 'package:sqlite3/open.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
@@ -156,8 +159,18 @@ LazyDatabase _openConnection() {
       await secureStorage.write(key: keyString, value: encryptionKey);
     }
 
-    return NativeDatabase.createInBackground(file, setup: (db) {
-      db.execute("PRAGMA key = '$encryptionKey';");
-    });
+    return NativeDatabase.createInBackground(
+      file,
+      isolateSetup: () async {
+        if (Platform.isAndroid) {
+          open.overrideFor(OperatingSystem.android, () {
+            return DynamicLibrary.open('libsqlcipher.so');
+          });
+        }
+      },
+      setup: (db) {
+        db.execute("PRAGMA key = '$encryptionKey';");
+      },
+    );
   });
 }

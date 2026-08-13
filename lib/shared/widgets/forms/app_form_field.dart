@@ -18,6 +18,7 @@ class AppFormField extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final FocusNode? focusNode;
   final ValueChanged<String>? onFieldSubmitted;
+  final ValueChanged<String>? onChanged;
   final int? maxLines;
 
   const AppFormField({
@@ -37,6 +38,7 @@ class AppFormField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.focusNode,
     this.onFieldSubmitted,
+    this.onChanged,
     this.maxLines = 1,
   });
 
@@ -71,6 +73,7 @@ class AppFormField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           onFieldSubmitted: onFieldSubmitted,
+          onChanged: onChanged,
           enabled: enabled,
           obscureText: obscureText,
           keyboardType: keyboardType,

@@ -253,7 +253,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   Future<void> signOut(BuildContext context) async {
     GlobalAsyncLoader.show(context, message: "Signing out...");
 
-    final isConnected = await GetIt.instance<ConnectivityService>().isConnected;
+    final isConnected = await GetIt.instance<ConnectivityService>().hasNetworkInterface;
     if (!isConnected) {
       GlobalAsyncLoader.hide();
       AppSnackBar.showError(context.mounted ? context : null,

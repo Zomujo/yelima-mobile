@@ -11,13 +11,14 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: 'ProductSans',
+      fontFamilyFallback: const ['NotoSans'],
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.globalBackground,
       cardColor: AppColors.cardBgLightGreen,
       appBarTheme: const AppBarTheme(
         systemOverlayStyle: SystemUiOverlayStyle(
-          // Status bar background matches the app's cream background
-          statusBarColor: AppColors.globalBackground,
+          // Status bar background must be transparent so modals can dim it
+          statusBarColor: Colors.transparent,
           // Dark icons for the light cream background
           statusBarIconBrightness: Brightness.dark,
           statusBarBrightness: Brightness.light, // iOS

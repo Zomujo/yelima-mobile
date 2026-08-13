@@ -60,7 +60,19 @@ class UserRemoteDataSource {
     }
 
     final response = await _apiClient.get("/api/v1/client/facilities",
-        queryParameters: queryParams) as Map<String, dynamic>;
-    return FacilityListResponse.fromJson(response['data']);
+        queryParameters: queryParams);
+    
+    if (response == null) {
+      return const FacilityListResponse(
+        rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
+    }
+
+    final data = (response as Map<String, dynamic>)['data'];
+    if (data == null) {
+      return const FacilityListResponse(
+        rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
+    }
+    
+    return FacilityListResponse.fromJson(data);
   }
 }
