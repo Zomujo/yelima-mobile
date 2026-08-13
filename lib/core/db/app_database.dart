@@ -1,11 +1,14 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'dart:ffi';
-// ignore: depend_on_referenced_packages
 import 'package:sqlite3/open.dart';
+// ignore: undefined_hidden_name
+import 'package:sqlite3/sqlite3.dart' hide Exception;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
@@ -159,15 +162,31 @@ LazyDatabase _openConnection() {
       await secureStorage.write(key: keyString, value: encryptionKey);
     }
 
+    if (Platform.isAndroid) {
+      open.overrideFor(OperatingSystem.android, () {
+        return DynamicLibrary.open('libsqlcipher.so');
+      });
+    }
+
+    if (file.existsSync()) {
+      try {
+        final tempDb = sqlite3.open(file.path);
+        tempDb.execute("PRAGMA key = '$encryptionKey';");
+        // Trigger a read to ensure the key is correct
+        tempDb.execute("SELECT count(*) FROM sqlite_master;");
+        tempDb.dispose();
+      } catch (e) {
+        debugPrint('Database decryption failed or file corrupted: $e');
+        file.deleteSync();
+        final shm = File('${file.path}-shm');
+        if (shm.existsSync()) shm.deleteSync();
+        final wal = File('${file.path}-wal');
+        if (wal.existsSync()) wal.deleteSync();
+      }
+    }
+
     return NativeDatabase.createInBackground(
       file,
-      isolateSetup: () async {
-        if (Platform.isAndroid) {
-          open.overrideFor(OperatingSystem.android, () {
-            return DynamicLibrary.open('libsqlcipher.so');
-          });
-        }
-      },
       setup: (db) {
         db.execute("PRAGMA key = '$encryptionKey';");
       },
