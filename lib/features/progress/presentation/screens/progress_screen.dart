@@ -8,6 +8,7 @@ import '../controllers/progress_controller.dart';
 import '../widgets/duration_selector.dart';
 import '../widgets/blood_glucose_section.dart';
 import '../widgets/blood_pressure_section.dart';
+import '../widgets/progress_note_banner.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
 import 'package:yelima/core/utils/app_tutorial_keys.dart';
@@ -90,49 +91,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Note Banner
             Consumer<ProgressController>(
               builder: (context, controller, child) {
                 final note = controller.bpTrendState.data?.note ??
                     controller.glucoseTrendState.data?.note;
                 if (note != null && note.trim().isNotEmpty) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 24),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.info_outline,
-                          color: Color(0xFF3B82F6),
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const AppText.bodyMedium(
-                                'Note',
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E3A8A),
-                              ),
-                              const SizedBox(height: 4),
-                              AppText.bodyMedium(
-                                note.trim(),
-                                color: const Color(0xFF1E40AF),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
+                  return ProgressNoteBanner(note: note);
                 }
                 return const SizedBox.shrink();
               },

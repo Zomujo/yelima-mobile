@@ -185,11 +185,19 @@ class MutationSyncManager implements SessionLifecycleHandler {
       return didRemap ? _MutationOutcome.remapped : _MutationOutcome.resolved;
     } on ApiException catch (e) {
       if (e.code == '409' || e.code == '404' || e.code == '400') {
+        if (e.code == '404' && mutation.action == 'delete') {
+          debugPrint(
+              "Mutation ${mutation.id} (DELETE) got 404. Item already deleted on server. Resolving.");
+          await _db.pendingMutationsDao.removePendingMutation(mutation.id);
+          _syncBroadcast.add(mutation.entityType);
+          return _MutationOutcome.resolved;
+        }
+
         debugPrint(
             "Mutation ${mutation.id} rejected by server (${e.code}). Marking as blocked instead of silently deleting.");
 
-        await _db.pendingMutationsDao.updatePendingMutation(
-            mutation.copyWith(retryCount: 9999));
+        await _db.pendingMutationsDao
+            .updatePendingMutation(mutation.copyWith(retryCount: 9999));
 
         return _MutationOutcome.blocked;
       }

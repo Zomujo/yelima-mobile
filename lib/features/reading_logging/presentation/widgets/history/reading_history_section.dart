@@ -130,13 +130,11 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                     final typeLower = vital.vitalType.toLowerCase();
                     final isBP = typeLower == 'bloodpressure';
                     final isSugar = typeLower == 'bloodsugar' || typeLower == 'blood_sugar';
-                    final isHR = typeLower == 'heartrate' || typeLower == 'heart_rate';
 
                     return ReadingHistoryItem(
                       date: dateStr,
                       bp: isBP ? "${vital.value} ${vital.unit}" : "-- mmHg",
                       sugar: isSugar ? "${vital.value} ${vital.unit}" : "-- mmol/L",
-                      hr: isHR ? "${vital.value} ${vital.unit}" : "-- bpm",
                     );
                   },
                   childCount: displayVitals.length,

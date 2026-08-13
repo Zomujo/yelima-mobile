@@ -46,6 +46,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
             'labels': result.labels,
             'systolic': result.systolic,
             'diastolic': result.diastolic,
+            if (result.note != null) 'note': result.note,
           });
 
           final cacheModel = VitalHistoriesCompanion(
@@ -101,6 +102,8 @@ class ProgressRepositoryImpl implements ProgressRepository {
           final trendJson = jsonEncode({
             'labels': result.labels,
             'values': result.values,
+            if (result.latestValue != null) 'latestValue': result.latestValue,
+            if (result.note != null) 'note': result.note,
           });
 
           final cacheModel = VitalHistoriesCompanion(

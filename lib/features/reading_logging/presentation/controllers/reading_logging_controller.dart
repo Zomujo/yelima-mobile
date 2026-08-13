@@ -42,6 +42,19 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   Future<void> init() async {
+    final cachedResult = await _repository.getCachedHomeMetrics();
+    cachedResult.fold((_) {}, (metrics) {
+      final bp = metrics.parsedBloodPressure;
+      final sugar = metrics.parsedBloodGlucose;
+
+      state = state.copyWith(
+        systolic: bp?.$1 ?? state.systolic,
+        diastolic: bp?.$2 ?? state.diastolic,
+        sugarLevel: sugar ?? state.sugarLevel,
+        isInitializing: false,
+      );
+    });
+
     final result = await _repository.getHomeMetrics();
 
     result.fold((_) {}, (metrics) {
