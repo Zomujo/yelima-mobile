@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class AppAlert extends StatelessWidget {
   final String title;
@@ -120,8 +121,8 @@ class AppAlert extends StatelessWidget {
     BuildContext context, {
     required String title,
     required String message,
-    String confirmText = 'Confirm',
-    String cancelText = 'Cancel',
+    String? confirmText,
+    String? cancelText,
     VoidCallback? onConfirm,
     VoidCallback? onCancel,
     bool isDestructive = false,
@@ -131,8 +132,8 @@ class AppAlert extends StatelessWidget {
       context,
       title: title,
       message: message,
-      confirmText: confirmText,
-      cancelText: cancelText,
+      confirmText: confirmText ?? context.l10n.confirm,
+      cancelText: cancelText ?? context.l10n.cancel,
       onConfirm: onConfirm,
       onCancel: onCancel,
       isDestructive: isDestructive,
@@ -144,8 +145,8 @@ class AppAlert extends StatelessWidget {
     BuildContext context, {
     required String title,
     required String message,
-    String confirmText = 'Delete',
-    String cancelText = 'Cancel',
+    String? confirmText,
+    String? cancelText,
     VoidCallback? onConfirm,
     VoidCallback? onCancel,
   }) {
@@ -153,8 +154,8 @@ class AppAlert extends StatelessWidget {
       context,
       title: title,
       message: message,
-      confirmText: confirmText,
-      cancelText: cancelText,
+      confirmText: confirmText ?? context.l10n.delete,
+      cancelText: cancelText ?? context.l10n.cancel,
       onConfirm: onConfirm,
       onCancel: onCancel,
       isDestructive: true,

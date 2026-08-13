@@ -245,6 +245,16 @@
   "tutorialLogReadingInputDesc": "Kyerɛw nɔma no pɛpɛɛpɛ sɛnea ɛte wɔ mita no so.",
   "tutorialLogReadingDateTitle": "Yi Da",
   "tutorialLogReadingDateDesc": "Yi berɛ a woyɛɛ nteɛsoɔ yi.",
-  "tutorialLogReadingSaveTitle": "Kora Nteɛsoɔ",
-  "tutorialLogReadingSaveDesc": "Kora wo nteɛsoɔ no sɛnea ɛbɛyɛ a wobɛhwɛ w'animkɔ."
+  "tutorialLogReadingSaveTitle": "Kora Wo Nsɛnhwehwɛmu No So",
+  "tutorialLogReadingSaveDesc": "Kora wo nsɛnhwehwɛmu no so na wo akwahosan ayɛ yie.",
+  "exitAppTitle": "Fi Afidie No Mu",
+  "exitAppConfirmation": "Wo pa ara wo pɛ sɛ wo fi afidie no mu?",
+  "exit": "Pue",
+  "discardChangesTitle": "Tow Nsesaeɛ No To Nkyɛn?",
+  "discardChangesConfirmation": "Wo yɛɛ nsesaeɛ bi a wo nsiee. Sɛ wo gyae mu a, wo nsesaeɛ no bɛyera.",
+  "keepEditing": "Toa Nsesaeɛ So",
+  "discard": "Tow To Nkyɛn",
+  "deleteMedicationTitle": "Pepa Aduro",
+  "deleteMedicationConfirmation": "Wo pa ara wo pɛ sɛ wo pepa {medicationName}?",
+  "confirm": "Gye Tom"
 }

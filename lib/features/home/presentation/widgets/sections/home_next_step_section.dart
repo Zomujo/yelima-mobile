@@ -40,63 +40,69 @@ class HomeNextStepSection extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ActionCard(
-                      title: context.l10n.reportSymptom,
-                      iconPath: AppImages.symptoms.assetName,
-                      bgImagePath: AppImages.medicineBgIcon.assetName,
-                      backgroundColor: const Color(0xFF6750A4),
-                      onTap: () {
-                        context.push(RoutePaths.symptoms);
-                      },
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: ActionCard(
+                        title: context.l10n.reportSymptom,
+                        iconPath: AppImages.symptoms.assetName,
+                        bgImagePath: AppImages.medicineBgIcon.assetName,
+                        backgroundColor: const Color(0xFF6750A4),
+                        onTap: () {
+                          context.push(RoutePaths.symptoms);
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ActionCard(
-                      title: context.l10n.recordVitals,
-                      iconPath: AppImages.numbers.assetName,
-                      bgImagePath: AppImages.progressBgIcon.assetName,
-                      backgroundColor: const Color(0xFFE8B931),
-                      onTap: () {
-                        context.go(RoutePaths.readingLogging);
-                      },
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ActionCard(
+                        title: context.l10n.recordVitals,
+                        iconPath: AppImages.numbers.assetName,
+                        bgImagePath: AppImages.progressBgIcon.assetName,
+                        backgroundColor: const Color(0xFFE8B931),
+                        onTap: () {
+                          context.go(RoutePaths.readingLogging);
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ActionCard(
-                      title: context.l10n.myMedicines,
-                      iconPath: AppImages.pillIcon.assetName,
-                      bgImagePath: AppImages.medicineBgIcon.assetName,
-                      backgroundColor: const Color(0xFF20C7D3),
-                      onTap: () {
-                        context.push(RoutePaths.medications);
-                      },
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: ActionCard(
+                        title: context.l10n.myMedicines,
+                        iconPath: AppImages.pillIcon.assetName,
+                        bgImagePath: AppImages.medicineBgIcon.assetName,
+                        backgroundColor: const Color(0xFF20C7D3),
+                        onTap: () {
+                          context.push(RoutePaths.medications);
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ActionCard(
-                      title: context.l10n.yourProgress,
-                      iconPath: AppImages.progressIcon.assetName,
-                      bgImagePath: AppImages.progressBgIcon.assetName,
-                      backgroundColor: const Color(0xFF37D2B8),
-                      onTap: () {
-                        context.push(RoutePaths.progress);
-                      },
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ActionCard(
+                        title: context.l10n.yourProgress,
+                        iconPath: AppImages.progressIcon.assetName,
+                        bgImagePath: AppImages.progressBgIcon.assetName,
+                        backgroundColor: const Color(0xFF37D2B8),
+                        onTap: () {
+                          context.push(RoutePaths.progress);
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

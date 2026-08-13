@@ -257,5 +257,22 @@
   "tutorialLogReadingDateTitle": "Select Date",
   "tutorialLogReadingDateDesc": "Choose when you took this reading.",
   "tutorialLogReadingSaveTitle": "Save Reading",
-  "tutorialLogReadingSaveDesc": "Save your reading to update your progress."
+  "tutorialLogReadingSaveDesc": "Save your reading to update your progress.",
+  "exitAppTitle": "Exit App",
+  "exitAppConfirmation": "Are you sure you want to exit the app?",
+  "exit": "Exit",
+  "discardChangesTitle": "Discard Changes?",
+  "discardChangesConfirmation": "You have unsaved changes. If you leave now, your changes will be lost.",
+  "keepEditing": "Keep Editing",
+  "discard": "Discard",
+  "deleteMedicationTitle": "Delete Medication",
+  "deleteMedicationConfirmation": "Are you sure you want to delete {medicationName}?",
+  "@deleteMedicationConfirmation": {
+    "placeholders": {
+      "medicationName": {
+        "type": "String"
+      }
+    }
+  },
+  "confirm": "Confirm"
 }

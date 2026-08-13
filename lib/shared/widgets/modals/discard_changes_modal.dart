@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'app_modal.dart';
 import '../layout/app_button.dart';
 import '../layout/app_text.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class DiscardChangesModal {
   static Future<bool?> show(BuildContext context) {
@@ -14,13 +15,13 @@ class DiscardChangesModal {
         animationDuration: const Duration(milliseconds: 300),
         onDismiss: () => Navigator.of(context).pop(false),
         child: ModalContainer(
-          title: 'Discard Changes?',
+          title: context.l10n.discardChangesTitle,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const AppText.titleMedium(
-                'You have unsaved changes. If you leave now, your changes will be lost.',
+              AppText.titleMedium(
+                context.l10n.discardChangesConfirmation,
                 color: Colors.black54,
               ),
               const SizedBox(height: 36),
@@ -28,7 +29,7 @@ class DiscardChangesModal {
                 children: [
                   Expanded(
                     child: AppButton(
-                      text: 'Keep Editing',
+                      text: context.l10n.keepEditing,
                       backgroundColor: const Color(0xFFF1F5F9),
                       foregroundColor: const Color(0xFF475569),
                       onPressed: () => Navigator.of(context).pop(false),
@@ -37,7 +38,7 @@ class DiscardChangesModal {
                   const SizedBox(width: 16),
                   Expanded(
                     child: AppButton(
-                      text: 'Discard',
+                      text: context.l10n.discard,
                       backgroundColor: const Color(0xFFEF4444),
                       onPressed: () => Navigator.of(context).pop(true),
                     ),

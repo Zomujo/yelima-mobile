@@ -245,5 +245,15 @@
   "tutorialLogReadingDateTitle": "Hala Gbi",
   "tutorialLogReadingDateDesc": "Hala be ni oná nɔkwɛmɔ nɛɛ.",
   "tutorialLogReadingSaveTitle": "To Nɔkwɛmɔ",
-  "tutorialLogReadingSaveDesc": "To o-nɔkwɛmɔ koni okɛtsa o-hiɛyaa."
+  "tutorialLogReadingSaveDesc": "To o-nɔkwɛmɔ koni okɛtsa o-hiɛyaa.",
+  "exitAppTitle": "Jiemɔ App Lɛ Mli",
+  "exitAppConfirmation": "Ani ooyaanu bɔ ni obaajie o-he yɛ app lɛ mli?",
+  "exit": "Jiemɔ",
+  "discardChangesTitle": "Kwa Tsakemɔi Lɛ?",
+  "discardChangesConfirmation": "Oyɛ tsakemɔi ni otoko. Kɛ oshi amrɔ nɛɛ, o-tsakemɔi lɛ fɛɛ baalaaje.",
+  "keepEditing": "Ya Nɔ Tsa",
+  "discard": "Kwa",
+  "deleteMedicationTitle": "Jiemɔ Tsofa",
+  "deleteMedicationConfirmation": "Ani ooyaanu bɔ ni obaajie {medicationName}?",
+  "confirm": "Kpɛlɛ Nɔ"
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../layout/app_text.dart';
 import '../layout/app_button.dart';
 import 'app_modal.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ExitConfirmationModal extends StatelessWidget {
   const ExitConfirmationModal({super.key});
@@ -24,13 +25,13 @@ class ExitConfirmationModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ModalContainer(
-      title: 'Exit App',
+      title: context.l10n.exitAppTitle,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppText.titleMedium(
-            'Are you sure you want to exit the app?',
+          AppText.titleMedium(
+            context.l10n.exitAppConfirmation,
             color: Colors.black54,
           ),
           const SizedBox(height: 36),
@@ -38,7 +39,7 @@ class ExitConfirmationModal extends StatelessWidget {
             children: [
               Expanded(
                 child: AppButton(
-                  text: 'Cancel',
+                  text: context.l10n.cancel,
                   backgroundColor: const Color(0xFFF1F5F9), // Slate 100
                   foregroundColor: const Color(0xFF475569), // Slate 600
                   onPressed: () => Navigator.of(context).pop(),
@@ -47,7 +48,7 @@ class ExitConfirmationModal extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: AppButton(
-                  text: 'Exit',
+                  text: context.l10n.exit,
                   backgroundColor: const Color(0xFFEF4444), // Red 500
                   onPressed: () {
                     Navigator.of(context).pop();

@@ -245,5 +245,15 @@
   "tutorialLogReadingDateTitle": "Tia Ŋkeke",
   "tutorialLogReadingDateDesc": "Tia ɣeyiɣi si nètsɔ dodo sia.",
   "tutorialLogReadingSaveTitle": "Dzra Dodoa Ɖo",
-  "tutorialLogReadingSaveDesc": "Dzra wò dodoa ɖo tsɔ trɔ wò ŋgɔyiyi."
+  "tutorialLogReadingSaveDesc": "Dzra wò dodoa ɖo tsɔ trɔ wò ŋgɔyiyi.",
+  "exitAppTitle": "Do le Dɔwɔwɔa Me",
+  "exitAppConfirmation": "Èka ɖe edzi be nèdi be yeado le dɔwɔwɔa mea?",
+  "exit": "Do le eme",
+  "discardChangesTitle": "Tsɔ Tɔtrɔwo Ƒu Gbe?",
+  "discardChangesConfirmation": "Tɔtrɔ siwo nèwɔ la medzra ɖo o. Ne èdzo fifia la, tɔtrɔawo katã atsrɔ̃.",
+  "keepEditing": "Yi Nuŋlɔŋlɔ Dzi",
+  "discard": "Tsɔ Ƒu Gbe",
+  "deleteMedicationTitle": "Tutuu Atike",
+  "deleteMedicationConfirmation": "Èka ɖe edzi be nèdi be yeatutu {medicationName} a?",
+  "confirm": "Ka Ɖe Edzi"
 }
