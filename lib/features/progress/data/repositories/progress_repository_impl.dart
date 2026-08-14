@@ -23,16 +23,16 @@ class ProgressRepositoryImpl implements ProgressRepository {
   }) : _remoteDataSource = remoteDataSource;
 
   @override
-  AsyncResponse<BPTrend> getCachedBPTrend({required String dateRange}) =>
+  AsyncResponse<BPTrend> getCachedBPTrend({required ChartDateRange dateRange}) =>
       _fetchLocalBPTrend(dateRange);
 
   @override
   AsyncResponse<VitalTrend> getCachedVitalTrend(
-          {required String vitalType, required String dateRange}) =>
+          {required String vitalType, required ChartDateRange dateRange}) =>
       _fetchLocalVitalTrend(vitalType, dateRange);
 
   @override
-  AsyncResponse<BPTrend> getBPTrend({required String dateRange}) {
+  AsyncResponse<BPTrend> getBPTrend({required ChartDateRange dateRange}) {
     return ExceptionWrapper.runAsync<BPTrend>(
       () async {
         try {
@@ -40,7 +40,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
             throw const NetworkException();
           }
           final result =
-              await _remoteDataSource.getBPTrend(dateRange: dateRange);
+              await _remoteDataSource.getBPTrend(dateRange: dateRange.backendString);
 
           final trendJson = jsonEncode({
             'labels': result.labels,
@@ -50,9 +50,9 @@ class ProgressRepositoryImpl implements ProgressRepository {
           });
 
           final cacheModel = VitalHistoriesCompanion(
-            id: drift.Value('bp_trend_cache_$dateRange'),
+            id: drift.Value('bp_trend_cache_${dateRange.backendString}'),
             vitalType: const drift.Value("PROGRESS_BP_TREND"),
-            vitalName: drift.Value('BP Trend $dateRange'),
+            vitalName: drift.Value('BP Trend ${dateRange.backendString}'),
             value: drift.Value(trendJson),
             unit: const drift.Value('json'),
             severity: const drift.Value('normal'),
@@ -70,10 +70,10 @@ class ProgressRepositoryImpl implements ProgressRepository {
     );
   }
 
-  AsyncResponse<BPTrend> _fetchLocalBPTrend(String dateRange) async {
+  AsyncResponse<BPTrend> _fetchLocalBPTrend(ChartDateRange dateRange) async {
     try {
       final vitals = await db.vitalsDao.getAllVitals();
-      final cacheKey = 'bp_trend_cache_$dateRange';
+      final cacheKey = 'bp_trend_cache_${dateRange.backendString}';
       final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
 
       if (cachedVital != null) {
@@ -89,7 +89,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
 
   @override
   AsyncResponse<VitalTrend> getVitalTrend(
-      {required String vitalType, required String dateRange}) {
+      {required String vitalType, required ChartDateRange dateRange}) {
     return ExceptionWrapper.runAsync<VitalTrend>(
       () async {
         try {
@@ -97,7 +97,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
             throw const NetworkException();
           }
           final result = await _remoteDataSource.getVitalTrend(
-              vitalType: vitalType, dateRange: dateRange);
+              vitalType: vitalType, dateRange: dateRange.backendString);
 
           final trendJson = jsonEncode({
             'labels': result.labels,
@@ -107,9 +107,9 @@ class ProgressRepositoryImpl implements ProgressRepository {
           });
 
           final cacheModel = VitalHistoriesCompanion(
-            id: drift.Value('vital_trend_cache_${vitalType}_$dateRange'),
+            id: drift.Value('vital_trend_cache_${vitalType}_${dateRange.backendString}'),
             vitalType: const drift.Value("PROGRESS_VITAL_TREND"),
-            vitalName: drift.Value('Vital Trend $vitalType $dateRange'),
+            vitalName: drift.Value('Vital Trend $vitalType ${dateRange.backendString}'),
             value: drift.Value(trendJson),
             unit: const drift.Value('json'),
             severity: const drift.Value('normal'),
@@ -128,10 +128,10 @@ class ProgressRepositoryImpl implements ProgressRepository {
   }
 
   AsyncResponse<VitalTrend> _fetchLocalVitalTrend(
-      String vitalType, String dateRange) async {
+      String vitalType, ChartDateRange dateRange) async {
     try {
       final vitals = await db.vitalsDao.getAllVitals();
-      final cacheKey = 'vital_trend_cache_${vitalType}_$dateRange';
+      final cacheKey = 'vital_trend_cache_${vitalType}_${dateRange.backendString}';
       final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
 
       if (cachedVital != null) {

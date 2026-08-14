@@ -9,6 +9,12 @@ class TrendLabel {
   const TrendLabel({required this.main, this.sub, this.isBoundary = false});
 }
 
+enum ChartDateRange { today, thisWeek, thisMonth }
+
+extension ChartDateRangeExt on ChartDateRange {
+  String get backendString => name;
+}
+
 class BPTrend extends Equatable {
   final List<String> labels;
   final List<int?> systolic;

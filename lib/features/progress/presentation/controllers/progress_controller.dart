@@ -29,8 +29,8 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
     notifyListeners();
   }
 
-  String _currentBPRange = 'today';
-  String _currentGlucoseRange = 'today';
+  ChartDateRange _currentBPRange = ChartDateRange.today;
+  ChartDateRange _currentGlucoseRange = ChartDateRange.today;
 
   ProgressController(this._repository);
 
@@ -40,13 +40,12 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
   // |                                   Actions & Methods                    |
   // --------------------------------------------------------------------------
 
-  Future<void> fetchBPTrend({String dateRange = 'today'}) async {
+  Future<void> fetchBPTrend(
+      {ChartDateRange dateRange = ChartDateRange.today}) async {
     _currentBPRange = dateRange;
 
     // Load from cache if empty
     if (bpTrendState.data == null) {
-      bpTrendState = bpTrendState.copyWith(isLoading: true, error: null);
-
       final cachedResult =
           await _repository.getCachedBPTrend(dateRange: dateRange);
       cachedResult.fold((_) {}, (data) {
@@ -57,12 +56,12 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
       });
     }
 
-    // Ensure loading state if still empty
+    // Emit loading state only if we still don't have data
     if (bpTrendState.data == null) {
       bpTrendState = bpTrendState.copyWith(isLoading: true, error: null);
     }
 
-    // Fetch from network
+    // Fetch from network silently
     final result = await _repository.getBPTrend(dateRange: dateRange);
 
     result.fold(
@@ -86,14 +85,12 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Fetches the Blood Glucose trends for the specified date range.
-  Future<void> fetchGlucoseTrend({String dateRange = 'today'}) async {
+  Future<void> fetchGlucoseTrend(
+      {ChartDateRange dateRange = ChartDateRange.today}) async {
     _currentGlucoseRange = dateRange;
 
     // Load from cache if empty
     if (glucoseTrendState.data == null) {
-      glucoseTrendState =
-          glucoseTrendState.copyWith(isLoading: true, error: null);
-
       final cachedResult = await _repository.getCachedVitalTrend(
           vitalType: 'bloodSugar', dateRange: dateRange);
       cachedResult.fold((_) {}, (data) {
@@ -104,13 +101,13 @@ class ProgressController extends ChangeNotifier with SafeNotifier {
       });
     }
 
-    // Ensure loading state if still empty
+    // Emit loading state only if we still don't have data
     if (glucoseTrendState.data == null) {
       glucoseTrendState =
           glucoseTrendState.copyWith(isLoading: true, error: null);
     }
 
-    // Fetch from network
+    // Fetch from network silently
     final result = await _repository.getVitalTrend(
         vitalType: 'bloodSugar', dateRange: dateRange);
 

@@ -12,6 +12,7 @@ import '../widgets/progress_note_banner.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
 import 'package:yelima/core/utils/app_tutorial_keys.dart';
+import '../../domain/entities/vital_trends.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -42,14 +43,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
     _controller.fetchGlucoseTrend(dateRange: dateRange);
   }
 
-  String _getDateRange() {
+  ChartDateRange _getDateRange() {
     switch (duration) {
       case '1w':
-        return 'thisWeek';
+        return ChartDateRange.thisWeek;
       case '1m':
-        return 'thisMonth';
+        return ChartDateRange.thisMonth;
       default:
-        return 'today';
+        return ChartDateRange.today;
     }
   }
 
