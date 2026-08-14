@@ -59,6 +59,7 @@ class UserRepositoryImpl implements UserRepository {
               firstName: drift.Value(model.firstName),
               lastName: drift.Value(model.lastName),
               gender: drift.Value(model.gender),
+              phoneNumber: drift.Value(model.phoneNumber),
               dateOfBirth: drift.Value(model.dateOfBirth),
               conditionsJson: drift.Value(jsonEncode(model.conditions)),
               completedTutorialsJson:
@@ -110,6 +111,7 @@ class UserRepositoryImpl implements UserRepository {
       firstName: localProfile.firstName,
       lastName: localProfile.lastName,
       gender: localProfile.gender,
+      phoneNumber: localProfile.phoneNumber,
       dateOfBirth: localProfile.dateOfBirth,
       conditions: conditionsList,
       completedTutorials: tutorialsList,
@@ -145,6 +147,9 @@ class UserRepositoryImpl implements UserRepository {
             gender: data.containsKey('gender')
                 ? drift.Value(data['gender'])
                 : drift.Value(currentProfile.gender),
+            phoneNumber: data.containsKey('phoneNumber')
+                ? drift.Value(data['phoneNumber'])
+                : drift.Value(currentProfile.phoneNumber),
             dateOfBirth: data.containsKey('dateOfBirth')
                 ? drift.Value(DateTime.parse(data['dateOfBirth']))
                 : drift.Value(currentProfile.dateOfBirth),
@@ -178,6 +183,9 @@ class UserRepositoryImpl implements UserRepository {
                 : const drift.Value.absent(),
             gender: data.containsKey('gender')
                 ? drift.Value(data['gender'])
+                : const drift.Value.absent(),
+            phoneNumber: data.containsKey('phoneNumber')
+                ? drift.Value(data['phoneNumber'])
                 : const drift.Value.absent(),
             dateOfBirth: data.containsKey('dateOfBirth')
                 ? drift.Value(DateTime.parse(data['dateOfBirth']))

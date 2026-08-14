@@ -1141,6 +1141,12 @@ class $UserProfilesTable extends UserProfiles
   late final GeneratedColumn<String> gender = GeneratedColumn<String>(
       'gender', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _phoneNumberMeta =
+      const VerificationMeta('phoneNumber');
+  @override
+  late final GeneratedColumn<String> phoneNumber = GeneratedColumn<String>(
+      'phone_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _dateOfBirthMeta =
       const VerificationMeta('dateOfBirth');
   @override
@@ -1206,6 +1212,7 @@ class $UserProfilesTable extends UserProfiles
         firstName,
         lastName,
         gender,
+        phoneNumber,
         dateOfBirth,
         conditionsJson,
         completedTutorialsJson,
@@ -1247,6 +1254,12 @@ class $UserProfilesTable extends UserProfiles
     if (data.containsKey('gender')) {
       context.handle(_genderMeta,
           gender.isAcceptableOrUnknown(data['gender']!, _genderMeta));
+    }
+    if (data.containsKey('phone_number')) {
+      context.handle(
+          _phoneNumberMeta,
+          phoneNumber.isAcceptableOrUnknown(
+              data['phone_number']!, _phoneNumberMeta));
     }
     if (data.containsKey('date_of_birth')) {
       context.handle(
@@ -1313,6 +1326,8 @@ class $UserProfilesTable extends UserProfiles
           .read(DriftSqlType.string, data['${effectivePrefix}last_name']),
       gender: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}gender']),
+      phoneNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}phone_number']),
       dateOfBirth: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date_of_birth']),
       conditionsJson: attachedDatabase.typeMapping.read(
@@ -1345,6 +1360,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
   final String? firstName;
   final String? lastName;
   final String? gender;
+  final String? phoneNumber;
   final DateTime? dateOfBirth;
   final String conditionsJson;
   final String completedTutorialsJson;
@@ -1359,6 +1375,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       this.firstName,
       this.lastName,
       this.gender,
+      this.phoneNumber,
       this.dateOfBirth,
       required this.conditionsJson,
       required this.completedTutorialsJson,
@@ -1380,6 +1397,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     }
     if (!nullToAbsent || gender != null) {
       map['gender'] = Variable<String>(gender);
+    }
+    if (!nullToAbsent || phoneNumber != null) {
+      map['phone_number'] = Variable<String>(phoneNumber);
     }
     if (!nullToAbsent || dateOfBirth != null) {
       map['date_of_birth'] = Variable<DateTime>(dateOfBirth);
@@ -1412,6 +1432,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           : Value(lastName),
       gender:
           gender == null && nullToAbsent ? const Value.absent() : Value(gender),
+      phoneNumber: phoneNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phoneNumber),
       dateOfBirth: dateOfBirth == null && nullToAbsent
           ? const Value.absent()
           : Value(dateOfBirth),
@@ -1440,6 +1463,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       firstName: serializer.fromJson<String?>(json['firstName']),
       lastName: serializer.fromJson<String?>(json['lastName']),
       gender: serializer.fromJson<String?>(json['gender']),
+      phoneNumber: serializer.fromJson<String?>(json['phoneNumber']),
       dateOfBirth: serializer.fromJson<DateTime?>(json['dateOfBirth']),
       conditionsJson: serializer.fromJson<String>(json['conditionsJson']),
       completedTutorialsJson:
@@ -1462,6 +1486,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       'firstName': serializer.toJson<String?>(firstName),
       'lastName': serializer.toJson<String?>(lastName),
       'gender': serializer.toJson<String?>(gender),
+      'phoneNumber': serializer.toJson<String?>(phoneNumber),
       'dateOfBirth': serializer.toJson<DateTime?>(dateOfBirth),
       'conditionsJson': serializer.toJson<String>(conditionsJson),
       'completedTutorialsJson':
@@ -1480,6 +1505,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           Value<String?> firstName = const Value.absent(),
           Value<String?> lastName = const Value.absent(),
           Value<String?> gender = const Value.absent(),
+          Value<String?> phoneNumber = const Value.absent(),
           Value<DateTime?> dateOfBirth = const Value.absent(),
           String? conditionsJson,
           String? completedTutorialsJson,
@@ -1494,6 +1520,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
         firstName: firstName.present ? firstName.value : this.firstName,
         lastName: lastName.present ? lastName.value : this.lastName,
         gender: gender.present ? gender.value : this.gender,
+        phoneNumber: phoneNumber.present ? phoneNumber.value : this.phoneNumber,
         dateOfBirth: dateOfBirth.present ? dateOfBirth.value : this.dateOfBirth,
         conditionsJson: conditionsJson ?? this.conditionsJson,
         completedTutorialsJson:
@@ -1513,6 +1540,8 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       firstName: data.firstName.present ? data.firstName.value : this.firstName,
       lastName: data.lastName.present ? data.lastName.value : this.lastName,
       gender: data.gender.present ? data.gender.value : this.gender,
+      phoneNumber:
+          data.phoneNumber.present ? data.phoneNumber.value : this.phoneNumber,
       dateOfBirth:
           data.dateOfBirth.present ? data.dateOfBirth.value : this.dateOfBirth,
       conditionsJson: data.conditionsJson.present
@@ -1544,6 +1573,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
           ..write('gender: $gender, ')
+          ..write('phoneNumber: $phoneNumber, ')
           ..write('dateOfBirth: $dateOfBirth, ')
           ..write('conditionsJson: $conditionsJson, ')
           ..write('completedTutorialsJson: $completedTutorialsJson, ')
@@ -1563,6 +1593,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       firstName,
       lastName,
       gender,
+      phoneNumber,
       dateOfBirth,
       conditionsJson,
       completedTutorialsJson,
@@ -1580,6 +1611,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           other.firstName == this.firstName &&
           other.lastName == this.lastName &&
           other.gender == this.gender &&
+          other.phoneNumber == this.phoneNumber &&
           other.dateOfBirth == this.dateOfBirth &&
           other.conditionsJson == this.conditionsJson &&
           other.completedTutorialsJson == this.completedTutorialsJson &&
@@ -1596,6 +1628,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
   final Value<String?> firstName;
   final Value<String?> lastName;
   final Value<String?> gender;
+  final Value<String?> phoneNumber;
   final Value<DateTime?> dateOfBirth;
   final Value<String> conditionsJson;
   final Value<String> completedTutorialsJson;
@@ -1611,6 +1644,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     this.firstName = const Value.absent(),
     this.lastName = const Value.absent(),
     this.gender = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
     this.dateOfBirth = const Value.absent(),
     this.conditionsJson = const Value.absent(),
     this.completedTutorialsJson = const Value.absent(),
@@ -1627,6 +1661,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     this.firstName = const Value.absent(),
     this.lastName = const Value.absent(),
     this.gender = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
     this.dateOfBirth = const Value.absent(),
     this.conditionsJson = const Value.absent(),
     this.completedTutorialsJson = const Value.absent(),
@@ -1644,6 +1679,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     Expression<String>? firstName,
     Expression<String>? lastName,
     Expression<String>? gender,
+    Expression<String>? phoneNumber,
     Expression<DateTime>? dateOfBirth,
     Expression<String>? conditionsJson,
     Expression<String>? completedTutorialsJson,
@@ -1660,6 +1696,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       if (firstName != null) 'first_name': firstName,
       if (lastName != null) 'last_name': lastName,
       if (gender != null) 'gender': gender,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
       if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
       if (conditionsJson != null) 'conditions_json': conditionsJson,
       if (completedTutorialsJson != null)
@@ -1680,6 +1717,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       Value<String?>? firstName,
       Value<String?>? lastName,
       Value<String?>? gender,
+      Value<String?>? phoneNumber,
       Value<DateTime?>? dateOfBirth,
       Value<String>? conditionsJson,
       Value<String>? completedTutorialsJson,
@@ -1695,6 +1733,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       gender: gender ?? this.gender,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       conditionsJson: conditionsJson ?? this.conditionsJson,
       completedTutorialsJson:
@@ -1725,6 +1764,9 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     }
     if (gender.present) {
       map['gender'] = Variable<String>(gender.value);
+    }
+    if (phoneNumber.present) {
+      map['phone_number'] = Variable<String>(phoneNumber.value);
     }
     if (dateOfBirth.present) {
       map['date_of_birth'] = Variable<DateTime>(dateOfBirth.value);
@@ -1765,6 +1807,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
           ..write('gender: $gender, ')
+          ..write('phoneNumber: $phoneNumber, ')
           ..write('dateOfBirth: $dateOfBirth, ')
           ..write('conditionsJson: $conditionsJson, ')
           ..write('completedTutorialsJson: $completedTutorialsJson, ')
@@ -5227,6 +5270,7 @@ typedef $$UserProfilesTableCreateCompanionBuilder = UserProfilesCompanion
   Value<String?> firstName,
   Value<String?> lastName,
   Value<String?> gender,
+  Value<String?> phoneNumber,
   Value<DateTime?> dateOfBirth,
   Value<String> conditionsJson,
   Value<String> completedTutorialsJson,
@@ -5244,6 +5288,7 @@ typedef $$UserProfilesTableUpdateCompanionBuilder = UserProfilesCompanion
   Value<String?> firstName,
   Value<String?> lastName,
   Value<String?> gender,
+  Value<String?> phoneNumber,
   Value<DateTime?> dateOfBirth,
   Value<String> conditionsJson,
   Value<String> completedTutorialsJson,
@@ -5278,6 +5323,9 @@ class $$UserProfilesTableFilterComposer
 
   ColumnFilters<String> get gender => $composableBuilder(
       column: $table.gender, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get dateOfBirth => $composableBuilder(
       column: $table.dateOfBirth, builder: (column) => ColumnFilters(column));
@@ -5332,6 +5380,9 @@ class $$UserProfilesTableOrderingComposer
   ColumnOrderings<String> get gender => $composableBuilder(
       column: $table.gender, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get dateOfBirth => $composableBuilder(
       column: $table.dateOfBirth, builder: (column) => ColumnOrderings(column));
 
@@ -5385,6 +5436,9 @@ class $$UserProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get gender =>
       $composableBuilder(column: $table.gender, builder: (column) => column);
+
+  GeneratedColumn<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => column);
 
   GeneratedColumn<DateTime> get dateOfBirth => $composableBuilder(
       column: $table.dateOfBirth, builder: (column) => column);
@@ -5442,6 +5496,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             Value<String?> firstName = const Value.absent(),
             Value<String?> lastName = const Value.absent(),
             Value<String?> gender = const Value.absent(),
+            Value<String?> phoneNumber = const Value.absent(),
             Value<DateTime?> dateOfBirth = const Value.absent(),
             Value<String> conditionsJson = const Value.absent(),
             Value<String> completedTutorialsJson = const Value.absent(),
@@ -5458,6 +5513,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             firstName: firstName,
             lastName: lastName,
             gender: gender,
+            phoneNumber: phoneNumber,
             dateOfBirth: dateOfBirth,
             conditionsJson: conditionsJson,
             completedTutorialsJson: completedTutorialsJson,
@@ -5474,6 +5530,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             Value<String?> firstName = const Value.absent(),
             Value<String?> lastName = const Value.absent(),
             Value<String?> gender = const Value.absent(),
+            Value<String?> phoneNumber = const Value.absent(),
             Value<DateTime?> dateOfBirth = const Value.absent(),
             Value<String> conditionsJson = const Value.absent(),
             Value<String> completedTutorialsJson = const Value.absent(),
@@ -5490,6 +5547,7 @@ class $$UserProfilesTableTableManager extends RootTableManager<
             firstName: firstName,
             lastName: lastName,
             gender: gender,
+            phoneNumber: phoneNumber,
             dateOfBirth: dateOfBirth,
             conditionsJson: conditionsJson,
             completedTutorialsJson: completedTutorialsJson,

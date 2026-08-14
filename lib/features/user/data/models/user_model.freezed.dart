@@ -20,6 +20,7 @@ mixin _$UserModel {
   String? get firstName;
   String? get lastName;
   String? get gender;
+  String? get phoneNumber;
   DateTime? get dateOfBirth;
   List<String> get conditions;
   List<String> get completedTutorials;
@@ -51,6 +52,8 @@ mixin _$UserModel {
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
             (identical(other.gender, gender) || other.gender == gender) &&
+            (identical(other.phoneNumber, phoneNumber) ||
+                other.phoneNumber == phoneNumber) &&
             (identical(other.dateOfBirth, dateOfBirth) ||
                 other.dateOfBirth == dateOfBirth) &&
             const DeepCollectionEquality()
@@ -78,6 +81,7 @@ mixin _$UserModel {
       firstName,
       lastName,
       gender,
+      phoneNumber,
       dateOfBirth,
       const DeepCollectionEquality().hash(conditions),
       const DeepCollectionEquality().hash(completedTutorials),
@@ -89,7 +93,7 @@ mixin _$UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
+    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, phoneNumber: $phoneNumber, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -104,6 +108,7 @@ abstract mixin class $UserModelCopyWith<$Res> {
       String? firstName,
       String? lastName,
       String? gender,
+      String? phoneNumber,
       DateTime? dateOfBirth,
       List<String> conditions,
       List<String> completedTutorials,
@@ -131,6 +136,7 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
     Object? firstName = freezed,
     Object? lastName = freezed,
     Object? gender = freezed,
+    Object? phoneNumber = freezed,
     Object? dateOfBirth = freezed,
     Object? conditions = null,
     Object? completedTutorials = null,
@@ -160,6 +166,10 @@ class _$UserModelCopyWithImpl<$Res> implements $UserModelCopyWith<$Res> {
       gender: freezed == gender
           ? _self.gender
           : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phoneNumber: freezed == phoneNumber
+          ? _self.phoneNumber
+          : phoneNumber // ignore: cast_nullable_to_non_nullable
               as String?,
       dateOfBirth: freezed == dateOfBirth
           ? _self.dateOfBirth
@@ -206,6 +216,7 @@ class _UserModel extends UserModel {
       this.firstName,
       this.lastName,
       this.gender,
+      this.phoneNumber,
       this.dateOfBirth,
       final List<String> conditions = const [],
       final List<String> completedTutorials = const [],
@@ -230,6 +241,8 @@ class _UserModel extends UserModel {
   final String? lastName;
   @override
   final String? gender;
+  @override
+  final String? phoneNumber;
   @override
   final DateTime? dateOfBirth;
   final List<String> _conditions;
@@ -291,6 +304,8 @@ class _UserModel extends UserModel {
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
             (identical(other.gender, gender) || other.gender == gender) &&
+            (identical(other.phoneNumber, phoneNumber) ||
+                other.phoneNumber == phoneNumber) &&
             (identical(other.dateOfBirth, dateOfBirth) ||
                 other.dateOfBirth == dateOfBirth) &&
             const DeepCollectionEquality()
@@ -318,6 +333,7 @@ class _UserModel extends UserModel {
       firstName,
       lastName,
       gender,
+      phoneNumber,
       dateOfBirth,
       const DeepCollectionEquality().hash(_conditions),
       const DeepCollectionEquality().hash(_completedTutorials),
@@ -329,7 +345,7 @@ class _UserModel extends UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
+    return 'UserModel(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, phoneNumber: $phoneNumber, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -347,6 +363,7 @@ abstract mixin class _$UserModelCopyWith<$Res>
       String? firstName,
       String? lastName,
       String? gender,
+      String? phoneNumber,
       DateTime? dateOfBirth,
       List<String> conditions,
       List<String> completedTutorials,
@@ -374,6 +391,7 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
     Object? firstName = freezed,
     Object? lastName = freezed,
     Object? gender = freezed,
+    Object? phoneNumber = freezed,
     Object? dateOfBirth = freezed,
     Object? conditions = null,
     Object? completedTutorials = null,
@@ -403,6 +421,10 @@ class __$UserModelCopyWithImpl<$Res> implements _$UserModelCopyWith<$Res> {
       gender: freezed == gender
           ? _self.gender
           : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phoneNumber: freezed == phoneNumber
+          ? _self.phoneNumber
+          : phoneNumber // ignore: cast_nullable_to_non_nullable
               as String?,
       dateOfBirth: freezed == dateOfBirth
           ? _self.dateOfBirth

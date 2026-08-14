@@ -137,7 +137,7 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
             keyboardType: TextInputType.phone,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
+              LengthLimitingTextInputFormatter(9),
             ],
             prefixWidget: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),

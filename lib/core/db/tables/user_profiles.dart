@@ -6,6 +6,7 @@ class UserProfiles extends Table {
   TextColumn get firstName => text().nullable()();
   TextColumn get lastName => text().nullable()();
   TextColumn get gender => text().nullable()();
+  TextColumn get phoneNumber => text().nullable()();
   DateTimeColumn get dateOfBirth => dateTime().nullable()();
 
   // Store conditions as JSON string list
