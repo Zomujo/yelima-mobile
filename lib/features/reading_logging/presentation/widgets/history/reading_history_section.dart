@@ -122,6 +122,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                       date: dateStr,
                       vitalName: vitalName,
                       vitalValue: "${vital.value} ${vital.unit}",
+                      severity: vital.severity,
                     );
                   },
                   childCount: displayVitals.length,

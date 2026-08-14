@@ -30,25 +30,33 @@ class HomeMetricsEntity extends Equatable {
   final String? bloodPressure;
   final String? bloodGlucose;
   final double? adherenceRate;
+  final String? bpSeverity;
+  final String? bgSeverity;
 
   const HomeMetricsEntity({
     this.bloodPressure,
     this.bloodGlucose,
     this.adherenceRate,
+    this.bpSeverity,
+    this.bgSeverity,
   });
 
   @override
-  List<Object?> get props => [bloodPressure, bloodGlucose, adherenceRate];
+  List<Object?> get props => [bloodPressure, bloodGlucose, adherenceRate, bpSeverity, bgSeverity];
 
   HomeMetricsEntity copyWith({
     String? bloodPressure,
     String? bloodGlucose,
     double? adherenceRate,
+    String? bpSeverity,
+    String? bgSeverity,
   }) {
     return HomeMetricsEntity(
       bloodPressure: bloodPressure ?? this.bloodPressure,
       bloodGlucose: bloodGlucose ?? this.bloodGlucose,
       adherenceRate: adherenceRate ?? this.adherenceRate,
+      bpSeverity: bpSeverity ?? this.bpSeverity,
+      bgSeverity: bgSeverity ?? this.bgSeverity,
     );
   }
 
