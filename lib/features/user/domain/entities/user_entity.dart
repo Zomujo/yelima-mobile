@@ -66,6 +66,7 @@ abstract class UserEntity with _$UserEntity {
     String? firstName,
     String? lastName,
     String? gender,
+    String? phoneNumber,
     DateTime? dateOfBirth,
     @Default([]) List<String> conditions,
     @Default([]) List<String> completedTutorials,

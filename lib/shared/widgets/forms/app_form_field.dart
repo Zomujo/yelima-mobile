@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../layout/app_text.dart';
 
@@ -6,6 +7,7 @@ class AppFormField extends StatelessWidget {
   final String label;
   final String? hintText;
   final IconData? prefixIcon;
+  final Widget? prefixWidget;
   final Widget? suffixIcon;
   final bool obscureText;
   final TextInputType keyboardType;
@@ -20,12 +22,15 @@ class AppFormField extends StatelessWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final ValueChanged<String>? onChanged;
   final int? maxLines;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppFormField({
     super.key,
     required this.label,
     this.hintText,
     this.prefixIcon,
+    this.prefixWidget,
     this.suffixIcon,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
@@ -40,6 +45,8 @@ class AppFormField extends StatelessWidget {
     this.onFieldSubmitted,
     this.onChanged,
     this.maxLines = 1,
+    this.maxLength,
+    this.inputFormatters,
   });
 
   @override
@@ -78,6 +85,8 @@ class AppFormField extends StatelessWidget {
           obscureText: obscureText,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
           textCapitalization: textCapitalization,
           validator: validator,
           autovalidateMode: autovalidateMode,
@@ -89,13 +98,13 @@ class AppFormField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: const TextStyle(color: Color(0xFF94A3B8)), // Slate 400
-            prefixIcon: prefixIcon != null
+            prefixIcon: prefixWidget ?? (prefixIcon != null
                 ? Icon(
                     prefixIcon,
                     color: const Color(0xFF94A3B8), // Slate 400
                     size: 20,
                   )
-                : null,
+                : null),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor:

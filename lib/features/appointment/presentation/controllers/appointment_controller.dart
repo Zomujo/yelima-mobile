@@ -87,7 +87,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     if (isRefresh || targetPage != null) {
       // 1. SWR: Try to load instantly from local DB
       final localRes = await repository.getLocalAppointments(
-          page: pageToFetch, pageSize: 10, filter: filter);
+          page: pageToFetch, pageSize: 3, filter: filter);
           
       localRes.fold((_) {}, (data) {
         if (data.rows.isNotEmpty) {
@@ -120,7 +120,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
 
     final result = await repository.getAppointments(
       page: pageToFetch,
-      pageSize: 10,
+      pageSize: 3,
       filter: filter,
     );
 

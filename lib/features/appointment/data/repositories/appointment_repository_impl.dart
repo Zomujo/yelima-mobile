@@ -58,7 +58,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           }
         });
 
-        return getLocalAppointments(page: page, pageSize: pageSize, filter: filter);
+        return Right(remoteData);
       } catch (e) {
         return getLocalAppointments(page: page, pageSize: pageSize, filter: filter);
       }

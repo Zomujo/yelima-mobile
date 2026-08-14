@@ -33,6 +33,8 @@
   "selectGender": "Select Gender",
   "male": "Male",
   "female": "Female",
+  "phoneNumber": "Phone Number",
+  "enterPhoneNumber": "e.g. 54*******",
   "whenWereYouBorn": "When were you born?",
   "dobSubtitle": "We need your date of birth to personalize your care plan. You must be 18 or older.",
   "dateOfBirthTab": "Date of Birth",

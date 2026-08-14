@@ -147,6 +147,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     required String firstName,
     required String lastName,
     required String gender,
+    required String phoneNumber,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return left('User not authenticated');
@@ -167,6 +168,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
           'firstName': firstName,
           'lastName': lastName,
           'gender': gender,
+          'phoneNumber': phoneNumber,
           'registrationStatus': newStatus.name,
         };
 
@@ -197,6 +199,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
             firstName: firstName,
             lastName: lastName,
             gender: gender,
+            phoneNumber: phoneNumber,
             registrationStatus: newStatus,
           ),
         );
@@ -349,6 +352,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
           "chronicConditions":
               state.userEntity!.conditions.map((c) => c.toLowerCase()).toList(),
           "facilityId": facilityId,
+          "phoneNumber": state.userEntity!.phoneNumber ?? '',
         };
 
         final onboardResult = await _repository.onboardUser(onboardData);

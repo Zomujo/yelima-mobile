@@ -12,6 +12,7 @@ _UserEntity _$UserEntityFromJson(Map<String, dynamic> json) => _UserEntity(
       firstName: json['firstName'] as String?,
       lastName: json['lastName'] as String?,
       gender: json['gender'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
       dateOfBirth: json['dateOfBirth'] == null
           ? null
           : DateTime.parse(json['dateOfBirth'] as String),
@@ -41,6 +42,7 @@ Map<String, dynamic> _$UserEntityToJson(_UserEntity instance) =>
       if (instance.firstName case final value?) 'firstName': value,
       if (instance.lastName case final value?) 'lastName': value,
       if (instance.gender case final value?) 'gender': value,
+      if (instance.phoneNumber case final value?) 'phoneNumber': value,
       if (instance.dateOfBirth?.toIso8601String() case final value?)
         'dateOfBirth': value,
       'conditions': instance.conditions,

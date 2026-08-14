@@ -20,6 +20,7 @@ mixin _$UserEntity {
   String? get firstName;
   String? get lastName;
   String? get gender;
+  String? get phoneNumber;
   DateTime? get dateOfBirth;
   List<String> get conditions;
   List<String> get completedTutorials;
@@ -51,6 +52,8 @@ mixin _$UserEntity {
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
             (identical(other.gender, gender) || other.gender == gender) &&
+            (identical(other.phoneNumber, phoneNumber) ||
+                other.phoneNumber == phoneNumber) &&
             (identical(other.dateOfBirth, dateOfBirth) ||
                 other.dateOfBirth == dateOfBirth) &&
             const DeepCollectionEquality()
@@ -78,6 +81,7 @@ mixin _$UserEntity {
       firstName,
       lastName,
       gender,
+      phoneNumber,
       dateOfBirth,
       const DeepCollectionEquality().hash(conditions),
       const DeepCollectionEquality().hash(completedTutorials),
@@ -89,7 +93,7 @@ mixin _$UserEntity {
 
   @override
   String toString() {
-    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
+    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, phoneNumber: $phoneNumber, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -105,6 +109,7 @@ abstract mixin class $UserEntityCopyWith<$Res> {
       String? firstName,
       String? lastName,
       String? gender,
+      String? phoneNumber,
       DateTime? dateOfBirth,
       List<String> conditions,
       List<String> completedTutorials,
@@ -132,6 +137,7 @@ class _$UserEntityCopyWithImpl<$Res> implements $UserEntityCopyWith<$Res> {
     Object? firstName = freezed,
     Object? lastName = freezed,
     Object? gender = freezed,
+    Object? phoneNumber = freezed,
     Object? dateOfBirth = freezed,
     Object? conditions = null,
     Object? completedTutorials = null,
@@ -161,6 +167,10 @@ class _$UserEntityCopyWithImpl<$Res> implements $UserEntityCopyWith<$Res> {
       gender: freezed == gender
           ? _self.gender
           : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phoneNumber: freezed == phoneNumber
+          ? _self.phoneNumber
+          : phoneNumber // ignore: cast_nullable_to_non_nullable
               as String?,
       dateOfBirth: freezed == dateOfBirth
           ? _self.dateOfBirth
@@ -207,6 +217,7 @@ class _UserEntity extends UserEntity {
       this.firstName,
       this.lastName,
       this.gender,
+      this.phoneNumber,
       this.dateOfBirth,
       final List<String> conditions = const [],
       final List<String> completedTutorials = const [],
@@ -231,6 +242,8 @@ class _UserEntity extends UserEntity {
   final String? lastName;
   @override
   final String? gender;
+  @override
+  final String? phoneNumber;
   @override
   final DateTime? dateOfBirth;
   final List<String> _conditions;
@@ -293,6 +306,8 @@ class _UserEntity extends UserEntity {
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
             (identical(other.gender, gender) || other.gender == gender) &&
+            (identical(other.phoneNumber, phoneNumber) ||
+                other.phoneNumber == phoneNumber) &&
             (identical(other.dateOfBirth, dateOfBirth) ||
                 other.dateOfBirth == dateOfBirth) &&
             const DeepCollectionEquality()
@@ -320,6 +335,7 @@ class _UserEntity extends UserEntity {
       firstName,
       lastName,
       gender,
+      phoneNumber,
       dateOfBirth,
       const DeepCollectionEquality().hash(_conditions),
       const DeepCollectionEquality().hash(_completedTutorials),
@@ -331,7 +347,7 @@ class _UserEntity extends UserEntity {
 
   @override
   String toString() {
-    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
+    return 'UserEntity(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, phoneNumber: $phoneNumber, dateOfBirth: $dateOfBirth, conditions: $conditions, completedTutorials: $completedTutorials, hasConsented: $hasConsented, registrationStatus: $registrationStatus, modeOfRegistration: $modeOfRegistration, facilityId: $facilityId, createdAt: $createdAt)';
   }
 }
 
@@ -349,6 +365,7 @@ abstract mixin class _$UserEntityCopyWith<$Res>
       String? firstName,
       String? lastName,
       String? gender,
+      String? phoneNumber,
       DateTime? dateOfBirth,
       List<String> conditions,
       List<String> completedTutorials,
@@ -376,6 +393,7 @@ class __$UserEntityCopyWithImpl<$Res> implements _$UserEntityCopyWith<$Res> {
     Object? firstName = freezed,
     Object? lastName = freezed,
     Object? gender = freezed,
+    Object? phoneNumber = freezed,
     Object? dateOfBirth = freezed,
     Object? conditions = null,
     Object? completedTutorials = null,
@@ -405,6 +423,10 @@ class __$UserEntityCopyWithImpl<$Res> implements _$UserEntityCopyWith<$Res> {
       gender: freezed == gender
           ? _self.gender
           : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
+      phoneNumber: freezed == phoneNumber
+          ? _self.phoneNumber
+          : phoneNumber // ignore: cast_nullable_to_non_nullable
               as String?,
       dateOfBirth: freezed == dateOfBirth
           ? _self.dateOfBirth

@@ -4,7 +4,6 @@ import 'reading_history_item.dart';
 import 'package:provider/provider.dart';
 import '../../../../../core/db/app_database.dart';
 import '../../../../../core/db/daos/vitals_dao.dart';
-import '../../../../../shared/widgets/layout/app_shimmer.dart';
 
 class ReadingHistorySection extends StatefulWidget {
   const ReadingHistorySection({super.key});
@@ -30,19 +29,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
       stream: _vitalsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ListView.separated(
-              padding: const EdgeInsets.only(top: 24),
-              itemCount: 3,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) => AppShimmer.box(
-                width: double.infinity,
-                height: 70,
-                borderRadius: 12,
-              ),
-            ),
-          );
+          return const SizedBox.shrink();
         }
 
         final allVitals = List<VitalHistory>.from(snapshot.data ?? []);
