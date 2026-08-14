@@ -83,13 +83,8 @@ class _OverlayModalState extends State<OverlayModal>
         animation: _animationController,
         builder: (context, child) {
           return PopScope(
-            canPop: _isDismissing,
-            onPopInvokedWithResult: (didPop, result) {
-              if (didPop) return;
-              if (widget.isDismissible && !_isDismissing) {
-                _dismiss();
-              }
-            },
+            canPop: widget.isDismissible,
+            onPopInvokedWithResult: (didPop, result) {},
             child: Stack(
               children: [
                 Positioned.fill(

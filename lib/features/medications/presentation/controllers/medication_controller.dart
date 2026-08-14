@@ -57,10 +57,28 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
       });
     }
 
+    _autoSelectTabBasedOnTime();
     fetchAdherence();
     _initCountsStream();
+    
+    // Trigger background sync for all sections so the tab counts populate immediately
+    repository.getMedicationsBySection('MORNING');
+    repository.getMedicationsBySection('AFTERNOON');
+    repository.getMedicationsBySection('EVENING');
+    
     fetchMedications();
     repository.getAllMedications(forceRefresh: true);
+  }
+
+  void _autoSelectTabBasedOnTime() {
+    final hour = DateTime.now().hour;
+    int index = 0; // Morning default
+    if (hour >= 12 && hour < 17) {
+      index = 1; // Afternoon
+    } else if (hour >= 17) {
+      index = 2; // Evening
+    }
+    _state = _state.copyWith(selectedTabIndex: index);
   }
 
   /// Updates the selected tab index and refreshes the medication list for that time of day.
