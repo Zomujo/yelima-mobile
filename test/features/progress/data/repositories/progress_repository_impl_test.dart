@@ -38,7 +38,7 @@ void main() {
   });
 
   group('getBPTrend', () {
-    const tDateRange = 'week';
+    const tDateRange = ChartDateRange.thisWeek;
     final tBPTrend = const BPTrend(
       labels: ['Mon', 'Tue'],
       systolic: [120, 122],
@@ -51,7 +51,7 @@ void main() {
       // Arrange
       when(() => mockConnectivityService.isConnected)
           .thenAnswer((_) async => true);
-      when(() => mockRemoteDataSource.getBPTrend(dateRange: tDateRange))
+      when(() => mockRemoteDataSource.getBPTrend(dateRange: tDateRange.backendString))
           .thenAnswer((_) async => tBPTrend);
 
       // Act
@@ -61,13 +61,13 @@ void main() {
       expect(result.isRight(), true);
       expect(result.getRight().toNullable(), tBPTrend);
 
-      verify(() => mockRemoteDataSource.getBPTrend(dateRange: tDateRange))
+      verify(() => mockRemoteDataSource.getBPTrend(dateRange: tDateRange.backendString))
           .called(1);
 
       // Verify it was cached in the local database
       final cachedVitals = await testDb.vitalsDao.getAllVitals();
       expect(cachedVitals.length, 1);
-      expect(cachedVitals.first.id, 'bp_trend_cache_$tDateRange');
+      expect(cachedVitals.first.id, 'bp_trend_cache_${tDateRange.backendString}');
 
       final cachedJson = jsonDecode(cachedVitals.first.value);
       expect(cachedJson['labels'], ['Mon', 'Tue']);
@@ -86,9 +86,9 @@ void main() {
       });
       await testDb.vitalsDao.insertVitals([
         VitalHistoriesCompanion(
-          id: const drift.Value('bp_trend_cache_week'),
+          id: const drift.Value('bp_trend_cache_thisWeek'),
           vitalType: const drift.Value('PROGRESS_BP_TREND'),
-          vitalName: const drift.Value('BP Trend week'),
+          vitalName: const drift.Value('BP Trend thisWeek'),
           value: drift.Value(trendJson),
           unit: const drift.Value('json'),
           severity: const drift.Value('normal'),

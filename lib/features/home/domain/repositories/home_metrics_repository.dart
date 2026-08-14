@@ -5,4 +5,5 @@ abstract class HomeMetricsRepository {
   AsyncResponse<HomeMetricsEntity> getCachedHomeMetrics();
   AsyncResponse<HomeMetricsEntity> getHomeMetrics();
   AsyncResponse<void> saveVitalReading(VitalHistoryEntity entity);
+  Stream<List<VitalHistoryEntity>> watchVitalHistories();
 }

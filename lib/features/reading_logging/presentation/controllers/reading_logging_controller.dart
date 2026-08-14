@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../home/domain/repositories/home_metrics_repository.dart';
-import '../../../../core/exceptions/exceptions.dart';
-import '../../../../core/utils/custom_types.dart';
+import 'package:yelima/core/exceptions/exceptions.dart';
+import 'package:yelima/core/utils/custom_types.dart';
 import '../../domain/entities/reading_form_data.dart';
 import '../../domain/usecases/save_vital_reading_usecase.dart';
+import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
 import '../states/reading_logging_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
@@ -130,4 +131,8 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
     state = state.copyWith(isSaving: false, hasChanged: response.isLeft());
     return response;
   }
+
+  /// Watch local history of vitals
+  Stream<List<VitalHistoryEntity>> get vitalHistoriesStream =>
+      _repository.watchVitalHistories();
 }

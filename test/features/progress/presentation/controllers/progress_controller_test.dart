@@ -19,7 +19,7 @@ void main() {
   });
 
   group('ProgressController', () {
-    const tDateRange = 'today';
+    const tDateRange = ChartDateRange.today;
     final tBPTrend = const BPTrend(
       labels: ['10:00 AM'],
       systolic: [120],

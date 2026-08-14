@@ -7,25 +7,11 @@ import '../medication_adherence_card.dart';
 import 'critical_health_banner.dart';
 import '../../controllers/home_metrics_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../../../domain/entities/vital_history_entity.dart';
 import '../../../../../core/utils/app_tutorial_keys.dart';
 
-class HomeMetricsSection extends StatefulWidget {
+class HomeMetricsSection extends StatelessWidget {
   const HomeMetricsSection({super.key});
-
-  @override
-  State<HomeMetricsSection> createState() => _HomeMetricsSectionState();
-}
-
-class _HomeMetricsSectionState extends State<HomeMetricsSection> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<HomeMetricsController>().fetchMetrics();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,49 +27,47 @@ class _HomeMetricsSectionState extends State<HomeMetricsSection> {
     final bpMain = bpParts.isNotEmpty && bpParts[0] != '--' ? bpParts[0] : '--';
     final bpSub = bpParts.length > 1 ? '/${bpParts[1]}' : '';
 
-    final bpSev = state.metrics?.bpSeverity?.toLowerCase() ?? '';
-    final bgSev = state.metrics?.bgSeverity?.toLowerCase() ?? '';
+    final bpSev = state.metrics?.parsedBpSeverity ?? VitalSeverity.unknown;
+    final bgSev = state.metrics?.parsedBgSeverity ?? VitalSeverity.unknown;
 
     final List<Widget> banners = [];
 
-    if (bpSev == 'critical' || bpSev == 'crisis') {
-      banners.add(const CriticalHealthBanner(
-        title: 'Critical Blood Pressure',
-        message:
-            'Repeat measurement promptly; assess for urgent/emergency care.',
+    if (bpSev == VitalSeverity.critical) {
+      banners.add(CriticalHealthBanner(
+        title: context.l10n.criticalBloodPressureTitle,
+        message: context.l10n.criticalBloodPressureMessage,
         isCritical: true,
       ));
-    } else if (bpSev == 'very_high') {
-      banners.add(const CriticalHealthBanner(
-        title: 'Very High Blood Pressure',
-        message: 'Clinical review recommended.',
+    } else if (bpSev == VitalSeverity.veryHigh) {
+      banners.add(CriticalHealthBanner(
+        title: context.l10n.veryHighBloodPressureTitle,
+        message: context.l10n.veryHighBloodPressureMessage,
         isCritical: false,
       ));
     }
 
-    if (bgSev == 'critical') {
-      banners.add(const CriticalHealthBanner(
-        title: 'Critical Blood Sugar',
-        message: 'Prompt clinical assessment required.',
+    if (bgSev == VitalSeverity.critical) {
+      banners.add(CriticalHealthBanner(
+        title: context.l10n.criticalBloodSugarTitle,
+        message: context.l10n.criticalBloodSugarMessage,
         isCritical: true,
       ));
-    } else if (bgSev == 'very_high') {
-      banners.add(const CriticalHealthBanner(
-        title: 'Very High Blood Sugar',
-        message: 'Needs attention, especially if persistent.',
+    } else if (bgSev == VitalSeverity.veryHigh) {
+      banners.add(CriticalHealthBanner(
+        title: context.l10n.veryHighBloodSugarTitle,
+        message: context.l10n.veryHighBloodSugarMessage,
         isCritical: false,
       ));
-    } else if (bgSev == 'critically_low') {
-      banners.add(const CriticalHealthBanner(
-        title: 'Critically Low Blood Sugar',
-        message:
-            'Clinically significant hypoglycemia. Please seek help immediately.',
+    } else if (bgSev == VitalSeverity.criticallyLow) {
+      banners.add(CriticalHealthBanner(
+        title: context.l10n.criticallyLowBloodSugarTitle,
+        message: context.l10n.criticallyLowBloodSugarMessage,
         isCritical: true,
       ));
-    } else if (bgSev == 'low') {
-      banners.add(const CriticalHealthBanner(
-        title: 'Low Blood Sugar',
-        message: 'Hypoglycemia detected. Consider consuming fast-acting carbs.',
+    } else if (bgSev == VitalSeverity.low) {
+      banners.add(CriticalHealthBanner(
+        title: context.l10n.lowBloodSugarTitle,
+        message: context.l10n.lowBloodSugarMessage,
         isCritical: false,
       ));
     }

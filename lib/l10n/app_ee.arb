@@ -255,5 +255,18 @@
   "discard": "Tsɔ Ƒu Gbe",
   "deleteMedicationTitle": "Tutuu Atike",
   "deleteMedicationConfirmation": "Èka ɖe edzi be nèdi be yeatutu {medicationName} a?",
-  "confirm": "Ka Ɖe Edzi"
+  "confirm": "Ka Ɖe Edzi",
+  "healthInsightsTitle": "Lãmesẽ ŋuti nyawo",
+  "criticalBloodPressureTitle": "Ʋu ƒe ʋuʋudedi si le afɔku me",
+  "criticalBloodPressureMessage": "Gbugbɔ dzidzee enumake; di atikewɔwɔ kpata.",
+  "veryHighBloodPressureTitle": "Ʋu ƒe ʋuʋudedi si kɔ ŋutɔ",
+  "veryHighBloodPressureMessage": "Míedo aɖaŋu be nàkpɔ atikewɔla.",
+  "criticalBloodSugarTitle": "Suklidɔ si le afɔku me",
+  "criticalBloodSugarMessage": "Ehiã be nàkpɔ atikewɔla enumake.",
+  "veryHighBloodSugarTitle": "Suklidɔ si kɔ ŋutɔ",
+  "veryHighBloodSugarMessage": "Ehiã beléle, vevietɔ ne eyi edzi.",
+  "criticallyLowBloodSugarTitle": "Suklidɔ si bɔbɔ ɖe anyi ŋutɔ eye wòle afɔku me",
+  "criticallyLowBloodSugarMessage": "Sukli ƒe agbɔsɔsɔme bɔbɔ ɖe anyi ŋutɔ. Meɖekuku di kpekpeɖeŋu enumake.",
+  "lowBloodSugarTitle": "Suklidɔ si bɔbɔ ɖe anyi",
+  "lowBloodSugarMessage": "Sukli ƒe agbɔsɔsɔme bɔbɔ ɖe anyi. Ðu nu siwo ana ŋusẽ wò enumake."
 }

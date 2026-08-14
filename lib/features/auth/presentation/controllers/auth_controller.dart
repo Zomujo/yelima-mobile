@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-
 import 'package:yelima/core/managers/token_manager.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 
 import '../../../../shared/widgets/loaders/global_async_loader.dart';
 import '../../../../shared/utils/app_snackbar.dart';
@@ -74,11 +74,17 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         try {
           await _refreshAuthAndProfile(user);
         } finally {
-          GlobalAsyncLoader.hide();
           _updateState(_state.copyWith(
             isInitialSyncInProgress: false,
             isInitialized: true,
           ));
+          if (GetIt.instance.isRegistered<UserController>()) {
+            final uc = GetIt.instance<UserController>();
+            while (!uc.isInitialized) {
+              await Future.delayed(const Duration(milliseconds: 100));
+            }
+          }
+          GlobalAsyncLoader.hide();
         }
       }
     });

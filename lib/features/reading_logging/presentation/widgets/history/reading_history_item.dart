@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
 
 class ReadingHistoryItem extends StatelessWidget {
   final String date;
   final String vitalName;
   final String vitalValue;
-  final String? severity;
+  final VitalSeverity? severity;
 
   const ReadingHistoryItem({
     super.key,
@@ -65,54 +66,43 @@ class ReadingHistoryItem extends StatelessWidget {
     );
   }
 
-  Color _getSeverityColor(String sev) {
-    switch (sev.toLowerCase()) {
-      case 'in_target':
-      case 'good':
-      case 'normal':
+  Color _getSeverityColor(VitalSeverity sev) {
+    switch (sev) {
+      case VitalSeverity.normal:
         return Colors.green;
-      case 'slightly_high':
-      case 'low':
-      case 'elevated':
+      case VitalSeverity.slightlyHigh:
+      case VitalSeverity.low:
         return Colors.amber.shade700;
-      case 'high':
-        return Colors.orange.shade700;
-      case 'very_high':
-      case 'critically_low':
+      case VitalSeverity.criticallyLow:
         return Colors.deepOrange;
-      case 'critical':
-      case 'crisis':
+      case VitalSeverity.high:
+        return Colors.orange.shade700;
+      case VitalSeverity.veryHigh:
+        return Colors.deepOrange;
+      case VitalSeverity.critical:
         return Colors.red.shade700;
-      default:
+      case VitalSeverity.unknown:
         return Colors.grey;
     }
   }
 
-  String _getSeverityText(String sev) {
-    switch (sev.toLowerCase()) {
-      case 'in_target':
-        return 'In Target';
-      case 'slightly_high':
+  String _getSeverityText(VitalSeverity sev) {
+    switch (sev) {
+      case VitalSeverity.normal:
+        return 'Normal / Target';
+      case VitalSeverity.slightlyHigh:
         return 'Slightly High';
-      case 'very_high':
-        return 'Very High';
-      case 'critically_low':
-        return 'Critically Low';
-      case 'good':
-        return 'Good';
-      case 'normal':
-        return 'Normal';
-      case 'low':
+      case VitalSeverity.low:
         return 'Low';
-      case 'elevated':
-        return 'Elevated';
-      case 'high':
+      case VitalSeverity.criticallyLow:
+        return 'Critically Low';
+      case VitalSeverity.high:
         return 'High';
-      case 'critical':
+      case VitalSeverity.veryHigh:
+        return 'Very High';
+      case VitalSeverity.critical:
         return 'Critical';
-      case 'crisis':
-        return 'Crisis';
-      default:
+      case VitalSeverity.unknown:
         return '';
     }
   }

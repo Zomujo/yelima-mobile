@@ -276,5 +276,18 @@
       }
     }
   },
-  "confirm": "Confirm"
+  "confirm": "Confirm",
+  "healthInsightsTitle": "Health Insights",
+  "criticalBloodPressureTitle": "Critical Blood Pressure",
+  "criticalBloodPressureMessage": "Repeat measurement promptly; assess for urgent/emergency care.",
+  "veryHighBloodPressureTitle": "Very High Blood Pressure",
+  "veryHighBloodPressureMessage": "Clinical review recommended.",
+  "criticalBloodSugarTitle": "Critical Blood Sugar",
+  "criticalBloodSugarMessage": "Prompt clinical assessment required.",
+  "veryHighBloodSugarTitle": "Very High Blood Sugar",
+  "veryHighBloodSugarMessage": "Needs attention, especially if persistent.",
+  "criticallyLowBloodSugarTitle": "Critically Low Blood Sugar",
+  "criticallyLowBloodSugarMessage": "Clinically significant hypoglycemia. Please seek help immediately.",
+  "lowBloodSugarTitle": "Low Blood Sugar",
+  "lowBloodSugarMessage": "Hypoglycemia detected. Consider consuming fast-acting carbs."
 }

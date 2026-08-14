@@ -256,5 +256,18 @@
   "discard": "Tow To Nkyɛn",
   "deleteMedicationTitle": "Pepa Aduro",
   "deleteMedicationConfirmation": "Wo pa ara wo pɛ sɛ wo pepa {medicationName}?",
-  "confirm": "Gye Tom"
+  "confirm": "Gye Tom",
+  "healthInsightsTitle": "Apotomudeɛ mu nsem",
+  "criticalBloodPressureTitle": "Mogya mmorosoɔ a ɛyɛ hu",
+  "criticalBloodPressureMessage": "Yɛ nsɔhwɛ no bio ntɛm; kɔ ayaresabea ntɛm.",
+  "veryHighBloodPressureTitle": "Mogya mmorosoɔ a ɛkɔ soro pa ara",
+  "veryHighBloodPressureMessage": "Yɛkamfo kyerɛ sɛ kɔhunu dɔkota.",
+  "criticalBloodSugarTitle": "Asikreyadeɛ a ɛyɛ hu",
+  "criticalBloodSugarMessage": "Ɛsɛ sɛ wohunu dɔkota ntɛm.",
+  "veryHighBloodSugarTitle": "Asikreyadeɛ a ɛkɔ soro pa ara",
+  "veryHighBloodSugarMessage": "Ɛhia adwene, titiriw sɛ ɛkɔ so a.",
+  "criticallyLowBloodSugarTitle": "Asikreyadeɛ a akɔ fam pa ara na ɛyɛ hu",
+  "criticallyLowBloodSugarMessage": "Sikreyadeɛ no aka fam pa ara. Yɛsrɛ wo kɔhunu dɔkota ntɛm.",
+  "lowBloodSugarTitle": "Asikreyadeɛ a akɔ fam",
+  "lowBloodSugarMessage": "Asikreyadeɛ no aka fam. Yɛkamfo kyerɛ sɛ di aduane a ɛma ahoɔden ntɛm."
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ProgressNoteBanner extends StatefulWidget {
   final String note;
@@ -64,11 +65,11 @@ class _ProgressNoteBannerState extends State<ProgressNoteBanner> {
                           size: 24,
                         ),
                         const SizedBox(width: 14),
-                        const Expanded(
+                        Expanded(
                           child: AppText.titleMedium(
-                            'Health Insights',
+                            context.l10n.healthInsightsTitle,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E3A8A),
+                            color: const Color(0xFF1E3A8A),
                           ),
                         ),
                         Icon(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:yelima/features/appointment/presentation/controllers/appointment_controller.dart';
+import 'package:yelima/features/home/presentation/controllers/home_metrics_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/home_header.dart';
 import '../widgets/sections/home_metrics_section.dart';
@@ -26,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<AppointmentController>().fetchNearestAppointment();
+        context.read<HomeMetricsController>().fetchMetrics();
         AppTutorialService.showHomeTutorial(context);
       }
     });

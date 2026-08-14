@@ -255,5 +255,18 @@
   "discard": "Kwa",
   "deleteMedicationTitle": "Jiemɔ Tsofa",
   "deleteMedicationConfirmation": "Ani ooyaanu bɔ ni obaajie {medicationName}?",
-  "confirm": "Kpɛlɛ Nɔ"
+  "confirm": "Kpɛlɛ Nɔ",
+  "healthInsightsTitle": "Gbɔmɔtso hewalɛ mli saji",
+  "criticalBloodPressureTitle": "Lá ta gbohii a nɔ ni wa",
+  "criticalBloodPressureMessage": "Kaa eko nɔŋŋ; yaa tsuŋ ni he hiaa oya.",
+  "veryHighBloodPressureTitle": "Lá ta gbohii a nɔ ni kwɔ waa",
+  "veryHighBloodPressureMessage": "Wɔtsɔɔ akɛ oya tsuŋ mli.",
+  "criticalBloodSugarTitle": "Suukle hela ni wa",
+  "criticalBloodSugarMessage": "Ehe hiaa ni oya tsuŋ oya.",
+  "veryHighBloodSugarTitle": "Suukle hela ni kwɔ waa",
+  "veryHighBloodSugarMessage": "Ehe hiaa nɔkwɛmɔ, titri kɛ eya nɔ.",
+  "criticallyLowBloodSugarTitle": "Suukle hela ni eba shi waa ni wa",
+  "criticallyLowBloodSugarMessage": "Suukle hela eba shi waa. Yaa tsuŋ oya.",
+  "lowBloodSugarTitle": "Suukle hela ni eba shi",
+  "lowBloodSugarMessage": "Suukle hela eba shi. Yemɔ niyenii ni haa hewalɛ oya."
 }

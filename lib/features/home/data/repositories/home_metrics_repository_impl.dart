@@ -158,4 +158,26 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
       operationName: 'HomeMetricsRepositoryImpl.saveVitalReading',
     );
   }
+
+  @override
+  Stream<List<VitalHistoryEntity>> watchVitalHistories() {
+    final db = GetIt.instance<AppDatabase>();
+    return db.vitalsDao.watchAllVitals().map((vitals) {
+      return vitals.where((v) {
+        final type = v.vitalType.toUpperCase();
+        return !type.contains("CACHE") && !type.contains("TREND");
+      }).map((v) {
+        return VitalHistoryModel(
+          id: v.id,
+          vitalType: v.vitalType,
+          value: v.value,
+          unit: v.unit,
+          severity: v.severity,
+          vitalName: v.vitalName,
+          vitalSubType: v.vitalSubType,
+          recordedAt: v.recordedAt ?? DateTime.now(),
+        );
+      }).toList();
+    });
+  }
 }

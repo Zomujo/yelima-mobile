@@ -26,6 +26,36 @@ class VitalHistoryEntity extends Equatable {
       [id, vitalType, value, unit, severity, vitalName, vitalSubType, recordedAt];
 }
 
+enum VitalSeverity { normal, slightlyHigh, high, veryHigh, critical, low, criticallyLow, unknown }
+
+extension VitalSeverityExt on VitalSeverity {
+  static VitalSeverity fromString(String? val) {
+    if (val == null) return VitalSeverity.unknown;
+    switch (val.toLowerCase()) {
+      case 'normal':
+      case 'good':
+      case 'in_target':
+        return VitalSeverity.normal;
+      case 'slightly_high':
+      case 'elevated':
+        return VitalSeverity.slightlyHigh;
+      case 'low':
+        return VitalSeverity.low;
+      case 'critically_low':
+        return VitalSeverity.criticallyLow;
+      case 'high':
+        return VitalSeverity.high;
+      case 'very_high':
+        return VitalSeverity.veryHigh;
+      case 'critical':
+      case 'crisis':
+        return VitalSeverity.critical;
+      default:
+        return VitalSeverity.unknown;
+    }
+  }
+}
+
 class HomeMetricsEntity extends Equatable {
   final String? bloodPressure;
   final String? bloodGlucose;
@@ -84,4 +114,7 @@ class HomeMetricsEntity extends Equatable {
     }
     return double.tryParse(bloodGlucose!.trim());
   }
+
+  VitalSeverity get parsedBpSeverity => VitalSeverityExt.fromString(bpSeverity);
+  VitalSeverity get parsedBgSeverity => VitalSeverityExt.fromString(bgSeverity);
 }

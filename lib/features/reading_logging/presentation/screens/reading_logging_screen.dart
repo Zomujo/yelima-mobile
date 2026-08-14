@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
-import '../../../../core/db/app_database.dart';
-import '../../../../core/db/daos/vitals_dao.dart';
 import '../controllers/reading_logging_controller.dart';
+import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
 import '../../../../injection_container.dart';
 import '../widgets/form/reading_logging_form.dart';
 import '../widgets/history/reading_history_section.dart';
@@ -61,15 +60,12 @@ class _ReadingLoggingViewState extends State<_ReadingLoggingView> {
               child: UnsavedChangesGuard(
                 hasUnsavedChanges: () =>
                     context.read<ReadingLoggingController>().state.hasChanged,
-                child: StreamBuilder<List<VitalHistory>>(
-                  stream: context.read<VitalsDao>().watchAllVitals(),
+                child: StreamBuilder<List<VitalHistoryEntity>>(
+                  stream: context.read<ReadingLoggingController>().vitalHistoriesStream,
                   builder: (context, snapshot) {
                     final allVitals =
-                        List<VitalHistory>.from(snapshot.data ?? []);
-                    final hasHistory = allVitals.any((v) {
-                      final type = v.vitalType.toUpperCase();
-                      return !type.contains("CACHE") && !type.contains("TREND");
-                    });
+                        List<VitalHistoryEntity>.from(snapshot.data ?? []);
+                    final hasHistory = allVitals.isNotEmpty;
 
                     // No history: simple non-scrollable column
                     if (!hasHistory) {

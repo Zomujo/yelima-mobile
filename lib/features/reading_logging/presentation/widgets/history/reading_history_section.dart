@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import 'reading_history_item.dart';
 import 'package:provider/provider.dart';
-import '../../../../../core/db/app_database.dart';
-import '../../../../../core/db/daos/vitals_dao.dart';
+import 'package:yelima/features/reading_logging/presentation/controllers/reading_logging_controller.dart';
+import 'package:yelima/core/utils/app_date_formats.dart';
+import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
 
 class ReadingHistorySection extends StatefulWidget {
   const ReadingHistorySection({super.key});
@@ -15,31 +16,26 @@ class ReadingHistorySection extends StatefulWidget {
 class _ReadingHistorySectionState extends State<ReadingHistorySection> {
   int _currentPage = 1;
   final int _pageSize = 5;
-  late Stream<List<VitalHistory>> _vitalsStream;
+  late Stream<List<VitalHistoryEntity>> _vitalsStream;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _vitalsStream = context.read<VitalsDao>().watchAllVitals();
+    _vitalsStream = context.read<ReadingLoggingController>().vitalHistoriesStream;
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<VitalHistory>>(
+    return StreamBuilder<List<VitalHistoryEntity>>(
       stream: _vitalsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox.shrink();
         }
 
-        final allVitals = List<VitalHistory>.from(snapshot.data ?? []);
-        final vitals = allVitals.where((v) {
-          final type = v.vitalType.toUpperCase();
-          return !type.contains("CACHE") && !type.contains("TREND");
-        }).toList();
+        final vitals = List<VitalHistoryEntity>.from(snapshot.data ?? []);
 
         if (vitals.isEmpty) {
-          // As requested, hide the entire section if there are no readings
           return const SizedBox.shrink();
         }
 
@@ -98,22 +94,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                   (context, index) {
                     final vital = displayVitals[index];
                     final date = vital.recordedAt ?? DateTime.now();
-                    final months = [
-                      'Jan',
-                      'Feb',
-                      'Mar',
-                      'Apr',
-                      'May',
-                      'Jun',
-                      'Jul',
-                      'Aug',
-                      'Sep',
-                      'Oct',
-                      'Nov',
-                      'Dec'
-                    ];
-                    final dateStr =
-                        "${months[date.month - 1]} ${date.day}, ${date.year}";
+                    final dateStr = AppDateFormats.dayDateMonth.format(date);
                     final typeLower = vital.vitalType.toLowerCase();
                     final isBP = typeLower == 'bloodpressure';
                     final vitalName = isBP ? 'BP' : 'Sugar';
@@ -122,7 +103,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                       date: dateStr,
                       vitalName: vitalName,
                       vitalValue: "${vital.value} ${vital.unit}",
-                      severity: vital.severity,
+                      severity: VitalSeverityExt.fromString(vital.severity),
                     );
                   },
                   childCount: displayVitals.length,

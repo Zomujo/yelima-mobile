@@ -64,9 +64,8 @@ class HomeMetricsController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   Future<void> fetchMetrics() async {
+    // Try cache first if we have no metrics
     if (_state.metrics == null) {
-      state = state.copyWith(isLoading: true);
-
       final cachedResult = await _repository.getCachedHomeMetrics();
       cachedResult.fold((error) => null, (data) {
         if (data.bloodPressure != null ||
@@ -77,6 +76,7 @@ class HomeMetricsController extends ChangeNotifier with SafeNotifier {
       });
     }
 
+    // Only emit loading state if we STILL have no metrics after checking cache
     if (_state.metrics == null) {
       state = state.copyWith(isLoading: true);
     }
