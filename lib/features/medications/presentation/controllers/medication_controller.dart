@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../states/medications_state.dart';
 import '../../domain/repositories/medication_repository.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_count.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import 'all_medicines_controller.dart';
+
+enum MedicationSection { morning, afternoon, evening }
+
+extension MedicationSectionExt on MedicationSection {
+  String get nameUpperCase => name.toUpperCase();
+}
 
 class MedicationController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
@@ -15,9 +19,10 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   final MedicationRepository repository;
+  final MutationSyncManager? syncManager;
   StreamSubscription? _mutationSyncSub;
 
-  MedicationController({required this.repository});
+  MedicationController({required this.repository, this.syncManager});
 
   MedicationsState _state = const MedicationsState();
   MedicationsState get state => _state;
@@ -34,21 +39,21 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   String get _currentSection {
     switch (state.selectedTabIndex) {
       case 0:
-        return 'MORNING';
+        return MedicationSection.morning.nameUpperCase;
       case 1:
-        return 'AFTERNOON';
+        return MedicationSection.afternoon.nameUpperCase;
       case 2:
-        return 'EVENING';
+        return MedicationSection.evening.nameUpperCase;
       default:
-        return 'MORNING';
+        return MedicationSection.morning.nameUpperCase;
     }
   }
 
   /// Initializes the controller by fetching adherence, counts, and medications.
   void init() {
-    if (GetIt.instance.isRegistered<MutationSyncManager>()) {
+    if (syncManager != null) {
       _mutationSyncSub?.cancel();
-      _mutationSyncSub = GetIt.instance<MutationSyncManager>()
+      _mutationSyncSub = syncManager!
           .onMutationSynced
           .listen((event) {
         if (event.contains('medication') || event.contains('confirmMedication') || event.contains('deleteMedication')) {
@@ -62,9 +67,9 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
     _initCountsStream();
     
     // Trigger background sync for all sections so the tab counts populate immediately
-    repository.getMedicationsBySection('MORNING');
-    repository.getMedicationsBySection('AFTERNOON');
-    repository.getMedicationsBySection('EVENING');
+    repository.getMedicationsBySection(MedicationSection.morning.nameUpperCase);
+    repository.getMedicationsBySection(MedicationSection.afternoon.nameUpperCase);
+    repository.getMedicationsBySection(MedicationSection.evening.nameUpperCase);
     
     fetchMedications();
     repository.getAllMedications(forceRefresh: true);
@@ -225,9 +230,6 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
       (error) => error,
       (_) {
         fetchAdherence();
-        if (GetIt.instance.isRegistered<AllMedicinesController>()) {
-          GetIt.instance<AllMedicinesController>().fetchMedicationHistory(id);
-        }
         return null;
       },
     );

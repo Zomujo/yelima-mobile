@@ -7,6 +7,7 @@ import 'data/repositories/medication_repository_impl.dart';
 import 'data/services/seeded_medications_sync_service.dart';
 import 'data/services/medication_alarm_sync_service.dart';
 import '../../core/services/session_lifecycle_service.dart';
+import '../../core/managers/mutation_sync_manager.dart';
 import 'domain/usecases/create_medication_usecase.dart';
 import 'domain/usecases/update_medication_usecase.dart';
 import 'presentation/controllers/all_medicines_controller.dart';
@@ -43,6 +44,16 @@ void initMedications(GetIt sl) {
       () => CreateMedicationUseCase(sl()));
 
   // Controllers
-  sl.registerFactory(() => MedicationController(repository: sl()));
-  sl.registerFactory(() => AllMedicinesController(repository: sl()));
+  sl.registerFactory(() => MedicationController(
+        repository: sl(),
+        syncManager: sl.isRegistered<MutationSyncManager>()
+            ? sl<MutationSyncManager>()
+            : null,
+      ));
+  sl.registerFactory(() => AllMedicinesController(
+        repository: sl(),
+        syncManager: sl.isRegistered<MutationSyncManager>()
+            ? sl<MutationSyncManager>()
+            : null,
+      ));
 }

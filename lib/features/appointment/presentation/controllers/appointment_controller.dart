@@ -33,7 +33,6 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
     fetchAppointments(filter: 'past', isRefresh: true);
   }
 
-
   // --------------------------------------------------------------------------
   // |                                   Actions & Methods                     |
   // --------------------------------------------------------------------------
@@ -42,14 +41,15 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
 
   Future<void> fetchNearestAppointment() async {
     final stamp = ++_nearestFetchStamp;
-    
+
     // 1. Instantly display local cache if available
     final localResult = await repository.getLocalNearestAppointment();
     localResult.fold(
       (_) {},
       (data) {
         if (data != null) {
-          state = state.copyWith(nearestAppointment: data, isNearestLoading: false);
+          state =
+              state.copyWith(nearestAppointment: data, isNearestLoading: false);
         }
       },
     );
@@ -66,8 +66,10 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
 
     state = result.fold(
       (error) => state.copyWith(isNearestLoading: false, nearestError: error),
-      (data) =>
-          state.copyWith(isNearestLoading: false, nearestAppointment: data, nearestError: null),
+      (data) => state.copyWith(
+          isNearestLoading: false,
+          nearestAppointment: data,
+          nearestError: null),
     );
   }
 
@@ -88,7 +90,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
       // 1. SWR: Try to load instantly from local DB
       final localRes = await repository.getLocalAppointments(
           page: pageToFetch, pageSize: 3, filter: filter);
-          
+
       localRes.fold((_) {}, (data) {
         if (data.rows.isNotEmpty) {
           currentPaginatedState = currentPaginatedState.copyWith(
@@ -102,8 +104,8 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
         }
       });
 
-      // Show loading spinner only if local DB was empty
-      if (currentPaginatedState.items.isEmpty) {
+      if (currentPaginatedState.items.isEmpty &&
+          currentPaginatedState.hasNextPage) {
         currentPaginatedState = currentPaginatedState.copyWith(isLoading: true);
         _updatePaginatedState(filter, currentPaginatedState);
       }

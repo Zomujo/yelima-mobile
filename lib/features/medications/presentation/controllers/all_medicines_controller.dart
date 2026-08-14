@@ -20,19 +20,20 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   final MedicationRepository repository;
+  final MutationSyncManager? syncManager;
   StreamSubscription? _mutationSyncSub;
 
   // --------------------------------------------------------------------------
   // |                               Initialization & Lifecycle               |
   // --------------------------------------------------------------------------
 
-  AllMedicinesController({required this.repository}) {
+  AllMedicinesController({required this.repository, this.syncManager}) {
     _init();
   }
 
   void _init() {
-    if (GetIt.instance.isRegistered<MutationSyncManager>()) {
-      _mutationSyncSub = GetIt.instance<MutationSyncManager>()
+    if (syncManager != null) {
+      _mutationSyncSub = syncManager!
           .onMutationSynced
           .listen((event) {
         if (event.contains('medication')) {
