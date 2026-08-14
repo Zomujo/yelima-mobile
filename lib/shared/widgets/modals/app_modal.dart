@@ -82,9 +82,13 @@ class _OverlayModalState extends State<OverlayModal>
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
-          return PopScope(
-            canPop: widget.isDismissible,
-            onPopInvokedWithResult: (didPop, result) {},
+          return BackButtonListener(
+            onBackButtonPressed: () async {
+              if (widget.isDismissible) {
+                _dismiss();
+              }
+              return true; // Consume the back button event while modal is active
+            },
             child: Stack(
               children: [
                 Positioned.fill(

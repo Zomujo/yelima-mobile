@@ -146,10 +146,13 @@ class NotificationService {
       message.hashCode,
       title,
       body,
-      const NotificationDetails(
-        android:
-            AndroidNotificationDetails('high_importance_channel', 'General'),
-        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'high_importance_channel',
+          'General',
+          styleInformation: BigTextStyleInformation(body),
+        ),
+        iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
       ),
       payload: jsonEncode(message.toMap()),
     );
@@ -202,14 +205,15 @@ class NotificationService {
         title,
         body,
         scheduledDate,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'medication_reminders',
             'Medication Reminders',
             importance: Importance.max,
             priority: Priority.high,
+            styleInformation: BigTextStyleInformation(body),
           ),
-          iOS: DarwinNotificationDetails(
+          iOS: const DarwinNotificationDetails(
             presentAlert: true,
             presentSound: true,
             presentBadge: true,

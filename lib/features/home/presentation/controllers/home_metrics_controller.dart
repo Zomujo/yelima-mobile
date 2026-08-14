@@ -5,9 +5,10 @@ import '../../../../core/db/app_database.dart';
 import '../../domain/entities/vital_history_entity.dart';
 import '../../domain/repositories/home_metrics_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/services/session_lifecycle_service.dart';
 import '../states/home_metrics_state.dart';
 
-class HomeMetricsController extends ChangeNotifier with SafeNotifier {
+class HomeMetricsController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies      |
   // --------------------------------------------------------------------------
@@ -21,7 +22,22 @@ class HomeMetricsController extends ChangeNotifier with SafeNotifier {
 
   HomeMetricsController({required HomeMetricsRepository repository})
       : _repository = repository {
+    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
+      GetIt.instance<SessionLifecycleService>().register(this);
+    }
     _initStream();
+  }
+
+  @override
+  String get serviceName => 'HomeMetricsController';
+
+  @override
+  Future<void> onSessionStarted(String userId) async {}
+
+  @override
+  Future<void> onSessionEnded() async {
+    _state = HomeMetricsState.initial();
+    notifyListeners();
   }
 
   void _initStream() {

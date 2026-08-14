@@ -12,5 +12,5 @@ void initProgress(GetIt sl) {
         connectivityService: sl(),
         db: sl(),
       ));
-  sl.registerFactory(() => ProgressController(sl()));
+  sl.registerLazySingleton(() => ProgressController(sl()));
 }

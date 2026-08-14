@@ -43,16 +43,16 @@ class BloodGlucoseSection extends StatelessWidget {
   }
 
   Widget _buildGlucoseGraph(ProgressController controller) {
+    if (controller.glucoseTrendState.data != null) {
+      return GlucoseGraph(data: controller.glucoseTrendState.data!);
+    }
     if (controller.glucoseTrendState.isLoading) {
       return Center(child: AppShimmer.box(width: double.infinity, height: 180));
     }
     if (controller.glucoseTrendState.error != null) {
       return Center(child: Text(controller.glucoseTrendState.error!));
     }
-    if (controller.glucoseTrendState.data == null) {
-      return const Center(child: Text('No data available'));
-    }
-    return GlucoseGraph(data: controller.glucoseTrendState.data!);
+    return const Center(child: Text('No data available'));
   }
 
   void _openFullScreen(

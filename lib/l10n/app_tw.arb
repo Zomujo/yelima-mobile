@@ -269,5 +269,7 @@
   "criticallyLowBloodSugarTitle": "Asikreyadeɛ a akɔ fam pa ara na ɛyɛ hu",
   "criticallyLowBloodSugarMessage": "Sikreyadeɛ no aka fam pa ara. Yɛsrɛ wo kɔhunu dɔkota ntɛm.",
   "lowBloodSugarTitle": "Asikreyadeɛ a akɔ fam",
-  "lowBloodSugarMessage": "Asikreyadeɛ no aka fam. Yɛkamfo kyerɛ sɛ di aduane a ɛma ahoɔden ntɛm."
+  "lowBloodSugarMessage": "Asikreyadeɛ no aka fam. Yɛkamfo kyerɛ sɛ di aduane a ɛma ahoɔden ntɛm.",
+  "phoneNumber": "Tɛlɛfon Nɔmba",
+  "enterPhoneNumber": "e.g. 54*******"
 }

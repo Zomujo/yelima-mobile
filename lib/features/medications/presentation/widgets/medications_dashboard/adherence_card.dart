@@ -62,7 +62,9 @@ class AdherenceCard extends StatelessWidget {
             ),
           ),
           AppText.bodyMedium(
-            context.l10n.doingWellKeepItUp,
+            rate >= 80
+                ? context.l10n.doingWellKeepItUp
+                : context.l10n.adherenceImprove,
             color: Colors.white,
           ),
           const SizedBox(height: 14),

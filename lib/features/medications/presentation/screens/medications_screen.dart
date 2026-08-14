@@ -83,13 +83,16 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                   const SizedBox(height: 12),
                   Consumer<MedicationController>(
                       builder: (context, controller, child) {
-                    return ShimmerLoading(
-                      isLoading: controller.state.isAdherenceLoading,
-                      shimmer:
-                          AppShimmer.box(width: double.infinity, height: 150),
-                      child: AdherenceCard(
-                        key: AppTutorialKeys.medicationsAdherenceKey,
-                        adherence: controller.state.adherence,
+                    return SizedBox(
+                      key: AppTutorialKeys.medicationsAdherenceKey,
+                      width: double.infinity,
+                      child: ShimmerLoading(
+                        isLoading: controller.state.isAdherenceLoading,
+                        shimmer:
+                            AppShimmer.box(width: double.infinity, height: 150),
+                        child: AdherenceCard(
+                          adherence: controller.state.adherence,
+                        ),
                       ),
                     );
                   }),

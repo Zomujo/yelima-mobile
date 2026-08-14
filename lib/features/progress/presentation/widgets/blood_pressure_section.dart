@@ -53,16 +53,16 @@ class BloodPressureSection extends StatelessWidget {
   }
 
   Widget _buildBPGraph(ProgressController controller) {
+    if (controller.bpTrendState.data != null) {
+      return BPGraph(data: controller.bpTrendState.data!);
+    }
     if (controller.bpTrendState.isLoading) {
       return Center(child: AppShimmer.box(width: double.infinity, height: 180));
     }
     if (controller.bpTrendState.error != null) {
       return Center(child: Text(controller.bpTrendState.error!));
     }
-    if (controller.bpTrendState.data == null) {
-      return const Center(child: Text('No data available'));
-    }
-    return BPGraph(data: controller.bpTrendState.data!);
+    return const Center(child: Text('No data available'));
   }
 
   void _openFullScreen(

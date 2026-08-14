@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/services/session_lifecycle_service.dart';
+import 'package:get_it/get_it.dart';
 import '../states/appointment_state.dart';
 
-class AppointmentController extends ChangeNotifier with SafeNotifier {
+class AppointmentController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies      |
   // --------------------------------------------------------------------------
@@ -16,7 +18,23 @@ class AppointmentController extends ChangeNotifier with SafeNotifier {
   // |                               Initialization & Lifecycle                |
   // --------------------------------------------------------------------------
 
-  AppointmentController({required this.repository});
+  AppointmentController({required this.repository}) {
+    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
+      GetIt.instance<SessionLifecycleService>().register(this);
+    }
+  }
+
+  @override
+  String get serviceName => 'AppointmentController';
+
+  @override
+  Future<void> onSessionStarted(String userId) async {}
+
+  @override
+  Future<void> onSessionEnded() async {
+    _state = const AppointmentState();
+    notifyListeners();
+  }
 
   AppointmentState _state = const AppointmentState();
   AppointmentState get state => _state;

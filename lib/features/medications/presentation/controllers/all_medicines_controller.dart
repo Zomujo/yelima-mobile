@@ -11,9 +11,11 @@ import '../../data/models/update_medication_model.dart';
 import '../../data/models/medication_detail_model.dart';
 import '../../data/models/seeded_medication_list_response_model.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/services/session_lifecycle_service.dart';
+import 'package:get_it/get_it.dart';
 import '../states/medication_state.dart';
 
-class AllMedicinesController extends ChangeNotifier with SafeNotifier {
+class AllMedicinesController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies                  |
   // --------------------------------------------------------------------------
@@ -27,7 +29,26 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   AllMedicinesController({required this.repository, this.syncManager}) {
+    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
+      GetIt.instance<SessionLifecycleService>().register(this);
+    }
     _init();
+  }
+
+  @override
+  String get serviceName => 'AllMedicinesController';
+
+  @override
+  Future<void> onSessionStarted(String userId) async {}
+
+  @override
+  Future<void> onSessionEnded() async {
+    listState = const MedicationState();
+    historyStates.clear();
+    preloadedState = const MedicationState();
+    detailState = const MedicationState();
+    formSubmitState = const MedicationState();
+    notifyListeners();
   }
 
   void _init() {

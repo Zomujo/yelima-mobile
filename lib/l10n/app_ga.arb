@@ -268,5 +268,7 @@
   "criticallyLowBloodSugarTitle": "Suukle hela ni eba shi waa ni wa",
   "criticallyLowBloodSugarMessage": "Suukle hela eba shi waa. Yaa tsuŋ oya.",
   "lowBloodSugarTitle": "Suukle hela ni eba shi",
-  "lowBloodSugarMessage": "Suukle hela eba shi. Yemɔ niyenii ni haa hewalɛ oya."
+  "lowBloodSugarMessage": "Suukle hela eba shi. Yemɔ niyenii ni haa hewalɛ oya.",
+  "phoneNumber": "Tɛlifoŋ Nɔmba",
+  "enterPhoneNumber": "e.g. 54*******"
 }

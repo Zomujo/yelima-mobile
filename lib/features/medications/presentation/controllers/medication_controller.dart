@@ -6,6 +6,8 @@ import '../../domain/repositories/medication_repository.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_count.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/services/session_lifecycle_service.dart';
+import 'package:get_it/get_it.dart';
 
 enum MedicationSection { morning, afternoon, evening }
 
@@ -13,7 +15,7 @@ extension MedicationSectionExt on MedicationSection {
   String get nameUpperCase => name.toUpperCase();
 }
 
-class MedicationController extends ChangeNotifier with SafeNotifier {
+class MedicationController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies                  |
   // --------------------------------------------------------------------------
@@ -22,7 +24,25 @@ class MedicationController extends ChangeNotifier with SafeNotifier {
   final MutationSyncManager? syncManager;
   StreamSubscription? _mutationSyncSub;
 
-  MedicationController({required this.repository, this.syncManager});
+  MedicationController({required this.repository, this.syncManager}) {
+    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
+      GetIt.instance<SessionLifecycleService>().register(this);
+    }
+  }
+
+  @override
+  String get serviceName => 'MedicationController';
+
+  @override
+  Future<void> onSessionStarted(String userId) async {}
+
+  @override
+  Future<void> onSessionEnded() async {
+    _state = const MedicationsState();
+    _medicationsSubscription?.cancel();
+    _countsSubscription?.cancel();
+    notifyListeners();
+  }
 
   MedicationsState _state = const MedicationsState();
   MedicationsState get state => _state;
