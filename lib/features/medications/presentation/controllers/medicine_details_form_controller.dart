@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../../data/models/medication_detail_model.dart';
@@ -27,7 +28,21 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     nameController.addListener(_markChanged);
     dosageController.addListener(_markChanged);
     notesController.addListener(_markChanged);
+
+    if (allMedicinesController.syncManager != null) {
+      _syncSub = allMedicinesController.syncManager!.onMutationSynced.listen((event) {
+        if (event.startsWith('remap:medication:$medicationId:')) {
+          final parts = event.split(':');
+          if (parts.length >= 4) {
+            medicationId = parts[3];
+            init(); // Re-fetch using the new server ID
+          }
+        }
+      });
+    }
   }
+
+  StreamSubscription? _syncSub;
 
   MedicineDetailsFormState state = const MedicineDetailsFormState();
 
@@ -228,6 +243,7 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
 
   @override
   void dispose() {
+    _syncSub?.cancel();
     nameController.dispose();
     dosageController.dispose();
     notesController.dispose();

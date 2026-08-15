@@ -51,12 +51,20 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
     notifyListeners();
   }
 
+  final Map<String, String> remappedIds = {};
+
   void _init() {
     if (syncManager != null) {
       _mutationSyncSub = syncManager!
           .onMutationSynced
           .listen((event) {
-        if (event.contains('medication')) {
+        if (event.startsWith('remap:medication:')) {
+          final parts = event.split(':');
+          if (parts.length >= 4) {
+            remappedIds[parts[2]] = parts[3];
+          }
+          fetchAllMedicines(forceRefresh: true);
+        } else if (event.contains('medication')) {
           fetchAllMedicines(forceRefresh: true);
         }
       });
@@ -94,24 +102,25 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
     });
   }
 
-  void fetchMedicationHistory(String id, {DateTime? targetMonth}) async {
+  Future<void> fetchMedicationHistory(String id, {DateTime? targetMonth}) async {
+    final targetId = remappedIds[id] ?? id;
     final month = targetMonth ?? DateTime.now();
     // Format as yyyy-MM-15
     final date = AppDateFormats.yyyyMM15.format(month);
 
-    final existing = historyStates[id]?.data;
-    historyStates[id] = MedicationState(isLoading: true, data: existing);
+    final existing = historyStates[targetId]?.data;
+    historyStates[targetId] = MedicationState(isLoading: true, data: existing);
     notifyListeners();
 
-    final result = await repository.getMedicationHistory(id, date: date);
+    final result = await repository.getMedicationHistory(targetId, date: date);
     result.fold(
       (failure) {
-        historyStates[id] =
+        historyStates[targetId] =
             MedicationState(error: failure, isLoading: false, data: existing);
         notifyListeners();
       },
       (data) {
-        historyStates[id] =
+        historyStates[targetId] =
             MedicationState(data: data, isLoading: false, error: null);
         notifyListeners();
       },
@@ -144,10 +153,11 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
   }
 
   Future<void> fetchMedicationDetails(String id) async {
+    final targetId = remappedIds[id] ?? id;
     detailState = const MedicationState(isLoading: true);
     notifyListeners();
 
-    final result = await repository.getMedicationById(id);
+    final result = await repository.getMedicationById(targetId);
     result.fold(
       (failure) {
         detailState = MedicationState(error: failure, isLoading: false);
@@ -205,9 +215,10 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
   }
 
   Future<bool> deleteMedication(String id) async {
+    final targetId = remappedIds[id] ?? id;
     if (listState.data != null) {
       final updatedRows =
-          listState.data!.rows.where((m) => m.id != id).toList();
+          listState.data!.rows.where((m) => m.id != targetId).toList();
       final updatedData = MedicationListResponse(
         rows: updatedRows,
         total: updatedRows.length,
@@ -222,7 +233,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
     formSubmitState = const MedicationState(isLoading: true);
     notifyListeners();
 
-    final result = await repository.deleteMedication(id);
+    final result = await repository.deleteMedication(targetId);
     return result.fold(
       (failure) {
         formSubmitState = MedicationState(error: failure, isLoading: false);
