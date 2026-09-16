@@ -102,7 +102,7 @@
   "today": "Today",
   "save": "Save",
   "yourAppointments": "Your appointments",
-  "appointmentsDescription": "The clinic books these for you. You can ask for a new one.",
+  "appointmentsDescription": "Appointments scheduled by your clinic will appear below.",
   "askForAppointment": "Ask for an appointment",
   "comingUp": "COMING UP",
   "noUpcomingAppointments": "No upcoming appointments.",
