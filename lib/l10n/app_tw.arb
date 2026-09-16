@@ -32,6 +32,8 @@
   "dateOfBirthLabel": "Awoda",
   "enterAgeTab": "Kyerɛ Mfeɛ",
   "ageLabel": "Mfeɛ",
+  "enterDobInstead": "Kyerɛ awoda mmom",
+  "enterAgeInstead": "Kyerɛ mfeɛ mmom",
   "enterAgeHint": "nhwɛsoɔ. 35",
   "ageRequirementSnackBar": "Ɛsɛ sɛ wodi mfeɛ 18 ansa na woatumi abue akawnt",
   "dobHint": "Ɔsanaa 2, 1979",

@@ -39,6 +39,8 @@
   "dateOfBirthLabel": "Fɔmɔ Gbi",
   "enterAgeTab": "Ŋmaa afi",
   "ageLabel": "Afi",
+  "enterDobInstead": "Ŋmaa fɔmɔ gbi moŋ",
+  "enterAgeInstead": "Ŋmaa afi moŋ",
   "enterAgeHint": "nɔkwɛmɔ: 35",
   "ageRequirementSnackBar": "Esa akɛ oye afii 18 dani obaanyɛ otswa o-gbɛ́i",
   "dobHint": "August 2, 1979",

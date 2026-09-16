@@ -39,6 +39,8 @@
   "dateOfBirthLabel": "Dzidzigbe",
   "enterAgeTab": "Ŋlɔ Ƒeme",
   "ageLabel": "Ƒeme",
+  "enterDobInstead": "Ŋlɔ dzidzigbe ɖe eteƒe",
+  "enterAgeInstead": "Ŋlɔ ƒeme ɖe eteƒe",
   "enterAgeHint": "kpɔɖeŋu: 35",
   "ageRequirementSnackBar": "Ele be nàxɔ ƒe 18 ya teti hafi ate ŋu aŋlɔ ŋkɔ",
   "dobHint": "Dasiamime 2, 1979",

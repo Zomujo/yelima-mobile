@@ -166,8 +166,8 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
               },
               child: AppText.bodyMedium(
                 _isEnteringAge
-                    ? 'I know my exact Date of Birth'
-                    : 'I don\'t know my exact Date of Birth',
+                    ? context.l10n.enterDobInstead
+                    : context.l10n.enterAgeInstead,
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
                 decoration: TextDecoration.underline,
