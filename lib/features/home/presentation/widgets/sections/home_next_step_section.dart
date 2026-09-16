@@ -10,7 +10,9 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../core/utils/app_tutorial_keys.dart';
 
 class HomeNextStepSection extends StatelessWidget {
-  const HomeNextStepSection({super.key});
+  final Widget? topSlotWidget;
+
+  const HomeNextStepSection({super.key, this.topSlotWidget});
 
   @override
   Widget build(BuildContext context) {
@@ -25,16 +27,10 @@ class HomeNextStepSection extends StatelessWidget {
             color: AppColors.textBlack.withValues(alpha: 0.5),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: DailyCheckInCard(
-            key: AppTutorialKeys.homeDailyCheckInKey,
-            onStart: () {
-              context.push(RoutePaths.aiChat);
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
+        if (topSlotWidget != null) ...[
+          topSlotWidget!,
+          const SizedBox(height: 10),
+        ],
         Column(
           key: AppTutorialKeys.homeActionCardsKey,
           children: [
@@ -106,6 +102,16 @@ class HomeNextStepSection extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: DailyCheckInCard(
+            key: AppTutorialKeys.homeDailyCheckInKey,
+            onStart: () {
+              context.push(RoutePaths.aiChat);
+            },
+          ),
         ),
       ],
     );

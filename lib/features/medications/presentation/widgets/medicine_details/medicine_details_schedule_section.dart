@@ -34,7 +34,8 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
                     context,
                     controller.state.morningTime,
                     (t) => controller.updateMorning(
-                        controller.state.hasMorning, t)),
+                        controller.state.hasMorning, t),
+                    isAM: true),
                 onQuantityChange: (q) => controller.updateMorning(
                     controller.state.hasMorning, null, q),
               ),
@@ -49,7 +50,8 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
                     context,
                     controller.state.afternoonTime,
                     (t) => controller.updateAfternoon(
-                        controller.state.hasAfternoon, t)),
+                        controller.state.hasAfternoon, t),
+                    isAM: false),
                 onQuantityChange: (q) => controller.updateAfternoon(
                     controller.state.hasAfternoon, null, q),
               ),
@@ -64,7 +66,8 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
                     context,
                     controller.state.eveningTime,
                     (t) => controller.updateEvening(
-                        controller.state.hasEvening, t)),
+                        controller.state.hasEvening, t),
+                    isAM: false),
                 onQuantityChange: (q) => controller.updateEvening(
                     controller.state.hasEvening, null, q),
               ),
@@ -95,7 +98,8 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
   }
 
   Future<void> _selectTime(BuildContext context, TimeOfDay initialTime,
-      Function(TimeOfDay) onSelected) async {
+      Function(TimeOfDay) onSelected,
+      {bool? isAM}) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
@@ -112,7 +116,15 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
         );
       },
     );
-    if (picked != null) onSelected(picked);
+    if (picked != null) {
+      TimeOfDay finalTime = picked;
+      if (isAM == true && picked.period == DayPeriod.pm) {
+        finalTime = TimeOfDay(hour: picked.hour - 12, minute: picked.minute);
+      } else if (isAM == false && picked.period == DayPeriod.am) {
+        finalTime = TimeOfDay(hour: picked.hour + 12, minute: picked.minute);
+      }
+      onSelected(finalTime);
+    }
   }
 }
 

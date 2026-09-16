@@ -22,11 +22,28 @@ class VitalHistoryEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props =>
-      [id, vitalType, value, unit, severity, vitalName, vitalSubType, recordedAt];
+  List<Object?> get props => [
+        id,
+        vitalType,
+        value,
+        unit,
+        severity,
+        vitalName,
+        vitalSubType,
+        recordedAt
+      ];
 }
 
-enum VitalSeverity { normal, slightlyHigh, high, veryHigh, critical, low, criticallyLow, unknown }
+enum VitalSeverity {
+  normal,
+  slightlyHigh,
+  high,
+  veryHigh,
+  critical,
+  low,
+  criticallyLow,
+  unknown
+}
 
 extension VitalSeverityExt on VitalSeverity {
   static VitalSeverity fromString(String? val) {
@@ -44,6 +61,7 @@ extension VitalSeverityExt on VitalSeverity {
       case 'critically_low':
         return VitalSeverity.criticallyLow;
       case 'high':
+      case 'hypertensive':
         return VitalSeverity.high;
       case 'very_high':
         return VitalSeverity.veryHigh;
@@ -72,7 +90,8 @@ class HomeMetricsEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [bloodPressure, bloodGlucose, adherenceRate, bpSeverity, bgSeverity];
+  List<Object?> get props =>
+      [bloodPressure, bloodGlucose, adherenceRate, bpSeverity, bgSeverity];
 
   HomeMetricsEntity copyWith({
     String? bloodPressure,

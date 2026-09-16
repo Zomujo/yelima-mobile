@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
-import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/features/appointment/presentation/controllers/appointment_controller.dart';
 import '../next_clinic_visit_card.dart';
@@ -15,14 +14,6 @@ class HomeUpcomingVisitsSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Consumer<AppointmentController>(
         builder: (context, controller, child) {
-          if (controller.state.isNearestLoading) {
-            return AppShimmer.box(
-              height: 120,
-              width: double.infinity,
-              borderRadius: 16,
-            );
-          }
-
           if (controller.state.nearestError != null) {
             return Center(
               child:

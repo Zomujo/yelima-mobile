@@ -8,7 +8,7 @@ class MedicationDosingSchedule extends StatelessWidget {
   const MedicationDosingSchedule({super.key});
 
   Future<void> _selectTime(BuildContext context, TimeOfDay initialTime,
-      Function(TimeOfDay) onSelected) async {
+      Function(TimeOfDay) onSelected, {bool? isAM}) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
@@ -25,7 +25,15 @@ class MedicationDosingSchedule extends StatelessWidget {
         );
       },
     );
-    if (picked != null) onSelected(picked);
+    if (picked != null) {
+      TimeOfDay finalTime = picked;
+      if (isAM == true && picked.period == DayPeriod.pm) {
+        finalTime = TimeOfDay(hour: picked.hour - 12, minute: picked.minute);
+      } else if (isAM == false && picked.period == DayPeriod.am) {
+        finalTime = TimeOfDay(hour: picked.hour + 12, minute: picked.minute);
+      }
+      onSelected(finalTime);
+    }
   }
 
   String _formatTime(TimeOfDay time) {
@@ -156,7 +164,8 @@ class MedicationDosingSchedule extends StatelessWidget {
                   context,
                   controller.state.morningTime,
                   (t) =>
-                      controller.updateMorning(controller.state.hasMorning, t)),
+                      controller.updateMorning(controller.state.hasMorning, t),
+                  isAM: true),
               onQuantityChange: (v) => controller.updateMorning(
                   controller.state.hasMorning, controller.state.morningTime, v),
             ),
@@ -172,7 +181,8 @@ class MedicationDosingSchedule extends StatelessWidget {
                   context,
                   controller.state.afternoonTime,
                   (t) => controller.updateAfternoon(
-                      controller.state.hasAfternoon, t)),
+                      controller.state.hasAfternoon, t),
+                  isAM: false),
               onQuantityChange: (v) => controller.updateAfternoon(
                   controller.state.hasAfternoon,
                   controller.state.afternoonTime,
@@ -190,7 +200,8 @@ class MedicationDosingSchedule extends StatelessWidget {
                   context,
                   controller.state.eveningTime,
                   (t) =>
-                      controller.updateEvening(controller.state.hasEvening, t)),
+                      controller.updateEvening(controller.state.hasEvening, t),
+                  isAM: false),
               onQuantityChange: (v) => controller.updateEvening(
                   controller.state.hasEvening, controller.state.eveningTime, v),
             ),

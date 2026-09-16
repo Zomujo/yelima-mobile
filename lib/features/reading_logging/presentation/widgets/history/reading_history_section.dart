@@ -21,7 +21,8 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _vitalsStream = context.read<ReadingLoggingController>().vitalHistoriesStream;
+    _vitalsStream =
+        context.read<ReadingLoggingController>().vitalHistoriesStream;
   }
 
   @override
@@ -43,6 +44,10 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
         vitals.sort((a, b) {
           final dateA = a.recordedAt ?? DateTime(2000);
           final dateB = b.recordedAt ?? DateTime(2000);
+          final diff = dateA.difference(dateB).inMilliseconds.abs();
+          if (diff < 1000) {
+            return b.id.compareTo(a.id);
+          }
           return dateB.compareTo(dateA);
         });
 

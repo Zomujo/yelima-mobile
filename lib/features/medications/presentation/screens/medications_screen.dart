@@ -72,7 +72,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                             ),
                           ),
                           child: AppText.labelMedium(
-                            context.l10n.allMedicines,
+                            context.l10n.addMedication,
                             color: const Color(0xFF1E293B),
                             fontWeight: FontWeight.w600,
                           ),

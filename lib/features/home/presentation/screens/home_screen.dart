@@ -60,9 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const HomeMetricsSection(),
               const SizedBox(height: 16),
-              const HomeNextStepSection(),
-              const SizedBox(height: 24),
-              const HomeUpcomingVisitsSection(),
+              const HomeNextStepSection(
+                topSlotWidget: HomeUpcomingVisitsSection(),
+              ),
             ],
           ),
         ),

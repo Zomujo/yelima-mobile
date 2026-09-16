@@ -132,10 +132,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
             .toList();
 
         for (var id in localMedsToDelete) {
+          await _cancelAlarmsForMed(id);
           await localDataSource.deleteMedication(id);
         }
 
         await localDataSource.insertMedications(localMedsToInsert);
+        await _scheduleAlarmsForMeds(localMedsToInsert);
       } catch (_) {}
     }
   }
@@ -303,6 +305,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
         ));
       }
       await localDataSource.insertMedications(localMedsToInsert);
+      await _scheduleAlarmsForMeds(localMedsToInsert);
     } catch (e, stack) {
       AppLogger.e('Failed to sync medications in background', e, stack);
     }

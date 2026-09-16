@@ -50,7 +50,7 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
   final dosageController = TextEditingController();
   final notesController = TextEditingController();
 
-  // ─── Derived data getters (no business logic in UI) ──────────────────────
+  // ─── Derived data getters ──────────────────────
 
   String get titleName {
     final detailName = allMedicinesController.detailState.data?.name;
