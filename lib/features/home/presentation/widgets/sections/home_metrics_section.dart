@@ -8,7 +8,7 @@ import 'critical_health_banner.dart';
 import '../../controllers/home_metrics_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../domain/entities/vital_history_entity.dart';
-import '../../../../../core/utils/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 class HomeMetricsSection extends StatelessWidget {
   const HomeMetricsSection({super.key});

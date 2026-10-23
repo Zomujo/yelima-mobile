@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../data/models/seeded_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/seeded_medication_model.dart';
 
 part 'add_medication_form_state.freezed.dart';
 

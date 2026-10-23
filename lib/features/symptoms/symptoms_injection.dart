@@ -4,6 +4,8 @@ import 'data/datasources/symptoms_remote_data_source.dart';
 import 'data/repositories/symptoms_repository_impl.dart';
 import 'domain/repositories/symptoms_repository.dart';
 import 'presentation/controllers/symptoms_controller.dart';
+import '../../core/managers/mutation_sync_manager.dart';
+import 'data/datasources/symptoms_remote_mutation_source.dart';
 
 final sl = GetIt.instance;
 
@@ -27,4 +29,8 @@ void initSymptoms() {
   sl.registerFactory(
     () => SymptomsController(repository: sl()),
   );
+
+  // Registered last: the source needs this feature's datasources above.
+  sl<MutationSyncManager>()
+      .registerSource('symptom', SymptomsRemoteMutationSource(sl(), sl()));
 }

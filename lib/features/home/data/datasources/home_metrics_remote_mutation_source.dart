@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/i_remote_mutation.dart';
+import '../../../../core/db/app_database.dart';
 
 class HomeMetricsRemoteMutationSource implements IRemoteMutationSource {
   final APIClient _apiClient;
+  final AppDatabase _db;
 
-  HomeMetricsRemoteMutationSource(this._apiClient);
+  HomeMetricsRemoteMutationSource(this._apiClient, this._db);
 
   @override
   Future<String?> syncMutation({
@@ -38,4 +40,8 @@ class HomeMetricsRemoteMutationSource implements IRemoteMutationSource {
 
     throw Exception('Unknown action: $action');
   }
+
+  @override
+  Future<void> remapLocalId(String oldId, String newId) =>
+      _db.vitalsDao.updateVitalId(oldId, newId);
 }

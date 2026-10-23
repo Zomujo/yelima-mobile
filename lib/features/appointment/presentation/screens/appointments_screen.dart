@@ -7,8 +7,8 @@ import 'package:provider/provider.dart';
 import '../controllers/appointment_controller.dart';
 import '../widgets/paginated_appointment_list.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/core/utils/app_tutorial_service.dart';
-import 'package:yelima/core/utils/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});

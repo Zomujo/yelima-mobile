@@ -6,4 +6,8 @@ abstract class IRemoteMutationSource {
     required String payloadJson,
     required DateTime createdAt,
   });
+
+  /// Renames the local entity from [oldId] to the server's [newId] after a create
+  /// syncs. Runs inside the sync manager's transaction.
+  Future<void> remapLocalId(String oldId, String newId);
 }

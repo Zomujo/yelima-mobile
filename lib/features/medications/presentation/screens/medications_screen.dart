@@ -10,8 +10,8 @@ import '../widgets/medications_dashboard/time_of_day_tabs.dart';
 import '../widgets/medications_dashboard/todays_medications_list.dart';
 import 'all_medicines_screen.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/core/utils/app_tutorial_service.dart';
-import 'package:yelima/core/utils/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key});

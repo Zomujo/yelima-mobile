@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../controllers/medicine_details_form_controller.dart';
-import '../../../data/models/medication_detail_model.dart';
-import '../../../data/models/dosing_schedule_model.dart';
+import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
+import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 

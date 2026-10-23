@@ -83,7 +83,7 @@ void main() {
       db: db,
       remoteSources: <String, IRemoteMutationSource>{
         'symptom': SymptomsRemoteMutationSource(
-            SymptomsRemoteDataSourceImpl(apiClient: api.client)),
+            SymptomsRemoteDataSourceImpl(apiClient: api.client), db),
       },
     );
     await manager.onSessionStarted('user_1');

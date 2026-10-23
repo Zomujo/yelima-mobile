@@ -7,7 +7,7 @@ import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/utils/custom_types.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/user_repository.dart';
-import '../models/facility_model.dart';
+import 'package:yelima/features/user/domain/models/facility_model.dart';
 import '../datasources/user_remote_data_source.dart';
 import '../../../../core/services/session_epoch.dart';
 

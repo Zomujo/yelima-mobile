@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
-import '../../../data/models/medication_detail_model.dart';
+import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
 import 'adherence_calendar.dart';
 import '../../controllers/all_medicines_controller.dart';
 import 'package:provider/provider.dart';

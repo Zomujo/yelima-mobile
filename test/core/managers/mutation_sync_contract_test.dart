@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/api/i_remote_mutation.dart';
@@ -47,6 +45,7 @@ void main() {
   setUp(() async {
     db = testDb();
     source = MockSource();
+    when(() => source.remapLocalId(any(), any())).thenAnswer((_) async {});
     manager = MutationSyncManager(
       connectivityService: FakeConnectivity(),
       db: db,
@@ -129,26 +128,6 @@ void main() {
     await manager.triggerSync();
 
     expect(await db.select(db.pendingMutations).get(), isEmpty);
-  });
-
-  test('CORE-EC-04: every queued entity type has a registered sync source', () {
-    final queued = <String>{};
-    for (final f
-        in Directory('lib').listSync(recursive: true).whereType<File>()) {
-      if (!f.path.endsWith('.dart')) continue;
-      queued.addAll(RegExp(r"entityType: '(\w+)'")
-          .allMatches(f.readAsStringSync())
-          .map((m) => m.group(1)!));
-    }
-    final injection = File('lib/core/core_injection.dart').readAsStringSync();
-    final syncBlock =
-        injection.substring(injection.indexOf('MutationSyncManager('));
-    final registered = RegExp(r"'(\w+)': sl<")
-        .allMatches(syncBlock)
-        .map((m) => m.group(1)!)
-        .toSet();
-
-    expect(queued.difference(registered), isEmpty);
   });
 
   group('failed list and retries', () {

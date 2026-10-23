@@ -2,18 +2,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/user_model.dart';
-import '../models/facility_model.dart';
+import 'package:yelima/features/user/domain/models/facility_model.dart';
 
 class UserRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
   final APIClient _apiClient;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore? _firestoreOverride;
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
   UserRemoteDataSource({
     required FirebaseAuth firebaseAuth,
     required APIClient apiClient,
+    FirebaseFirestore? firestore,
   })  : _firebaseAuth = firebaseAuth,
-        _apiClient = apiClient;
+        _apiClient = apiClient,
+        _firestoreOverride = firestore;
 
   Future<UserModel?> getUserProfile(String uid) async {
     final doc = await _firestore.collection('users').doc(uid).get();
@@ -61,18 +65,18 @@ class UserRemoteDataSource {
 
     final response = await _apiClient.get("/api/v1/client/facilities",
         queryParameters: queryParams);
-    
+
     if (response == null) {
       return const FacilityListResponse(
-        rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
+          rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
     }
 
     final data = (response as Map<String, dynamic>)['data'];
     if (data == null) {
       return const FacilityListResponse(
-        rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
+          rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
     }
-    
+
     return FacilityListResponse.fromJson(data);
   }
 }

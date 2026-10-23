@@ -4,6 +4,8 @@ import 'data/datasources/user_remote_data_source.dart';
 import 'data/repositories/user_repository_impl.dart';
 import 'domain/repositories/user_repository.dart';
 import 'presentation/controllers/user_controller.dart';
+import '../../core/managers/mutation_sync_manager.dart';
+import 'data/datasources/user_remote_mutation_source.dart';
 
 void initUser(GetIt sl) {
   // Data sources
@@ -23,4 +25,8 @@ void initUser(GetIt sl) {
   // State Management
   sl.registerLazySingleton<UserController>(
       () => UserController(repository: sl(), firebaseAuth: sl()));
+
+  // Registered last: the source needs this feature's datasources above.
+  sl<MutationSyncManager>()
+      .registerSource('user_profile', UserRemoteMutationSource(sl()));
 }

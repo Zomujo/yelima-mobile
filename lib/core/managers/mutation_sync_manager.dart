@@ -31,7 +31,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
   MutationSyncManager({
     required ConnectivityService connectivityService,
     required AppDatabase db,
-    required Map<String, IRemoteMutationSource> remoteSources,
+    Map<String, IRemoteMutationSource> remoteSources = const {},
     List<Duration> retryDelays = const [
       Duration(seconds: 30),
       Duration(minutes: 1),
@@ -41,7 +41,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
     ],
   })  : _connectivityService = connectivityService,
         _db = db,
-        _remoteSources = remoteSources,
+        _remoteSources = {...remoteSources},
         _retryDelays = retryDelays;
 
   /// Waits between automatic retries; the last one repeats.
@@ -109,6 +109,14 @@ class MutationSyncManager implements SessionLifecycleHandler {
       await _syncTask;
     }
   }
+
+  /// Entity types that have a registered source.
+  @visibleForTesting
+  Set<String> get sourceTypes => _remoteSources.keys.toSet();
+
+  /// Lets a feature sync its queued changes of [entityType] through [source].
+  void registerSource(String entityType, IRemoteMutationSource source) =>
+      _remoteSources[entityType] = source;
 
   /// Live count of changes waiting to sync, for the "changes waiting" badge.
   Stream<int> watchWaitingCount() =>
@@ -231,19 +239,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
             "Remapping offline ID ${mutation.entityId} to server ID $newServerId for ${mutation.entityType}");
 
         await _db.transaction(() async {
-          if (mutation.entityType == 'chat') {
-            await _db.aiChatDao.updateMessageId(mutation.entityId, newServerId);
-          } else if (mutation.entityType == 'symptom') {
-            await _db.symptomsDao
-                .updateSymptomId(mutation.entityId, newServerId);
-          } else if (mutation.entityType == 'vital_history') {
-            await _db.vitalsDao.updateVitalId(mutation.entityId, newServerId);
-          } else if (mutation.entityType == 'medication') {
-            await _db.medicationsDao
-                .updateMedicationId(mutation.entityId, newServerId);
-            await _db.adherenceDao
-                .updateLogsMedicationId(mutation.entityId, newServerId);
-          }
+          await remoteSource.remapLocalId(mutation.entityId, newServerId);
           await _db.pendingMutationsDao
               .updateEntityId(mutation.entityId, newServerId);
         });

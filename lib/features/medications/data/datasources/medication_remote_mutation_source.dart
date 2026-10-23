@@ -1,13 +1,15 @@
 import 'dart:convert';
 import '../../../../core/api/i_remote_mutation.dart';
 import 'medication_remote_datasource.dart';
-import '../models/create_medication_model.dart';
-import '../models/update_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
+import '../../../../core/db/app_database.dart';
 
 class MedicationRemoteMutationSource implements IRemoteMutationSource {
   final MedicationRemoteDataSource _remoteDataSource;
+  final AppDatabase _db;
 
-  MedicationRemoteMutationSource(this._remoteDataSource);
+  MedicationRemoteMutationSource(this._remoteDataSource, this._db);
 
   @override
   Future<String?> syncMutation({
@@ -45,4 +47,11 @@ class MedicationRemoteMutationSource implements IRemoteMutationSource {
         throw UnimplementedError('Unknown action $action for medication');
     }
   }
+
+  @override
+  Future<void> remapLocalId(String oldId, String newId) =>
+      _db.transaction(() async {
+        await _db.medicationsDao.updateMedicationId(oldId, newId);
+        await _db.adherenceDao.updateLogsMedicationId(oldId, newId);
+      });
 }

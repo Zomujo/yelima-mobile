@@ -23,12 +23,6 @@ import 'services/database_lifecycle_handler.dart';
 import 'services/fcm_lifecycle_handler.dart';
 import 'managers/deletion_sync_manager.dart';
 import 'managers/mutation_sync_manager.dart';
-import '../features/chat/data/datasources/ai_chat_remote_datasource.dart';
-import '../features/chat/data/datasources/ai_chat_remote_mutation_source.dart';
-import '../features/medications/data/datasources/medication_remote_mutation_source.dart';
-import '../features/home/data/datasources/home_metrics_remote_mutation_source.dart';
-import '../features/symptoms/data/datasources/symptoms_remote_mutation_source.dart';
-import '../features/user/data/datasources/user_remote_mutation_source.dart';
 
 void initCore(GetIt sl) {
   // --- Core Infrastructure ---
@@ -81,31 +75,17 @@ void initCore(GetIt sl) {
   sl.registerLazySingleton(() => VoiceRecordingService());
 
   // Sync Managers
+  // Features register their sources with registerSource in their own injection.
   sl.registerLazySingleton(() => DeletionSyncManager(
         connectivityService: sl(),
         db: sl(),
-        remoteSources: {
-          'chat': sl<AiChatRemoteDataSource>(),
-        },
       )
         ..init()
         ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));
 
-  sl.registerLazySingleton(() => AiChatRemoteMutationSource(sl(), sl()));
-  sl.registerLazySingleton(() => MedicationRemoteMutationSource(sl()));
-  sl.registerLazySingleton(() => HomeMetricsRemoteMutationSource(sl()));
-  sl.registerLazySingleton(() => SymptomsRemoteMutationSource(sl()));
-  sl.registerLazySingleton(() => UserRemoteMutationSource(sl()));
   sl.registerLazySingleton(() => MutationSyncManager(
         connectivityService: sl(),
         db: sl(),
-        remoteSources: {
-          'chat': sl<AiChatRemoteMutationSource>(),
-          'medication': sl<MedicationRemoteMutationSource>(),
-          'vital_history': sl<HomeMetricsRemoteMutationSource>(),
-          'symptom': sl<SymptomsRemoteMutationSource>(),
-          'user_profile': sl<UserRemoteMutationSource>(),
-        },
       )
         ..onDiscarded = ((n) => MonitoringService.instance
             .logDiscardedChanges(n, reason: 'other_user'))

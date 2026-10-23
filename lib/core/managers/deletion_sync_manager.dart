@@ -18,15 +18,19 @@ class DeletionSyncManager implements SessionLifecycleHandler {
   DeletionSyncManager({
     required ConnectivityService connectivityService,
     required AppDatabase db,
-    required Map<String, IRemoteDeletionSource> remoteSources,
+    Map<String, IRemoteDeletionSource> remoteSources = const {},
   })  : _connectivityService = connectivityService,
         _db = db,
-        _remoteSources = remoteSources;
+        _remoteSources = {...remoteSources};
 
   Future<void>? _syncTask;
 
   @override
   String get serviceName => 'Chat Deletion Sync';
+
+  /// Lets a feature send its queued deletions of [source] through [remote].
+  void registerSource(String source, IRemoteDeletionSource remote) =>
+      _remoteSources[source] = remote;
 
   @override
   Future<void> onSessionStarted(String userId) async {

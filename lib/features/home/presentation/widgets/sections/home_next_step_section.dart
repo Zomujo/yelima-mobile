@@ -7,7 +7,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../daily_check_in_card.dart';
 import '../action_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../../core/utils/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 class HomeNextStepSection extends StatelessWidget {
   final Widget? topSlotWidget;

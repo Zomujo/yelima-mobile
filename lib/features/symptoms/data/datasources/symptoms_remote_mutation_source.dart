@@ -1,11 +1,13 @@
 import 'dart:convert';
 import '../../../../core/api/i_remote_mutation.dart';
 import 'symptoms_remote_data_source.dart';
+import '../../../../core/db/app_database.dart';
 
 class SymptomsRemoteMutationSource implements IRemoteMutationSource {
   final SymptomsRemoteDataSource _remoteDataSource;
+  final AppDatabase _db;
 
-  SymptomsRemoteMutationSource(this._remoteDataSource);
+  SymptomsRemoteMutationSource(this._remoteDataSource, this._db);
 
   @override
   Future<String?> syncMutation({
@@ -20,7 +22,7 @@ class SymptomsRemoteMutationSource implements IRemoteMutationSource {
       case 'create':
         final description = payload['description'] as String;
         final res = await _remoteDataSource.createSymptom(description);
-        return res; 
+        return res;
 
       case 'update':
         final description = payload['description'] as String;
@@ -35,4 +37,8 @@ class SymptomsRemoteMutationSource implements IRemoteMutationSource {
         throw UnimplementedError('Unknown action $action for symptom');
     }
   }
+
+  @override
+  Future<void> remapLocalId(String oldId, String newId) =>
+      _db.symptomsDao.updateSymptomId(oldId, newId);
 }

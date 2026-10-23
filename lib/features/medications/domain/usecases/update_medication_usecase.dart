@@ -2,8 +2,8 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/utils/custom_types.dart';
 import '../entities/medicine_form_data.dart';
 import '../repositories/medication_repository.dart';
-import '../../data/models/update_medication_model.dart';
-import '../../data/models/dosing_schedule_model.dart';
+import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 
 class UpdateMedicationUseCase {
   final MedicationRepository repository;

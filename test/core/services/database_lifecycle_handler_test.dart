@@ -7,14 +7,11 @@ import '../../helpers/fakes.dart';
 
 void main() {
   late AppDatabase db;
-  late bool audioCleared;
   late DatabaseLifecycleHandler handler;
 
   setUp(() {
     db = testDb();
-    audioCleared = false;
-    handler = DatabaseLifecycleHandler(db,
-        clearAudioFiles: () async => audioCleared = true);
+    handler = DatabaseLifecycleHandler(db);
   });
 
   tearDown(() => db.close());
@@ -42,13 +39,11 @@ void main() {
     for (final table in db.allTables) {
       expect(await rows(table), 0, reason: table.actualTableName);
     }
-    expect(audioCleared, isTrue);
   });
 
   test('reports how many unsynced changes the wipe discarded', () async {
     final discarded = <int>[];
-    handler = DatabaseLifecycleHandler(db,
-        clearAudioFiles: () async {}, onDiscarded: discarded.add);
+    handler = DatabaseLifecycleHandler(db, onDiscarded: discarded.add);
     for (final id in ['a', 'b']) {
       await db.pendingMutationsDao.queueMutation(
           entityId: id, entityType: 'symptom', action: 'create', payload: {});
@@ -61,8 +56,7 @@ void main() {
 
   test('says nothing when everything was synced', () async {
     final discarded = <int>[];
-    handler = DatabaseLifecycleHandler(db,
-        clearAudioFiles: () async {}, onDiscarded: discarded.add);
+    handler = DatabaseLifecycleHandler(db, onDiscarded: discarded.add);
 
     await handler.onSessionEnded();
 

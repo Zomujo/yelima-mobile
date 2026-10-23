@@ -3,10 +3,10 @@ import '../entities/medication_adherence.dart';
 import '../entities/medication_count.dart';
 import '../entities/medication_entity.dart';
 import '../entities/medication_history_entity.dart';
-import '../../data/models/create_medication_model.dart';
-import '../../data/models/update_medication_model.dart';
-import '../../data/models/medication_detail_model.dart';
-import '../../data/models/seeded_medication_list_response_model.dart';
+import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
+import 'package:yelima/features/medications/domain/models/seeded_medication_list_response_model.dart';
 
 abstract class MedicationRepository {
   AsyncResponse<MedicationAdherence> getAdherence({required bool showWeekdays});

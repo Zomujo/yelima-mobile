@@ -1,6 +1,6 @@
 import '../../../../core/utils/custom_types.dart';
 import '../entities/user_entity.dart';
-import '../../data/models/facility_model.dart';
+import 'package:yelima/features/user/domain/models/facility_model.dart';
 
 abstract class UserRepository {
   /// Updates specific fields of the user profile in the backend

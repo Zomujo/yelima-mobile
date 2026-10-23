@@ -3,7 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import '../../../../user/presentation/controllers/user_controller.dart';
 import '../../../../user/domain/repositories/user_repository.dart';
-import '../../../../user/data/models/facility_model.dart';
+import 'package:yelima/features/user/domain/models/facility_model.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';

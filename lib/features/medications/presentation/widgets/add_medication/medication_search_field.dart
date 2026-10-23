@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../data/models/seeded_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/seeded_medication_model.dart';
 import '../../controllers/add_medication_form_controller.dart';
 import '../../controllers/all_medicines_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';

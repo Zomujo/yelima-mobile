@@ -5,7 +5,7 @@ import '../../../../core/services/session_lifecycle_service.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/db/app_database.dart';
 import '../datasources/medication_remote_datasource.dart';
-import '../models/seeded_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/seeded_medication_model.dart';
 
 class SeededMedicationsSyncService implements SessionLifecycleHandler {
   final MedicationRemoteDataSource _remoteDataSource;

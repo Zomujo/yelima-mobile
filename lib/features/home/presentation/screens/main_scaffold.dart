@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../features/home/presentation/widgets/home_bottom_navbar.dart';
-import '../widgets/modals/exit_confirmation_modal.dart';
+import 'package:yelima/features/home/presentation/widgets/home_bottom_navbar.dart';
+import 'package:yelima/shared/widgets/modals/exit_confirmation_modal.dart';
 
 class MainScaffold extends StatelessWidget {
   final Widget child;

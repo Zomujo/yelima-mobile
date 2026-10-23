@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'facility_model.freezed.dart';
-part 'facility_model.g.dart';
+part 'package:yelima/features/user/domain/models/facility_model.freezed.dart';
+part 'package:yelima/features/user/domain/models/facility_model.g.dart';
 
 @freezed
 abstract class FacilityModel with _$FacilityModel {

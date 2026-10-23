@@ -67,7 +67,7 @@ void main() {
     final api = FakeApi()
       ..on('POST', logsPath,
           FakeReply.ok('665f00000000000000000001', status: 201));
-    final source = HomeMetricsRemoteMutationSource(api.client);
+    final source = HomeMetricsRemoteMutationSource(api.client, db);
 
     final id = await source.syncMutation(
       entityId: 'local-1',
@@ -92,7 +92,7 @@ void main() {
       connectivityService: FakeConnectivity(),
       db: db,
       remoteSources: <String, IRemoteMutationSource>{
-        'vital_history': HomeMetricsRemoteMutationSource(api.client),
+        'vital_history': HomeMetricsRemoteMutationSource(api.client, db),
       },
     );
     await manager.onSessionStarted('user_1');

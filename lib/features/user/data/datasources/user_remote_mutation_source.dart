@@ -24,4 +24,8 @@ class UserRemoteMutationSource implements IRemoteMutationSource {
         throw UnimplementedError('Unknown action $action for user_profile');
     }
   }
+
+  /// The user's id is their Firebase uid, which never changes.
+  @override
+  Future<void> remapLocalId(String oldId, String newId) async {}
 }

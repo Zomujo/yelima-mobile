@@ -6,11 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 
-import 'package:yelima/core/utils/app_tutorial_keys.dart';
-import 'package:yelima/core/utils/app_tutorial_target.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_target.dart';
 
 class AppTutorialService {
-
   static Future<void> showTutorial({
     required BuildContext context,
     required String tutorialId,
@@ -22,12 +21,13 @@ class AppTutorialService {
 
     final userController = context.read<UserController>();
     final user = userController.userEntity;
-    
+
     final prefsService = sl<SharedPrefsService>();
     final String localKey = '${user?.id}_$tutorialId';
 
     final bool isCompletedLocally = prefsService.isTutorialCompleted(localKey);
-    final bool isCompletedInProfile = user?.completedTutorials.contains(tutorialId) ?? false;
+    final bool isCompletedInProfile =
+        user?.completedTutorials.contains(tutorialId) ?? false;
 
     if (isCompletedLocally || isCompletedInProfile) return;
 

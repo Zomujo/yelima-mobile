@@ -4,10 +4,10 @@ import '../models/medication_count_model.dart';
 import '../models/medication_model.dart';
 import '../models/medication_list_response_model.dart';
 import '../models/medication_history_model.dart';
-import '../models/create_medication_model.dart';
-import '../models/update_medication_model.dart';
-import '../models/medication_detail_model.dart';
-import '../models/seeded_medication_list_response_model.dart';
+import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
+import 'package:yelima/features/medications/domain/models/seeded_medication_list_response_model.dart';
 
 abstract class MedicationRemoteDataSource {
   Future<MedicationAdherenceModel> getAdherence({required bool showWeekdays});

@@ -11,7 +11,7 @@ import '../widgets/sections/home_upcoming_visits_section.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/core/utils/app_tutorial_service.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 import 'package:clock/clock.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/route_paths.dart';

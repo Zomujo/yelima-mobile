@@ -5,6 +5,8 @@ import 'data/datasources/home_metrics_local_datasource.dart';
 import 'domain/repositories/home_metrics_repository.dart';
 import 'data/repositories/home_metrics_repository_impl.dart';
 import 'presentation/controllers/home_metrics_controller.dart';
+import '../../core/managers/mutation_sync_manager.dart';
+import 'data/datasources/home_metrics_remote_mutation_source.dart';
 
 void initHome(GetIt sl) {
   // Data sources
@@ -26,4 +28,8 @@ void initHome(GetIt sl) {
   // Controller
   sl.registerFactory<HomeMetricsController>(
       () => HomeMetricsController(repository: sl()));
+
+  // Registered last: the source needs this feature's datasources above.
+  sl<MutationSyncManager>().registerSource(
+      'vital_history', HomeMetricsRemoteMutationSource(sl(), sl()));
 }

@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'dosing_schedule_model.freezed.dart';
-part 'dosing_schedule_model.g.dart';
+part 'package:yelima/features/medications/domain/models/dosing_schedule_model.freezed.dart';
+part 'package:yelima/features/medications/domain/models/dosing_schedule_model.g.dart';
 
 @freezed
 abstract class ScheduleTimeModel with _$ScheduleTimeModel {

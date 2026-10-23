@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/models/seeded_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/seeded_medication_model.dart';
 import '../../domain/entities/medicine_form_data.dart';
 import '../../domain/usecases/create_medication_usecase.dart';
 import '../states/add_medication_form_state.dart';

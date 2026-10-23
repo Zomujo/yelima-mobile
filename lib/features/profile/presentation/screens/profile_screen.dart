@@ -12,8 +12,8 @@ import '../widgets/language_picker_modal.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/controllers/locale_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/core/utils/app_tutorial_service.dart';
-import 'package:yelima/core/utils/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -108,14 +108,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       blockItems: [
                         OptionBlockItem(
                           label: (() {
-                            final currentLangCode = context.watch<LocaleController>().locale?.languageCode ?? 'en';
-                            if (currentLangCode == 'tw') return context.l10n.akanTwi;
-                            if (currentLangCode == 'ee') return context.l10n.ewe;
-                            if (currentLangCode == 'ga') return context.l10n.ga;
-                            return context.l10n.english;
+                            final currentLangCode = context
+                                    .watch<LocaleController>()
+                                    .locale
+                                    ?.languageCode ??
+                                'en';
+                            return switch (currentLangCode) {
+                              'tw' => context.l10n.akanTwi,
+                              'ee' => context.l10n.ewe,
+                              'ga' => context.l10n.ga,
+                              _ => context.l10n.english,
+                            };
                           })(),
                           icon: Iconsax.language_square,
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF64748B)),
+                          trailing: const Icon(Icons.arrow_forward_ios,
+                              size: 16, color: Color(0xFF64748B)),
                           onTap: () {
                             LanguagePickerModal.show(context);
                           },

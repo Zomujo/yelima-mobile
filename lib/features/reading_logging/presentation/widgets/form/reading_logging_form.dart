@@ -7,7 +7,7 @@ import 'reading_save_button.dart';
 import '../../../../../shared/widgets/modals/custom_calendar_modal.dart';
 import '../../../../../shared/widgets/forms/app_dropdown.dart';
 import '../../controllers/reading_logging_controller.dart';
-import '../../../../../core/utils/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingLoggingForm extends StatelessWidget {
@@ -40,10 +40,12 @@ class ReadingLoggingForm extends StatelessWidget {
                         hintText: context.l10n.measurementContext,
                         items: const ['fasting', 'postprandial', 'random'],
                         itemLabelBuilder: (val) {
-                          if (val == 'fasting') return context.l10n.fasting;
-                          if (val == 'postprandial') return context.l10n.postMeal;
-                          if (val == 'random') return context.l10n.randomReading;
-                          return val;
+                          return switch (val) {
+                            'fasting' => context.l10n.fasting,
+                            'postprandial' => context.l10n.postMeal,
+                            'random' => context.l10n.randomReading,
+                            _ => val,
+                          };
                         },
                         onChanged: (value) {
                           context

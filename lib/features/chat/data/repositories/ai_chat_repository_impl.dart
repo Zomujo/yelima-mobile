@@ -16,6 +16,7 @@ import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/file_service.dart';
 import 'package:clock/clock.dart';
 import '../../../../core/services/session_epoch.dart';
+import '../../domain/services/audio_cache_manager.dart';
 
 class AiChatRepositoryImpl
     implements AiChatRepository, SessionLifecycleHandler {
@@ -62,6 +63,8 @@ class AiChatRepositoryImpl
         }
       }
       await _localDataSource.clearChats();
+      // Cached voice notes too, before the database wipe drops the list of them.
+      await AudioCacheManager().clearCache();
     } catch (_) {}
   }
 

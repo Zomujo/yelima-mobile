@@ -25,7 +25,7 @@ import '../../features/medications/presentation/screens/medicine_details_screen.
 import '../../features/progress/presentation/screens/progress_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../shared/screens/not_found_screen.dart';
-import '../../shared/screens/main_scaffold.dart';
+import 'package:yelima/features/home/presentation/screens/main_scaffold.dart';
 import 'route_paths.dart';
 import '../services/session_expiry.dart';
 import '../managers/mutation_sync_manager.dart';

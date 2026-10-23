@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../data/models/medication_detail_model.dart';
+import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
 import '../../domain/entities/medicine_form_data.dart';
 import '../../domain/usecases/update_medication_usecase.dart';
 import 'all_medicines_controller.dart';
@@ -31,7 +31,8 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     notesController.addListener(_markChanged);
 
     if (allMedicinesController.syncManager != null) {
-      _syncSub = allMedicinesController.syncManager!.onMutationSynced.listen((event) {
+      _syncSub =
+          allMedicinesController.syncManager!.onMutationSynced.listen((event) {
         if (event.startsWith('remap:medication:$medicationId:')) {
           final parts = event.split(':');
           if (parts.length >= 4) {
@@ -144,7 +145,6 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     notifyListeners();
   }
 
-
   void init() {
     Future.microtask(() {
       allMedicinesController.fetchMedicationHistory(medicationId);
@@ -193,7 +193,6 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
     if (designator.toUpperCase() == 'AM' && hour == 12) return 0;
     return hour;
   }
-
 
   // --------------------------------------------------------------------------
   // |                                   Actions & Methods                    |

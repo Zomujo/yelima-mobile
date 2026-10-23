@@ -10,8 +10,8 @@ import '../widgets/blood_glucose_section.dart';
 import '../widgets/blood_pressure_section.dart';
 import '../widgets/progress_note_banner.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/core/utils/app_tutorial_service.dart';
-import 'package:yelima/core/utils/app_tutorial_keys.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 import '../../domain/entities/vital_trends.dart';
 
 class ProgressScreen extends StatefulWidget {

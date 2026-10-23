@@ -12,6 +12,7 @@ import 'domain/usecases/create_medication_usecase.dart';
 import 'domain/usecases/update_medication_usecase.dart';
 import 'presentation/controllers/all_medicines_controller.dart';
 import 'presentation/controllers/medication_controller.dart';
+import 'data/datasources/medication_remote_mutation_source.dart';
 
 void initMedications(GetIt sl) {
   // Data sources
@@ -58,4 +59,8 @@ void initMedications(GetIt sl) {
             ? sl<MutationSyncManager>()
             : null,
       ));
+
+  // Registered last: the source needs this feature's datasources above.
+  sl<MutationSyncManager>()
+      .registerSource('medication', MedicationRemoteMutationSource(sl(), sl()));
 }

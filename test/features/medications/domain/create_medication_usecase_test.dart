@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:yelima/features/medications/data/models/create_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
 import 'package:yelima/features/medications/domain/entities/medication_entity.dart';
 import 'package:yelima/features/medications/domain/entities/medicine_form_data.dart';
 import 'package:yelima/features/medications/domain/repositories/medication_repository.dart';

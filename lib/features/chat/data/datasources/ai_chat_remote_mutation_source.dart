@@ -81,4 +81,8 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
         throw UnimplementedError('Unknown action $action for chat');
     }
   }
+
+  @override
+  Future<void> remapLocalId(String oldId, String newId) =>
+      _db.aiChatDao.updateMessageId(oldId, newId);
 }

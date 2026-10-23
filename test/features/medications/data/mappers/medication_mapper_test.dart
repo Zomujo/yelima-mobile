@@ -2,10 +2,10 @@ import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/features/medications/data/mappers/medication_mapper.dart';
-import 'package:yelima/features/medications/data/models/create_medication_model.dart';
-import 'package:yelima/features/medications/data/models/dosing_schedule_model.dart';
+import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 import 'package:yelima/features/medications/data/models/medication_model.dart';
-import 'package:yelima/features/medications/data/models/update_medication_model.dart';
+import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
 
 void main() {
   final today = DateTime(2026, 10, 23, 9, 0);

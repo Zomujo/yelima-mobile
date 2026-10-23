@@ -9,7 +9,7 @@ import '../widgets/form/reading_logging_form.dart';
 import '../widgets/history/reading_history_section.dart';
 import '../../../../shared/widgets/forms/unsaved_changes_guard.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../core/utils/app_tutorial_service.dart';
+import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 
 class ReadingLoggingScreen extends StatelessWidget {
   const ReadingLoggingScreen({super.key});
@@ -61,7 +61,9 @@ class _ReadingLoggingViewState extends State<_ReadingLoggingView> {
                 hasUnsavedChanges: () =>
                     context.read<ReadingLoggingController>().state.hasChanged,
                 child: StreamBuilder<List<VitalHistoryEntity>>(
-                  stream: context.read<ReadingLoggingController>().vitalHistoriesStream,
+                  stream: context
+                      .read<ReadingLoggingController>()
+                      .vitalHistoriesStream,
                   builder: (context, snapshot) {
                     final allVitals =
                         List<VitalHistoryEntity>.from(snapshot.data ?? []);
