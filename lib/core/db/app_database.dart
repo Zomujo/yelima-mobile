@@ -1,7 +1,6 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -12,6 +11,8 @@ import 'package:sqlite3/sqlite3.dart' hide Exception;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
+import '../services/monitoring_service.dart';
+import 'db_key.dart';
 
 import 'tables/vital_histories.dart';
 import 'tables/ai_chat_conversations.dart';
@@ -68,6 +69,23 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 20;
+
+  /// Deletes every row in every table in one transaction, so tables added later can't leak.
+  Future<void> wipeAll() => transaction(() async {
+        for (final table in allTables) {
+          await delete(table).go();
+        }
+      });
+
+  /// Whether any table still holds a row (e.g. after a wipe that failed).
+  Future<bool> hasAnyRows() async {
+    for (final table in allTables) {
+      if (await (select(table)..limit(1)).getSingleOrNull() != null) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @override
   MigrationStrategy get migration {
@@ -159,14 +177,12 @@ LazyDatabase _openConnection() {
     // Setup encryption key
     const secureStorage = FlutterSecureStorage();
     const keyString = "db_encryption_key";
-    String? encryptionKey = await secureStorage.read(key: keyString);
-    if (encryptionKey == null) {
-      final random = Random.secure();
-      final values = List<int>.generate(32, (i) => random.nextInt(256));
-      encryptionKey =
-          values.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-      await secureStorage.write(key: keyString, value: encryptionKey);
-    }
+    final encryptionKey = await resolveDbKey(
+      dbFile: file,
+      read: () => secureStorage.read(key: keyString),
+      write: (key) => secureStorage.write(key: keyString, value: key),
+      onQuarantined: _reportQuarantine,
+    );
 
     if (Platform.isAndroid) {
       open.overrideFor(OperatingSystem.android, () {
@@ -182,12 +198,10 @@ LazyDatabase _openConnection() {
         tempDb.execute("SELECT count(*) FROM sqlite_master;");
         tempDb.dispose();
       } catch (e) {
+        // Never delete: move it aside so a fresh database can open (CORE-EC-10).
         debugPrint('Database decryption failed or file corrupted: $e');
-        file.deleteSync();
-        final shm = File('${file.path}-shm');
-        if (shm.existsSync()) shm.deleteSync();
-        final wal = File('${file.path}-wal');
-        if (wal.existsSync()) wal.deleteSync();
+        await quarantineDb(file);
+        _reportQuarantine('decrypt_failed');
       }
     }
 
@@ -205,4 +219,11 @@ LazyDatabase _openConnection() {
       },
     );
   });
+}
+
+/// Records that the local database was moved aside (a reason code only, no data).
+void _reportQuarantine(String reason) {
+  MonitoringService.instance.recordError(
+      Exception('Local database moved aside: $reason'), null,
+      reason: 'db_quarantine');
 }

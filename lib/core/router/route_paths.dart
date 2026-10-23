@@ -21,4 +21,7 @@ class RoutePaths {
   static const String signUp = '/sign-up';
   static const String registration = '/registration';
   static const String forgotPassword = '/forgot-password';
+  static const String sessionExpired = '/session-expired';
+  static const String profileUnavailable = '/profile-unavailable';
+  static const String unsyncedChanges = '/unsynced-changes';
 }

@@ -36,6 +36,14 @@ class SessionLifecycleService {
     _handlers.putIfAbsent(priority, () => []).add(handler);
   }
 
+  /// Stops calling [handler], e.g. when a screen's controller is disposed.
+  void unregister(SessionLifecycleHandler handler) {
+    for (final group in _handlers.values) {
+      group.remove(handler);
+    }
+    _handlers.removeWhere((_, group) => group.isEmpty);
+  }
+
   /// Runs all handlers' [onSessionStarted] in ascending priority order.
   Future<void> startSession(String userId) async {
     // Chain onto the existing task to ensure sequential execution
@@ -49,11 +57,11 @@ class SessionLifecycleService {
       }
       _isSessionActive = true;
       AppLogger.i('SessionLifecycleService: starting session for user $userId');
-      for (final entry in _handlers.entries) {
+      for (final entry in _handlers.entries.toList()) {
         AppLogger.d(
             'SessionLifecycleService: running onSessionStarted (priority ${entry.key})');
         await Future.wait(
-          entry.value.map((h) async {
+          List.of(entry.value).map((h) async {
             try {
               await h.onSessionStarted(userId);
             } catch (e) {
@@ -85,7 +93,7 @@ class SessionLifecycleService {
         AppLogger.d(
             'SessionLifecycleService: running onSessionEnded (priority ${entry.key})');
         await Future.wait(
-          entry.value.map((h) async {
+          List.of(entry.value).map((h) async {
             try {
               await h.onSessionEnded();
             } catch (e) {

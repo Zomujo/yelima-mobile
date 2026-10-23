@@ -58,7 +58,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
       if (user == null) {
         await _userProfileSubscription?.cancel();
         _userProfileSubscription = null;
-        state = state.copyWith(userEntity: null, isInitialized: true);
+        state = state.copyWith(
+            userEntity: null, isInitialized: true, profileUnavailable: false);
       } else {
         state = state.copyWith(isInitialized: false);
 
@@ -66,6 +67,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
             await _repository.getCachedProfile(user.uid);
         if (stamp != _userEventStamp) return;
 
+        var unavailable = false;
         if (resolvedProfile == null) {
           final result = await _repository.getUserProfile(user.uid).timeout(
                 const Duration(seconds: 6),
@@ -73,14 +75,17 @@ class UserController extends ChangeNotifier with SafeNotifier {
               );
           if (stamp != _userEventStamp) return;
           result.fold(
-            (error) {},
+            // Couldn't load it: don't treat a registered user as new.
+            (error) => unavailable = true,
             (profile) => resolvedProfile = profile,
           );
         }
 
-        state =
-            state.copyWith(userEntity: resolvedProfile, isInitialized: true);
-        refreshProfile(user);
+        state = state.copyWith(
+            userEntity: resolvedProfile,
+            isInitialized: true,
+            profileUnavailable: unavailable);
+        if (!unavailable) refreshProfile(user);
       }
     });
   }
@@ -112,6 +117,44 @@ class UserController extends ChangeNotifier with SafeNotifier {
       }
     });
   }
+
+  /// Tries loading the profile again after it couldn't be loaded.
+  Future<void> retryProfile() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+    final stamp = _userEventStamp;
+    state = state.copyWith(isLoading: true);
+    final result = await _repository.getUserProfile(user.uid);
+    if (stamp != _userEventStamp) return;
+    result.fold(
+      (_) => state = state.copyWith(isLoading: false),
+      (profile) {
+        state = state.copyWith(
+            userEntity: profile, profileUnavailable: false, isLoading: false);
+        refreshProfile(user);
+      },
+    );
+  }
+
+  /// Completes once the profile has loaded (or failed to), or after [timeout].
+  Future<void> whenInitialized(
+      {Duration timeout = const Duration(seconds: 8)}) async {
+    if (isInitialized) return;
+    final done = Completer<void>();
+    void check() {
+      if (isInitialized && !done.isCompleted) done.complete();
+    }
+
+    addListener(check);
+    try {
+      await done.future.timeout(timeout, onTimeout: () {});
+    } finally {
+      removeListener(check);
+    }
+  }
+
+  /// The profile couldn't be loaded, so the app shows a retry screen instead of registration.
+  bool get profileUnavailable => _state.profileUnavailable;
 
   @override
   void dispose() {
@@ -164,11 +207,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
-        final currentStatusIndex =
-            state.userEntity?.registrationStatus.index ?? 0;
-        final newStatus = currentStatusIndex > RegistrationStatus.dob.index
-            ? state.userEntity!.registrationStatus
-            : RegistrationStatus.dob;
+        final newStatus = (state.userEntity?.registrationStatus ??
+                RegistrationStatus.personalDetails)
+            .atLeast(RegistrationStatus.dob);
 
         final data = {
           'id': user.uid,
@@ -193,11 +234,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
         return left(error);
       },
       (_) {
-        final currentStatusIndex =
-            state.userEntity?.registrationStatus.index ?? 0;
-        final newStatus = currentStatusIndex > RegistrationStatus.dob.index
-            ? state.userEntity!.registrationStatus
-            : RegistrationStatus.dob;
+        final newStatus = (state.userEntity?.registrationStatus ??
+                RegistrationStatus.personalDetails)
+            .atLeast(RegistrationStatus.dob);
 
         final currentEntity = state.userEntity ??
             UserEntity(id: user.uid, email: user.email ?? '');
@@ -226,12 +265,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
-        final currentStatusIndex =
-            state.userEntity?.registrationStatus.index ?? 0;
-        final newStatus =
-            currentStatusIndex > RegistrationStatus.healthConditions.index
-                ? state.userEntity!.registrationStatus
-                : RegistrationStatus.healthConditions;
+        final newStatus = (state.userEntity?.registrationStatus ??
+                RegistrationStatus.personalDetails)
+            .atLeast(RegistrationStatus.healthConditions);
 
         final data = {
           'dateOfBirth': dob.toIso8601String(),
@@ -251,12 +287,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
         return left(error);
       },
       (_) {
-        final currentStatusIndex =
-            state.userEntity?.registrationStatus.index ?? 0;
-        final newStatus =
-            currentStatusIndex > RegistrationStatus.healthConditions.index
-                ? state.userEntity!.registrationStatus
-                : RegistrationStatus.healthConditions;
+        final newStatus = (state.userEntity?.registrationStatus ??
+                RegistrationStatus.personalDetails)
+            .atLeast(RegistrationStatus.healthConditions);
 
         if (state.userEntity != null) {
           state = state.copyWith(
@@ -289,12 +322,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
-        final currentStatusIndex =
-            state.userEntity?.registrationStatus.index ?? 0;
-        final newStatus =
-            currentStatusIndex > RegistrationStatus.facilitySelection.index
-                ? state.userEntity!.registrationStatus
-                : RegistrationStatus.facilitySelection;
+        final newStatus = (state.userEntity?.registrationStatus ??
+                RegistrationStatus.personalDetails)
+            .atLeast(RegistrationStatus.facilitySelection);
 
         final data = {
           'conditions': conditionsPayload,
@@ -315,12 +345,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
         return left(error);
       },
       (_) {
-        final currentStatusIndex =
-            state.userEntity?.registrationStatus.index ?? 0;
-        final newStatus =
-            currentStatusIndex > RegistrationStatus.facilitySelection.index
-                ? state.userEntity!.registrationStatus
-                : RegistrationStatus.facilitySelection;
+        final newStatus = (state.userEntity?.registrationStatus ??
+                RegistrationStatus.personalDetails)
+            .atLeast(RegistrationStatus.facilitySelection);
 
         state = state.copyWith(
           userEntity: state.userEntity!.copyWith(

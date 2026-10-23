@@ -48,6 +48,8 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
   void dispose() {
     _recordingService.removeListener(_onRecordingServiceChanged);
     WidgetsBinding.instance.removeObserver(this);
+    // Leaving the chat must not leave the shared recorder running (CHAT-EC-02).
+    if (_recordingService.isActive) _recordingService.cancelRecording();
     super.dispose();
   }
 
@@ -55,12 +57,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      if (_recordingService.recorderValueNotifier.value.state ==
-              RecorderState.recording ||
-          _recordingService.recorderValueNotifier.value.state ==
-              RecorderState.paused) {
-        _handleCancel();
-      }
+      if (_recordingService.isActive) _handleCancel();
     }
   }
 

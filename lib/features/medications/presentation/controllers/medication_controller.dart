@@ -6,9 +6,8 @@ import '../../domain/repositories/medication_repository.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_count.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/services/session_lifecycle_service.dart';
-import 'package:get_it/get_it.dart';
 import 'package:clock/clock.dart';
+import 'package:yelima/core/utils/session_scoped.dart';
 
 enum MedicationSection { morning, afternoon, evening }
 
@@ -16,7 +15,8 @@ extension MedicationSectionExt on MedicationSection {
   String get nameUpperCase => name.toUpperCase();
 }
 
-class MedicationController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
+class MedicationController extends ChangeNotifier
+    with SafeNotifier, SessionScoped {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies                  |
   // --------------------------------------------------------------------------
@@ -26,9 +26,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier implements S
   StreamSubscription? _mutationSyncSub;
 
   MedicationController({required this.repository, this.syncManager}) {
-    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
-      GetIt.instance<SessionLifecycleService>().register(this);
-    }
+    joinSession();
   }
 
   @override
@@ -74,10 +72,10 @@ class MedicationController extends ChangeNotifier with SafeNotifier implements S
   void init() {
     if (syncManager != null) {
       _mutationSyncSub?.cancel();
-      _mutationSyncSub = syncManager!
-          .onMutationSynced
-          .listen((event) {
-        if (event.contains('medication') || event.contains('confirmMedication') || event.contains('deleteMedication')) {
+      _mutationSyncSub = syncManager!.onMutationSynced.listen((event) {
+        if (event.contains('medication') ||
+            event.contains('confirmMedication') ||
+            event.contains('deleteMedication')) {
           fetchAdherence();
         }
       });
@@ -86,12 +84,13 @@ class MedicationController extends ChangeNotifier with SafeNotifier implements S
     _autoSelectTabBasedOnTime();
     fetchAdherence();
     _initCountsStream();
-    
+
     // Trigger background sync for all sections so the tab counts populate immediately
     repository.getMedicationsBySection(MedicationSection.morning.nameUpperCase);
-    repository.getMedicationsBySection(MedicationSection.afternoon.nameUpperCase);
+    repository
+        .getMedicationsBySection(MedicationSection.afternoon.nameUpperCase);
     repository.getMedicationsBySection(MedicationSection.evening.nameUpperCase);
-    
+
     fetchMedications();
     repository.getAllMedications(forceRefresh: true);
   }
@@ -114,7 +113,6 @@ class MedicationController extends ChangeNotifier with SafeNotifier implements S
       fetchMedications();
     }
   }
-
 
   // --------------------------------------------------------------------------
   // |                                   Actions & Methods                    |
@@ -233,7 +231,8 @@ class MedicationController extends ChangeNotifier with SafeNotifier implements S
     if (med.taken) return null;
 
     final now = clock.now();
-    final todayScheduledTime = DateTime(now.year, now.month, now.day, med.toBeTakenAt.hour, med.toBeTakenAt.minute);
+    final todayScheduledTime = DateTime(now.year, now.month, now.day,
+        med.toBeTakenAt.hour, med.toBeTakenAt.minute);
 
     if (now.isBefore(todayScheduledTime)) {
       return 'Cannot confirm dose — it\'s not yet time.';

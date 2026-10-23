@@ -5,10 +5,11 @@ import '../../../../core/db/app_database.dart';
 import '../../domain/entities/vital_history_entity.dart';
 import '../../domain/repositories/home_metrics_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/services/session_lifecycle_service.dart';
 import '../states/home_metrics_state.dart';
+import 'package:yelima/core/utils/session_scoped.dart';
 
-class HomeMetricsController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
+class HomeMetricsController extends ChangeNotifier
+    with SafeNotifier, SessionScoped {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies      |
   // --------------------------------------------------------------------------
@@ -22,9 +23,7 @@ class HomeMetricsController extends ChangeNotifier with SafeNotifier implements 
 
   HomeMetricsController({required HomeMetricsRepository repository})
       : _repository = repository {
-    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
-      GetIt.instance<SessionLifecycleService>().register(this);
-    }
+    joinSession();
     _initStream();
   }
 

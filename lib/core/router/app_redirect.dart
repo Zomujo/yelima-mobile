@@ -8,6 +8,8 @@ typedef RedirectState = ({
   bool onboarded,
   bool authenticated,
   bool registered,
+  bool expired,
+  bool profileUnavailable,
 });
 
 /// Decides where navigation should go for [uri]; null keeps the current route.
@@ -18,10 +20,17 @@ String? appRedirect(Uri uri, String location, RedirectState s) {
   final isRegistrationRoute = location == RoutePaths.registration;
   final isSplashRoute = location == RoutePaths.splash;
   final isWelcomeRoute = location == RoutePaths.welcome;
+  final isExpiredRoute = location == RoutePaths.sessionExpired;
+  final isUnavailableRoute = location == RoutePaths.profileUnavailable;
 
   // The route the user originally wanted, carried through ?redirect=.
   final intendedPath = uri.queryParameters['redirect'] ??
-      (isAuthRoute || isRegistrationRoute || isSplashRoute || isWelcomeRoute
+      (isAuthRoute ||
+              isRegistrationRoute ||
+              isSplashRoute ||
+              isWelcomeRoute ||
+              isExpiredRoute ||
+              isUnavailableRoute
           ? null
           : uri.toString());
 
@@ -41,11 +50,23 @@ String? appRedirect(Uri uri, String location, RedirectState s) {
     return isAuthRoute ? null : withRedirect(RoutePaths.signIn);
   }
 
+  // Login expired: lock the app until the user signs in again or logs out.
+  if (s.expired) return isExpiredRoute ? null : RoutePaths.sessionExpired;
+
+  // Profile couldn't load: offer a retry rather than sending a registered user to registration.
+  if (s.profileUnavailable) {
+    return isUnavailableRoute ? null : RoutePaths.profileUnavailable;
+  }
+
   if (!s.registered) {
     return isRegistrationRoute ? null : withRedirect(RoutePaths.registration);
   }
 
-  if (isAuthRoute || isRegistrationRoute || isSplashRoute) {
+  if (isAuthRoute ||
+      isRegistrationRoute ||
+      isSplashRoute ||
+      isExpiredRoute ||
+      isUnavailableRoute) {
     return intendedPath ?? RoutePaths.home;
   }
   return null;

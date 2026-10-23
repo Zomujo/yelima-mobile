@@ -1,6 +1,8 @@
 import 'package:get_it/get_it.dart';
 
 import 'core/core_injection.dart';
+import 'core/managers/deletion_sync_manager.dart';
+import 'core/managers/mutation_sync_manager.dart';
 import 'features/auth/auth_injection.dart';
 import 'features/user/user_injection.dart';
 import 'features/chat/chat_injection.dart';
@@ -38,6 +40,7 @@ Future<void> init() async {
   initAppointment(sl);
   initReadingLogging(sl);
 
-  // Wait for async singletons if any
-  // await sl.allReady();
+  // Create the sync managers now, so they are registered before the first session starts.
+  sl<MutationSyncManager>();
+  sl<DeletionSyncManager>();
 }

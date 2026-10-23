@@ -111,6 +111,11 @@ class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
     return audioPath;
   }
 
+  /// Whether the microphone is in use (recording or paused).
+  bool get isActive =>
+      _recorderValue.value.state == RecorderState.recording ||
+      _recorderValue.value.state == RecorderState.paused;
+
   Future<void> cancelRecording() async {
     final path = await _recorderController.stop();
     if (path != null) {

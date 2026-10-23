@@ -10,6 +10,9 @@ abstract class UserState with _$UserState {
     UserEntity? userEntity,
     @Default(false) bool isInitialized,
     @Default(false) bool isLoading,
+
+    /// The profile couldn't be loaded (offline, no cache); not the same as a new user with no profile.
+    @Default(false) bool profileUnavailable,
   }) = _UserState;
 
   const UserState._();

@@ -13,6 +13,8 @@ import '../../../user/presentation/controllers/user_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
 import 'package:clock/clock.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/route_paths.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/layout/pending_changes_badge.dart';
@@ -66,7 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 greeting: greetingName.isNotEmpty
                     ? context.l10n.welcomeName(greetingName)
                     : context.l10n.welcome,
-                status: PendingChangesBadge(waiting: _waiting, failed: _failed),
+                status: PendingChangesBadge(
+                  waiting: _waiting,
+                  failed: _failed,
+                  onTap: () => context.push(RoutePaths.unsyncedChanges),
+                ),
               ),
               const HomeMetricsSection(),
               const SizedBox(height: 16),

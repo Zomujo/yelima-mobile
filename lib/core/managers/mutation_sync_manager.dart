@@ -114,6 +114,10 @@ class MutationSyncManager implements SessionLifecycleHandler {
   Stream<int> watchWaitingCount() =>
       _db.pendingMutationsDao.watchWaitingCount();
 
+  /// Live list of changes that were rejected or ran out of tries.
+  Stream<List<PendingMutation>> watchFailed() =>
+      _db.pendingMutationsDao.watchFailedMutations();
+
   /// Live count of changes that were rejected or ran out of tries.
   Stream<int> watchFailedCount() => _db.pendingMutationsDao.watchFailedCount();
 

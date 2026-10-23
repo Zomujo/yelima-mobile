@@ -17,6 +17,12 @@ enum RegistrationStatus {
   complete
 }
 
+extension RegistrationStatusX on RegistrationStatus {
+  /// This status, or [step] if that is further along: registration never goes backwards.
+  RegistrationStatus atLeast(RegistrationStatus step) =>
+      index >= step.index ? this : step;
+}
+
 enum HealthConditionCategory { hypertension, diabetes, both }
 
 extension HealthConditionCategoryX on HealthConditionCategory {

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../services/session_expiry.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
@@ -27,7 +28,7 @@ extension DioExceptionExtension on DioException {
 class APIClient {
   late final Dio _dio;
 
-  APIClient({required String baseUrl}) {
+  APIClient({required String baseUrl, SessionExpiry? sessionExpiry}) {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -42,7 +43,7 @@ class APIClient {
 
     _dio.interceptors.addAll([
       LoggingInterceptor(),
-      AuthInterceptor(dio: _dio),
+      AuthInterceptor(dio: _dio, sessionExpiry: sessionExpiry),
       ErrorInterceptor(),
     ]);
   }

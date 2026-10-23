@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../user/domain/entities/user_entity.dart';
-import '../controllers/auth_controller.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
 import '../widgets/registration_app_bar.dart';
 import '../widgets/steps/registration_step_one.dart';
 import '../widgets/steps/registration_step_two.dart';
 import '../widgets/steps/registration_step_three.dart';
 import '../widgets/steps/registration_step_four.dart';
+import '../widgets/logout_flow.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -65,9 +65,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
 
     /// Sign out and return to sign up if on the first step.
-    final authController = context.read<AuthController>();
-    context.go(RoutePaths.signUp); // clear deep link intent before sign out
-    await authController.signOut(context);
+    await logOutWithSyncCheck(context);
   }
 
   @override
@@ -91,12 +89,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 return RegistrationAppBar(
                   currentStep: currentPage + 1,
                   totalSteps: 4,
-                  onClose: () async {
-                    final authController = context.read<AuthController>();
-                    context.go(RoutePaths
-                        .signUp); // clear deep link intent before sign out
-                    await authController.signOut(context);
-                  },
+                  onClose: () => logOutWithSyncCheck(context),
                 );
               },
             ),

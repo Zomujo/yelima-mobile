@@ -47,6 +47,13 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Live list of failed items, oldest first.
+  Stream<List<PendingMutation>> watchFailedMutations() =>
+      (select(pendingMutations)
+            ..where((t) => t.retryCount.isBiggerOrEqualValue(maxTries))
+            ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+          .watch();
+
   /// Live count of items waiting to sync, for the "changes waiting" badge.
   Stream<int> watchWaitingCount() =>
       _watchCount(pendingMutations.retryCount.isSmallerThanValue(maxTries));

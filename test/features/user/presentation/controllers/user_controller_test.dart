@@ -19,6 +19,7 @@ void main() {
   late MockUserRepository repo;
   late UserController controller;
   late StreamController<UserEntity?> profileWatch;
+  late MockFirebaseAuth auth;
 
   UserEntity profile(String id) => UserEntity(id: id, email: '$id@example.com');
 
@@ -32,7 +33,7 @@ void main() {
     authEvents = StreamController<User?>();
     profileWatch = StreamController<UserEntity?>.broadcast();
     repo = MockUserRepository();
-    final auth = MockFirebaseAuth();
+    auth = MockFirebaseAuth();
     when(() => auth.authStateChanges()).thenAnswer((_) => authEvents.stream);
     when(() => repo.getCachedProfile(any())).thenAnswer(
         (i) async => profile(i.positionalArguments.first as String));
@@ -86,5 +87,83 @@ void main() {
     await pumpEventQueue();
 
     expect(controller.userEntity, isNull);
+  });
+
+  group('ACC-EC-05: profile unavailable', () {
+    setUp(() {
+      when(() => repo.getCachedProfile(any())).thenAnswer((_) async => null);
+    });
+
+    test(
+        'offline with no cached profile flags it, instead of looking like a new user',
+        () async {
+      when(() => repo.getUserProfile('a'))
+          .thenAnswer((_) async => left('Offline user profile not found.'));
+
+      authEvents.add(user('a'));
+      await pumpEventQueue();
+
+      expect(controller.isInitialized, isTrue);
+      expect(controller.profileUnavailable, isTrue);
+      expect(controller.userEntity, isNull);
+    });
+
+    test('a user with no profile yet is new, not unavailable', () async {
+      when(() => repo.getUserProfile('a')).thenAnswer((_) async => right(null));
+
+      authEvents.add(user('a'));
+      await pumpEventQueue();
+
+      expect(controller.profileUnavailable, isFalse);
+    });
+
+    test('retry loads the profile and clears the flag', () async {
+      final u = user('a');
+      when(() => auth.currentUser).thenReturn(u);
+      when(() => repo.getUserProfile('a'))
+          .thenAnswer((_) async => left('offline'));
+      authEvents.add(u);
+      await pumpEventQueue();
+
+      when(() => repo.getUserProfile('a'))
+          .thenAnswer((_) async => right(profile('a')));
+      await controller.retryProfile();
+
+      expect(controller.profileUnavailable, isFalse);
+      expect(controller.userEntity?.id, 'a');
+    });
+
+    test('sign-out clears the flag', () async {
+      when(() => repo.getUserProfile('a'))
+          .thenAnswer((_) async => left('offline'));
+      authEvents.add(user('a'));
+      await pumpEventQueue();
+
+      authEvents.add(null);
+      await pumpEventQueue();
+
+      expect(controller.profileUnavailable, isFalse);
+    });
+  });
+
+  group('whenInitialized', () {
+    test('completes once the profile has loaded', () async {
+      when(() => repo.getUserProfile('a'))
+          .thenAnswer((_) async => right(profile('a')));
+      var done = false;
+      controller.whenInitialized().then((_) => done = true);
+
+      authEvents.add(user('a'));
+      await pumpEventQueue();
+
+      expect(done, isTrue);
+    });
+
+    test('gives up after the timeout instead of hanging', () async {
+      await expectLater(
+          controller.whenInitialized(timeout: const Duration(milliseconds: 10)),
+          completes);
+      expect(controller.isInitialized, isFalse);
+    });
   });
 }

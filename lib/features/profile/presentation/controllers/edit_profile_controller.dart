@@ -98,20 +98,13 @@ class EditProfileController extends ChangeNotifier with SafeNotifier {
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
-        final currentStatusIndex =
-            _userController.userEntity?.registrationStatus.index ?? 0;
-        final newStatus =
-            currentStatusIndex > 1 // RegistrationStatus.dob is usually 1
-                ? _userController.userEntity!.registrationStatus.name
-                : 'dob';
-
         final data = {
           'id': user.uid,
           'email': user.email ?? '',
           'firstName': state.firstName.trim(),
           'lastName': state.lastName.trim(),
           'gender': state.gender,
-          'registrationStatus': newStatus,
+          // No registrationStatus: editing a profile must never move registration backwards.
         };
 
         return await _repository.updateUserProfile(user.uid, data);

@@ -19,6 +19,7 @@ import 'services/voice_recording_service.dart';
 import 'services/notification_service.dart';
 import 'services/monitoring_service.dart';
 import 'services/session_epoch.dart';
+import 'services/session_expiry.dart';
 import 'services/fcm_token_service.dart';
 import 'services/database_lifecycle_handler.dart';
 import 'services/fcm_lifecycle_handler.dart';
@@ -37,8 +38,9 @@ void initCore(GetIt sl) {
   sl.registerLazySingleton(() => FirebaseMessaging.instance);
   sl.registerLazySingleton(() => InternetConnection());
   sl.registerLazySingleton<INetworkInfo>(() => NetworkInfoImpl(sl()));
-  sl.registerLazySingleton(
-      () => APIClient(baseUrl: AppConfig.instance.apiBaseUrl));
+  sl.registerLazySingleton(() => SessionExpiry());
+  sl.registerLazySingleton(() =>
+      APIClient(baseUrl: AppConfig.instance.apiBaseUrl, sessionExpiry: sl()));
   sl.registerLazySingleton(() => AppDatabase());
   sl.registerLazySingleton(() => sl<AppDatabase>().vitalsDao);
   sl.registerLazySingleton(() => sl<AppDatabase>().aiChatDao);
@@ -65,6 +67,7 @@ void initCore(GetIt sl) {
   // Highest priority, so it runs first on session end and late results are dropped before the wipe.
   sl.registerSingleton(SessionEpoch());
   sl<SessionLifecycleService>().register(sl<SessionEpoch>(), priority: 100);
+  sl<SessionLifecycleService>().register(sl<SessionExpiry>(), priority: 1);
 
   sl.registerLazySingleton(() => FCMLifecycleHandler(
         connectivity: sl(),

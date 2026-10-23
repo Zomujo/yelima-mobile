@@ -3,11 +3,11 @@ import '../../domain/entities/vital_trends.dart';
 import '../../domain/repositories/progress_repository.dart';
 import 'progress_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/services/session_lifecycle_service.dart';
-import 'package:get_it/get_it.dart';
 import 'package:clock/clock.dart';
+import 'package:yelima/core/utils/session_scoped.dart';
 
-class ProgressController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
+class ProgressController extends ChangeNotifier
+    with SafeNotifier, SessionScoped {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies                  |
   // --------------------------------------------------------------------------
@@ -15,7 +15,8 @@ class ProgressController extends ChangeNotifier with SafeNotifier implements Ses
   final ProgressRepository _repository;
 
   ProgressState<BPTrend> _bpTrendState = const ProgressState(isLoading: true);
-  ProgressState<VitalTrend> _glucoseTrendState = const ProgressState(isLoading: true);
+  ProgressState<VitalTrend> _glucoseTrendState =
+      const ProgressState(isLoading: true);
 
   ProgressState<BPTrend> get bpTrendState => _bpTrendState;
   ProgressState<VitalTrend> get glucoseTrendState => _glucoseTrendState;
@@ -36,9 +37,7 @@ class ProgressController extends ChangeNotifier with SafeNotifier implements Ses
   ChartDateRange _currentGlucoseRange = ChartDateRange.today;
 
   ProgressController(this._repository) {
-    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
-      GetIt.instance<SessionLifecycleService>().register(this);
-    }
+    joinSession();
   }
 
   @override
@@ -109,7 +108,8 @@ class ProgressController extends ChangeNotifier with SafeNotifier implements Ses
   /// Fetches the Blood Glucose trends for the specified date range.
   Future<void> fetchGlucoseTrend(
       {ChartDateRange dateRange = ChartDateRange.today}) async {
-    bool isNewRange = _currentGlucoseRange != dateRange || glucoseTrendState.data == null;
+    bool isNewRange =
+        _currentGlucoseRange != dateRange || glucoseTrendState.data == null;
     _currentGlucoseRange = dateRange;
 
     // Load from cache if it's a new range or empty

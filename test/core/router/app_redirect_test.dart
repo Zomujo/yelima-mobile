@@ -9,6 +9,8 @@ void main() {
     bool onboarded = true,
     bool authenticated = true,
     bool registered = true,
+    bool expired = false,
+    bool profileUnavailable = false,
   }) =>
       (
         initialized: initialized,
@@ -17,6 +19,8 @@ void main() {
         onboarded: onboarded,
         authenticated: authenticated,
         registered: registered,
+        expired: expired,
+        profileUnavailable: profileUnavailable,
       );
 
   final ready = stateWith();
@@ -105,6 +109,45 @@ void main() {
 
     test('a root redirect is not carried', () {
       expect(go('/', stateWith(authenticated: false)), '/sign-in');
+    });
+  });
+
+  group('session expired', () {
+    final s = stateWith(expired: true);
+
+    test('locks every app route behind the session-expired screen', () {
+      for (final loc in [
+        '/home',
+        '/medications/abc',
+        '/sign-in',
+        '/registration'
+      ]) {
+        expect(go(loc, s), '/session-expired', reason: loc);
+      }
+      expect(go('/session-expired', s), isNull);
+    });
+
+    test('once signed in again, the lock screen moves on to home', () {
+      expect(go('/session-expired', ready), '/home');
+    });
+
+    test('a signed-out user never sees the lock screen', () {
+      expect(go('/home', stateWith(expired: true, authenticated: false)),
+          '/sign-in?redirect=${Uri.encodeComponent('/home')}');
+    });
+  });
+
+  group('ACC-EC-05: profile could not load', () {
+    final s = stateWith(profileUnavailable: true, registered: false);
+
+    test('a registered user is not sent to registration while offline', () {
+      expect(go('/home', s), '/profile-unavailable');
+      expect(go('/registration', s), '/profile-unavailable');
+      expect(go('/profile-unavailable', s), isNull);
+    });
+
+    test('once loaded, the retry screen moves on', () {
+      expect(go('/profile-unavailable', ready), '/home');
     });
   });
 }

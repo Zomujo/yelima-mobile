@@ -27,6 +27,11 @@ import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../shared/screens/not_found_screen.dart';
 import '../../shared/screens/main_scaffold.dart';
 import 'route_paths.dart';
+import '../services/session_expiry.dart';
+import '../managers/mutation_sync_manager.dart';
+import '../../shared/screens/unsynced_changes_screen.dart';
+import '../../features/auth/presentation/screens/session_expired_screen.dart';
+import '../../features/user/presentation/screens/profile_unavailable_screen.dart';
 import 'app_redirect.dart';
 import '../services/monitoring_service.dart';
 import '../services/shared_prefs_service.dart';
@@ -41,8 +46,12 @@ class AppRouter {
     return GoRouter(
       navigatorKey: rootNavigatorKey,
       initialLocation: RoutePaths.splash,
-      refreshListenable: Listenable.merge(
-          [authController, userController, sl<AppStartupService>()]),
+      refreshListenable: Listenable.merge([
+        authController,
+        userController,
+        sl<AppStartupService>(),
+        sl<SessionExpiry>()
+      ]),
       observers: [MonitoringService.instance.analyticsObserver],
       redirect: (context, state) =>
           appRedirect(state.uri, state.matchedLocation, (
@@ -54,6 +63,8 @@ class AppRouter {
         authenticated: authController.isAuthenticated,
         registered: userController.userEntity?.registrationStatus ==
             RegistrationStatus.complete,
+        expired: sl<SessionExpiry>().isExpired,
+        profileUnavailable: userController.profileUnavailable,
       )),
       routes: [
         GoRoute(
@@ -79,6 +90,19 @@ class AppRouter {
         GoRoute(
           path: RoutePaths.forgotPassword,
           builder: (context, state) => const ForgotPasswordScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.unsyncedChanges,
+          builder: (context, state) =>
+              UnsyncedChangesScreen(sync: sl<MutationSyncManager>()),
+        ),
+        GoRoute(
+          path: RoutePaths.profileUnavailable,
+          builder: (context, state) => const ProfileUnavailableScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.sessionExpired,
+          builder: (context, state) => const SessionExpiredScreen(),
         ),
         GoRoute(
           path: RoutePaths.registration,

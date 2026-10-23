@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:yelima/core/managers/token_manager.dart';
-import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 
 import '../../../../shared/widgets/loaders/global_async_loader.dart';
 import '../../../../shared/utils/app_snackbar.dart';
@@ -13,6 +11,7 @@ import '../../../../core/services/session_lifecycle_service.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/db/app_database.dart';
+import '../../../../core/services/session_expiry.dart';
 import 'auth_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 
@@ -27,6 +26,12 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   final ConnectivityService _connectivity;
   final MutationSyncManager _syncManager;
   final AppDatabase _db;
+  final SessionExpiry _sessionExpiry;
+  final TokenManager? _tokenManagerOverride;
+
+  /// Waits for the user's profile to load, so the sign-in loader stays up until then.
+  final Future<void> Function() _waitForProfile;
+  TokenManager get _tokens => _tokenManagerOverride ?? TokenManager();
   StreamSubscription<User?>? _authStateSubscription;
 
   // --------------------------------------------------------------------------
@@ -40,7 +45,13 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     required ConnectivityService connectivity,
     required MutationSyncManager syncManager,
     required AppDatabase db,
+    required SessionExpiry sessionExpiry,
+    TokenManager? tokenManager,
+    Future<void> Function()? waitForProfile,
   })  : _repository = repository,
+        _waitForProfile = waitForProfile ?? (() async {}),
+        _tokenManagerOverride = tokenManager,
+        _sessionExpiry = sessionExpiry,
         _sessionLifecycleService = sessionLifecycleService,
         _firebaseAuth = firebaseAuth,
         _connectivity = connectivity,
@@ -90,12 +101,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
             isInitialSyncInProgress: false,
             isInitialized: true,
           ));
-          if (GetIt.instance.isRegistered<UserController>()) {
-            final uc = GetIt.instance<UserController>();
-            while (!uc.isInitialized) {
-              await Future.delayed(const Duration(milliseconds: 100));
-            }
-          }
+          await _waitForProfile();
           GlobalAsyncLoader.hide();
         }
       }
@@ -119,16 +125,15 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     try {
       await user.reload().timeout(const Duration(seconds: 5));
       if (_firebaseAuth.currentUser == null) {
-        _showSessionExpiredSnackbar();
-        await _repository.signOut();
+        _sessionExpiry.markExpired();
         return;
       }
     } on FirebaseAuthException catch (e) {
+      // Lock instead of signing out, so unsynced data survives until the user chooses.
       if (e.code == 'user-not-found' ||
           e.code == 'user-disabled' ||
           e.code == 'user-token-expired') {
-        _showSessionExpiredSnackbar();
-        await _repository.signOut();
+        _sessionExpiry.markExpired();
         return;
       }
     } catch (_) {}
@@ -140,9 +145,18 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     }
   }
 
-  void _showSessionExpiredSnackbar() {
-    AppSnackBar.showError(null,
-        message: 'Your session has expired or your account was disabled.');
+  /// Whether "Sign in again" needs a password field.
+  bool get reauthNeedsPassword => _repository.usesPassword;
+
+  /// Signs the same user in again after their session expired; returns an error message, or null.
+  Future<String?> reauthenticate({String? password}) async {
+    final result = await _repository.reauthenticate(password: password);
+    return result.fold((error) => error, (_) async {
+      _sessionExpiry.clear();
+      final uid = _firebaseAuth.currentUser?.uid;
+      if (uid != null) await _sessionLifecycleService.startSession(uid);
+      return null;
+    });
   }
 
   @override
@@ -255,7 +269,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         } catch (e) {
           debugPrint('Error ending session on delete: $e');
         }
-        await TokenManager().clearTokens();
+        await _tokens.clearTokens();
         GlobalAsyncLoader.hide();
         if (context.mounted) {
           AppSnackBar.showSuccess(context,
@@ -265,30 +279,27 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     );
   }
 
+  /// Tries to send queued changes, then reports what a logout would still lose.
+  Future<({int waiting, int failed})> syncBeforeLogout() async {
+    try {
+      if (await _connectivity.isConnected) {
+        await _syncManager.triggerSync().timeout(const Duration(seconds: 10));
+      }
+    } catch (e) {
+      debugPrint('Sync before logout failed or timed out: $e');
+    }
+    final dao = _db.pendingMutationsDao;
+    return (
+      waiting: (await dao.getAllPendingMutations()).length,
+      failed: (await dao.getFailedMutations()).length,
+    );
+  }
+
+  /// Logs out: ends the session (FCM token, reminders, wipe), then signs out of Firebase.
+  /// Callers warn about unsynced changes first (see `logOutWithSyncCheck`).
+  /// Firebase sign-out only happens once the wipe really emptied the database.
   Future<void> signOut(BuildContext context) async {
     GlobalAsyncLoader.show(context, message: "Signing out...");
-
-    final isConnected = await _connectivity.hasNetworkInterface;
-    if (!isConnected) {
-      GlobalAsyncLoader.hide();
-      AppSnackBar.showError(context.mounted ? context : null,
-          message:
-              'Connect to the internet to sync your changes before logging out.');
-      return;
-    }
-
-    try {} catch (e) {
-      debugPrint('Error syncing before sign out: $e');
-    }
-
-    final stillPending = await _db.pendingMutationsDao.getAllPendingMutations();
-    if (stillPending.isNotEmpty) {
-      GlobalAsyncLoader.hide();
-      AppSnackBar.showError(context.mounted ? context : null,
-          message:
-              'Some changes are still syncing. Please try again in a moment.');
-      return;
-    }
 
     try {
       await _sessionLifecycleService.endSession();
@@ -296,8 +307,21 @@ class AuthController extends ChangeNotifier with SafeNotifier {
       debugPrint('Error ending session on sign out: $e');
     }
 
+    // A failed wipe must not hand this phone's data to the next user.
+    try {
+      if (await _db.hasAnyRows()) await _db.wipeAll();
+    } catch (e) {
+      debugPrint('Retrying the wipe failed: $e');
+    }
+    if (await _db.hasAnyRows().catchError((_) => true)) {
+      GlobalAsyncLoader.hide();
+      AppSnackBar.showError(context.mounted ? context : null,
+          message: "We couldn't finish logging out. Please try again.");
+      return;
+    }
+
     final result = await _repository.signOut();
-    await TokenManager().clearTokens();
+    await _tokens.clearTokens();
 
     GlobalAsyncLoader.hide();
 

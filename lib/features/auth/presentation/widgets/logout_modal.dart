@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
-import '../../../../core/router/route_paths.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../controllers/auth_controller.dart';
+import '../../../../core/router/router.dart';
+import 'logout_flow.dart';
 
 class LogoutModal extends StatelessWidget {
   const LogoutModal({super.key});
@@ -54,10 +52,9 @@ class LogoutModal extends StatelessWidget {
                   text: context.l10n.logOut,
                   backgroundColor: const Color(0xFFEF4444), // Red 500
                   onPressed: () {
-                    final controller = context.read<AuthController>();
+                    final host = rootNavigatorKey.currentContext ?? context;
                     Navigator.of(context).pop(); // dismiss modal
-                    context.go(RoutePaths.signIn); // clear deep link intent
-                    controller.signOut(context);
+                    logOutWithSyncCheck(host);
                   },
                 ),
               ),

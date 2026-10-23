@@ -19,6 +19,9 @@ mixin _$UserState {
   bool get isInitialized;
   bool get isLoading;
 
+  /// The profile couldn't be loaded (offline, no cache); not the same as a new user with no profile.
+  bool get profileUnavailable;
+
   /// Create a copy of UserState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -36,16 +39,18 @@ mixin _$UserState {
             (identical(other.isInitialized, isInitialized) ||
                 other.isInitialized == isInitialized) &&
             (identical(other.isLoading, isLoading) ||
-                other.isLoading == isLoading));
+                other.isLoading == isLoading) &&
+            (identical(other.profileUnavailable, profileUnavailable) ||
+                other.profileUnavailable == profileUnavailable));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, userEntity, isInitialized, isLoading);
+  int get hashCode => Object.hash(
+      runtimeType, userEntity, isInitialized, isLoading, profileUnavailable);
 
   @override
   String toString() {
-    return 'UserState(userEntity: $userEntity, isInitialized: $isInitialized, isLoading: $isLoading)';
+    return 'UserState(userEntity: $userEntity, isInitialized: $isInitialized, isLoading: $isLoading, profileUnavailable: $profileUnavailable)';
   }
 }
 
@@ -54,7 +59,11 @@ abstract mixin class $UserStateCopyWith<$Res> {
   factory $UserStateCopyWith(UserState value, $Res Function(UserState) _then) =
       _$UserStateCopyWithImpl;
   @useResult
-  $Res call({UserEntity? userEntity, bool isInitialized, bool isLoading});
+  $Res call(
+      {UserEntity? userEntity,
+      bool isInitialized,
+      bool isLoading,
+      bool profileUnavailable});
 
   $UserEntityCopyWith<$Res>? get userEntity;
 }
@@ -74,6 +83,7 @@ class _$UserStateCopyWithImpl<$Res> implements $UserStateCopyWith<$Res> {
     Object? userEntity = freezed,
     Object? isInitialized = null,
     Object? isLoading = null,
+    Object? profileUnavailable = null,
   }) {
     return _then(_self.copyWith(
       userEntity: freezed == userEntity
@@ -87,6 +97,10 @@ class _$UserStateCopyWithImpl<$Res> implements $UserStateCopyWith<$Res> {
       isLoading: null == isLoading
           ? _self.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      profileUnavailable: null == profileUnavailable
+          ? _self.profileUnavailable
+          : profileUnavailable // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
@@ -110,7 +124,10 @@ class _$UserStateCopyWithImpl<$Res> implements $UserStateCopyWith<$Res> {
 
 class _UserState extends UserState {
   const _UserState(
-      {this.userEntity, this.isInitialized = false, this.isLoading = false})
+      {this.userEntity,
+      this.isInitialized = false,
+      this.isLoading = false,
+      this.profileUnavailable = false})
       : super._();
 
   @override
@@ -121,6 +138,11 @@ class _UserState extends UserState {
   @override
   @JsonKey()
   final bool isLoading;
+
+  /// The profile couldn't be loaded (offline, no cache); not the same as a new user with no profile.
+  @override
+  @JsonKey()
+  final bool profileUnavailable;
 
   /// Create a copy of UserState
   /// with the given fields replaced by the non-null parameter values.
@@ -140,16 +162,18 @@ class _UserState extends UserState {
             (identical(other.isInitialized, isInitialized) ||
                 other.isInitialized == isInitialized) &&
             (identical(other.isLoading, isLoading) ||
-                other.isLoading == isLoading));
+                other.isLoading == isLoading) &&
+            (identical(other.profileUnavailable, profileUnavailable) ||
+                other.profileUnavailable == profileUnavailable));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, userEntity, isInitialized, isLoading);
+  int get hashCode => Object.hash(
+      runtimeType, userEntity, isInitialized, isLoading, profileUnavailable);
 
   @override
   String toString() {
-    return 'UserState(userEntity: $userEntity, isInitialized: $isInitialized, isLoading: $isLoading)';
+    return 'UserState(userEntity: $userEntity, isInitialized: $isInitialized, isLoading: $isLoading, profileUnavailable: $profileUnavailable)';
   }
 }
 
@@ -161,7 +185,11 @@ abstract mixin class _$UserStateCopyWith<$Res>
       __$UserStateCopyWithImpl;
   @override
   @useResult
-  $Res call({UserEntity? userEntity, bool isInitialized, bool isLoading});
+  $Res call(
+      {UserEntity? userEntity,
+      bool isInitialized,
+      bool isLoading,
+      bool profileUnavailable});
 
   @override
   $UserEntityCopyWith<$Res>? get userEntity;
@@ -182,6 +210,7 @@ class __$UserStateCopyWithImpl<$Res> implements _$UserStateCopyWith<$Res> {
     Object? userEntity = freezed,
     Object? isInitialized = null,
     Object? isLoading = null,
+    Object? profileUnavailable = null,
   }) {
     return _then(_UserState(
       userEntity: freezed == userEntity
@@ -195,6 +224,10 @@ class __$UserStateCopyWithImpl<$Res> implements _$UserStateCopyWith<$Res> {
       isLoading: null == isLoading
           ? _self.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      profileUnavailable: null == profileUnavailable
+          ? _self.profileUnavailable
+          : profileUnavailable // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }

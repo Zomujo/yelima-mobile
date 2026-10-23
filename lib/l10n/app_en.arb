@@ -309,5 +309,44 @@
         "type": "int"
       }
     }
-  }
+  },
+  "sessionExpiredTitle": "Your session expired",
+  "sessionExpiredBody": "Sign in again to keep using Yelima. Your saved changes are safe on this phone.",
+  "signInAgain": "Sign in again",
+  "reauthFailed": "We couldn't sign you in. Check your details and try again.",
+  "sendingChanges": "Sending your changes...",
+  "unsyncedTitle": "Changes not sent",
+  "unsyncedBody": "{count, plural, =1{1 change hasn't been sent yet. If you log out now, it will be lost.} other{{count} changes haven't been sent yet. If you log out now, they will be lost.}}",
+  "@unsyncedBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unsyncedRejected": "{count, plural, =1{1 of them was rejected by the server, so trying again won't send it.} other{{count} of them were rejected by the server, so trying again won't send them.}}",
+  "@unsyncedRejected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tryAgain": "Try again",
+  "logOutAnyway": "Log out anyway",
+  "unsyncedChangesTitle": "Changes not sent",
+  "allChangesSynced": "Everything has been sent.",
+  "changeRejected": "The server rejected this change.",
+  "changeGaveUp": "This change couldn't be sent after several tries.",
+  "retry": "Retry",
+  "discardChangeTitle": "Discard this change?",
+  "discardChangeBody": "It will be deleted from this phone and never sent. This can't be undone.",
+  "changeKindMedication": "Medication",
+  "changeKindReading": "Reading",
+  "changeKindSymptom": "Symptom",
+  "changeKindChat": "Chat message",
+  "changeKindProfile": "Profile",
+  "changeKindOther": "Change",
+  "profileUnavailableTitle": "We couldn't load your profile",
+  "profileUnavailableBody": "Check your internet connection and try again. Nothing on this phone has been lost."
 }

@@ -11,12 +11,12 @@ import '../../data/models/update_medication_model.dart';
 import '../../data/models/medication_detail_model.dart';
 import '../../data/models/seeded_medication_list_response_model.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/services/session_lifecycle_service.dart';
-import 'package:get_it/get_it.dart';
 import '../states/medication_state.dart';
 import 'package:clock/clock.dart';
+import 'package:yelima/core/utils/session_scoped.dart';
 
-class AllMedicinesController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
+class AllMedicinesController extends ChangeNotifier
+    with SafeNotifier, SessionScoped {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies                  |
   // --------------------------------------------------------------------------
@@ -30,9 +30,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
   // --------------------------------------------------------------------------
 
   AllMedicinesController({required this.repository, this.syncManager}) {
-    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
-      GetIt.instance<SessionLifecycleService>().register(this);
-    }
+    joinSession();
     _init();
   }
 
@@ -56,9 +54,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
 
   void _init() {
     if (syncManager != null) {
-      _mutationSyncSub = syncManager!
-          .onMutationSynced
-          .listen((event) {
+      _mutationSyncSub = syncManager!.onMutationSynced.listen((event) {
         if (event.startsWith('remap:medication:')) {
           final parts = event.split(':');
           if (parts.length >= 4) {
@@ -103,7 +99,8 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
     });
   }
 
-  Future<void> fetchMedicationHistory(String id, {DateTime? targetMonth}) async {
+  Future<void> fetchMedicationHistory(String id,
+      {DateTime? targetMonth}) async {
     final targetId = remappedIds[id] ?? id;
     final month = targetMonth ?? clock.now();
     // Format as yyyy-MM-15

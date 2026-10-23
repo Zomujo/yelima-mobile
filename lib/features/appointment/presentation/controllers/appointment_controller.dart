@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/services/session_lifecycle_service.dart';
-import 'package:get_it/get_it.dart';
 import '../states/appointment_state.dart';
+import 'package:yelima/core/utils/session_scoped.dart';
 
-class AppointmentController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
+class AppointmentController extends ChangeNotifier
+    with SafeNotifier, SessionScoped {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies      |
   // --------------------------------------------------------------------------
@@ -19,9 +19,7 @@ class AppointmentController extends ChangeNotifier with SafeNotifier implements 
   // --------------------------------------------------------------------------
 
   AppointmentController({required this.repository}) {
-    if (GetIt.instance.isRegistered<SessionLifecycleService>()) {
-      GetIt.instance<SessionLifecycleService>().register(this);
-    }
+    joinSession();
   }
 
   @override

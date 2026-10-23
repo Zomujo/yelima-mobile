@@ -3,17 +3,27 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../../core/exceptions/exceptions.dart';
 
 class AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
+  final APIClient _apiClient;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn;
+  final FirebaseFirestore? _firestoreOverride;
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
   AuthRemoteDataSource({
     required FirebaseAuth firebaseAuth,
-  }) : _firebaseAuth = firebaseAuth;
+    required APIClient apiClient,
+    GoogleSignIn? googleSignIn,
+    FirebaseFirestore? firestore,
+  })  : _firebaseAuth = firebaseAuth,
+        _apiClient = apiClient,
+        _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: ['email']),
+        _firestoreOverride = firestore;
 
   Stream<User?> get authStateChanges => _firebaseAuth.userChanges();
   User? get currentUser => _firebaseAuth.currentUser;
@@ -90,7 +100,8 @@ class AuthRemoteDataSource {
     ]);
   }
 
-  Future<void> deleteAccount({String? password}) async {
+  /// Confirms the signed-in user's identity again with their own provider, returning the user.
+  Future<User> reauthenticate({String? password}) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) throw const UnauthenticatedException();
 
@@ -101,8 +112,7 @@ class AuthRemoteDataSource {
 
     if (isPassword) {
       if (password == null || password.isEmpty) {
-        throw const ErrorException(
-            message: 'Password is required to delete account');
+        throw const ErrorException(message: 'Password is required');
       }
       final credential = EmailAuthProvider.credential(
         email: user.email!,
@@ -150,17 +160,23 @@ class AuthRemoteDataSource {
         rethrow;
       }
     }
+    return user;
+  }
 
-    /// Delete the user document from Firestore.
+  /// Whether the signed-in user logs in with email and password (so re-auth needs one).
+  bool get usesPassword =>
+      _firebaseAuth.currentUser?.providerData
+          .any((p) => p.providerId == 'password') ??
+      false;
+
+  /// Deletes the account in an order where a failure leaves it usable and retryable:
+  /// confirm identity, delete server data, then the profile doc, then the login itself.
+  /// Each step stops on error; nothing signs the user out early.
+  Future<void> deleteAccount({String? password}) async {
+    final user = await reauthenticate(password: password);
+    await _apiClient.delete('api/v1/client/clean');
     await _firestore.collection('users').doc(user.uid).delete();
-
-    /// Delete user from Firebase Auth.
-    try {
-      await user.delete();
-      await _googleSignIn.signOut();
-    } catch (e) {
-      await signOut();
-      rethrow;
-    }
+    await user.delete();
+    if (await _googleSignIn.isSignedIn()) await _googleSignIn.signOut();
   }
 }

@@ -4,11 +4,13 @@ import 'data/datasources/auth_remote_data_source.dart';
 import 'data/repositories/auth_repository_impl.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'presentation/controllers/auth_controller.dart';
+import '../user/presentation/controllers/user_controller.dart';
 
 void initAuth(GetIt sl) {
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSource(
         firebaseAuth: sl(),
+        apiClient: sl(),
       ));
 
   // Repositories
@@ -28,5 +30,8 @@ void initAuth(GetIt sl) {
         connectivity: sl(),
         syncManager: sl(),
         db: sl(),
+        sessionExpiry: sl(),
+        // Resolved lazily, so creating AuthController doesn't create UserController early.
+        waitForProfile: () => sl<UserController>().whenInitialized(),
       ));
 }

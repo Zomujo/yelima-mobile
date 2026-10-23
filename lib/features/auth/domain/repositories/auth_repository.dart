@@ -21,4 +21,10 @@ abstract class AuthRepository {
 
   /// Deletes the user account, requiring re-authentication
   AsyncResponse<void> deleteAccount({String? password});
+
+  /// Confirms the signed-in user again (after a session expired) without signing out.
+  AsyncResponse<void> reauthenticate({String? password});
+
+  /// Whether re-authentication needs a password (email login) rather than a provider.
+  bool get usesPassword;
 }

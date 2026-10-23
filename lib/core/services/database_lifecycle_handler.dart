@@ -39,12 +39,7 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
     AppLogger.w(
         'DatabaseLifecycleHandler: Wiping all cached SQLite data for logout/deletion...');
     try {
-      // Every table, so tables added later can't leak to the next user.
-      await _db.transaction(() async {
-        for (final table in _db.allTables) {
-          await _db.delete(table).go();
-        }
-      });
+      await _db.wipeAll();
       await _clearAudioFiles();
       AppLogger.i('DatabaseLifecycleHandler: SQLite data successfully wiped.');
     } catch (e) {

@@ -104,7 +104,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AsyncResponse<void> deleteAccount({String? password}) {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
       () async {
-        await notifications.cancelAllReminders();
+        // Reminders are cancelled with the session wipe, only once the delete succeeded.
         await remoteDataSource.deleteAccount(password: password);
         return right(null);
       },
@@ -112,4 +112,19 @@ class AuthRepositoryImpl implements AuthRepository {
       operationName: 'AuthRepositoryImpl.deleteAccount',
     );
   }
+
+  @override
+  AsyncResponse<void> reauthenticate({String? password}) {
+    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
+      () async {
+        await remoteDataSource.reauthenticate(password: password);
+        return right(null);
+      },
+      connectivityService: connectivityService,
+      operationName: 'AuthRepositoryImpl.reauthenticate',
+    );
+  }
+
+  @override
+  bool get usesPassword => remoteDataSource.usesPassword;
 }
