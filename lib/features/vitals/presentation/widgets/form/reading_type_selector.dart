@@ -3,6 +3,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/features/vitals/presentation/widgets/form/log_type_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Blood pressure or blood sugar.
 class ReadingTypeSelector extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTypeSelected;

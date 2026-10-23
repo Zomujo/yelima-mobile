@@ -1,18 +1,16 @@
-/// Why a reading can't be saved.
-enum ReadingError {
-  bpOutOfRange,
-  systolicNotAboveDiastolic,
-  sugarOutOfRange;
+import '../../../core/failures/app_failure.dart';
 
-  /// The English explanation, used where no translations are available.
-  String get message => switch (this) {
-        bpOutOfRange =>
-          'Blood pressure must be between ${ReadingLimits.systolicMin}/${ReadingLimits.diastolicMin} and ${ReadingLimits.systolicMax}/${ReadingLimits.diastolicMax}.',
-        systolicNotAboveDiastolic =>
-          'The top number (systolic) must be higher than the bottom number (diastolic).',
-        sugarOutOfRange =>
-          'Blood sugar must be between ${ReadingLimits.sugarMin} and ${ReadingLimits.sugarMax} mmol/L.',
-      };
+/// Why a reading can't be saved.
+enum ReadingError { bpOutOfRange, systolicNotAboveDiastolic, sugarOutOfRange }
+
+/// A reading outside what the app accepts.
+final class ReadingFailure extends FeatureFailure {
+  const ReadingFailure(this.error);
+
+  final ReadingError error;
+
+  @override
+  List<Object?> get props => [error];
 }
 
 /// The ranges a reading can be entered in, shared by the pickers, the save check and the prefill.

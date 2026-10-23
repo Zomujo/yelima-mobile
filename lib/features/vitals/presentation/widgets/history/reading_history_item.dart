@@ -4,6 +4,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 
+/// One saved reading with its grade.
 class ReadingHistoryItem extends StatelessWidget {
   final String date;
   final String vitalName;

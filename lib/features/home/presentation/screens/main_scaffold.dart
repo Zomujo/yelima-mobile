@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yelima/features/home/presentation/widgets/home_bottom_navbar.dart';
 import 'package:yelima/shared/widgets/modals/exit_confirmation_modal.dart';
 
+/// The tab screens with the floating bottom bar.
 class MainScaffold extends StatelessWidget {
   final Widget child;
 
@@ -20,10 +21,7 @@ class MainScaffold extends StatelessWidget {
       child: Scaffold(
         body: Stack(
           children: [
-            // Main content
             Positioned.fill(child: child),
-
-            // Floating Bottom Navigation Bar
             const Positioned(
               left: 0,
               right: 0,

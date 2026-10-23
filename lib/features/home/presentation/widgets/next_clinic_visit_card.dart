@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// The next appointment at the clinic.
 class NextClinicVisitCard extends StatelessWidget {
   final String date;
   final String time;

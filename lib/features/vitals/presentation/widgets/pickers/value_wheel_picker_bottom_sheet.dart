@@ -5,18 +5,17 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
 
+/// A bottom sheet with one or two scroll wheels for picking a reading.
 class ValueWheelPickerBottomSheet extends StatefulWidget {
   final String title;
   final bool isDualPicker;
 
-  // Single picker props
   final double initialValue;
   final double minValue;
   final double maxValue;
   final double step;
   final ValueChanged<double>? onSingleChanged;
 
-  // Dual picker props (for BP)
   final int initialValue1;
   final int initialValue2;
   final int minValue1;

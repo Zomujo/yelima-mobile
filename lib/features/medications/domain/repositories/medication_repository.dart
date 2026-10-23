@@ -13,6 +13,9 @@ abstract class MedicationRepository {
   /// This week's adherence as last saved on the phone.
   Future<MedicationAdherence> getCachedAdherence();
 
+  /// Live weekly adherence rate (0–100) as saved on the phone.
+  Stream<double?> watchAdherenceRate();
+
   /// This week's adherence from the server, or the phone's copy.
   AsyncResult<MedicationAdherence> getAdherence();
 

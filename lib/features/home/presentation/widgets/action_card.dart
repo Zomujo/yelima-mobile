@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// A tappable card with an illustration, for a suggested action.
 class ActionCard extends StatelessWidget {
   final String title;
   final String iconPath;
@@ -30,7 +31,6 @@ class ActionCard extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         child: Stack(
           children: [
-            // Background SVG
             Positioned.fill(
               child: SvgPicture.asset(
                 bgImagePath,

@@ -62,14 +62,16 @@ void main() {
     );
   });
 
-  test('domain and presentation never touch Firebase, HTTP or the database',
+  test(
+      'domain and presentation never touch Firebase, HTTP, the database or the service locator',
       () {
     final infra = RegExp(
-        r"^import 'package:(firebase_\w+|cloud_firestore|dio|drift|sqlite3|google_sign_in|sign_in_with_apple|flutter_secure_storage|shared_preferences)/",
+        r"^import 'package:(firebase_\w+|cloud_firestore|dio|drift|get_it|sqlite3|google_sign_in|sign_in_with_apple|flutter_secure_storage|shared_preferences)/",
         multiLine: true);
-    final appDb = RegExp(r"^import '[^']*core/db/", multiLine: true);
+    final appDb = RegExp(r"^import '[^']*(core/db/|injection_container\.dart)",
+        multiLine: true);
     // Features not cleaned up yet; remove each one as it's done.
-    const pending = {'chat', 'home'};
+    const pending = {'chat', 'onboarding', 'progress'};
     final bad = <String>[];
     for (final f in Directory('lib/features')
         .listSync(recursive: true)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 
+/// A blood sugar value in large type.
 class SugarDisplay extends StatelessWidget {
   const SugarDisplay({
     super.key,

@@ -4,6 +4,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// This week's medication adherence on home.
 class MedicationAdherenceCard extends StatelessWidget {
   final double percentage;
   final String message;

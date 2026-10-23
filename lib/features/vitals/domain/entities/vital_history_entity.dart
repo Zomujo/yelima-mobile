@@ -1,15 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+/// One saved blood pressure or blood sugar reading.
 class VitalHistoryEntity extends Equatable {
-  final String id;
-  final String vitalType;
-  final String value;
-  final String unit;
-  final String severity;
-  final String vitalName;
-  final String? vitalSubType;
-  final DateTime? recordedAt;
-
   const VitalHistoryEntity({
     required this.id,
     required this.vitalType,
@@ -20,6 +12,26 @@ class VitalHistoryEntity extends Equatable {
     this.vitalSubType,
     this.recordedAt,
   });
+
+  final String id;
+  final String vitalType;
+  final String value;
+  final String unit;
+  final String severity;
+  final String vitalName;
+  final String? vitalSubType;
+  final DateTime? recordedAt;
+
+  bool get isBloodPressure =>
+      vitalType.toLowerCase() == 'bloodpressure' ||
+      vitalName.toLowerCase() == 'blood pressure';
+
+  /// Older rows call it blood glucose.
+  bool get isBloodSugar =>
+      const {'bloodsugar', 'bloodglucose'}.contains(vitalType.toLowerCase()) ||
+      const {'blood sugar', 'blood glucose'}.contains(vitalName.toLowerCase());
+
+  VitalSeverity get grade => VitalSeverityExt.fromString(severity);
 
   @override
   List<Object?> get props => [
@@ -34,6 +46,7 @@ class VitalHistoryEntity extends Equatable {
       ];
 }
 
+/// How a reading is graded, from the backend's table.
 enum VitalSeverity {
   normal,
   slightlyHigh,
@@ -48,88 +61,62 @@ enum VitalSeverity {
 extension VitalSeverityExt on VitalSeverity {
   /// Maps a stored grade to a display level. Covers the server's labels (see
   /// `VitalSeverityThresholds`) and older app labels still in local data.
-  static VitalSeverity fromString(String? val) {
-    switch (val?.toLowerCase()) {
-      case 'normal' || 'good' || 'in_target':
-        return VitalSeverity.normal;
-      case 'elevated' || 'slightly_high':
-        return VitalSeverity.slightlyHigh;
-      case 'high' || 'hypertensive':
-        return VitalSeverity.high;
-      case 'very_high':
-        return VitalSeverity.veryHigh;
-      case 'critical' || 'crisis' || 'hypertensive_crisis' || 'critically_high':
-        return VitalSeverity.critical;
-      case 'low' || 'hypotensive':
-        return VitalSeverity.low;
-      case 'critically_low' || 'severe_hypotension':
-        return VitalSeverity.criticallyLow;
-      default:
-        return VitalSeverity.unknown;
-    }
-  }
+  static VitalSeverity fromString(String? val) => switch (val?.toLowerCase()) {
+        'normal' || 'good' || 'in_target' => VitalSeverity.normal,
+        'elevated' || 'slightly_high' => VitalSeverity.slightlyHigh,
+        'high' || 'hypertensive' => VitalSeverity.high,
+        'very_high' => VitalSeverity.veryHigh,
+        'critical' ||
+        'crisis' ||
+        'hypertensive_crisis' ||
+        'critically_high' =>
+          VitalSeverity.critical,
+        'low' || 'hypotensive' => VitalSeverity.low,
+        'critically_low' || 'severe_hypotension' => VitalSeverity.criticallyLow,
+        _ => VitalSeverity.unknown,
+      };
 }
 
-class HomeMetricsEntity extends Equatable {
-  final String? bloodPressure;
-  final String? bloodGlucose;
-  final double? adherenceRate;
-  final String? bpSeverity;
-  final String? bgSeverity;
+/// The newest blood pressure and blood sugar readings.
+class LatestVitals extends Equatable {
+  const LatestVitals({this.bloodPressure, this.bloodSugar});
 
-  const HomeMetricsEntity({
-    this.bloodPressure,
-    this.bloodGlucose,
-    this.adherenceRate,
-    this.bpSeverity,
-    this.bgSeverity,
-  });
+  final VitalHistoryEntity? bloodPressure;
+  final VitalHistoryEntity? bloodSugar;
 
-  @override
-  List<Object?> get props =>
-      [bloodPressure, bloodGlucose, adherenceRate, bpSeverity, bgSeverity];
-
-  HomeMetricsEntity copyWith({
-    String? bloodPressure,
-    String? bloodGlucose,
-    double? adherenceRate,
-    String? bpSeverity,
-    String? bgSeverity,
-  }) {
-    return HomeMetricsEntity(
-      bloodPressure: bloodPressure ?? this.bloodPressure,
-      bloodGlucose: bloodGlucose ?? this.bloodGlucose,
-      adherenceRate: adherenceRate ?? this.adherenceRate,
-      bpSeverity: bpSeverity ?? this.bpSeverity,
-      bgSeverity: bgSeverity ?? this.bgSeverity,
+  /// The newest of each kind in [readings].
+  factory LatestVitals.from(List<VitalHistoryEntity> readings) {
+    final newest = _newestFirst(readings);
+    return LatestVitals(
+      bloodPressure: newest.where((r) => r.isBloodPressure).firstOrNull,
+      bloodSugar: newest.where((r) => r.isBloodSugar).firstOrNull,
     );
   }
 
-  /// Returns the blood pressure parsed as a tuple of (systolic, diastolic).
-  (int, int)? get parsedBloodPressure {
-    if (bloodPressure == null ||
-        bloodPressure!.isEmpty ||
-        bloodPressure!.contains('--')) {
-      return null;
-    }
-    final parts = bloodPressure!.split('/');
-    if (parts.length != 2) return null;
+  /// The blood pressure as (systolic, diastolic), or null.
+  (int, int)? get systolicDiastolic {
+    final parts = bloodPressure?.value.split('/');
+    if (parts == null || parts.length != 2) return null;
     final sys = int.tryParse(parts[0].trim());
     final dia = int.tryParse(parts[1].trim());
-    if (sys != null && dia != null) return (sys, dia);
-    return null;
+    return sys == null || dia == null ? null : (sys, dia);
   }
 
-  /// Returns the blood glucose parsed as a double.
-  double? get parsedBloodGlucose {
-    if (bloodGlucose == null ||
-        bloodGlucose!.isEmpty ||
-        bloodGlucose!.contains('--')) {
-      return null;
-    }
-    return double.tryParse(bloodGlucose!.trim());
+  /// The blood sugar in mmol/L, or null.
+  double? get sugarLevel => double.tryParse(bloodSugar?.value.trim() ?? '');
+
+  /// Newest first. Undated rows (server rows, already newest first) keep their order, after dated ones.
+  static List<VitalHistoryEntity> _newestFirst(List<VitalHistoryEntity> rows) {
+    final indexed = rows.indexed.toList()
+      ..sort((a, b) {
+        final (ta, tb) = (a.$2.recordedAt, b.$2.recordedAt);
+        if (ta != null && tb != null && ta != tb) return tb.compareTo(ta);
+        if ((ta == null) != (tb == null)) return ta == null ? 1 : -1;
+        return a.$1.compareTo(b.$1);
+      });
+    return [for (final (_, v) in indexed) v];
   }
 
-  VitalSeverity get parsedBpSeverity => VitalSeverityExt.fromString(bpSeverity);
-  VitalSeverity get parsedBgSeverity => VitalSeverityExt.fromString(bgSeverity);
+  @override
+  List<Object?> get props => [bloodPressure, bloodSugar];
 }

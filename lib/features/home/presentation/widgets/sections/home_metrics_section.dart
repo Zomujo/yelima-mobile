@@ -10,6 +10,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
+/// Blood pressure, blood sugar and adherence cards, with warnings for dangerous readings.
 class HomeMetricsSection extends StatelessWidget {
   const HomeMetricsSection({super.key});
 
@@ -17,18 +18,18 @@ class HomeMetricsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<HomeMetricsController>();
     final state = controller.state;
-    final bool isLoading = state.isLoading && state.metrics == null;
+    final isLoading = state.vitals == null;
 
-    final bp = state.metrics?.bloodPressure ?? '--/--';
-    final bg = state.metrics?.bloodGlucose ?? '--';
-    final adherence = state.metrics?.adherenceRate ?? 0.0;
+    final bp = state.vitals?.bloodPressure?.value ?? '--/--';
+    final bg = state.vitals?.bloodSugar?.value ?? '--';
+    final adherence = state.adherence ?? 0.0;
 
     final bpParts = bp.split('/');
     final bpMain = bpParts.isNotEmpty && bpParts[0] != '--' ? bpParts[0] : '--';
     final bpSub = bpParts.length > 1 ? '/${bpParts[1]}' : '';
 
-    final bpSev = state.metrics?.parsedBpSeverity ?? VitalSeverity.unknown;
-    final bgSev = state.metrics?.parsedBgSeverity ?? VitalSeverity.unknown;
+    final bpSev = state.vitals?.bloodPressure?.grade ?? VitalSeverity.unknown;
+    final bgSev = state.vitals?.bloodSugar?.grade ?? VitalSeverity.unknown;
 
     final List<Widget> banners = [];
 

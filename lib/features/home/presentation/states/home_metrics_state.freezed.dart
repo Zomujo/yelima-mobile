@@ -15,9 +15,11 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$HomeMetricsState {
-  bool get isLoading;
-  String? get errorMessage;
-  HomeMetricsEntity? get metrics;
+  /// Null until the phone's readings have loaded.
+  LatestVitals? get vitals;
+
+  /// Fraction of doses taken this week (0–1), or null if unknown.
+  double? get adherence;
 
   /// Create a copy of HomeMetricsState
   /// with the given fields replaced by the non-null parameter values.
@@ -32,20 +34,17 @@ mixin _$HomeMetricsState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is HomeMetricsState &&
-            (identical(other.isLoading, isLoading) ||
-                other.isLoading == isLoading) &&
-            (identical(other.errorMessage, errorMessage) ||
-                other.errorMessage == errorMessage) &&
-            (identical(other.metrics, metrics) || other.metrics == metrics));
+            (identical(other.vitals, vitals) || other.vitals == vitals) &&
+            (identical(other.adherence, adherence) ||
+                other.adherence == adherence));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isLoading, errorMessage, metrics);
+  int get hashCode => Object.hash(runtimeType, vitals, adherence);
 
   @override
   String toString() {
-    return 'HomeMetricsState(isLoading: $isLoading, errorMessage: $errorMessage, metrics: $metrics)';
+    return 'HomeMetricsState(vitals: $vitals, adherence: $adherence)';
   }
 }
 
@@ -55,7 +54,7 @@ abstract mixin class $HomeMetricsStateCopyWith<$Res> {
           HomeMetricsState value, $Res Function(HomeMetricsState) _then) =
       _$HomeMetricsStateCopyWithImpl;
   @useResult
-  $Res call({bool isLoading, String? errorMessage, HomeMetricsEntity? metrics});
+  $Res call({LatestVitals? vitals, double? adherence});
 }
 
 /// @nodoc
@@ -71,43 +70,34 @@ class _$HomeMetricsStateCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? isLoading = null,
-    Object? errorMessage = freezed,
-    Object? metrics = freezed,
+    Object? vitals = freezed,
+    Object? adherence = freezed,
   }) {
     return _then(_self.copyWith(
-      isLoading: null == isLoading
-          ? _self.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      errorMessage: freezed == errorMessage
-          ? _self.errorMessage
-          : errorMessage // ignore: cast_nullable_to_non_nullable
-              as String?,
-      metrics: freezed == metrics
-          ? _self.metrics
-          : metrics // ignore: cast_nullable_to_non_nullable
-              as HomeMetricsEntity?,
+      vitals: freezed == vitals
+          ? _self.vitals
+          : vitals // ignore: cast_nullable_to_non_nullable
+              as LatestVitals?,
+      adherence: freezed == adherence
+          ? _self.adherence
+          : adherence // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
 
 /// @nodoc
 
-class _HomeMetricsState extends HomeMetricsState {
-  const _HomeMetricsState(
-      {this.isLoading = false, this.errorMessage = null, this.metrics = null})
-      : super._();
+class _HomeMetricsState implements HomeMetricsState {
+  const _HomeMetricsState({this.vitals, this.adherence});
 
+  /// Null until the phone's readings have loaded.
   @override
-  @JsonKey()
-  final bool isLoading;
+  final LatestVitals? vitals;
+
+  /// Fraction of doses taken this week (0–1), or null if unknown.
   @override
-  @JsonKey()
-  final String? errorMessage;
-  @override
-  @JsonKey()
-  final HomeMetricsEntity? metrics;
+  final double? adherence;
 
   /// Create a copy of HomeMetricsState
   /// with the given fields replaced by the non-null parameter values.
@@ -122,20 +112,17 @@ class _HomeMetricsState extends HomeMetricsState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _HomeMetricsState &&
-            (identical(other.isLoading, isLoading) ||
-                other.isLoading == isLoading) &&
-            (identical(other.errorMessage, errorMessage) ||
-                other.errorMessage == errorMessage) &&
-            (identical(other.metrics, metrics) || other.metrics == metrics));
+            (identical(other.vitals, vitals) || other.vitals == vitals) &&
+            (identical(other.adherence, adherence) ||
+                other.adherence == adherence));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isLoading, errorMessage, metrics);
+  int get hashCode => Object.hash(runtimeType, vitals, adherence);
 
   @override
   String toString() {
-    return 'HomeMetricsState(isLoading: $isLoading, errorMessage: $errorMessage, metrics: $metrics)';
+    return 'HomeMetricsState(vitals: $vitals, adherence: $adherence)';
   }
 }
 
@@ -147,7 +134,7 @@ abstract mixin class _$HomeMetricsStateCopyWith<$Res>
       __$HomeMetricsStateCopyWithImpl;
   @override
   @useResult
-  $Res call({bool isLoading, String? errorMessage, HomeMetricsEntity? metrics});
+  $Res call({LatestVitals? vitals, double? adherence});
 }
 
 /// @nodoc
@@ -163,23 +150,18 @@ class __$HomeMetricsStateCopyWithImpl<$Res>
   @override
   @pragma('vm:prefer-inline')
   $Res call({
-    Object? isLoading = null,
-    Object? errorMessage = freezed,
-    Object? metrics = freezed,
+    Object? vitals = freezed,
+    Object? adherence = freezed,
   }) {
     return _then(_HomeMetricsState(
-      isLoading: null == isLoading
-          ? _self.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      errorMessage: freezed == errorMessage
-          ? _self.errorMessage
-          : errorMessage // ignore: cast_nullable_to_non_nullable
-              as String?,
-      metrics: freezed == metrics
-          ? _self.metrics
-          : metrics // ignore: cast_nullable_to_non_nullable
-              as HomeMetricsEntity?,
+      vitals: freezed == vitals
+          ? _self.vitals
+          : vitals // ignore: cast_nullable_to_non_nullable
+              as LatestVitals?,
+      adherence: freezed == adherence
+          ? _self.adherence
+          : adherence // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }

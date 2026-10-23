@@ -1,67 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yelima/core/theme/app_colors.dart';
-import 'package:yelima/shared/widgets/layout/app_button.dart';
-import 'package:yelima/shared/utils/app_snackbar.dart';
-import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
-import 'package:yelima/features/vitals/presentation/states/reading_logging_state.dart';
-import 'package:yelima/features/vitals/domain/reading_limits.dart';
-import 'package:yelima/core/extensions/l10n_extension.dart';
 
+import '../../../../../core/extensions/l10n_extension.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../shared/utils/app_snackbar.dart';
+import '../../../../../shared/widgets/layout/app_button.dart';
+import '../../controllers/reading_logging_controller.dart';
+import '../../vital_failure_message.dart';
+
+/// Saves the reading and says whether it worked.
 class ReadingSaveButton extends StatelessWidget {
   const ReadingSaveButton({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ReadingLoggingController>(
-      builder: (context, controller, child) {
-        return AppButton(
-          text: controller.state.isSaving
-              ? '${context.l10n.save}...'
-              : context.l10n.save,
-          onPressed: () async {
-            final invalid = _invalidReading(controller.state);
-            if (invalid != null) {
-              AppSnackBar.showError(context,
-                  message: _errorText(context, invalid));
-              return;
-            }
-            final result = await controller.saveReading();
-            if (context.mounted) {
-              result.fold(
-                (error) => AppSnackBar.showError(context, message: error),
-                (_) {
-                  AppSnackBar.showSuccess(context,
-                      message: context.l10n.readingSaved);
-                },
-              );
-            }
-          },
-          isDisabled: !controller.state.hasChanged || controller.state.isSaving,
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          borderRadius: 12,
-          height: 50,
-        );
-      },
+  Future<void> _save(
+      BuildContext context, ReadingLoggingController controller) async {
+    final l10n = context.l10n;
+    final result = await controller.saveReading();
+    if (!context.mounted) return;
+    result.fold(
+      (f) =>
+          AppSnackBar.showError(context, message: f.vitalMessage(l10n) ?? ''),
+      (_) => AppSnackBar.showSuccess(context, message: l10n.readingSaved),
     );
   }
 
-  ReadingError? _invalidReading(ReadingLoggingState s) =>
-      s.selectedTypeIndex == 0
-          ? ReadingLimits.bloodPressureError(s.systolic, s.diastolic)
-          : ReadingLimits.bloodSugarError(s.sugarLevel);
-
-  String _errorText(BuildContext context, ReadingError error) =>
-      switch (error) {
-        ReadingError.bpOutOfRange => context.l10n.readingErrorBpRange(
-            ReadingLimits.systolicMin,
-            ReadingLimits.diastolicMin,
-            ReadingLimits.systolicMax,
-            ReadingLimits.diastolicMax),
-        ReadingError.systolicNotAboveDiastolic =>
-          context.l10n.readingErrorSystolicNotAbove,
-        ReadingError.sugarOutOfRange => context.l10n.readingErrorSugarRange(
-            '${ReadingLimits.sugarMin}', '${ReadingLimits.sugarMax}'),
-      };
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<ReadingLoggingController>();
+    final state = controller.state;
+    return AppButton(
+      text: state.isSaving ? '${context.l10n.save}...' : context.l10n.save,
+      onPressed: () => _save(context, controller),
+      isDisabled: !state.hasChanged || state.isSaving,
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      borderRadius: 12,
+      height: 50,
+    );
+  }
 }

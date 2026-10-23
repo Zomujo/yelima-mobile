@@ -70,6 +70,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   @override
+  Stream<double?> watchAdherenceRate() =>
+      _adherence.watchGlobalAdherenceRate(_weekly).map((a) => a?.rate);
+
+  @override
   AsyncResult<MedicationAdherence> getAdherence() => guard(() async {
         // Unsent doses would be missing from the server's numbers.
         if (!await connectivityService.isConnected ||
@@ -132,7 +136,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final local = (await _meds.getAllMedications())
           .where((m) => m.section == section.key);
       final byId = {for (final m in local) m.id: m};
-      final waiting = await db.pendingMutationsDao.waitingIds(_type);
+      final waiting = await db.pendingMutationsDao.getEntityIdsOfType(_type);
       final remoteIds = remote.map((m) => m.id).toSet();
 
       // Gone from this section only: the medication's other sections stay.
@@ -162,7 +166,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final epoch = session.current;
       final remote = await remoteDataSource.getAllMedications(pageSize: 100);
       session.ensure(epoch);
-      final waiting = await db.pendingMutationsDao.waitingIds(_type);
+      final waiting = await db.pendingMutationsDao.getEntityIdsOfType(_type);
 
       for (final id in await _meds.deleteUnknownSectionRows()) {
         await notificationService

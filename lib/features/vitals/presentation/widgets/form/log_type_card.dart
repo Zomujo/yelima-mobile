@@ -3,6 +3,7 @@ import 'package:yelima/core/constants/app_decoration.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 
+/// One reading type to choose from.
 class LogTypeCard extends StatelessWidget {
   final String title;
   final String subtitle;

@@ -33,7 +33,7 @@ class HomeHeader extends StatelessWidget {
           AppText.headlineSmall(
             greeting,
             fontWeight: FontWeight.bold,
-            color: AppColors.slate800, // Dark blueish gray
+            color: AppColors.slate800,
           ),
           if (status != null) ...[
             const SizedBox(height: 8),

@@ -5,6 +5,7 @@ import 'package:yelima/core/db/app_database.dart';
 
 part 'vital_history_model.g.dart';
 
+/// A reading as the server sends it and as a local row.
 @JsonSerializable()
 class VitalHistoryModel extends VitalHistoryEntity {
   const VitalHistoryModel({
@@ -22,6 +23,19 @@ class VitalHistoryModel extends VitalHistoryEntity {
       _$VitalHistoryModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$VitalHistoryModelToJson(this);
+
+  /// [entity] as a model.
+  factory VitalHistoryModel.fromEntity(VitalHistoryEntity entity) =>
+      VitalHistoryModel(
+        id: entity.id,
+        vitalType: entity.vitalType,
+        value: entity.value,
+        unit: entity.unit,
+        severity: entity.severity,
+        vitalName: entity.vitalName,
+        vitalSubType: entity.vitalSubType,
+        recordedAt: entity.recordedAt,
+      );
 
   factory VitalHistoryModel.fromDrift(VitalHistory vitalHistory) {
     return VitalHistoryModel(

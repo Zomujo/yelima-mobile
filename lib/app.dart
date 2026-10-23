@@ -15,9 +15,9 @@ import 'features/medications/presentation/controllers/medication_controller.dart
 import 'features/medications/presentation/controllers/all_medicines_controller.dart';
 import 'features/medications/domain/repositories/medication_repository.dart';
 import 'features/appointment/presentation/controllers/appointment_controller.dart';
-import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
+import 'core/managers/mutation_sync_manager.dart';
+import 'features/vitals/domain/repositories/vitals_repository.dart';
 import 'features/symptoms/presentation/controllers/symptoms_controller.dart';
-import 'core/db/daos/vitals_dao.dart';
 import 'injection_container.dart';
 import 'core/controllers/locale_controller.dart';
 import 'core/localization/fallback_localization_delegates.dart';
@@ -70,12 +70,11 @@ class _MyAppState extends State<MyApp> {
             Provider<MedicationRepository>(create: (_) => sl()),
             ChangeNotifierProvider(
                 create: (_) => sl<AppointmentController>()..initialize()),
-            ChangeNotifierProvider(
-                create: (_) => sl<ReadingLoggingController>()),
+            Provider<VitalsRepository>(create: (_) => sl()),
+            Provider<MutationSyncManager>.value(value: sl()),
             ChangeNotifierProvider(
                 create: (_) =>
                     sl<SymptomsController>()..fetchSymptoms(silent: true)),
-            Provider<VitalsDao>(create: (_) => sl()),
           ],
           child: Consumer<LocaleController>(
             builder: (context, localeController, child) {

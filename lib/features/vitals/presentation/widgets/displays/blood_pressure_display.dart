@@ -3,6 +3,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Systolic over diastolic in large type.
 class BloodPressureDisplay extends StatelessWidget {
   const BloodPressureDisplay({
     super.key,
@@ -47,7 +48,7 @@ class BloodPressureDisplay extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF4F8FF), // Light blue box
+            color: const Color(0xFFF4F8FF),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(

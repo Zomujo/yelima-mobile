@@ -9,7 +9,9 @@ import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/features/vitals/domain/entities/reading_form.dart';
 
+/// Type, value, day and Save for a new reading.
 class ReadingLoggingForm extends StatelessWidget {
   const ReadingLoggingForm({super.key});
 
@@ -18,18 +20,19 @@ class ReadingLoggingForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Selector<ReadingLoggingController, int>(
-          selector: (context, controller) => controller.state.selectedTypeIndex,
-          builder: (context, selectedTypeIndex, child) {
+        Selector<ReadingLoggingController, VitalKind>(
+          selector: (context, controller) => controller.state.kind,
+          builder: (context, kind, child) {
             return Column(
               children: [
                 ReadingTypeSelector(
                   key: AppTutorialKeys.logReadingTypeKey,
-                  selectedIndex: selectedTypeIndex,
-                  onTypeSelected:
-                      context.read<ReadingLoggingController>().setTypeIndex,
+                  selectedIndex: kind.index,
+                  onTypeSelected: (i) => context
+                      .read<ReadingLoggingController>()
+                      .setKind(VitalKind.values[i]),
                 ),
-                if (selectedTypeIndex == 1) ...[
+                if (kind == VitalKind.bloodSugar) ...[
                   const SizedBox(height: 16),
                   Selector<ReadingLoggingController, String>(
                     selector: (context, controller) =>

@@ -1,118 +1,75 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:get_it/get_it.dart';
-import '../../../../core/db/app_database.dart';
-import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
-import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../states/home_metrics_state.dart';
-import 'package:yelima/core/utils/session_scoped.dart';
 
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/utils/session_scoped.dart';
+import '../../../medications/domain/repositories/medication_repository.dart';
+import '../../../vitals/domain/repositories/vitals_repository.dart';
+import '../states/home_metrics_state.dart';
+
+/// The home metric cards, kept live from the phone and refreshed from the server.
 class HomeMetricsController extends ChangeNotifier
     with SafeNotifier, SessionScoped {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies      |
-  // --------------------------------------------------------------------------
-
-  final VitalsRepository _repository;
-  StreamSubscription? _adherenceSub;
-  StreamSubscription? _readingsSub;
-
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle   |
-  // --------------------------------------------------------------------------
-
-  HomeMetricsController({required VitalsRepository repository})
-      : _repository = repository {
+  HomeMetricsController({
+    required VitalsRepository vitals,
+    required MedicationRepository medications,
+  })  : _vitals = vitals,
+        _medications = medications {
     joinSession();
-    _initStream();
+    _follow();
   }
 
-  @override
-  String get serviceName => 'HomeMetricsController';
+  final VitalsRepository _vitals;
+  final MedicationRepository _medications;
+  final _subs = <StreamSubscription<Object?>>[];
 
-  @override
-  Future<void> onSessionStarted(String userId) async {}
-
-  @override
-  Future<void> onSessionEnded() async {
-    _state = HomeMetricsState.initial();
-    notifyListeners();
-  }
-
-  void _initStream() {
-    // A reading saved anywhere (e.g. the log screen) updates home from the cache.
-    _readingsSub = _repository.watchVitalHistories().listen((_) async {
-      final cached = await _repository.getCachedHomeMetrics();
-      cached.fold((_) {}, (data) => state = state.copyWith(metrics: data));
-    });
-    if (GetIt.instance.isRegistered<AppDatabase>()) {
-      _adherenceSub = GetIt.instance<AppDatabase>()
-          .adherenceDao
-          .watchGlobalAdherenceRate('global_weekly')
-          .listen((data) {
-        if (data != null && _state.metrics != null) {
-          final newMetrics = _state.metrics!.copyWith(
-            adherenceRate: data.rate > 1 ? data.rate / 100 : data.rate,
-          );
-          state = state.copyWith(metrics: newMetrics);
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _adherenceSub?.cancel();
-    _readingsSub?.cancel();
-    super.dispose();
-  }
-
-  HomeMetricsState _state = HomeMetricsState.initial();
+  HomeMetricsState _state = const HomeMetricsState();
   HomeMetricsState get state => _state;
-
-  HomeMetricsEntity? get metrics => _state.metrics;
-
   set state(HomeMetricsState value) {
     if (_state == value) return;
     _state = value;
     notifyListeners();
   }
 
-  /// Fetches the latest home metrics initially from the cache, followed by a network refresh.
+  @override
+  String get serviceName => 'HomeMetricsController';
 
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods        |
-  // --------------------------------------------------------------------------
+  @override
+  Future<void> onSessionStarted(String userId) async => _follow();
 
+  @override
+  Future<void> onSessionEnded() async {
+    for (final s in _subs) {
+      await s.cancel();
+    }
+    _subs.clear();
+    state = const HomeMetricsState();
+  }
+
+  /// A reading or dose saved anywhere updates home straight away.
+  void _follow() {
+    if (_subs.isNotEmpty) return;
+    _subs
+      ..add(_vitals
+          .watchLatest()
+          .listen((latest) => state = state.copyWith(vitals: latest)))
+      ..add(_medications.watchAdherenceRate().listen((rate) => state =
+          state.copyWith(
+              adherence:
+                  rate == null ? null : (rate > 1 ? rate / 100 : rate))));
+  }
+
+  /// Refreshes readings and adherence from the server.
   Future<void> fetchMetrics() async {
-    // Try cache first if we have no metrics
-    if (_state.metrics == null) {
-      final cachedResult = await _repository.getCachedHomeMetrics();
-      cachedResult.fold((error) => null, (data) {
-        if (data.bloodPressure != null ||
-            data.bloodGlucose != null ||
-            data.adherenceRate != null) {
-          state = state.copyWith(metrics: data, isLoading: false);
-        }
-      });
+    await Future.wait([_vitals.refresh(), _medications.getAdherence()]);
+  }
+
+  @override
+  void dispose() {
+    for (final s in _subs) {
+      s.cancel();
     }
-
-    // Only emit loading state if we STILL have no metrics after checking cache
-    if (_state.metrics == null) {
-      state = state.copyWith(isLoading: true);
-    }
-
-    final result = await _repository.getHomeMetrics();
-
-    result.fold(
-      (error) {
-        state = state.copyWith(errorMessage: error, isLoading: false);
-      },
-      (data) {
-        state =
-            state.copyWith(metrics: data, errorMessage: null, isLoading: false);
-      },
-    );
+    super.dispose();
   }
 }

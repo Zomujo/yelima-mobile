@@ -1,17 +1,17 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+
+import '../../../vitals/domain/entities/vital_history_entity.dart';
 
 part 'home_metrics_state.freezed.dart';
 
+/// The home cards: newest readings and this week's adherence.
 @freezed
 abstract class HomeMetricsState with _$HomeMetricsState {
   const factory HomeMetricsState({
-    @Default(false) bool isLoading,
-    @Default(null) String? errorMessage,
-    @Default(null) HomeMetricsEntity? metrics,
+    /// Null until the phone's readings have loaded.
+    LatestVitals? vitals,
+
+    /// Fraction of doses taken this week (0–1), or null if unknown.
+    double? adherence,
   }) = _HomeMetricsState;
-
-  const HomeMetricsState._();
-
-  factory HomeMetricsState.initial() => const HomeMetricsState();
 }

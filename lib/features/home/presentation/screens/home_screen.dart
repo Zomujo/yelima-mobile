@@ -16,9 +16,9 @@ import 'package:clock/clock.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
-import '../../../../injection_container.dart';
 import '../../../../shared/widgets/layout/pending_changes_badge.dart';
 
+/// The home tab: greeting, metrics, next step and upcoming visits.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -28,7 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // Created once so the badge doesn't resubscribe on every rebuild.
-  final _sync = sl<MutationSyncManager>();
+  late final _sync = context.read<MutationSyncManager>();
   late final _waiting = _sync.watchWaitingCount();
   late final _failed = _sync.watchFailedCount();
 

@@ -4,6 +4,7 @@ import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:clock/clock.dart';
 
+/// Shows the reading's day; tap to pick another.
 class ReadingDaySelector extends StatelessWidget {
   final DateTime selectedDate;
   final VoidCallback onTap;

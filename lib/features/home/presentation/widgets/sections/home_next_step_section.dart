@@ -9,6 +9,7 @@ import '../action_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
+/// What to do next: log a reading or take a dose.
 class HomeNextStepSection extends StatelessWidget {
   final Widget? topSlotWidget;
 

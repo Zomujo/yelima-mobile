@@ -8,7 +8,9 @@ import 'package:yelima/features/vitals/presentation/widgets/displays/sugar_displ
 import 'package:yelima/features/vitals/presentation/widgets/pickers/value_wheel_picker_bottom_sheet.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/features/vitals/domain/reading_limits.dart';
+import 'package:yelima/features/vitals/domain/entities/reading_form.dart';
 
+/// The current value; tap to change it with a wheel picker.
 class InteractiveReadingCard extends StatelessWidget {
   const InteractiveReadingCard({super.key});
 
@@ -29,7 +31,7 @@ class InteractiveReadingCard extends StatelessWidget {
         return ReadingDisplayCard(
           child: InkWell(
             onTap: () {
-              if (controller.state.selectedTypeIndex == 0) {
+              if (controller.state.kind == VitalKind.bloodPressure) {
                 ValueWheelPickerBottomSheet.showDual(
                   context,
                   title: context.l10n.bpPickerTitle,
@@ -57,7 +59,7 @@ class InteractiveReadingCard extends StatelessWidget {
                 );
               }
             },
-            child: controller.state.selectedTypeIndex == 0
+            child: controller.state.kind == VitalKind.bloodPressure
                 ? BloodPressureDisplay(
                     systolic: controller.state.systolic.toString(),
                     diastolic: controller.state.diastolic.toString(),

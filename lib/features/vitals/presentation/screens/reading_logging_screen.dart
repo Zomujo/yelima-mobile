@@ -3,27 +3,25 @@ import 'package:provider/provider.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_header.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
-import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
-import 'package:yelima/injection_container.dart';
+import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
 import 'package:yelima/features/vitals/presentation/widgets/form/reading_logging_form.dart';
 import 'package:yelima/features/vitals/presentation/widgets/history/reading_history_section.dart';
 import 'package:yelima/shared/widgets/forms/unsaved_changes_guard.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 
+/// Logs a blood pressure or blood sugar reading and lists earlier ones.
 class ReadingLoggingScreen extends StatelessWidget {
   const ReadingLoggingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<ReadingLoggingController>(
-      create: _initializeController,
+      create: (context) =>
+          ReadingLoggingController(repository: context.read<VitalsRepository>())
+            ..init(),
       child: const _ReadingLoggingView(),
     );
-  }
-
-  ReadingLoggingController _initializeController(BuildContext context) {
-    return sl<ReadingLoggingController>()..init();
   }
 }
 
@@ -60,16 +58,11 @@ class _ReadingLoggingViewState extends State<_ReadingLoggingView> {
               child: UnsavedChangesGuard(
                 hasUnsavedChanges: () =>
                     context.read<ReadingLoggingController>().state.hasChanged,
-                child: StreamBuilder<List<VitalHistoryEntity>>(
-                  stream: context
-                      .read<ReadingLoggingController>()
-                      .vitalHistoriesStream,
-                  builder: (context, snapshot) {
-                    final allVitals =
-                        List<VitalHistoryEntity>.from(snapshot.data ?? []);
-                    final hasHistory = allVitals.isNotEmpty;
-
-                    // No history: simple non-scrollable column
+                child: Builder(
+                  builder: (context) {
+                    final hasHistory = context.select(
+                        (ReadingLoggingController c) =>
+                            c.history?.isNotEmpty ?? false);
                     if (!hasHistory) {
                       return const Padding(
                         padding: EdgeInsets.only(
@@ -80,7 +73,6 @@ class _ReadingLoggingViewState extends State<_ReadingLoggingView> {
                       );
                     }
 
-                    // Has history: scrollable layout with history section below
                     return NestedScrollView(
                       headerSliverBuilder: (context, innerBoxIsScrolled) {
                         return [

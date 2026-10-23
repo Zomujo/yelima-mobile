@@ -4,6 +4,7 @@ import 'package:yelima/core/constants/app_decoration.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The frame around the reading being entered.
 class ReadingDisplayCard extends StatelessWidget {
   const ReadingDisplayCard({
     super.key,

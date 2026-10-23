@@ -6,6 +6,7 @@ import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/features/appointment/presentation/controllers/appointment_controller.dart';
 import '../next_clinic_visit_card.dart';
 
+/// Upcoming appointments on home.
 class HomeUpcomingVisitsSection extends StatelessWidget {
   const HomeUpcomingVisitsSection({super.key});
 
@@ -24,7 +25,7 @@ class HomeUpcomingVisitsSection extends StatelessWidget {
 
           final nearest = controller.state.nearestAppointment;
           if (nearest == null) {
-            return const SizedBox.shrink(); // Or some empty state
+            return const SizedBox.shrink();
           }
 
           final formattedDate =

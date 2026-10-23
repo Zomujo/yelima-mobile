@@ -6,9 +6,9 @@ import 'package:yelima/features/vitals/presentation/widgets/history/reading_hist
 import 'package:provider/provider.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
-import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:clock/clock.dart';
 
+/// The saved readings, five per page.
 class ReadingHistorySection extends StatefulWidget {
   const ReadingHistorySection({super.key});
 
@@ -19,113 +19,80 @@ class ReadingHistorySection extends StatefulWidget {
 class _ReadingHistorySectionState extends State<ReadingHistorySection> {
   int _currentPage = 1;
   final int _pageSize = 5;
-  late Stream<List<VitalHistoryEntity>> _vitalsStream;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _vitalsStream =
-        context.read<ReadingLoggingController>().vitalHistoriesStream;
-  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<VitalHistoryEntity>>(
-      stream: _vitalsStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
-        }
+    final vitals =
+        context.select((ReadingLoggingController c) => c.history) ?? const [];
+    if (vitals.isEmpty) return const SizedBox.shrink();
 
-        final vitals = List<VitalHistoryEntity>.from(snapshot.data ?? []);
+    final totalItems = vitals.length;
+    final totalPages = (totalItems / _pageSize).ceil();
 
-        if (vitals.isEmpty) {
-          return const SizedBox.shrink();
-        }
+    if (_currentPage > totalPages && totalPages > 0) {
+      _currentPage = 1;
+    }
 
-        // Sort newest first
-        vitals.sort((a, b) {
-          final dateA = a.recordedAt ?? DateTime(2000);
-          final dateB = b.recordedAt ?? DateTime(2000);
-          final diff = dateA.difference(dateB).inMilliseconds.abs();
-          if (diff < 1000) {
-            return b.id.compareTo(a.id);
-          }
-          return dateB.compareTo(dateA);
-        });
+    final startIndex = (_currentPage - 1) * _pageSize;
+    final displayVitals = vitals.skip(startIndex).take(_pageSize).toList();
 
-        final totalItems = vitals.length;
-        final totalPages = (totalItems / _pageSize).ceil();
-
-        if (_currentPage > totalPages && totalPages > 0) {
-          _currentPage = 1;
-        }
-
-        final startIndex = (_currentPage - 1) * _pageSize;
-        final displayVitals = vitals.skip(startIndex).take(_pageSize).toList();
-
-        return CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppText.titleMedium(
-                        context.l10n.readingHistory,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.slate800,
-                      ),
-                    ],
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  AppText.titleMedium(
+                    context.l10n.readingHistory,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.slate800,
                   ),
-                ),
+                ],
               ),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _PaginationHeaderDelegate(
-                currentPage: _currentPage,
-                totalPages: totalPages > 0
-                    ? totalPages
-                    : 1, // Fallback to 1 if no items, though handled by empty state
-                onPrev: () => setState(() => _currentPage--),
-                onNext: () => setState(() => _currentPage++),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final vital = displayVitals[index];
-                    final date = vital.recordedAt ?? clock.now();
-                    final dateStr = AppDateFormats.dayDateMonth.format(date);
-                    final typeLower = vital.vitalType.toLowerCase();
-                    final isBP = typeLower == 'bloodpressure';
-                    final vitalName =
-                        isBP ? context.l10n.bpShort : context.l10n.sugar;
+          ),
+        ),
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _PaginationHeaderDelegate(
+            currentPage: _currentPage,
+            totalPages: totalPages,
+            onPrev: () => setState(() => _currentPage--),
+            onNext: () => setState(() => _currentPage++),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final vital = displayVitals[index];
+                final date = vital.recordedAt ?? clock.now();
+                final dateStr = AppDateFormats.dayDateMonth.format(date);
+                final vitalName = vital.isBloodPressure
+                    ? context.l10n.bpShort
+                    : context.l10n.sugar;
 
-                    return ReadingHistoryItem(
-                      date: dateStr,
-                      vitalName: vitalName,
-                      vitalValue: "${vital.value} ${vital.unit}",
-                      severity: VitalSeverityExt.fromString(vital.severity),
-                    );
-                  },
-                  childCount: displayVitals.length,
-                ),
-              ),
+                return ReadingHistoryItem(
+                  date: dateStr,
+                  vitalName: vitalName,
+                  vitalValue: "${vital.value} ${vital.unit}",
+                  severity: vital.grade,
+                );
+              },
+              childCount: displayVitals.length,
             ),
-            const SliverPadding(
-              padding: EdgeInsets.only(bottom: 120), // Bottom nav clearance
-              sliver: SliverToBoxAdapter(child: SizedBox.shrink()),
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+        const SliverPadding(
+          padding: EdgeInsets.only(bottom: 120),
+          sliver: SliverToBoxAdapter(child: SizedBox.shrink()),
+        ),
+      ],
     );
   }
 }
@@ -147,8 +114,7 @@ class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: const Color(
-          0xFFFFF7ED), // Match globalBackground so it looks sticky over the list
+      color: const Color(0xFFFFF7ED),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,35 +126,13 @@ class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
           ),
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: AppColors.orange300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.chevron_left,
-                      color: AppColors.orange300),
-                  onPressed: currentPage > 1 ? onPrev : null,
-                ),
-              ),
+              _PageButton(
+                  icon: Icons.chevron_left,
+                  onPressed: currentPage > 1 ? onPrev : null),
               const SizedBox(width: 8),
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: AppColors.orange300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.chevron_right,
-                      color: AppColors.orange300),
-                  onPressed: currentPage < totalPages ? onNext : null,
-                ),
-              ),
+              _PageButton(
+                  icon: Icons.chevron_right,
+                  onPressed: currentPage < totalPages ? onNext : null),
             ],
           ),
         ],
@@ -207,4 +151,24 @@ class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
     return oldDelegate.currentPage != currentPage ||
         oldDelegate.totalPages != totalPages;
   }
+}
+
+class _PageButton extends StatelessWidget {
+  const _PageButton({required this.icon, required this.onPressed});
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: AppColors.orange300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: IconButton(
+            icon: Icon(icon, color: AppColors.orange300), onPressed: onPressed),
+      );
 }

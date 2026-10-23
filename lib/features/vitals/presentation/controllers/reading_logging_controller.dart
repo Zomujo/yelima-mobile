@@ -1,65 +1,49 @@
-import 'package:flutter/material.dart';
-import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
-import 'package:yelima/core/exceptions/exceptions.dart';
-import 'package:yelima/core/utils/custom_types.dart';
-import 'package:yelima/features/vitals/domain/entities/reading_form_data.dart';
-import 'package:yelima/features/vitals/domain/usecases/save_vital_reading_usecase.dart';
-import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
-import 'package:yelima/features/vitals/presentation/states/reading_logging_state.dart';
-import 'package:yelima/core/utils/safe_notifier.dart';
-import 'package:clock/clock.dart';
-import 'package:yelima/features/vitals/domain/reading_limits.dart';
+import 'dart:async';
 
+import 'package:clock/clock.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/utils/safe_notifier.dart';
+import '../../domain/entities/reading_form.dart';
+import '../../domain/entities/vital_history_entity.dart';
+import '../../domain/reading_limits.dart';
+import '../../domain/repositories/vitals_repository.dart';
+import '../states/reading_logging_state.dart';
+
+/// The log-a-reading screen: the form, prefilled from the last reading, and the history.
 class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies      |
-  // --------------------------------------------------------------------------
+  ReadingLoggingController({required VitalsRepository repository})
+      : _repository = repository;
 
   final VitalsRepository _repository;
-  final SaveVitalReadingUseCase _saveVitalReadingUseCase;
+  StreamSubscription<List<VitalHistoryEntity>>? _sub;
 
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle   |
-  // --------------------------------------------------------------------------
-
-  ReadingLoggingController({
-    required VitalsRepository repository,
-    required SaveVitalReadingUseCase saveVitalReadingUseCase,
-  })  : _repository = repository,
-        _saveVitalReadingUseCase = saveVitalReadingUseCase;
+  /// Every reading on the phone, newest first; null until loaded.
+  List<VitalHistoryEntity>? history;
 
   ReadingLoggingState _state = ReadingLoggingState(selectedDate: clock.now());
   ReadingLoggingState get state => _state;
-
   set state(ReadingLoggingState value) {
     if (_state == value) return;
     _state = value;
     notifyListeners();
   }
 
-  /// Fetches the latest home metrics to prepopulate the reading forms.
-
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods        |
-  // --------------------------------------------------------------------------
-
-  Future<void> init() async {
-    final cachedResult = await _repository.getCachedHomeMetrics();
-    cachedResult.fold((_) {}, (metrics) {
-      _prefillFrom(metrics);
+  /// Follows the saved readings and refreshes them from the server.
+  void init() {
+    _sub ??= _repository.watchReadings().listen((rows) {
+      history = _newestFirst(rows);
+      if (!state.hasChanged) _prefillFrom(LatestVitals.from(rows));
+      notifyListeners();
     });
-
-    final result = await _repository.getHomeMetrics();
-
-    result.fold((_) {}, (metrics) {
-      _prefillFrom(metrics);
-    });
+    _repository.refresh();
   }
 
-  /// Prefills the form with the last reading, skipping values the pickers can't show.
-  void _prefillFrom(HomeMetricsEntity metrics) {
-    final bp = metrics.parsedBloodPressure;
-    final sugar = metrics.parsedBloodGlucose;
+  /// Starts the form from the last reading, skipping values the pickers can't show.
+  void _prefillFrom(LatestVitals latest) {
+    final bp = latest.systolicDiastolic;
+    final sugar = latest.sugarLevel;
     final bpOk =
         bp != null && ReadingLimits.bloodPressureError(bp.$1, bp.$2) == null;
     final sugarOk =
@@ -72,68 +56,71 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  /// Updates the currently selected tab (e.g., Blood Pressure vs. Blood Glucose).
-  void setTypeIndex(int index) {
-    if (state.selectedTypeIndex != index) {
-      state = state.copyWith(selectedTypeIndex: index, hasChanged: false);
+  /// Switches between blood pressure and blood sugar.
+  void setKind(VitalKind kind) {
+    if (state.kind != kind) {
+      state = state.copyWith(kind: kind, hasChanged: false);
     }
   }
 
-  /// Sets the vital sub type for blood glucose.
+  /// Sets when the blood sugar was taken (fasting, random…).
   void setVitalSubType(String subType) {
     if (state.vitalSubType != subType) {
       state = state.copyWith(vitalSubType: subType, hasChanged: true);
     }
   }
 
-  /// Sets the blood pressure readings (systolic and diastolic).
+  /// Sets the blood pressure.
   void setBloodPressure(int sys, int dia) {
     if (state.systolic != sys || state.diastolic != dia) {
       state = state.copyWith(systolic: sys, diastolic: dia, hasChanged: true);
     }
   }
 
-  /// Sets the blood glucose reading level.
+  /// Sets the blood sugar in mmol/L.
   void setSugarLevel(double level) {
     if (state.sugarLevel != level) {
       state = state.copyWith(sugarLevel: level, hasChanged: true);
     }
   }
 
-  /// Updates the selected date while preserving the current time.
+  /// Sets the day of the reading, at the current time.
   void setSelectedDate(DateTime date) {
     final now = clock.now();
-    final newDate = DateTime(
-        date.year, date.month, date.day, now.hour, now.minute, now.second);
-
-    state = state.copyWith(selectedDate: newDate, hasChanged: true);
+    state = state.copyWith(
+        selectedDate: DateTime(
+            date.year, date.month, date.day, now.hour, now.minute, now.second),
+        hasChanged: true);
   }
 
-  /// Saves the current vital reading to the backend.
-  AsyncResponse<void> saveReading() async {
+  /// Saves the reading.
+  AsyncResult<void> saveReading() async {
     state = state.copyWith(isSaving: true);
-
-    final response = await ExceptionWrapper.runAsync<void>(
-      () async {
-        final formData = ReadingFormData(
-          selectedTypeIndex: state.selectedTypeIndex,
-          vitalSubType: state.vitalSubType,
-          systolic: state.systolic,
-          diastolic: state.diastolic,
-          sugarLevel: state.sugarLevel,
-          recordedAt: state.selectedDate,
-        );
-
-        return await _saveVitalReadingUseCase(formData);
-      },
-      operationName: 'saveReading',
-    );
-
-    state = state.copyWith(isSaving: false, hasChanged: response.isLeft());
-    return response;
+    final result = await _repository.saveReading(ReadingForm(
+      kind: state.kind,
+      subType: state.vitalSubType,
+      systolic: state.systolic,
+      diastolic: state.diastolic,
+      sugarLevel: state.sugarLevel,
+      recordedAt: state.selectedDate,
+    ));
+    state = state.copyWith(isSaving: false, hasChanged: result.isLeft());
+    return result;
   }
 
-  /// Watch local history of vitals
-  Stream<List<VitalHistoryEntity>> get vitalHistoriesStream =>
-      _repository.watchVitalHistories();
+  /// Newest first; readings within a second of each other fall back to id order.
+  static List<VitalHistoryEntity> _newestFirst(List<VitalHistoryEntity> rows) =>
+      [...rows]..sort((a, b) {
+          final (ta, tb) =
+              (a.recordedAt ?? DateTime(2000), b.recordedAt ?? DateTime(2000));
+          return ta.difference(tb).inMilliseconds.abs() < 1000
+              ? b.id.compareTo(a.id)
+              : tb.compareTo(ta);
+        });
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
 }

@@ -9,6 +9,7 @@ import '../../../../core/router/route_paths.dart';
 import '../controllers/home_metrics_controller.dart';
 import 'package:provider/provider.dart';
 
+/// One tab of the bottom bar.
 class HomeBottomNavItem {
   final dynamic assetPath;
   final String route;
@@ -45,6 +46,7 @@ final List<HomeBottomNavItem> _bottomNavs = [
   ),
 ];
 
+/// The floating bottom tab bar.
 class HomeBottomNavBar extends StatelessWidget {
   const HomeBottomNavBar({super.key});
 
@@ -94,7 +96,6 @@ class _NavItemButton extends StatelessWidget {
       onTap: isActive
           ? null
           : () {
-              // Proactively refresh home metrics if navigating to Home
               if (item.route == RoutePaths.home) {
                 try {
                   context.read<HomeMetricsController>().fetchMetrics();

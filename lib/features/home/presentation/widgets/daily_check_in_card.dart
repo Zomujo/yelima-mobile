@@ -5,6 +5,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Prompts the daily reading.
 class DailyCheckInCard extends StatelessWidget {
   final VoidCallback onStart;
 
@@ -24,7 +25,6 @@ class DailyCheckInCard extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          // Decorative circles
           Positioned(
             right: -20,
             top: -20,

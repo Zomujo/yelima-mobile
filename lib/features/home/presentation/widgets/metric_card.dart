@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
 
+/// One home metric: title, value and its grade.
 class MetricCard extends StatelessWidget {
   final String title;
   final String mainValue;
