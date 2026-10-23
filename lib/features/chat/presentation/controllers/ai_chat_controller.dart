@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../domain/entities/ai_chat_message.dart';
@@ -86,7 +87,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     // Listen for background sync completion
     _syncSubscription =
         _mutationSyncManager.onMutationSynced.listen((entityType) {
-      if (entityType == 'chat' || entityType == 'ai_chat_message') {
+      if (entityType == 'chat' || entityType.startsWith('remap:chat:')) {
         syncConversations();
       }
     });
@@ -114,28 +115,21 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     state = state.copyWith(isLoading: true);
 
     final localRes = await _repository.loadConversations();
-    localRes.fold(
-      (err) => state = state.copyWith(error: err, isLoading: false),
+    await localRes.fold(
+      (err) async => state = state.copyWith(error: err, isLoading: false),
       (localMsgs) async {
-        var msgs = List<AiChatMessage>.from(localMsgs);
-
-        bool stateChanged = false;
-        for (int i = 0; i < msgs.length; i++) {
-          if (msgs[i].status == MessageStatus.sending) {
-            msgs[i] = msgs[i].copyWith(status: MessageStatus.failed);
-            stateChanged = true;
-          }
-        }
-        if (stateChanged) {
+        final msgs = [
+          for (final m in localMsgs)
+            m.status == MessageStatus.sending
+                ? m.copyWith(status: MessageStatus.failed)
+                : m,
+        ];
+        if (localMsgs.any((m) => m.status == MessageStatus.sending)) {
           await _repository.saveConversations(msgs);
         }
 
-        int currentPage = state.currentPage;
-        if (msgs.isNotEmpty) {
-          currentPage = (msgs.length / _pageSize).ceil();
-          if (currentPage < 1) currentPage = 1;
-        }
-
+        final currentPage =
+            msgs.isEmpty ? state.currentPage : (msgs.length / _pageSize).ceil();
         state = state.copyWith(messages: msgs, currentPage: currentPage);
 
         if (!state.isOnline) {
@@ -144,35 +138,33 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
         }
 
         await _repository.syncRemoteConversations();
+        await _reloadAfterRemoteSync();
+      },
+    );
+  }
 
-        final newLocalRes = await _repository.loadConversations();
-        newLocalRes.fold(
-          (err) => state = state.copyWith(error: err, isLoading: false),
-          (newLocalMsgs) async {
-            msgs = List.from(newLocalMsgs);
-
-            if (msgs.isEmpty) {
-              final initialRes = await _repository.loadInitialMessage();
-              initialRes.fold(
-                (err) {
-                  // Ignore offline errors during background sync
-                  if (err.contains('No internet connection')) {
-                    state = state.copyWith(isLoading: false);
-                  } else {
-                    state = state.copyWith(error: err, isLoading: false);
-                  }
-                },
-                (initialMsg) async {
-                  if (initialMsg != null) {
-                    msgs = [initialMsg];
-                    await _repository.saveConversations(msgs);
-                  }
-                  state = state.copyWith(messages: msgs, isLoading: false);
-                },
-              );
-            } else {
-              state = state.copyWith(messages: msgs, isLoading: false);
+  /// Reloads local messages after a remote sync, fetching the greeting for an empty chat.
+  Future<void> _reloadAfterRemoteSync() async {
+    final newLocalRes = await _repository.loadConversations();
+    await newLocalRes.fold(
+      (err) async => state = state.copyWith(error: err, isLoading: false),
+      (msgs) async {
+        if (msgs.isNotEmpty) {
+          state = state.copyWith(messages: msgs, isLoading: false);
+          return;
+        }
+        final initialRes = await _repository.loadInitialMessage();
+        await initialRes.fold(
+          (err) async => state = state.copyWith(
+              // Ignore offline errors during background sync.
+              error: err.contains('No internet connection') ? null : err,
+              isLoading: false),
+          (initialMsg) async {
+            final withGreeting = initialMsg == null ? msgs : [initialMsg];
+            if (initialMsg != null) {
+              await _repository.saveConversations(withGreeting);
             }
+            state = state.copyWith(messages: withGreeting, isLoading: false);
           },
         );
       },
@@ -190,8 +182,8 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     final result =
         await _repository.fetchPaginatedConversations(page: targetPage);
 
-    result.fold(
-      (err) {
+    await result.fold(
+      (err) async {
         state = state.copyWith(error: err, isLoadingMore: false);
         _triggerPendingSyncIfAny();
       },
@@ -237,150 +229,99 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
 
   /// Sends a text message to the AI Chat API.
   Future<void> sendMessage(String text) async {
-    if (text.trim().isEmpty || state.isSending) return;
-
-    state = state.copyWith(isSending: true);
-    if (_activeSync != null) await _activeSync;
-
-    final localId = const Uuid().v4();
-    final userMsg = AiChatMessage(
-      id: localId,
-      sender: 'user',
-      type: MessageType.text,
-      value: text,
-      createdAt: clock.now(),
-      status: MessageStatus.sending,
-      localChatId: localId,
-    );
-
-    state = state.copyWith(messages: [userMsg, ...state.messages]);
-
-    final res = await _repository.sendMessage(text, localChatId: localId);
-
-    res.fold(
-      (err) {
-        final msgs = List<AiChatMessage>.from(state.messages);
-        final index = msgs.indexWhere((m) => m.localChatId == localId);
-
-        if (index != -1) {
-          msgs[index] = msgs[index].copyWith(status: MessageStatus.failed);
-        }
-
-        state = state.copyWith(messages: msgs, isSending: false, error: err);
-        _repository.saveConversations(msgs);
-        _triggerPendingSyncIfAny();
-      },
-      (botData) {
-        final msgs = List<AiChatMessage>.from(state.messages);
-        final index = msgs.indexWhere((m) => m.localChatId == localId);
-
-        if (index != -1) {
-          msgs[index] = msgs[index].copyWith(
-              status:
-                  botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
-        }
-
-        if (botData.isNotEmpty) {
-          List<String> suggestions = [];
-          if (botData['suggestions'] != null) {
-            suggestions = List<String>.from(botData['suggestions']);
-          }
-
-          final botMsg = AiChatMessage(
-            id: botData['_id'] as String,
-            sender: 'bot',
-            type: MessageType.text,
-            value: botData['text'] as String,
-            createdAt: clock.now(),
-            status: MessageStatus.sent,
-            suggestions: suggestions,
-            localChatId: localId,
-          );
-
-          msgs.insert(0, botMsg);
-        }
-
-        state = state.copyWith(messages: msgs, isSending: false);
-        _repository.saveConversations(msgs);
-        _triggerPendingSyncIfAny();
-      },
+    if (text.trim().isEmpty) return;
+    await _send(
+      (localId) => AiChatMessage(
+        id: localId,
+        sender: 'user',
+        type: MessageType.text,
+        value: text,
+        createdAt: clock.now(),
+        status: MessageStatus.sending,
+        localChatId: localId,
+      ),
+      (localId) => _repository.sendMessage(text, localChatId: localId),
     );
   }
 
   /// Sends a voice note/audio file to the AI Chat API.
   Future<void> sendAudioMessage(String filePath,
       [String durationStr = "Voice Message"]) async {
+    await _send(
+      (localId) => AiChatMessage(
+        id: localId,
+        sender: 'user',
+        type: MessageType.audio,
+        value: durationStr,
+        createdAt: clock.now(),
+        status: MessageStatus.sending,
+        localChatId: localId,
+        audioUrl: filePath,
+      ),
+      (localId) => _repository.sendAudioMessage(
+          filePath: filePath, localChatId: localId),
+    );
+  }
+
+  /// Shows [draft] optimistically, sends it, then applies the server's reply.
+  Future<void> _send(
+    AiChatMessage Function(String localId) draft,
+    Future<Either<String, Map<String, dynamic>>> Function(String localId) call,
+  ) async {
     if (state.isSending) return;
 
     state = state.copyWith(isSending: true);
     if (_activeSync != null) await _activeSync;
 
     final localId = const Uuid().v4();
-    final userMsg = AiChatMessage(
-      id: localId,
-      sender: 'user',
-      type: MessageType.audio,
-      value: durationStr,
-      createdAt: clock.now(),
-      status: MessageStatus.sending,
-      localChatId: localId,
-      audioUrl: filePath,
-    );
+    state = state.copyWith(messages: [draft(localId), ...state.messages]);
 
-    state = state.copyWith(messages: [userMsg, ...state.messages]);
-
-    final res = await _repository.sendAudioMessage(
-        filePath: filePath, localChatId: localId);
+    final res = await call(localId);
+    final msgs = List<AiChatMessage>.from(state.messages);
+    final index = msgs.indexWhere((m) => m.localChatId == localId);
 
     res.fold(
       (err) {
-        final msgs = List<AiChatMessage>.from(state.messages);
-        final index = msgs.indexWhere((m) => m.localChatId == localId);
-
         if (index != -1) {
           msgs[index] = msgs[index].copyWith(status: MessageStatus.failed);
         }
-
         state = state.copyWith(messages: msgs, isSending: false, error: err);
-        _repository.saveConversations(msgs);
-        _triggerPendingSyncIfAny();
       },
-      (botData) async {
-        final msgs = List<AiChatMessage>.from(state.messages);
-        final index = msgs.indexWhere((m) => m.localChatId == localId);
-
+      (data) {
+        final bot = data['outResponse'] as Map<String, dynamic>?;
+        final userServerId =
+            (data['inResponse'] as Map<String, dynamic>?)?['_id'] as String?;
         if (index != -1) {
           msgs[index] = msgs[index].copyWith(
-              status:
-                  botData.isEmpty ? MessageStatus.sending : MessageStatus.sent);
-        }
-
-        if (botData.isNotEmpty) {
-          List<String> suggestions = [];
-          if (botData['suggestions'] != null) {
-            suggestions = List<String>.from(botData['suggestions']);
-          }
-
-          final botMsg = AiChatMessage(
-            id: botData['_id'] as String,
-            sender: 'bot',
-            type: MessageType.text,
-            value: botData['text'] as String,
-            createdAt: clock.now(),
-            status: MessageStatus.sent,
-            suggestions: suggestions,
-            localChatId: localId,
+            id: userServerId ?? msgs[index].id,
+            // An empty result means the send was queued for later.
+            status: bot == null ? MessageStatus.sending : MessageStatus.sent,
           );
-
-          msgs.insert(0, botMsg);
         }
-
+        if (bot != null) {
+          final botMsg = _botMessage(bot, localId);
+          msgs
+            ..removeWhere((m) => m.id == botMsg.id)
+            ..insert(0, botMsg);
+        }
         state = state.copyWith(messages: msgs, isSending: false);
-        _repository.saveConversations(msgs);
-        _triggerPendingSyncIfAny();
       },
     );
+    await _repository.saveConversations(msgs);
+    _triggerPendingSyncIfAny();
   }
+
+  AiChatMessage _botMessage(Map<String, dynamic> bot, String localId) =>
+      AiChatMessage(
+        id: bot['_id'] as String,
+        sender: 'bot',
+        type: MessageType.text,
+        value: bot['text'] as String,
+        createdAt: clock.now(),
+        status: MessageStatus.sent,
+        suggestions: List<String>.from(bot['suggestions'] ?? const []),
+        localChatId: localId,
+      );
 
   /// Retries sending a previously failed message.
   Future<void> retryMessage(AiChatMessage failedMsg) async {

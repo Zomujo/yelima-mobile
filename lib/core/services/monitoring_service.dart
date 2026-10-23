@@ -2,16 +2,34 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'session_lifecycle_service.dart';
 
 /// Centralized monitoring service for Firebase Analytics and Crashlytics.
-class MonitoringService {
-  MonitoringService._internal();
+class MonitoringService implements SessionLifecycleHandler {
+  MonitoringService._internal()
+      : this.withServices(
+            FirebaseAnalytics.instance, FirebaseCrashlytics.instance);
+
+  /// Builds the service around the given Firebase services, e.g. mocks in tests.
+  @visibleForTesting
+  MonitoringService.withServices(this._analytics, this._crashlytics);
 
   /// The single instance of [MonitoringService].
   static final MonitoringService instance = MonitoringService._internal();
 
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-  final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
+  final FirebaseAnalytics _analytics;
+  final FirebaseCrashlytics _crashlytics;
+
+  @override
+  String get serviceName => 'MonitoringService';
+
+  /// Ties crash reports and analytics to the signed-in user's uid.
+  @override
+  Future<void> onSessionStarted(String userId) => identifyUser(userId: userId);
+
+  /// Detaches the previous user so the next one starts clean.
+  @override
+  Future<void> onSessionEnded() => resetUser();
 
   /// Returns a [FirebaseAnalyticsObserver] for use in the router.
   FirebaseAnalyticsObserver get analyticsObserver =>
@@ -29,10 +47,7 @@ class MonitoringService {
         // Automatically identify if already logged in
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
-          await identifyUser(
-            userId: user.uid,
-            email: user.email,
-          );
+          await identifyUser(userId: user.uid);
         } else {
           await _crashlytics.setCustomKey('is_authenticated', false);
         }
@@ -163,7 +178,9 @@ class MonitoringService {
       await _analytics.setUserId(id: null);
       await _crashlytics.setUserIdentifier('');
       await _crashlytics.setCustomKey('is_authenticated', false);
-      await _crashlytics.setCustomKey('user_email', 'anonymous');
+      // Clears emails that older versions attached.
+      await _analytics.setUserProperty(name: 'email', value: null);
+      await _crashlytics.setCustomKey('user_email', '');
       await _crashlytics.setCustomKey('account_type', 'none');
     } catch (e) {
       debugPrint('MonitoringService: Failed to reset user: $e');
@@ -248,10 +265,9 @@ class MonitoringService {
   // |                            Combined Methods                              |
   // --------------------------------------------------------------------------
 
-  /// Identifies the user on both Analytics and Crashlytics.
+  /// Identifies the user on both Analytics and Crashlytics, by uid only (no email or other PII).
   Future<void> identifyUser({
     required String userId,
-    String? email,
     String? accountType,
   }) async {
     try {
@@ -261,17 +277,12 @@ class MonitoringService {
       // Enhance Crashlytics correlation with custom keys
       await _crashlytics.setCustomKey('is_authenticated', true);
 
-      if (email != null) {
-        await setUserProperty(name: 'email', value: email);
-        await _crashlytics.setCustomKey('user_email', email);
-      }
-
       if (accountType != null) {
         await setUserProperty(name: 'account_type', value: accountType);
         await _crashlytics.setCustomKey('account_type', accountType);
       }
 
-      await log('User identified: $userId ${email != null ? "($email)" : ""}');
+      await log('User identified: $userId');
     } catch (e) {
       debugPrint('MonitoringService: Failed to identify user: $e');
     }

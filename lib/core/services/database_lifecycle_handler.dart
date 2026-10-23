@@ -3,10 +3,14 @@ import 'package:yelima/core/services/session_lifecycle_service.dart';
 import 'package:yelima/core/utils/logger.dart';
 import 'package:yelima/features/chat/domain/services/audio_cache_manager.dart';
 
+/// Wipes every local table and the voice-note files when a session ends.
 class DatabaseLifecycleHandler implements SessionLifecycleHandler {
   final AppDatabase _db;
+  final Future<void> Function() _clearAudioFiles;
 
-  DatabaseLifecycleHandler(this._db);
+  DatabaseLifecycleHandler(this._db, {Future<void> Function()? clearAudioFiles})
+      : _clearAudioFiles =
+            clearAudioFiles ?? (() => AudioCacheManager().clearCache());
 
   @override
   String get serviceName => 'Local Database Cache';
@@ -32,18 +36,13 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
     AppLogger.w(
         'DatabaseLifecycleHandler: Wiping all cached SQLite data for logout/deletion...');
     try {
+      // Every table, so tables added later can't leak to the next user.
       await _db.transaction(() async {
-        await _db.aiChatDao.clearAiChats();
-        await _db.aiChatDao.clearPendingDeletions();
-        await _db.vitalsDao.clearAllVitals();
-        await _db.appointmentsDao.clearAppointments();
-        await _db.userProfilesDao.clearProfiles();
-        await _db.medicationsDao.clearMedications();
-        await _db.medicationsDao.clearPreloadedMedications();
-        await _db.symptomsDao.clearSymptoms();
-        await _db.pendingMutationsDao.clearPendingMutations();
+        for (final table in _db.allTables) {
+          await _db.delete(table).go();
+        }
       });
-      await AudioCacheManager().clearCache();
+      await _clearAudioFiles();
       AppLogger.i('DatabaseLifecycleHandler: SQLite data successfully wiped.');
     } catch (e) {
       AppLogger.e('DatabaseLifecycleHandler: Failed to wipe SQLite data: $e');

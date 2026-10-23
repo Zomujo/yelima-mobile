@@ -14,10 +14,11 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
 
   AiChatRemoteMutationSource(this._remoteDataSource, this._db);
 
-  Future<void> _handleBotReply(
+  /// Saves the bot reply locally and returns the server id of the user's message.
+  Future<String?> _handleReply(
       Map<String, dynamic> response, String? localChatId) async {
-    if (response['suggestions'] != null) {}
-    final botData = response;
+    final botData = response['outResponse'] as Map<String, dynamic>?;
+    if (botData == null) return null;
 
     List<String> suggestions = [];
     if (botData['suggestions'] != null) {
@@ -36,6 +37,7 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
     );
 
     await _db.aiChatDao.insertAiChats([botMsg]);
+    return (response['inResponse'] as Map<String, dynamic>?)?['_id'] as String?;
   }
 
   @override
@@ -53,9 +55,8 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
         final localChatId = payload['localChatId'] as String?;
         final res = await _remoteDataSource.sendMessage(message,
             localChatId: localChatId);
-        await _handleBotReply(res, localChatId);
-        // We return the actual _id so MutationSyncManager can remap our localChatId
-        return res['_id'] as String?;
+        // The user message's server id lets MutationSyncManager remap our local id.
+        return _handleReply(res, localChatId);
 
       case 'sendAudioMessage':
         String filePath = payload['filePath'] as String;
@@ -74,8 +75,7 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
 
         final res = await _remoteDataSource.sendAudioMessage(
             filePath: filePath, localChatId: localChatId);
-        await _handleBotReply(res, localChatId);
-        return res['_id'] as String?;
+        return _handleReply(res, localChatId);
 
       default:
         throw UnimplementedError('Unknown action $action for chat');

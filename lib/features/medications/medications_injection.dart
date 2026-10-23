@@ -34,7 +34,7 @@ void initMedications(GetIt sl) {
   sl<SessionLifecycleService>().register(seededSyncService, priority: 90);
   sl.registerSingleton<SeededMedicationsSyncService>(seededSyncService);
 
-  final alarmSyncService = MedicationAlarmSyncService(sl());
+  final alarmSyncService = MedicationAlarmSyncService(sl(), sl());
   sl<SessionLifecycleService>().register(alarmSyncService, priority: 80);
 
   // Use cases

@@ -5,10 +5,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
 
 import '../utils/logger.dart';
 import '../../firebase_options.dart';
+import '../utils/time_zone.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -152,7 +152,8 @@ class NotificationService {
           'General',
           styleInformation: BigTextStyleInformation(body),
         ),
-        iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
+        iOS: const DarwinNotificationDetails(
+            presentAlert: true, presentSound: true),
       ),
       payload: jsonEncode(message.toMap()),
     );
@@ -185,20 +186,7 @@ class NotificationService {
     required TimeOfDay time,
   }) async {
     try {
-      final now = tz.TZDateTime.now(tz.local);
-      var scheduledDate = tz.TZDateTime(
-        tz.local,
-        now.year,
-        now.month,
-        now.day,
-        time.hour,
-        time.minute,
-      );
-
-      // If the time has already passed today, schedule for tomorrow
-      if (scheduledDate.isBefore(now)) {
-        scheduledDate = scheduledDate.add(const Duration(days: 1));
-      }
+      final scheduledDate = nextDailyTime(time);
 
       await _localNotifications.zonedSchedule(
         id,

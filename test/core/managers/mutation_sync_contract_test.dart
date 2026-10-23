@@ -128,9 +128,7 @@ void main() {
     await manager.triggerSync();
 
     expect(await db.select(db.pendingMutations).get(), isEmpty);
-  },
-      skip:
-          "Known bug CORE-EC-19: the 404 shortcut checks action == 'delete'. Fix in P2.");
+  });
 
   test('CORE-EC-04: every queued entity type has a registered sync source', () {
     final queued = <String>{};
@@ -150,7 +148,5 @@ void main() {
         .toSet();
 
     expect(queued.difference(registered), isEmpty);
-  },
-      skip:
-          'Known bug CORE-EC-04: user_profile is queued but has no sync source. Fix in P2.');
+  });
 }

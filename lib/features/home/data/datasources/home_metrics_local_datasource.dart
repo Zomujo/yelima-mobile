@@ -28,7 +28,10 @@ class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
 
   @override
   Future<void> cacheVitalHistories(List<VitalHistoryModel> vitals) async {
-    await _database.vitalsDao.clearVitals();
+    // Readings still waiting to sync aren't on the server yet, so keep them.
+    final pending =
+        await _database.pendingMutationsDao.getEntityIdsOfType('vital_history');
+    await _database.vitalsDao.clearVitals(keepIds: pending);
     final companions = vitals.map((v) => v.toDrift()).toList();
     await _database.vitalsDao.insertVitals(companions);
   }

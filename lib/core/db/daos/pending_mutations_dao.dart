@@ -34,6 +34,15 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
     return delete(pendingMutations).go();
   }
 
+  /// Ids of every queued entity of [entityType], including blocked ones.
+  Future<Set<String>> getEntityIdsOfType(String entityType) async {
+    final rows = await (selectOnly(pendingMutations, distinct: true)
+          ..addColumns([pendingMutations.entityId])
+          ..where(pendingMutations.entityType.equals(entityType)))
+        .get();
+    return rows.map((r) => r.read(pendingMutations.entityId)!).toSet();
+  }
+
   Future<void> updateEntityId(String oldEntityId, String newEntityId) {
     return (update(pendingMutations)
           ..where((t) => t.entityId.equals(oldEntityId)))

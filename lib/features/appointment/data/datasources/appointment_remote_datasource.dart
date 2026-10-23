@@ -37,7 +37,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
 
       return AppointmentListResponseModel.fromJson(response);
     } catch (e) {
-      throw ApiException(e.toString());
+      throw _asApiError(e);
     }
   }
 
@@ -51,7 +51,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
       }
       return AppointmentModel.fromJson(response['data']);
     } catch (e) {
-      throw ApiException(e.toString());
+      throw _asApiError(e);
     }
   }
 
@@ -63,7 +63,12 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
         data: {'type': "SCHEDULE", 'note': note},
       );
     } catch (e) {
-      throw ApiException(e.toString());
+      throw _asApiError(e);
     }
   }
+
+  /// Keeps API and network errors as they are (with their status code); wraps anything else.
+  Object _asApiError(Object e) => e is ApiException || e is NetworkException
+      ? e
+      : ApiException(e.toString());
 }

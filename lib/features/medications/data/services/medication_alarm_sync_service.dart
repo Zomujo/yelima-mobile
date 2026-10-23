@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 import '../../domain/repositories/medication_repository.dart';
 
 class MedicationAlarmSyncService implements SessionLifecycleHandler {
   final MedicationRepository _repository;
+  final NotificationService _notifications;
 
-  MedicationAlarmSyncService(this._repository);
+  MedicationAlarmSyncService(this._repository, this._notifications);
 
   @override
   String get serviceName => 'MedicationAlarmSyncService';
@@ -23,7 +25,14 @@ class MedicationAlarmSyncService implements SessionLifecycleHandler {
   }
 
   @override
+
+  /// Cancels every reminder on any session end, forced logouts included, so
+  /// drug names never show on the next user's lock screen.
   Future<void> onSessionEnded() async {
-    // Alarms are already wiped in AuthRepositoryImpl during logout,
+    try {
+      await _notifications.cancelAllReminders();
+    } catch (e) {
+      debugPrint('MedicationAlarmSyncService: Failed to cancel reminders: $e');
+    }
   }
 }

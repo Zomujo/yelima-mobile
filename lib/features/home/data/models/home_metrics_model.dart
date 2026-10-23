@@ -16,7 +16,7 @@ class HomeMetricsModel extends HomeMetricsEntity {
     String? bpSev;
     String? bgSev;
 
-    for (var vital in vitals) {
+    for (var vital in _newestFirst(vitals)) {
       final type = vital.vitalType.toLowerCase();
       final name = vital.vitalName.toLowerCase();
 
@@ -47,5 +47,18 @@ class HomeMetricsModel extends HomeMetricsEntity {
       bpSeverity: bpSev,
       bgSeverity: bgSev,
     );
+  }
+
+  /// Sorts readings newest first. Undated rows (server rows, already newest first) keep their order, after dated ones.
+  static List<VitalHistoryEntity> _newestFirst(
+      List<VitalHistoryEntity> vitals) {
+    final indexed = vitals.indexed.toList()
+      ..sort((a, b) {
+        final (ta, tb) = (a.$2.recordedAt, b.$2.recordedAt);
+        if (ta != null && tb != null && ta != tb) return tb.compareTo(ta);
+        if ((ta == null) != (tb == null)) return ta == null ? 1 : -1;
+        return a.$1.compareTo(b.$1);
+      });
+    return [for (final (_, v) in indexed) v];
   }
 }

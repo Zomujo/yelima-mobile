@@ -25,13 +25,15 @@ class HomeMetricsRemoteMutationSource implements IRemoteMutationSource {
     );
 
     if (action == 'saveVitalReading') {
-      await _apiClient.post(
+      final res = await _apiClient.post(
         '/api/v1/client/vital-histories/logs',
         data: payload,
         options: options,
       );
 
-      return entityId;
+      // The server replies with the new reading's id, so the local row can take it.
+      final serverId = res is Map ? res['data'] : null;
+      return serverId is String && serverId.isNotEmpty ? serverId : entityId;
     }
 
     throw Exception('Unknown action: $action');

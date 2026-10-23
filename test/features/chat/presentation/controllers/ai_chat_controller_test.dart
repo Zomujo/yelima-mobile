@@ -32,15 +32,16 @@ void main() {
     );
   }
 
-  /// The repository returns only `data.outResponse` (the bot reply), already
-  /// unwrapped by the datasource. `userId` is what the server sends in
-  /// `inResponse._id`, which the app drops today (CHAT-EC-13).
+  /// The repository returns the server's `data`: the user message and the bot reply.
   Map<String, dynamic> chatResponse({
     required String userId,
     required String botId,
     String botText = 'hi',
   }) {
-    return {'_id': botId, 'text': botText, 'suggestions': <String>[]};
+    return {
+      'inResponse': {'_id': userId},
+      'outResponse': {'_id': botId, 'text': botText, 'suggestions': <String>[]},
+    };
   }
 
   setUp(() {
@@ -102,9 +103,7 @@ void main() {
       expect(botEntries.single.value, 'updated reply');
 
       controller.dispose();
-    },
-        skip:
-            'Known bug CHAT-EC-07: bot reply is inserted, not upserted by id. Fix in P2.');
+    });
 
     test(
         'syncConversations defers while a send is in flight and runs afterward instead of racing it',
@@ -184,9 +183,7 @@ void main() {
       expect(controller.messages.any((m) => m.id == 'bot-1'), isTrue);
 
       controller.dispose();
-    },
-        skip:
-            'Known bug CHAT-EC-13: inResponse._id is dropped, user message keeps its uuid. Fix in P2.');
+    });
 
     test(
         'syncConversations defers while loadMoreMessages is in flight and runs afterward instead of racing it',
@@ -266,8 +263,6 @@ void main() {
           reason: 'pagination should proceed normally once the sync finishes');
 
       controller.dispose();
-    },
-        skip:
-            'Known bug CHAT-EC-05: async fold callbacks not awaited, late sync wipes the page. Fix in P2.');
+    });
   });
 }

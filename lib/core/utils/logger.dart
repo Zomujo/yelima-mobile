@@ -102,3 +102,8 @@ $color${_AnsiColors.bold}╔$divider╗
     debugPrint(output);
   }
 }
+
+/// Turns [debugPrint] into a no-op in release builds, so logs never carry health data or ids.
+void silenceDebugPrintInRelease({bool isRelease = kReleaseMode}) {
+  if (isRelease) debugPrint = (String? message, {int? wrapWidth}) {};
+}

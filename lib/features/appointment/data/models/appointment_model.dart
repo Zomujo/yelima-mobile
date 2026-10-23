@@ -15,7 +15,7 @@ class AppointmentModel extends AppointmentEntity {
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       appointmentDate: json['appointmentDate'] != null
-          ? DateTime.parse(json['appointmentDate'])
+          ? DateTime.parse(json['appointmentDate']).toLocal()
           : clock.now(),
       hostPersonnel: HostPersonnelModel.fromJson(json['hostPersonnel'] ?? {}),
     );

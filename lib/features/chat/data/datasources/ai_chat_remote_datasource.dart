@@ -4,8 +4,12 @@ import '../../../../core/api/i_remote_deletion.dart';
 
 abstract class AiChatRemoteDataSource implements IRemoteDeletionSource {
   Future<Map<String, dynamic>> fetchChats({required int page, int limit = 20});
+
+  /// Sends a message. Returns `{inResponse, outResponse}` (user and bot messages), or `{}` when empty.
   Future<Map<String, dynamic>> sendMessage(String message,
       {String? localChatId});
+
+  /// Sends a voice note. Same result shape as [sendMessage].
   Future<Map<String, dynamic>> sendAudioMessage(
       {required String filePath, String? localChatId});
   Future<Map<String, dynamic>?> getInitialMessage();
@@ -59,7 +63,7 @@ class AiChatRemoteDataSourceImpl implements AiChatRemoteDataSource {
         responseData['data']['outResponse'] == null) {
       return {};
     }
-    return responseData['data']['outResponse'];
+    return responseData['data'] as Map<String, dynamic>;
   }
 
   @override
@@ -89,7 +93,7 @@ class AiChatRemoteDataSourceImpl implements AiChatRemoteDataSource {
         responseData['data']['outResponse'] == null) {
       return {};
     }
-    return responseData['data']['outResponse'];
+    return responseData['data'] as Map<String, dynamic>;
   }
 
   @override

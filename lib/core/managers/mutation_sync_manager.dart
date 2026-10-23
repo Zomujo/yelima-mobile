@@ -160,8 +160,10 @@ class MutationSyncManager implements SessionLifecycleHandler {
             "Remapping offline ID ${mutation.entityId} to server ID $newServerId for ${mutation.entityType}");
 
         await _db.transaction(() async {
-          if (mutation.entityType == 'ai_chat_message') {
+          if (mutation.entityType == 'chat') {
             await _db.aiChatDao.updateMessageId(mutation.entityId, newServerId);
+          } else if (mutation.entityType == 'vital_history') {
+            await _db.vitalsDao.updateVitalId(mutation.entityId, newServerId);
           } else if (mutation.entityType == 'medication') {
             await _db.medicationsDao
                 .updateMedicationId(mutation.entityId, newServerId);
@@ -185,7 +187,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
       return didRemap ? _MutationOutcome.remapped : _MutationOutcome.resolved;
     } on ApiException catch (e) {
       if (e.code == '409' || e.code == '404' || e.code == '400') {
-        if (e.code == '404' && mutation.action == 'delete') {
+        if (e.code == '404' && mutation.action.startsWith('delete')) {
           debugPrint(
               "Mutation ${mutation.id} (DELETE) got 404. Item already deleted on server. Resolving.");
           await _db.pendingMutationsDao.removePendingMutation(mutation.id);

@@ -14,11 +14,13 @@ import 'dart:ui';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'core/services/monitoring_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/utils/time_zone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 
 Future<void> bootstrap(FirebaseOptions? firebaseOptions,
     {String? envFile}) async {
   WidgetsFlutterBinding.ensureInitialized();
+  silenceDebugPrintInRelease();
 
   // Apply system-wide UI overlay style.
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -36,8 +38,9 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
   // Initialize Monitoring Service (Crashlytics + Analytics)
   await MonitoringService.instance.initialize();
 
-  // Initialize timezone data required for scheduled notifications
+  // Initialize timezone data and the device zone, so reminders fire at local time.
   tz.initializeTimeZones();
+  await configureLocalTimeZone();
 
   // Initialize Notification Service (Push Notifications).
   await NotificationService.instance.initialize();

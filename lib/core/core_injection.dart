@@ -17,6 +17,7 @@ import 'controllers/locale_controller.dart';
 import 'managers/audio_player_manager.dart';
 import 'services/voice_recording_service.dart';
 import 'services/notification_service.dart';
+import 'services/monitoring_service.dart';
 import 'services/fcm_token_service.dart';
 import 'services/database_lifecycle_handler.dart';
 import 'services/fcm_lifecycle_handler.dart';
@@ -27,6 +28,7 @@ import '../features/chat/data/datasources/ai_chat_remote_mutation_source.dart';
 import '../features/medications/data/datasources/medication_remote_mutation_source.dart';
 import '../features/home/data/datasources/home_metrics_remote_mutation_source.dart';
 import '../features/symptoms/data/datasources/symptoms_remote_mutation_source.dart';
+import '../features/user/data/datasources/user_remote_mutation_source.dart';
 
 void initCore(GetIt sl) {
   // --- Core Infrastructure ---
@@ -54,6 +56,9 @@ void initCore(GetIt sl) {
   // Register Lifecycle Handlers with SessionLifecycleService
   sl.registerLazySingleton(() => DatabaseLifecycleHandler(sl())
     ..also((h) => sl<SessionLifecycleService>().register(h, priority: 10)));
+
+  sl<SessionLifecycleService>()
+      .register(MonitoringService.instance, priority: 5);
 
   sl.registerLazySingleton(() => FCMLifecycleHandler(
         connectivity: sl(),
@@ -85,6 +90,7 @@ void initCore(GetIt sl) {
   sl.registerLazySingleton(() => MedicationRemoteMutationSource(sl()));
   sl.registerLazySingleton(() => HomeMetricsRemoteMutationSource(sl()));
   sl.registerLazySingleton(() => SymptomsRemoteMutationSource(sl()));
+  sl.registerLazySingleton(() => UserRemoteMutationSource(sl()));
   sl.registerLazySingleton(() => MutationSyncManager(
         connectivityService: sl(),
         db: sl(),
@@ -93,6 +99,7 @@ void initCore(GetIt sl) {
           'medication': sl<MedicationRemoteMutationSource>(),
           'vital_history': sl<HomeMetricsRemoteMutationSource>(),
           'symptom': sl<SymptomsRemoteMutationSource>(),
+          'user_profile': sl<UserRemoteMutationSource>(),
         },
       )
         ..init()

@@ -68,9 +68,7 @@ void main() {
         () => dataSource.getAppointments(page: 1, pageSize: 3, filter: 'past'),
         throwsA(isA<ApiException>().having((e) => e.code, 'code', '500')),
       );
-    },
-        skip:
-            'Known bug APPT-EC-05: errors are rewrapped as ApiException(e.toString()). Fix in P2.');
+    });
 
     test('APPT-EC-05: an offline request surfaces as NetworkException',
         () async {
@@ -80,9 +78,7 @@ void main() {
         () => dataSource.getAppointments(page: 1, pageSize: 3, filter: 'past'),
         throwsA(isA<NetworkException>()),
       );
-    },
-        skip:
-            'Known bug APPT-EC-05: NetworkException is rewrapped as ApiException. Fix in P2.');
+    });
   });
 
   group('getNearestAppointment', () {
@@ -110,9 +106,7 @@ void main() {
       final result = await dataSource.getNearestAppointment();
 
       expect(result?.appointmentDate.isUtc, isFalse);
-    },
-        skip:
-            'Known bug APPT-EC-01: appointmentDate is parsed without toLocal(). Fix in P2.');
+    });
   });
 
   test('requestAppointment posts the note as a SCHEDULE request', () async {

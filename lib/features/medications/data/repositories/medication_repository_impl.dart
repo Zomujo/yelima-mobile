@@ -26,6 +26,7 @@ import '../models/update_medication_model.dart';
 import '../models/medication_detail_model.dart';
 import '../models/seeded_medication_list_response_model.dart';
 import 'package:clock/clock.dart';
+import '../../utils/medication_reminder_id.dart';
 
 class MedicationRepositoryImpl implements MedicationRepository {
   final MedicationRemoteDataSource remoteDataSource;
@@ -209,8 +210,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   AsyncResponse<void> confirmMedication(String medicationId, String section,
       {String? date}) async {
-    final effectiveDate =
-        date ?? clock.now().toIso8601String().split('T')[0];
+    final effectiveDate = date ?? clock.now().toIso8601String().split('T')[0];
 
     final meds = await localDataSource.getAllMedications();
     final target = meds
@@ -404,7 +404,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
     final hasPending = await localDataSource.hasPendingMutationsForEntity(id);
 
-    if (await connectivityService.isConnected && !id.contains('-') && !hasPending) {
+    if (await connectivityService.isConnected &&
+        !id.contains('-') &&
+        !hasPending) {
       try {
         final result = await remoteDataSource.getMedicationById(id);
 
@@ -512,7 +514,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   Future<void> _scheduleAlarmsForMeds(List<Medication> meds) async {
     for (final med in meds) {
       if (med.toBeTakenAt != null) {
-        final notifId = (med.id + med.section).hashCode;
+        final notifId = medicationReminderId(med.id, med.section);
         await notificationService.scheduleDailyReminder(
           id: notifId,
           title: 'Time for your medication!',
@@ -525,9 +527,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
   /// Helper to completely wipe all section alarms for a given medication ID.
   Future<void> _cancelAlarmsForMed(String medicationId) async {
-    final sections = ['MORNING', 'AFTERNOON', 'EVENING'];
+    // UNKNOWN rows come from the background list sync and get alarms too.
+    final sections = ['MORNING', 'AFTERNOON', 'EVENING', 'UNKNOWN'];
     for (final sec in sections) {
-      final notifId = (medicationId + sec).hashCode;
+      final notifId = medicationReminderId(medicationId, sec);
       await notificationService.cancelReminder(notifId);
     }
   }
