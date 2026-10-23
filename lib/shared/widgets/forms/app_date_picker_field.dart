@@ -34,24 +34,6 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
     _selectedDate = widget.initialDate;
   }
 
-  String _formatDate(DateTime date) {
-    String daySuffix(int day) {
-      if (day >= 11 && day <= 13) return 'th';
-      switch (day % 10) {
-        case 1:
-          return 'st';
-        case 2:
-          return 'nd';
-        case 3:
-          return 'rd';
-        default:
-          return 'th';
-      }
-    }
-
-    return '${date.day}${daySuffix(date.day)} ${context.l10n.monthNames[date.month - 1]} ${date.year}';
-  }
-
   void _showDatePicker() {
     DateTime tempPickedDate = _selectedDate ?? DateTime(1979, 8, 2);
 
@@ -157,7 +139,7 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
               children: [
                 AppText.bodyLarge(
                   _selectedDate != null
-                      ? _formatDate(_selectedDate!)
+                      ? context.l10n.longDate(_selectedDate!)
                       : (widget.hintText ?? ''),
                   color: _selectedDate != null
                       ? AppColors.slate800

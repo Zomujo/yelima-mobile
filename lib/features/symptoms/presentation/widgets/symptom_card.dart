@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// One symptom; long text expands on tap.
 class SymptomCard extends StatefulWidget {
   final String content;
 

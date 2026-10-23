@@ -1,10 +1,15 @@
-import 'package:fpdart/fpdart.dart';
+import '../../../../core/failures/app_failure.dart';
 import '../entities/symptom_entity.dart';
 
+/// Reported symptoms, saved on the phone first.
 abstract class SymptomsRepository {
-  Future<Either<String, String>> createSymptom(String description);
-  Future<Either<String, List<SymptomEntity>>> getSymptoms({int page = 1, int pageSize = 10});
-  Future<Either<String, SymptomEntity>> getSymptomById(String id);
-  Future<Either<String, void>> updateSymptom(String id, String description);
-  Future<Either<String, void>> deleteSymptom(String id);
+  /// Live symptoms on the phone.
+  Stream<List<SymptomEntity>> watchSymptoms();
+
+  /// Replaces the phone's symptoms with the server's, keeping unsent ones.
+  /// Skipped if the last refresh in this session was under 5 minutes ago, unless [force].
+  AsyncResult<void> refresh({bool force = false});
+
+  /// Reports a symptom and returns its id (a temporary one until it syncs).
+  AsyncResult<String> createSymptom(String description);
 }

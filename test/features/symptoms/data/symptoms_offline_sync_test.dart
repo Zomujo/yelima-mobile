@@ -30,7 +30,7 @@ void main() {
     connectivity = FakeConnectivity(online: false);
     session = SessionEpoch();
     repo = SymptomsRepositoryImpl(
-      remoteDataSource: SymptomsRemoteDataSourceImpl(apiClient: api.client),
+      remoteDataSource: SymptomsRemoteDataSource(apiClient: api.client),
       connectivityService: connectivity,
       db: db,
       session: session,
@@ -60,7 +60,7 @@ void main() {
           'rows': [serverSymptom('srv-1', 'Dizzy')]
         }));
 
-    await repo.getSymptoms();
+    await repo.refresh();
 
     expect((await storedIds()).toSet(), {offlineId, 'srv-1'});
   });
@@ -83,14 +83,14 @@ void main() {
       db: db,
       remoteSources: <String, IRemoteMutationSource>{
         'symptom': SymptomsRemoteMutationSource(
-            SymptomsRemoteDataSourceImpl(apiClient: api.client), db),
+            SymptomsRemoteDataSource(apiClient: api.client), db),
       },
     );
     await manager.onSessionStarted('user_1');
     await manager.triggerSync();
 
     expect(await storedIds(), ['srv-9'], reason: 'remapped from $offlineId');
-    await repo.getSymptoms();
+    await repo.refresh();
     expect(await storedIds(), ['srv-9']);
     manager.dispose();
   });
@@ -105,7 +105,7 @@ void main() {
         FakeReply.ok({
           'rows': [serverSymptom('a-1', 'A')]
         }));
-    await repo.getSymptoms();
+    await repo.refresh();
 
     await session.onSessionEnded();
     await db.delete(db.symptoms).go(); // logout wipe
@@ -115,8 +115,31 @@ void main() {
         FakeReply.ok({
           'rows': [serverSymptom('b-1', 'B')]
         }));
-    await repo.getSymptoms();
+    await repo.refresh();
 
     expect(await storedIds(), ['b-1']);
+  });
+
+  test('a second refresh within 5 minutes is skipped, unless forced', () async {
+    connectivity.online = true;
+    api.on('GET', path, FakeReply.ok({'rows': []}));
+
+    await repo.refresh();
+    await repo.refresh();
+    expect(api.sent('GET', path).length, 1);
+
+    await repo.refresh(force: true);
+    expect(api.sent('GET', path).length, 2);
+  });
+
+  test('online, a symptom gets its server id straight away', () async {
+    connectivity.online = true;
+    api.on('POST', path, FakeReply.ok('srv-1', status: 201));
+
+    final id = (await repo.createSymptom('Headache')).getOrElse((_) => '');
+
+    expect(id, 'srv-1');
+    expect(await storedIds(), ['srv-1']);
+    expect(await db.select(db.pendingMutations).get(), isEmpty);
   });
 }

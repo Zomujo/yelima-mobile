@@ -1,13 +1,15 @@
 import 'dart:convert';
+
 import '../../../../core/api/i_remote_mutation.dart';
-import 'symptoms_remote_data_source.dart';
 import '../../../../core/db/app_database.dart';
+import 'symptoms_remote_data_source.dart';
 
+/// Replays queued symptom reports to the server.
 class SymptomsRemoteMutationSource implements IRemoteMutationSource {
-  final SymptomsRemoteDataSource _remoteDataSource;
-  final AppDatabase _db;
+  SymptomsRemoteMutationSource(this._remote, this._db);
 
-  SymptomsRemoteMutationSource(this._remoteDataSource, this._db);
+  final SymptomsRemoteDataSource _remote;
+  final AppDatabase _db;
 
   @override
   Future<String?> syncMutation({
@@ -15,27 +17,12 @@ class SymptomsRemoteMutationSource implements IRemoteMutationSource {
     required String action,
     required String payloadJson,
     required DateTime createdAt,
-  }) async {
-    final payload = jsonDecode(payloadJson);
-
-    switch (action) {
-      case 'create':
-        final description = payload['description'] as String;
-        final res = await _remoteDataSource.createSymptom(description);
-        return res;
-
-      case 'update':
-        final description = payload['description'] as String;
-        await _remoteDataSource.updateSymptom(entityId, description);
-        return null;
-
-      case 'delete':
-        await _remoteDataSource.deleteSymptom(entityId);
-        return null;
-
-      default:
-        throw UnimplementedError('Unknown action $action for symptom');
+  }) {
+    if (action != 'create') {
+      throw UnimplementedError('Unknown action $action for symptom');
     }
+    // The server id replaces the temporary one.
+    return _remote.createSymptom(jsonDecode(payloadJson)['description']);
   }
 
   @override

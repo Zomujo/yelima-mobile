@@ -28,7 +28,7 @@ Future<void> init() async {
   initCore(sl);
 
   // --- Features ---
-  initSymptoms();
+  initSymptoms(sl);
   initAuth(sl);
   initUser(sl);
   initChat(sl);

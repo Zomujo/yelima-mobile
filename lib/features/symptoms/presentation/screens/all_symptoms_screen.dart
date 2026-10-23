@@ -9,6 +9,7 @@ import 'package:yelima/features/symptoms/presentation/widgets/report_symptom_mod
 import '../controllers/symptoms_controller.dart';
 import '../widgets/symptom_card.dart';
 
+/// Every reported symptom, grouped by day, with Add.
 class AllSymptomsScreen extends StatefulWidget {
   const AllSymptomsScreen({super.key});
 
@@ -28,8 +29,8 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<SymptomsController>();
-    final state = controller.state;
-    final groupedSymptoms = controller.groupedSymptoms;
+    final symptoms = controller.state.symptoms;
+    final byDay = controller.byDay;
 
     return Scaffold(
         body: Container(
@@ -40,7 +41,6 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Custom Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Row(
@@ -77,10 +77,8 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                 ],
               ),
             ),
-
-            // Content List
             Expanded(
-              child: state.isLoading && !state.isInitialized
+              child: symptoms == null
                   ? ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       itemCount: 3,
@@ -100,7 +98,7 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                         );
                       },
                     )
-                  : state.symptoms.isEmpty
+                  : symptoms.isEmpty
                       ? Center(
                           child: AppText.bodyMedium(
                             context.l10n.noSymptomsReported,
@@ -109,11 +107,9 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
-                          itemCount: groupedSymptoms.keys.length,
+                          itemCount: byDay.length,
                           itemBuilder: (context, index) {
-                            final dateKey =
-                                groupedSymptoms.keys.elementAt(index);
-                            final symptomsList = groupedSymptoms[dateKey]!;
+                            final (day, symptomsList) = byDay[index];
 
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +118,7 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                                   padding:
                                       const EdgeInsets.only(bottom: 8, top: 16),
                                   child: AppText.bodyMedium(
-                                    dateKey,
+                                    context.l10n.dayLabel(day),
                                     color: AppColors.textGrey,
                                   ),
                                 ),

@@ -1,33 +1,13 @@
 import 'package:equatable/equatable.dart';
+
 import '../../domain/entities/symptom_entity.dart';
 
+/// The reported symptoms; null until the phone's copy has loaded.
 class SymptomsState extends Equatable {
-  final bool isLoading;
-  final bool isInitialized;
-  final List<SymptomEntity> symptoms;
-  final String? error;
+  const SymptomsState({this.symptoms});
 
-  const SymptomsState({
-    this.isLoading = false,
-    this.isInitialized = false,
-    this.symptoms = const [],
-    this.error,
-  });
-
-  SymptomsState copyWith({
-    bool? isLoading,
-    bool? isInitialized,
-    List<SymptomEntity>? symptoms,
-    String? error,
-  }) {
-    return SymptomsState(
-      isLoading: isLoading ?? this.isLoading,
-      isInitialized: isInitialized ?? this.isInitialized,
-      symptoms: symptoms ?? this.symptoms,
-      error: error,
-    );
-  }
+  final List<SymptomEntity>? symptoms;
 
   @override
-  List<Object?> get props => [isLoading, isInitialized, symptoms, error];
+  List<Object?> get props => [symptoms];
 }

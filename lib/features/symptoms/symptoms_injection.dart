@@ -1,34 +1,23 @@
 import 'package:get_it/get_it.dart';
-import '../../core/api/api_client.dart';
+
+import '../../core/managers/mutation_sync_manager.dart';
 import 'data/datasources/symptoms_remote_data_source.dart';
+import 'data/datasources/symptoms_remote_mutation_source.dart';
 import 'data/repositories/symptoms_repository_impl.dart';
 import 'domain/repositories/symptoms_repository.dart';
 import 'presentation/controllers/symptoms_controller.dart';
-import '../../core/managers/mutation_sync_manager.dart';
-import 'data/datasources/symptoms_remote_mutation_source.dart';
 
-final sl = GetIt.instance;
-
-void initSymptoms() {
-  // Data sources
+/// Registers the symptoms feature.
+void initSymptoms(GetIt sl) {
   sl.registerLazySingleton<SymptomsRemoteDataSource>(
-    () => SymptomsRemoteDataSourceImpl(apiClient: sl<APIClient>()),
-  );
-
-  // Repository
-  sl.registerLazySingleton<SymptomsRepository>(
-    () => SymptomsRepositoryImpl(
-      remoteDataSource: sl(),
-      connectivityService: sl(),
-      db: sl(),
-      session: sl(),
-    ),
-  );
-
-  // Controllers
-  sl.registerFactory(
-    () => SymptomsController(repository: sl()),
-  );
+      () => SymptomsRemoteDataSource(apiClient: sl()));
+  sl.registerLazySingleton<SymptomsRepository>(() => SymptomsRepositoryImpl(
+        remoteDataSource: sl(),
+        connectivityService: sl(),
+        db: sl(),
+        session: sl(),
+      ));
+  sl.registerFactory(() => SymptomsController(repository: sl()));
 
   // Registered last: the source needs this feature's datasources above.
   sl<MutationSyncManager>()

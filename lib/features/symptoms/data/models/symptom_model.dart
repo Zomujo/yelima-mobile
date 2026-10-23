@@ -1,28 +1,19 @@
-import '../../domain/entities/symptom_entity.dart';
 import 'package:clock/clock.dart';
 
+import '../../domain/entities/symptom_entity.dart';
+
+/// A symptom as the server sends it.
 class SymptomModel extends SymptomEntity {
-  const SymptomModel({
-    required super.id,
-    required super.description,
-    required super.onsetDate,
-  });
+  const SymptomModel(
+      {required super.id,
+      required super.description,
+      required super.onsetDate});
 
-  factory SymptomModel.fromJson(Map<String, dynamic> json) {
-    return SymptomModel(
-      id: json['id'] ?? json['_id'] ?? '',
-      description: json['description'] ?? '',
-      onsetDate: json['onsetDate'] != null
-          ? DateTime.parse(json['onsetDate']).toLocal()
-          : clock.now(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'description': description,
-      'onsetDate': onsetDate.toUtc().toIso8601String(),
-    };
-  }
+  factory SymptomModel.fromJson(Map<String, dynamic> json) => SymptomModel(
+        id: json['id'] ?? json['_id'] ?? '',
+        description: json['description'] ?? '',
+        onsetDate: json['onsetDate'] == null
+            ? clock.now()
+            : DateTime.parse(json['onsetDate']).toLocal(),
+      );
 }

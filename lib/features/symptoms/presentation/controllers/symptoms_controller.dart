@@ -1,89 +1,56 @@
-import 'package:flutter/material.dart';
-import '../../../../core/utils/date_time_utils.dart';
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/failures/app_failure.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../../domain/entities/symptom_entity.dart';
 import '../../domain/repositories/symptoms_repository.dart';
-import '../../../../core/utils/custom_types.dart';
 import 'symptoms_state.dart';
 
+/// The reported symptoms, kept live from the phone and refreshed from the server.
 class SymptomsController extends ChangeNotifier with SafeNotifier {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies                  |
-  // --------------------------------------------------------------------------
+  SymptomsController({required SymptomsRepository repository})
+      : _repository = repository {
+    _sub = _repository
+        .watchSymptoms()
+        .listen((list) => state = SymptomsState(symptoms: list));
+  }
 
   final SymptomsRepository _repository;
+  late final StreamSubscription<List<SymptomEntity>> _sub;
 
   SymptomsState _state = const SymptomsState();
   SymptomsState get state => _state;
-
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle                |
-  // --------------------------------------------------------------------------
-
-  SymptomsController({
-    required SymptomsRepository repository,
-  }) : _repository = repository;
-
   set state(SymptomsState value) {
     if (_state == value) return;
     _state = value;
     notifyListeners();
   }
 
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                    |
-  // --------------------------------------------------------------------------
+  /// Refreshes from the server (at most every 5 minutes unless [force]).
+  Future<void> fetchSymptoms({bool force = false}) =>
+      _repository.refresh(force: force);
 
-  Future<void> fetchSymptoms({bool silent = false}) async {
-    if (!silent) {
-      state = state.copyWith(isLoading: true, error: null);
-    }
+  /// Reports a new symptom.
+  AsyncResult<String> createSymptom(String description) =>
+      _repository.createSymptom(description);
 
-    final result = await _repository.getSymptoms(page: 1, pageSize: 100);
-
-    result.fold(
-      (error) {
-        state =
-            state.copyWith(isLoading: false, error: error, isInitialized: true);
-      },
-      (symptoms) {
-        state = state.copyWith(
-          isLoading: false,
-          isInitialized: true,
-          symptoms: symptoms,
-          error: null,
-        );
-      },
-    );
-  }
-
-  /// Reports a new symptom and refreshes the list on success.
-  AsyncResponse<String> createSymptom(String description) async {
-    final result = await _repository.createSymptom(description);
-    if (result.isRight()) fetchSymptoms(silent: true);
-    return result;
-  }
-
-  // --------------------------------------------------------------------------
-  // |                                   Computed UI State                    |
-  // --------------------------------------------------------------------------
-
-  /// Returns symptoms grouped by date strings like "Today", "Yesterday", "10th July 2026"
-  Map<String, List<SymptomEntity>> get groupedSymptoms {
-    final Map<String, List<SymptomEntity>> groups = {};
-
-    // Sort symptoms descending by date
-    final sortedSymptoms = List<SymptomEntity>.from(state.symptoms)
+  /// Symptoms grouped by the day they started, newest day first.
+  List<(DateTime day, List<SymptomEntity> symptoms)> get byDay {
+    final sorted = [...?state.symptoms]
       ..sort((a, b) => b.onsetDate.compareTo(a.onsetDate));
-
-    for (var symptom in sortedSymptoms) {
-      final dateStr = DateTimeUtils.formatDate(symptom.onsetDate);
-      if (!groups.containsKey(dateStr)) {
-        groups[dateStr] = [];
-      }
-      groups[dateStr]!.add(symptom);
+    final groups = <DateTime, List<SymptomEntity>>{};
+    for (final s in sorted) {
+      final d = s.onsetDate;
+      groups.putIfAbsent(DateTime(d.year, d.month, d.day), () => []).add(s);
     }
+    return [for (final e in groups.entries) (e.key, e.value)];
+  }
 
-    return groups;
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }

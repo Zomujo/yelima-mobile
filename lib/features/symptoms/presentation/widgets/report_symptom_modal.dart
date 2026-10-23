@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:yelima/features/symptoms/presentation/controllers/symptoms_controller.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
+/// Asks how the patient feels and reports it as a symptom.
 class ReportSymptomModal extends StatefulWidget {
   const ReportSymptomModal({super.key});
 
@@ -37,12 +38,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
     final note = _controller.text.trim();
     if (note.length <= 5) return;
 
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-
+    setState(() => _isLoading = true);
     final controller = context.read<SymptomsController>();
     await runWithLoader(
       context,
@@ -62,7 +58,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
       isBottomSheet: false,
       onClose: context.removeModal,
       padding: const EdgeInsets.all(24),
-      showCloseButton: false, // We build our own close button
+      showCloseButton: false,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

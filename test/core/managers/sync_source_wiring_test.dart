@@ -68,7 +68,7 @@ void main() {
   test(
       'CORE-EC-04: the feature modules register a sync source for every queued type',
       () {
-    initSymptoms();
+    initSymptoms(sl);
     initUser(sl);
     initChat(sl);
     initVitals(sl);

@@ -74,7 +74,7 @@ class _MyAppState extends State<MyApp> {
             Provider<MutationSyncManager>.value(value: sl()),
             ChangeNotifierProvider(
                 create: (_) =>
-                    sl<SymptomsController>()..fetchSymptoms(silent: true)),
+                    sl<SymptomsController>()..fetchSymptoms()),
           ],
           child: Consumer<LocaleController>(
             builder: (context, localeController, child) {
