@@ -7,6 +7,7 @@ import 'package:yelima/core/extensions/context_extensions.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/features/symptoms/presentation/controllers/symptoms_controller.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class ReportSymptomModal extends StatefulWidget {
   const ReportSymptomModal({super.key});
@@ -42,17 +43,16 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
       });
     }
 
-    // Submit via backend
-    await context.read<SymptomsController>().createSymptom(context, note);
-
+    final controller = context.read<SymptomsController>();
+    await runWithLoader(
+      context,
+      message: context.l10n.reportingSymptom,
+      successMessage: context.l10n.symptomReported,
+      action: () => controller.createSymptom(note),
+    );
     if (!mounted) return;
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-
+    setState(() => _isLoading = false);
     context.removeModal();
   }
 

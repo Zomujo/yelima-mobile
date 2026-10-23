@@ -7,6 +7,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/validators.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class ForgotPasswordForm extends StatefulWidget {
   const ForgotPasswordForm({super.key});
@@ -62,12 +63,12 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
           onPressed: _isButtonEnabled
               ? () async {
                   FocusScope.of(context).unfocus();
-                  final success = await context
-                      .read<AuthController>()
-                      .sendPasswordResetEmail(
-                        context,
-                        _emailController.text.trim(),
-                      );
+                  final auth = context.read<AuthController>();
+                  final success = await runWithLoader(context,
+                      message: context.l10n.sendingResetLink,
+                      successMessage: context.l10n.resetLinkSent,
+                      action: () => auth.sendPasswordResetEmail(
+                          _emailController.text.trim()));
                   if (success && context.mounted) {
                     context.pop();
                   }

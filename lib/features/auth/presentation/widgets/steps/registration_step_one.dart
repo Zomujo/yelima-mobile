@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../user/presentation/controllers/user_controller.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/step_layout.dart';
@@ -84,22 +85,24 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
       }
     }
 
-    final response = await context.read<UserController>().updateBasicInfo(
-          context,
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          gender: _selectedGender!,
-          phoneNumber: phone,
-        );
+    final controller = context.read<UserController>();
+    final ok = await runWithLoader(
+      context,
+      message: context.l10n.savingDetails,
+      action: () => controller.updateBasicInfo(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        gender: _selectedGender!,
+        phoneNumber: phone,
+      ),
+    );
 
     if (mounted) {
       setState(() {
         _isSubmitting = false;
       });
 
-      if (response.isRight()) {
-        widget.onContinue();
-      }
+      if (ok) widget.onContinue();
     }
   }
 

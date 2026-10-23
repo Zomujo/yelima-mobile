@@ -12,11 +12,9 @@ class MockAuthController extends Mock implements AuthController {}
 void main() {
   late MockAuthController auth;
 
-  setUpAll(() => registerFallbackValue(FakeBuildContext()));
-
   setUp(() {
     auth = MockAuthController();
-    when(() => auth.signOut(any())).thenAnswer((_) async {});
+    when(() => auth.signOut()).thenAnswer((_) async => true);
   });
 
   Future<void> pumpScreen(WidgetTester tester, {required bool password}) async {
@@ -76,8 +74,6 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => auth.syncBeforeLogout()).called(1);
-    verify(() => auth.signOut(any())).called(1);
+    verify(() => auth.signOut()).called(1);
   });
 }
-
-class FakeBuildContext extends Fake implements BuildContext {}

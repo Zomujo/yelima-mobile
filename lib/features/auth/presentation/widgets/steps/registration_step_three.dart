@@ -8,6 +8,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../condition_selection_card.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class RegistrationStepThree extends StatefulWidget {
   const RegistrationStepThree({
@@ -33,14 +34,15 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
     super.initState();
     final user = context.read<UserController>().userEntity;
     if (user != null) {
-      if (user.conditions.contains('hypertension') && user.conditions.contains('diabetes')) {
+      if (user.conditions.contains('hypertension') &&
+          user.conditions.contains('diabetes')) {
         _selectedCondition = HealthConditionCategory.both;
       } else if (user.conditions.contains('hypertension')) {
         _selectedCondition = HealthConditionCategory.hypertension;
       } else if (user.conditions.contains('diabetes')) {
         _selectedCondition = HealthConditionCategory.diabetes;
       }
-      
+
       _hasConsented = user.hasConsented;
     }
   }
@@ -72,10 +74,13 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
 
     final controller = context.read<UserController>();
 
-    final response = await controller.updateHealthConditions(
+    final ok = await runWithLoader(
       context,
-      category: _selectedCondition,
-      consented: _hasConsented,
+      message: context.l10n.savingHealthConditions,
+      action: () => controller.updateHealthConditions(
+        category: _selectedCondition,
+        consented: _hasConsented,
+      ),
     );
 
     if (mounted) {
@@ -83,9 +88,7 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
         _isSubmitting = false;
       });
 
-      if (response.isRight()) {
-        widget.onContinue();
-      }
+      if (ok) widget.onContinue();
     }
   }
 
@@ -94,7 +97,9 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
     return StepLayout(
       title: context.l10n.whatAreYouLivingWith,
       subtitle: context.l10n.healthConditionsSubtitle,
-      continueText: _isSubmitting ? context.l10n.completingText : context.l10n.continueText,
+      continueText: _isSubmitting
+          ? context.l10n.completingText
+          : context.l10n.continueText,
       isContinueEnabled: _hasConsented,
       isSubmitting: _isSubmitting,
       onBack: widget.onBack,

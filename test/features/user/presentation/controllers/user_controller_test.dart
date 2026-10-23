@@ -15,7 +15,6 @@ class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 class MockUser extends Mock implements User {}
 
 void main() {
-  late StreamController<User?> authEvents;
   late MockUserRepository repo;
   late UserController controller;
   late StreamController<UserEntity?> profileWatch;
@@ -29,12 +28,13 @@ void main() {
     return u;
   }
 
+  // Login changes arrive from AuthController; not awaited, like stream events.
+  void emit(User? u) => controller.onUserChanged(u);
+
   setUp(() {
-    authEvents = StreamController<User?>();
     profileWatch = StreamController<UserEntity?>.broadcast();
     repo = MockUserRepository();
     auth = MockFirebaseAuth();
-    when(() => auth.authStateChanges()).thenAnswer((_) => authEvents.stream);
     when(() => repo.getCachedProfile(any())).thenAnswer(
         (i) async => profile(i.positionalArguments.first as String));
     when(() => repo.watchUserProfile(any()))
@@ -44,7 +44,6 @@ void main() {
 
   tearDown(() async {
     controller.dispose();
-    await authEvents.close();
     await profileWatch.close();
   });
 
@@ -52,7 +51,7 @@ void main() {
     when(() => repo.getUserProfile('a'))
         .thenAnswer((_) async => right(profile('a')));
 
-    authEvents.add(user('a'));
+    emit(user('a'));
     await pumpEventQueue();
 
     expect(controller.isInitialized, isTrue);
@@ -64,9 +63,9 @@ void main() {
     final late = Completer<Either<String, UserEntity?>>();
     when(() => repo.getUserProfile('a')).thenAnswer((_) => late.future);
 
-    authEvents.add(user('a'));
+    emit(user('a'));
     await pumpEventQueue();
-    authEvents.add(null);
+    emit(null);
     await pumpEventQueue();
     late.complete(right(profile('a')));
     await pumpEventQueue();
@@ -78,10 +77,10 @@ void main() {
       () async {
     when(() => repo.getUserProfile('a'))
         .thenAnswer((_) async => right(profile('a')));
-    authEvents.add(user('a'));
+    emit(user('a'));
     await pumpEventQueue();
 
-    authEvents.add(null);
+    emit(null);
     await pumpEventQueue();
     profileWatch.add(profile('a'));
     await pumpEventQueue();
@@ -100,7 +99,7 @@ void main() {
       when(() => repo.getUserProfile('a'))
           .thenAnswer((_) async => left('Offline user profile not found.'));
 
-      authEvents.add(user('a'));
+      emit(user('a'));
       await pumpEventQueue();
 
       expect(controller.isInitialized, isTrue);
@@ -111,7 +110,7 @@ void main() {
     test('a user with no profile yet is new, not unavailable', () async {
       when(() => repo.getUserProfile('a')).thenAnswer((_) async => right(null));
 
-      authEvents.add(user('a'));
+      emit(user('a'));
       await pumpEventQueue();
 
       expect(controller.profileUnavailable, isFalse);
@@ -122,7 +121,7 @@ void main() {
       when(() => auth.currentUser).thenReturn(u);
       when(() => repo.getUserProfile('a'))
           .thenAnswer((_) async => left('offline'));
-      authEvents.add(u);
+      emit(u);
       await pumpEventQueue();
 
       when(() => repo.getUserProfile('a'))
@@ -136,34 +135,13 @@ void main() {
     test('sign-out clears the flag', () async {
       when(() => repo.getUserProfile('a'))
           .thenAnswer((_) async => left('offline'));
-      authEvents.add(user('a'));
+      emit(user('a'));
       await pumpEventQueue();
 
-      authEvents.add(null);
+      emit(null);
       await pumpEventQueue();
 
       expect(controller.profileUnavailable, isFalse);
-    });
-  });
-
-  group('whenInitialized', () {
-    test('completes once the profile has loaded', () async {
-      when(() => repo.getUserProfile('a'))
-          .thenAnswer((_) async => right(profile('a')));
-      var done = false;
-      controller.whenInitialized().then((_) => done = true);
-
-      authEvents.add(user('a'));
-      await pumpEventQueue();
-
-      expect(done, isTrue);
-    });
-
-    test('gives up after the timeout instead of hanging', () async {
-      await expectLater(
-          controller.whenInitialized(timeout: const Duration(milliseconds: 10)),
-          completes);
-      expect(controller.isInitialized, isFalse);
     });
   });
 }

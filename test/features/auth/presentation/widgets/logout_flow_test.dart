@@ -9,17 +9,13 @@ import '../../../../helpers/pump_app.dart';
 
 class MockAuthController extends Mock implements AuthController {}
 
-class FakeBuildContext extends Fake implements BuildContext {}
-
 void main() {
   late MockAuthController auth;
   late List<({int waiting, int failed})> results;
 
-  setUpAll(() => registerFallbackValue(FakeBuildContext()));
-
   setUp(() {
     auth = MockAuthController();
-    when(() => auth.signOut(any())).thenAnswer((_) async {});
+    when(() => auth.signOut()).thenAnswer((_) async => true);
     when(() => auth.syncBeforeLogout())
         .thenAnswer((_) async => results.removeAt(0));
   });
@@ -44,7 +40,7 @@ void main() {
     await startLogout(tester);
 
     expect(find.text('Changes not sent'), findsNothing);
-    verify(() => auth.signOut(any())).called(1);
+    verify(() => auth.signOut()).called(1);
   });
 
   testWidgets(
@@ -62,7 +58,7 @@ void main() {
         find.text(
             "1 of them was rejected by the server, so trying again won't send it."),
         findsOneWidget);
-    verifyNever(() => auth.signOut(any()));
+    verifyNever(() => auth.signOut());
   });
 
   testWidgets('"Log out anyway" logs out', (tester) async {
@@ -72,7 +68,7 @@ void main() {
     await tester.tap(find.text('Log out anyway'));
     await tester.pumpAndSettle();
 
-    verify(() => auth.signOut(any())).called(1);
+    verify(() => auth.signOut()).called(1);
   });
 
   testWidgets('"Try again" syncs again and logs out once nothing is left',
@@ -84,6 +80,6 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => auth.syncBeforeLogout()).called(2);
-    verify(() => auth.signOut(any())).called(1);
+    verify(() => auth.signOut()).called(1);
   });
 }

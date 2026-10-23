@@ -1,11 +1,8 @@
 import 'dart:async';
-import '../../../../core/extensions/l10n_extension.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 
-import '../../../../shared/widgets/loaders/global_async_loader.dart';
-import '../../../../shared/utils/app_snackbar.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../../../../core/utils/custom_types.dart';
@@ -21,7 +18,6 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
   final UserRepository _repository;
   final FirebaseAuth _firebaseAuth;
-  StreamSubscription<User?>? _authStateSubscription;
   StreamSubscription<UserEntity?>? _userProfileSubscription;
 
   // --------------------------------------------------------------------------
@@ -32,9 +28,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     required UserRepository repository,
     required FirebaseAuth firebaseAuth,
   })  : _repository = repository,
-        _firebaseAuth = firebaseAuth {
-    _initializeAuthStateListener();
-  }
+        _firebaseAuth = firebaseAuth;
 
   UserState _state = const UserState();
   UserState get state => _state;
@@ -50,45 +44,42 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
   int _userEventStamp = 0;
 
-  void _initializeAuthStateListener() {
-    _authStateSubscription?.cancel();
-    _authStateSubscription =
-        _firebaseAuth.authStateChanges().listen((user) async {
-      final stamp = ++_userEventStamp;
+  /// Loads the signed-in user's profile, or clears it on sign-out. Called by AuthController.
+  Future<void> onUserChanged(User? user) async {
+    final stamp = ++_userEventStamp;
 
-      if (user == null) {
-        await _userProfileSubscription?.cancel();
-        _userProfileSubscription = null;
-        state = state.copyWith(
-            userEntity: null, isInitialized: true, profileUnavailable: false);
-      } else {
-        state = state.copyWith(isInitialized: false);
+    if (user == null) {
+      await _userProfileSubscription?.cancel();
+      _userProfileSubscription = null;
+      state = state.copyWith(
+          userEntity: null, isInitialized: true, profileUnavailable: false);
+    } else {
+      state = state.copyWith(isInitialized: false);
 
-        UserEntity? resolvedProfile =
-            await _repository.getCachedProfile(user.uid);
+      UserEntity? resolvedProfile =
+          await _repository.getCachedProfile(user.uid);
+      if (stamp != _userEventStamp) return;
+
+      var unavailable = false;
+      if (resolvedProfile == null) {
+        final result = await _repository.getUserProfile(user.uid).timeout(
+              const Duration(seconds: 6),
+              onTimeout: () => left('Profile fetch timed out'),
+            );
         if (stamp != _userEventStamp) return;
-
-        var unavailable = false;
-        if (resolvedProfile == null) {
-          final result = await _repository.getUserProfile(user.uid).timeout(
-                const Duration(seconds: 6),
-                onTimeout: () => left('Profile fetch timed out'),
-              );
-          if (stamp != _userEventStamp) return;
-          result.fold(
-            // Couldn't load it: don't treat a registered user as new.
-            (error) => unavailable = true,
-            (profile) => resolvedProfile = profile,
-          );
-        }
-
-        state = state.copyWith(
-            userEntity: resolvedProfile,
-            isInitialized: true,
-            profileUnavailable: unavailable);
-        if (!unavailable) refreshProfile(user);
+        result.fold(
+          // Couldn't load it: don't treat a registered user as new.
+          (error) => unavailable = true,
+          (profile) => resolvedProfile = profile,
+        );
       }
-    });
+
+      state = state.copyWith(
+          userEntity: resolvedProfile,
+          isInitialized: true,
+          profileUnavailable: unavailable);
+      if (!unavailable) refreshProfile(user);
+    }
   }
 
   /// Refreshes the user profile from the network and subscribes to offline changes.
@@ -137,35 +128,13 @@ class UserController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  /// Completes once the profile has loaded (or failed to), or after [timeout].
-  Future<void> whenInitialized(
-      {Duration timeout = const Duration(seconds: 8)}) async {
-    if (isInitialized) return;
-    final done = Completer<void>();
-    void check() {
-      if (isInitialized && !done.isCompleted) done.complete();
-    }
-
-    addListener(check);
-    try {
-      await done.future.timeout(timeout, onTimeout: () {});
-    } finally {
-      removeListener(check);
-    }
-  }
-
   /// The profile couldn't be loaded, so the app shows a retry screen instead of registration.
   bool get profileUnavailable => _state.profileUnavailable;
 
   @override
   void dispose() {
-    _authStateSubscription?.cancel();
     _userProfileSubscription?.cancel();
     super.dispose();
-  }
-
-  void _showError(BuildContext context, String message) {
-    AppSnackBar.showError(context, message: message);
   }
 
   /// Marks a tutorial as completed by the user
@@ -194,8 +163,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Updates the user's basic information such as name and gender.
-  AsyncResponse<void> updateBasicInfo(
-    BuildContext context, {
+  AsyncResponse<void> updateBasicInfo({
     required String firstName,
     required String lastName,
     required String gender,
@@ -203,8 +171,6 @@ class UserController extends ChangeNotifier with SafeNotifier {
   }) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) return left('User not authenticated');
-
-    GlobalAsyncLoader.show(context, message: context.l10n.savingDetails);
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
@@ -227,11 +193,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
       operationName: 'updateBasicInfo',
     );
 
-    GlobalAsyncLoader.hide();
-
     return response.fold(
       (error) {
-        _showError(context, error);
         return left(error);
       },
       (_) {
@@ -257,12 +220,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Updates the user's date of birth.
-  AsyncResponse<void> updateDob(BuildContext context,
-      {required DateTime dob}) async {
+  AsyncResponse<void> updateDob({required DateTime dob}) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) return left('User not authenticated');
-
-    GlobalAsyncLoader.show(context, message: context.l10n.savingDob);
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
@@ -280,11 +240,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
       operationName: 'updateDob',
     );
 
-    GlobalAsyncLoader.hide();
-
     return response.fold(
       (error) {
-        _showError(context, error);
         return left(error);
       },
       (_) {
@@ -307,8 +264,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
   /// Finalizes onboarding by updating the user's health conditions and consent.
   /// Saves health conditions and transitions to facility selection.
-  AsyncResponse<void> updateHealthConditions(
-    BuildContext context, {
+  AsyncResponse<void> updateHealthConditions({
     required HealthConditionCategory? category,
     required bool consented,
   }) async {
@@ -316,9 +272,6 @@ class UserController extends ChangeNotifier with SafeNotifier {
     if (user == null || state.userEntity == null || category == null) {
       return left('Invalid user state or missing category');
     }
-
-    GlobalAsyncLoader.show(context,
-        message: context.l10n.savingHealthConditions);
 
     final conditionsPayload = category.toBackendPayload;
 
@@ -339,11 +292,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
       operationName: 'updateHealthConditions',
     );
 
-    GlobalAsyncLoader.hide();
-
     return response.fold(
       (error) {
-        _showError(context, error);
         return left(error);
       },
       (_) {
@@ -364,16 +314,13 @@ class UserController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Finalizes onboarding by updating the user's facility and calling the onboard API.
-  AsyncResponse<void> submitOnboarding(
-    BuildContext context, {
+  AsyncResponse<void> submitOnboarding({
     required String facilityId,
   }) async {
     final user = _firebaseAuth.currentUser;
     if (user == null || state.userEntity == null) {
       return left('Invalid user state');
     }
-
-    GlobalAsyncLoader.show(context, message: context.l10n.completingProfile);
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
@@ -422,11 +369,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
       operationName: 'submitOnboarding',
     );
 
-    GlobalAsyncLoader.hide();
-
     return response.fold(
       (error) {
-        _showError(context, error);
         return left(error);
       },
       (_) {

@@ -1,11 +1,9 @@
 import 'dart:async';
-import '../../../../core/extensions/l10n_extension.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/managers/token_manager.dart';
 
 import '../../../../shared/widgets/loaders/global_async_loader.dart';
-import '../../../../shared/utils/app_snackbar.dart';
 
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
@@ -15,6 +13,8 @@ import '../../../../core/db/app_database.dart';
 import '../../../../core/services/session_expiry.dart';
 import 'auth_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/utils/custom_types.dart';
 
 class AuthController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
@@ -30,8 +30,8 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   final SessionExpiry _sessionExpiry;
   final TokenManager? _tokenManagerOverride;
 
-  /// Waits for the user's profile to load, so the sign-in loader stays up until then.
-  final Future<void> Function() _waitForProfile;
+  /// Loads or clears the user's profile; the one place login changes reach the profile.
+  final Future<void> Function(User? user) _onUserChanged;
   TokenManager get _tokens => _tokenManagerOverride ?? TokenManager();
   StreamSubscription<User?>? _authStateSubscription;
 
@@ -48,9 +48,9 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     required AppDatabase db,
     required SessionExpiry sessionExpiry,
     TokenManager? tokenManager,
-    Future<void> Function()? waitForProfile,
+    Future<void> Function(User? user)? onUserChanged,
   })  : _repository = repository,
-        _waitForProfile = waitForProfile ?? (() async {}),
+        _onUserChanged = onUserChanged ?? ((_) async {}),
         _tokenManagerOverride = tokenManager,
         _sessionExpiry = sessionExpiry,
         _sessionLifecycleService = sessionLifecycleService,
@@ -80,6 +80,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     _authStateSubscription =
         _firebaseAuth.authStateChanges().listen((user) async {
       if (user == null) {
+        await _onUserChanged(null);
         _updateState(_state.copyWith(
           currentUser: null,
           isInitialized: true,
@@ -96,13 +97,14 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         ));
 
         try {
-          await _refreshAuthAndProfile(user);
+          // The profile loads before auth reports ready, so the router never sees a half-loaded login.
+          await Future.wait(
+              [_refreshAuthAndProfile(user), _onUserChanged(user)]);
         } finally {
           _updateState(_state.copyWith(
             isInitialSyncInProgress: false,
             isInitialized: true,
           ));
-          await _waitForProfile();
           GlobalAsyncLoader.hide();
         }
       }
@@ -166,118 +168,47 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     super.dispose();
   }
 
-  Future<void> signIn(
-      BuildContext context, String email, String password) async {
-    if (_state.isAuthLoading) return;
+  /// Signs in with email. An empty error means the user cancelled.
+  AsyncResponse<void> signIn(String email, String password) =>
+      _authenticate(() => _repository.signIn(email, password));
+
+  /// Creates an email account. An empty error means the user cancelled.
+  AsyncResponse<void> register(String email, String password) =>
+      _authenticate(() => _repository.register(email, password));
+
+  /// Signs in with Google. An empty error means the user cancelled.
+  AsyncResponse<void> signInWithGoogle() =>
+      _authenticate(_repository.signInWithGoogle);
+
+  /// Signs in with Apple. An empty error means the user cancelled.
+  AsyncResponse<void> signInWithApple() =>
+      _authenticate(_repository.signInWithApple);
+
+  /// Runs one sign-in attempt at a time; success is finished by the auth listener.
+  AsyncResponse<void> _authenticate(AsyncResponse<void> Function() call) async {
+    if (_state.isAuthLoading) return left('');
     _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: context.l10n.signingIn);
-
-    final result = await _repository.signIn(email, password);
+    final result = await call();
     _updateState(_state.copyWith(isAuthLoading: false));
-
-    result.fold(
-      (error) {
-        GlobalAsyncLoader.hide();
-        _showError(context, error);
-      },
-      (_) {},
-    );
+    return result.mapLeft(_userFacing);
   }
 
-  Future<void> register(
-      BuildContext context, String email, String password) async {
-    if (_state.isAuthLoading) return;
-    _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: context.l10n.creatingAccount);
+  /// Sends a password reset link.
+  AsyncResponse<void> sendPasswordResetEmail(String email) async =>
+      (await _repository.sendPasswordResetEmail(email)).mapLeft(_userFacing);
 
-    final result = await _repository.register(email, password);
-    _updateState(_state.copyWith(isAuthLoading: false));
-
-    result.fold(
-      (error) {
-        GlobalAsyncLoader.hide();
-        _showError(context, error);
-      },
-      (_) {},
-    );
-  }
-
-  Future<void> signInWithGoogle(BuildContext context) async {
-    if (_state.isAuthLoading) return;
-    _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: context.l10n.continuingWithGoogle);
-
-    final result = await _repository.signInWithGoogle();
-    _updateState(_state.copyWith(isAuthLoading: false));
-
-    result.fold(
-      (error) {
-        GlobalAsyncLoader.hide();
-        _showError(context, error);
-      },
-      (_) {},
-    );
-  }
-
-  Future<void> signInWithApple(BuildContext context) async {
-    if (_state.isAuthLoading) return;
-    _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: context.l10n.continuingWithApple);
-
-    final result = await _repository.signInWithApple();
-    _updateState(_state.copyWith(isAuthLoading: false));
-
-    result.fold(
-      (error) {
-        GlobalAsyncLoader.hide();
-        _showError(context, error);
-      },
-      (_) {},
-    );
-  }
-
-  Future<bool> sendPasswordResetEmail(
-      BuildContext context, String email) async {
-    final l10n = context.l10n;
-    GlobalAsyncLoader.show(context, message: l10n.sendingResetLink);
-    final result = await _repository.sendPasswordResetEmail(email);
-    GlobalAsyncLoader.hide();
-
-    return result.fold(
-      (error) {
-        _showError(context, error);
-        return false;
-      },
-      (_) {
-        AppSnackBar.showSuccess(context, message: l10n.resetLinkSent);
-        return true;
-      },
-    );
-  }
-
-  Future<void> deleteAccount(BuildContext context, {String? password}) async {
-    final l10n = context.l10n;
-    GlobalAsyncLoader.show(context, message: l10n.deletingAccount);
+  /// Deletes the account; on success the session ends and local data is wiped.
+  AsyncResponse<void> deleteAccount({String? password}) async {
     final result = await _repository.deleteAccount(password: password);
-
-    await result.fold(
-      (error) async {
-        GlobalAsyncLoader.hide();
-        _showError(context, error);
-      },
-      (_) async {
-        try {
-          await _sessionLifecycleService.endSession();
-        } catch (e) {
-          debugPrint('Error ending session on delete: $e');
-        }
-        await _tokens.clearTokens();
-        GlobalAsyncLoader.hide();
-        if (context.mounted) {
-          AppSnackBar.showSuccess(context, message: l10n.accountDeleted);
-        }
-      },
-    );
+    if (result.isRight()) {
+      try {
+        await _sessionLifecycleService.endSession();
+      } catch (e) {
+        debugPrint('Error ending session on delete: $e');
+      }
+      await _tokens.clearTokens();
+    }
+    return result.mapLeft(_userFacing);
   }
 
   /// Tries to send queued changes, then reports what a logout would still lose.
@@ -298,11 +229,8 @@ class AuthController extends ChangeNotifier with SafeNotifier {
 
   /// Logs out: ends the session (FCM token, reminders, wipe), then signs out of Firebase.
   /// Callers warn about unsynced changes first (see `logOutWithSyncCheck`).
-  /// Firebase sign-out only happens once the wipe really emptied the database.
-  Future<void> signOut(BuildContext context) async {
-    final l10n = context.l10n;
-    GlobalAsyncLoader.show(context, message: l10n.signingOut);
-
+  /// Returns false, still signed in, if the wipe didn't empty the database.
+  Future<bool> signOut() async {
     try {
       await _sessionLifecycleService.endSession();
     } catch (e) {
@@ -315,35 +243,20 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     } catch (e) {
       debugPrint('Retrying the wipe failed: $e');
     }
-    if (await _db.hasAnyRows().catchError((_) => true)) {
-      GlobalAsyncLoader.hide();
-      AppSnackBar.showError(context.mounted ? context : null,
-          message: l10n.logoutFailed);
-      return;
-    }
+    if (await _db.hasAnyRows().catchError((_) => true)) return false;
 
     final result = await _repository.signOut();
     await _tokens.clearTokens();
-
-    GlobalAsyncLoader.hide();
-
-    result.fold(
-      (error) => _showError(context.mounted ? context : null, error),
-      (_) {
-        AppSnackBar.showSuccess(context.mounted ? context : null,
-            message: l10n.signedOut);
-      },
-    );
+    return result.isRight();
   }
 
-  void _showError(BuildContext? context, String message) {
-    if (message == 'User cancelled the operation.' ||
-        message == 'Sign in cancelled' ||
-        message == 'Apple sign-in cancelled' ||
-        message == 'Re-authentication was cancelled.') {
-      return; // Silent failure for user cancellations
-    }
-    AppSnackBar.showError(context != null && context.mounted ? context : null,
-        message: message);
-  }
+  /// Hides user cancellations: they come back as an empty error.
+  String _userFacing(String message) => const {
+        'User cancelled the operation.',
+        'Sign in cancelled',
+        'Apple sign-in cancelled',
+        'Re-authentication was cancelled.',
+      }.contains(message)
+          ? ''
+          : message;
 }

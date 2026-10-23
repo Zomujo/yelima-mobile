@@ -8,6 +8,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/loaders/global_async_loader.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
 import '../controllers/auth_controller.dart';
+import 'package:yelima/shared/utils/app_snackbar.dart';
 
 /// What the user picked in the "changes not sent" warning.
 enum UnsyncedChoice { tryAgain, logOutAnyway, cancel }
@@ -30,7 +31,15 @@ Future<void> logOutWithSyncCheck(BuildContext context) async {
     if (choice == UnsyncedChoice.logOutAnyway) break;
     if (choice != UnsyncedChoice.tryAgain) return;
   }
-  await auth.signOut(host());
+  GlobalAsyncLoader.show(host(), message: l10n.signingOut);
+  final signedOut = await auth.signOut();
+  GlobalAsyncLoader.hide();
+  if (signedOut) {
+    AppSnackBar.showSuccess(null, message: l10n.signedOut);
+  } else {
+    // The wipe didn't finish, so the user stays signed in and can try again.
+    AppSnackBar.showError(null, message: l10n.logoutFailed);
+  }
 }
 
 /// Warns that a logout would lose [waiting] + [failed] unsynced changes.

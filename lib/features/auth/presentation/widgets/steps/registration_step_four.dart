@@ -9,6 +9,7 @@ import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class RegistrationStepFour extends StatefulWidget {
   const RegistrationStepFour({
@@ -67,9 +68,11 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
     });
 
     final userController = context.read<UserController>();
-    final response = await userController.submitOnboarding(
+    final ok = await runWithLoader(
       context,
-      facilityId: _selectedFacility!.id,
+      message: context.l10n.completingProfile,
+      action: () =>
+          userController.submitOnboarding(facilityId: _selectedFacility!.id),
     );
 
     if (mounted) {
@@ -77,9 +80,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
         _isSubmitting = false;
       });
 
-      if (response.isRight()) {
-        widget.onContinue();
-      }
+      if (ok) widget.onContinue();
     }
   }
 

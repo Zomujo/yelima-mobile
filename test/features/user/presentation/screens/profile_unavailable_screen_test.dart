@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
@@ -13,13 +12,9 @@ class MockUserController extends Mock implements UserController {}
 
 class MockAuthController extends Mock implements AuthController {}
 
-class FakeBuildContext extends Fake implements BuildContext {}
-
 void main() {
   late MockUserController users;
   late MockAuthController auth;
-
-  setUpAll(() => registerFallbackValue(FakeBuildContext()));
 
   setUp(() {
     users = MockUserController();
@@ -29,7 +24,7 @@ void main() {
     when(() => users.retryProfile()).thenAnswer((_) async {});
     when(() => auth.syncBeforeLogout())
         .thenAnswer((_) async => (waiting: 0, failed: 0));
-    when(() => auth.signOut(any())).thenAnswer((_) async {});
+    when(() => auth.signOut()).thenAnswer((_) async => true);
   });
 
   Future<void> pumpScreen(WidgetTester tester) => tester.pumpApp(
@@ -55,6 +50,6 @@ void main() {
     await tester.tap(find.text('Log Out'));
     await tester.pumpAndSettle();
 
-    verify(() => auth.signOut(any())).called(1);
+    verify(() => auth.signOut()).called(1);
   });
 }

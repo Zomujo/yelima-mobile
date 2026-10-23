@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/db/app_database.dart';
@@ -14,7 +13,6 @@ import 'package:yelima/features/auth/domain/repositories/auth_repository.dart';
 import 'package:yelima/features/auth/presentation/controllers/auth_controller.dart';
 
 import '../../../../helpers/fakes.dart';
-import '../../../../helpers/pump_app.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -49,6 +47,21 @@ void main() {
   late MockFirebaseAuth auth;
   late MockTokens tokens;
 
+  AuthController build(
+          {AppDatabase? database,
+          Future<void> Function(User?)? onUserChanged}) =>
+      AuthController(
+        repository: repo,
+        sessionLifecycleService: session,
+        firebaseAuth: auth,
+        connectivity: connectivity,
+        syncManager: sync,
+        db: database ?? db,
+        sessionExpiry: expiry,
+        tokenManager: tokens,
+        onUserChanged: onUserChanged,
+      );
+
   setUp(() {
     authEvents = StreamController<User?>.broadcast();
     auth = MockFirebaseAuth();
@@ -67,16 +80,7 @@ void main() {
     connectivity = FakeConnectivity();
     db = testDb();
 
-    controller = AuthController(
-      repository: repo,
-      sessionLifecycleService: session,
-      firebaseAuth: auth,
-      connectivity: connectivity,
-      syncManager: sync,
-      db: db,
-      sessionExpiry: expiry,
-      tokenManager: tokens,
-    );
+    controller = build();
   });
 
   tearDown(() async {
@@ -115,6 +119,26 @@ void main() {
     await signOutEvent();
 
     expect(calls, ['end']);
+  });
+
+  test('login changes reach the profile before auth reports ready', () async {
+    final u = MockUser();
+    when(() => u.uid).thenReturn('uid-1');
+    when(() => u.reload()).thenAnswer((_) async {});
+    when(() => auth.currentUser).thenReturn(u);
+    final seen = <(String?, bool)>[];
+    late final AuthController c;
+    c = build(
+        onUserChanged: (user) async => seen.add((user?.uid, c.isInitialized)));
+    addTearDown(c.dispose);
+
+    authEvents.add(u);
+    await pumpEventQueue();
+    expect(c.isInitialized, isTrue);
+    authEvents.add(null);
+    await pumpEventQueue();
+
+    expect(seen, [('uid-1', false), (null, true)]);
   });
 
   group('session expiry', () {
@@ -191,41 +215,24 @@ void main() {
       expect((left.waiting, left.failed), (0, 0));
     });
 
-    testWidgets(
-        'signs out of Firebase once the session ended and the data is gone',
-        (tester) async {
+    test('signs out of Firebase once the session ended and the data is gone',
+        () async {
       when(() => repo.signOut()).thenAnswer((_) async => right(null));
-      await tester.pumpApp(const SizedBox());
-      final context = tester.element(find.byType(Scaffold));
 
-      await tester.runAsync(() => controller.signOut(context));
-
+      expect(await controller.signOut(), isTrue);
       expect(calls, contains('end'));
       verify(() => repo.signOut()).called(1);
     });
 
-    testWidgets('CORE-EC-03: if the wipe fails, the user stays signed in',
-        (tester) async {
+    test('CORE-EC-03: if the wipe fails, the user stays signed in', () async {
       final stuck = StuckDb();
       addTearDown(stuck.close);
       await stuck.pendingMutationsDao.queueMutation(
           entityId: 'a', entityType: 'symptom', action: 'create', payload: {});
-      final c = AuthController(
-        repository: repo,
-        sessionLifecycleService: session,
-        firebaseAuth: auth,
-        connectivity: connectivity,
-        syncManager: sync,
-        db: stuck,
-        sessionExpiry: expiry,
-        tokenManager: tokens,
-      );
+      final c = build(database: stuck);
       addTearDown(c.dispose);
-      await tester.pumpApp(const SizedBox());
-      final context = tester.element(find.byType(Scaffold));
 
-      await tester.runAsync(() => c.signOut(context));
-
+      expect(await c.signOut(), isFalse);
       verifyNever(() => repo.signOut());
     });
   });

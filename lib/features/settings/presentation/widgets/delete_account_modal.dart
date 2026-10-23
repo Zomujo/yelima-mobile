@@ -7,6 +7,7 @@ import '../../../../shared/widgets/modals/app_modal.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/router/router.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class DeleteAccountModal extends StatefulWidget {
   const DeleteAccountModal({super.key});
@@ -104,8 +105,11 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
                           final host =
                               rootNavigatorKey.currentContext ?? context;
                           Navigator.of(context).pop();
-                          await controller.deleteAccount(host,
-                              password: password);
+                          await runWithLoader(host,
+                              message: host.l10n.deletingAccount,
+                              successMessage: host.l10n.accountDeleted,
+                              action: () =>
+                                  controller.deleteAccount(password: password));
                         }
                       : null,
                 ),

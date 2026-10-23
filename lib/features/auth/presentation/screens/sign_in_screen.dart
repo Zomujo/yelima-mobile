@@ -11,6 +11,7 @@ import '../widgets/auth_divider.dart';
 import '../widgets/forms/sign_in_form.dart';
 import '../widgets/terms_and_privacy_text.dart';
 import '../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
@@ -33,7 +34,11 @@ class SignInScreen extends StatelessWidget {
                   text: context.l10n.signInWithGoogle,
                   onPressed: isLoading
                       ? null
-                      : () => authController.signInWithGoogle(context),
+                      : () => runWithLoader(context,
+                          message: context.l10n.continuingWithGoogle,
+                          action: authController.signInWithGoogle,
+                          // The auth listener hides it once the profile has loaded.
+                          keepLoaderOnSuccess: true),
                 ),
                 const SizedBox(height: 16),
                 // SocialAuthButton(

@@ -32,6 +32,6 @@ void initAuth(GetIt sl) {
         db: sl(),
         sessionExpiry: sl(),
         // Resolved lazily, so creating AuthController doesn't create UserController early.
-        waitForProfile: () => sl<UserController>().whenInitialized(),
+        onUserChanged: (user) => sl<UserController>().onUserChanged(user),
       ));
 }

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/utils/date_time_utils.dart';
-import '../../../../shared/widgets/loaders/global_async_loader.dart';
-import '../../../../shared/utils/app_snackbar.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../../domain/entities/symptom_entity.dart';
 import '../../domain/repositories/symptoms_repository.dart';
+import '../../../../core/utils/custom_types.dart';
 import 'symptoms_state.dart';
 
 class SymptomsController extends ChangeNotifier with SafeNotifier {
@@ -59,24 +57,11 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  Future<void> createSymptom(BuildContext context, String description) async {
-    final l10n = context.l10n;
-    GlobalAsyncLoader.show(context, message: l10n.reportingSymptom);
-
+  /// Reports a new symptom and refreshes the list on success.
+  AsyncResponse<String> createSymptom(String description) async {
     final result = await _repository.createSymptom(description);
-
-    GlobalAsyncLoader.hide();
-
-    result.fold(
-      (error) {
-        AppSnackBar.showError(context, message: error);
-      },
-      (id) {
-        AppSnackBar.showSuccess(context, message: l10n.symptomReported);
-        // Refresh the list to show the new symptom
-        fetchSymptoms(silent: true);
-      },
-    );
+    if (result.isRight()) fetchSymptoms(silent: true);
+    return result;
   }
 
   // --------------------------------------------------------------------------

@@ -6,6 +6,7 @@ import '../../../../../core/utils/validators.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({
@@ -95,11 +96,13 @@ class _SignUpFormState extends State<SignUpForm> {
           onPressed: (_isButtonEnabled && !widget.isAuthLoading)
               ? () {
                   FocusScope.of(context).unfocus();
-                  context.read<AuthController>().register(
-                        context,
-                        _emailController.text.trim(),
-                        _passwordController.text,
-                      );
+                  final auth = context.read<AuthController>();
+                  runWithLoader(context,
+                      message: context.l10n.creatingAccount,
+                      // The auth listener hides it once the profile has loaded.
+                      keepLoaderOnSuccess: true,
+                      action: () => auth.register(_emailController.text.trim(),
+                          _passwordController.text));
                 }
               : null,
           width: double.infinity,

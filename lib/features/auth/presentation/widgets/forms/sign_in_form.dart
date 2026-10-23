@@ -8,6 +8,7 @@ import '../../../../../core/router/route_paths.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class SignInForm extends StatefulWidget {
   const SignInForm({
@@ -117,11 +118,13 @@ class _SignInFormState extends State<SignInForm> {
           onPressed: (_isButtonEnabled && !widget.isAuthLoading)
               ? () {
                   FocusScope.of(context).unfocus();
-                  context.read<AuthController>().signIn(
-                        context,
-                        _emailController.text.trim(),
-                        _passwordController.text,
-                      );
+                  final auth = context.read<AuthController>();
+                  runWithLoader(context,
+                      message: context.l10n.signingIn,
+                      // The auth listener hides it once the profile has loaded.
+                      keepLoaderOnSuccess: true,
+                      action: () => auth.signIn(_emailController.text.trim(),
+                          _passwordController.text));
                 }
               : null,
           width: double.infinity,

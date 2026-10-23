@@ -8,6 +8,7 @@ import '../../../../../shared/widgets/forms/app_date_picker_field.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
 import 'package:clock/clock.dart';
+import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class RegistrationStepTwo extends StatefulWidget {
   const RegistrationStepTwo({
@@ -105,19 +106,19 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
       finalDob = _selectedDate!;
     }
 
-    final response = await context.read<UserController>().updateDob(
-          context,
-          dob: finalDob,
-        );
+    final controller = context.read<UserController>();
+    final ok = await runWithLoader(
+      context,
+      message: context.l10n.savingDob,
+      action: () => controller.updateDob(dob: finalDob),
+    );
 
     if (mounted) {
       setState(() {
         _isSubmitting = false;
       });
 
-      if (response.isRight()) {
-        widget.onContinue();
-      }
+      if (ok) widget.onContinue();
     }
   }
 
