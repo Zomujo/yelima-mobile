@@ -10,6 +10,7 @@ import 'package:yelima/features/user/presentation/widgets/registration/condition
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
+/// Registration step 3: conditions and consent to store health data.
 class RegistrationStepThree extends StatefulWidget {
   const RegistrationStepThree({
     super.key,
@@ -27,69 +28,31 @@ class RegistrationStepThree extends StatefulWidget {
 class _RegistrationStepThreeState extends State<RegistrationStepThree> {
   HealthConditionCategory? _selectedCondition;
   bool _hasConsented = false;
-  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     final user = context.read<UserController>().userEntity;
-    if (user != null) {
-      if (user.conditions.contains('hypertension') &&
-          user.conditions.contains('diabetes')) {
-        _selectedCondition = HealthConditionCategory.both;
-      } else if (user.conditions.contains('hypertension')) {
-        _selectedCondition = HealthConditionCategory.hypertension;
-      } else if (user.conditions.contains('diabetes')) {
-        _selectedCondition = HealthConditionCategory.diabetes;
-      }
-
-      _hasConsented = user.hasConsented;
-    }
+    _selectedCondition = HealthConditionCategory.from(user?.conditions ?? []);
+    _hasConsented = user?.hasConsented ?? false;
   }
 
-  void _toggleCondition(HealthConditionCategory condition) {
-    setState(() {
-      if (_selectedCondition == condition) {
-        _selectedCondition = null;
-      } else {
-        _selectedCondition = condition;
-      }
-    });
-  }
+  void _toggleCondition(HealthConditionCategory condition) => setState(() =>
+      _selectedCondition = _selectedCondition == condition ? null : condition);
 
-  void _handleContinue() async {
-    if (!_hasConsented || _isSubmitting) return;
-
-    if (_selectedCondition == null) {
+  Future<void> _continue() async {
+    final category = _selectedCondition;
+    if (category == null) {
       AppSnackBar.showError(context,
           message: context.l10n.pleaseSelectCondition);
       return;
     }
-
-    FocusScope.of(context).unfocus();
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    final controller = context.read<UserController>();
-
-    final ok = await runWithLoader(
-      context,
-      message: context.l10n.savingHealthConditions,
-      action: () => controller.updateHealthConditions(
-        category: _selectedCondition,
-        consented: _hasConsented,
-      ),
-    );
-
-    if (mounted) {
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      if (ok) widget.onContinue();
-    }
+    final users = context.read<UserController>();
+    final saved = await runWithLoader(context,
+        message: context.l10n.savingHealthConditions,
+        action: () => users.updateHealthConditions(
+            category: category, consented: _hasConsented));
+    if (saved && mounted) widget.onContinue();
   }
 
   @override
@@ -97,13 +60,9 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
     return StepLayout(
       title: context.l10n.whatAreYouLivingWith,
       subtitle: context.l10n.healthConditionsSubtitle,
-      continueText: _isSubmitting
-          ? context.l10n.completingText
-          : context.l10n.continueText,
       isContinueEnabled: _hasConsented,
-      isSubmitting: _isSubmitting,
       onBack: widget.onBack,
-      onContinue: _handleContinue,
+      onContinue: _continue,
       child: Column(
         children: [
           ConditionSelectionCard(

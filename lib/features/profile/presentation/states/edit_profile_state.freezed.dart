@@ -18,7 +18,6 @@ mixin _$EditProfileState {
   String get firstName;
   String get lastName;
   String? get gender;
-  bool get isSaving;
   bool get hasChanged;
   bool get isButtonEnabled;
 
@@ -40,8 +39,6 @@ mixin _$EditProfileState {
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
             (identical(other.gender, gender) || other.gender == gender) &&
-            (identical(other.isSaving, isSaving) ||
-                other.isSaving == isSaving) &&
             (identical(other.hasChanged, hasChanged) ||
                 other.hasChanged == hasChanged) &&
             (identical(other.isButtonEnabled, isButtonEnabled) ||
@@ -49,12 +46,12 @@ mixin _$EditProfileState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, firstName, lastName, gender,
-      isSaving, hasChanged, isButtonEnabled);
+  int get hashCode => Object.hash(
+      runtimeType, firstName, lastName, gender, hasChanged, isButtonEnabled);
 
   @override
   String toString() {
-    return 'EditProfileState(firstName: $firstName, lastName: $lastName, gender: $gender, isSaving: $isSaving, hasChanged: $hasChanged, isButtonEnabled: $isButtonEnabled)';
+    return 'EditProfileState(firstName: $firstName, lastName: $lastName, gender: $gender, hasChanged: $hasChanged, isButtonEnabled: $isButtonEnabled)';
   }
 }
 
@@ -68,7 +65,6 @@ abstract mixin class $EditProfileStateCopyWith<$Res> {
       {String firstName,
       String lastName,
       String? gender,
-      bool isSaving,
       bool hasChanged,
       bool isButtonEnabled});
 }
@@ -89,7 +85,6 @@ class _$EditProfileStateCopyWithImpl<$Res>
     Object? firstName = null,
     Object? lastName = null,
     Object? gender = freezed,
-    Object? isSaving = null,
     Object? hasChanged = null,
     Object? isButtonEnabled = null,
   }) {
@@ -106,10 +101,6 @@ class _$EditProfileStateCopyWithImpl<$Res>
           ? _self.gender
           : gender // ignore: cast_nullable_to_non_nullable
               as String?,
-      isSaving: null == isSaving
-          ? _self.isSaving
-          : isSaving // ignore: cast_nullable_to_non_nullable
-              as bool,
       hasChanged: null == hasChanged
           ? _self.hasChanged
           : hasChanged // ignore: cast_nullable_to_non_nullable
@@ -129,7 +120,6 @@ class _EditProfileState implements EditProfileState {
       {this.firstName = '',
       this.lastName = '',
       this.gender,
-      this.isSaving = false,
       this.hasChanged = false,
       this.isButtonEnabled = false});
 
@@ -141,9 +131,6 @@ class _EditProfileState implements EditProfileState {
   final String lastName;
   @override
   final String? gender;
-  @override
-  @JsonKey()
-  final bool isSaving;
   @override
   @JsonKey()
   final bool hasChanged;
@@ -169,8 +156,6 @@ class _EditProfileState implements EditProfileState {
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
             (identical(other.gender, gender) || other.gender == gender) &&
-            (identical(other.isSaving, isSaving) ||
-                other.isSaving == isSaving) &&
             (identical(other.hasChanged, hasChanged) ||
                 other.hasChanged == hasChanged) &&
             (identical(other.isButtonEnabled, isButtonEnabled) ||
@@ -178,12 +163,12 @@ class _EditProfileState implements EditProfileState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, firstName, lastName, gender,
-      isSaving, hasChanged, isButtonEnabled);
+  int get hashCode => Object.hash(
+      runtimeType, firstName, lastName, gender, hasChanged, isButtonEnabled);
 
   @override
   String toString() {
-    return 'EditProfileState(firstName: $firstName, lastName: $lastName, gender: $gender, isSaving: $isSaving, hasChanged: $hasChanged, isButtonEnabled: $isButtonEnabled)';
+    return 'EditProfileState(firstName: $firstName, lastName: $lastName, gender: $gender, hasChanged: $hasChanged, isButtonEnabled: $isButtonEnabled)';
   }
 }
 
@@ -199,7 +184,6 @@ abstract mixin class _$EditProfileStateCopyWith<$Res>
       {String firstName,
       String lastName,
       String? gender,
-      bool isSaving,
       bool hasChanged,
       bool isButtonEnabled});
 }
@@ -220,7 +204,6 @@ class __$EditProfileStateCopyWithImpl<$Res>
     Object? firstName = null,
     Object? lastName = null,
     Object? gender = freezed,
-    Object? isSaving = null,
     Object? hasChanged = null,
     Object? isButtonEnabled = null,
   }) {
@@ -237,10 +220,6 @@ class __$EditProfileStateCopyWithImpl<$Res>
           ? _self.gender
           : gender // ignore: cast_nullable_to_non_nullable
               as String?,
-      isSaving: null == isSaving
-          ? _self.isSaving
-          : isSaving // ignore: cast_nullable_to_non_nullable
-              as bool,
       hasChanged: null == hasChanged
           ? _self.hasChanged
           : hasChanged // ignore: cast_nullable_to_non_nullable

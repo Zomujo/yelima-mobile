@@ -1,6 +1,7 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+/// Close button, progress bar and "step X of Y" badge.
 class RegistrationAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final int currentStep;
@@ -22,7 +23,6 @@ class RegistrationAppBar extends StatelessWidget
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
-            // Close Button
             GestureDetector(
               onTap: onClose,
               child: Container(
@@ -41,8 +41,6 @@ class RegistrationAppBar extends StatelessWidget
               ),
             ),
             const SizedBox(width: 16),
-
-            // Progress Bar
             Expanded(
               child: Row(
                 children: List.generate(totalSteps, (index) {
@@ -64,18 +62,16 @@ class RegistrationAppBar extends StatelessWidget
               ),
             ),
             const SizedBox(width: 16),
-
-            // Step Indicator Badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFD1FCE3), // Mint green
+                color: const Color(0xFFD1FCE3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '$currentStep of $totalSteps',
                 style: const TextStyle(
-                  color: Color(0xFF059669), // Dark emerald green text
+                  color: Color(0xFF059669),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),

@@ -1,30 +1,24 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/managers/mutation_sync_manager.dart';
 import 'data/datasources/user_remote_data_source.dart';
+import 'data/datasources/user_remote_mutation_source.dart';
 import 'data/repositories/user_repository_impl.dart';
 import 'domain/repositories/user_repository.dart';
 import 'presentation/controllers/user_controller.dart';
-import '../../core/managers/mutation_sync_manager.dart';
-import 'data/datasources/user_remote_mutation_source.dart';
 
+/// Registers the user feature.
 void initUser(GetIt sl) {
-  // Data sources
-  sl.registerLazySingleton<UserRemoteDataSource>(() => UserRemoteDataSource(
-        firebaseAuth: sl(),
-        apiClient: sl(),
-      ));
-
-  // Repositories
+  sl.registerLazySingleton<UserRemoteDataSource>(
+      () => UserRemoteDataSource(firebaseAuth: sl(), apiClient: sl()));
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(
         remoteDataSource: sl(),
         connectivityService: sl(),
         db: sl(),
         session: sl(),
       ));
-
-  // State Management
   sl.registerLazySingleton<UserController>(
-      () => UserController(repository: sl(), firebaseAuth: sl()));
+      () => UserController(repository: sl()));
 
   // Registered last: the source needs this feature's datasources above.
   sl<MutationSyncManager>()

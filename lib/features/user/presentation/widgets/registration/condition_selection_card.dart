@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 
+/// A selectable card for one health condition.
 class ConditionSelectionCard extends StatelessWidget {
   final String title;
   final String subtitle;

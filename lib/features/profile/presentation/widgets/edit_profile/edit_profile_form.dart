@@ -8,6 +8,7 @@ import '../../../../user/presentation/controllers/user_controller.dart';
 import '../../controllers/edit_profile_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Name and gender fields of the edit-profile screen.
 class EditProfileForm extends StatefulWidget {
   const EditProfileForm({super.key});
 
@@ -73,7 +74,7 @@ class _EditProfileFormState extends State<EditProfileForm> {
         AppText.labelLarge(
           context.l10n.gender,
           fontWeight: FontWeight.w400,
-          color: const Color(0xFF6A7282), // Slate 700
+          color: const Color(0xFF6A7282),
         ),
         const SizedBox(height: 8),
         Selector<EditProfileController, String?>(

@@ -9,7 +9,10 @@ import 'package:yelima/shared/widgets/forms/app_form_field.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:clock/clock.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
+import 'package:yelima/shared/utils/app_snackbar.dart';
+import 'package:yelima/features/user/domain/entities/user_entity.dart';
 
+/// Registration step 2: date of birth, or age.
 class RegistrationStepTwo extends StatefulWidget {
   const RegistrationStepTwo({
     super.key,
@@ -26,7 +29,6 @@ class RegistrationStepTwo extends StatefulWidget {
 
 class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
   DateTime? _selectedDate;
-  bool _isSubmitting = false;
   bool _isEnteringAge = false;
   final _ageController = TextEditingController();
 
@@ -34,11 +36,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
   void initState() {
     super.initState();
 
-    final user = context.read<UserController>().userEntity;
-    if (user != null && user.dateOfBirth != null) {
-      _selectedDate = user.dateOfBirth;
-      _isEnteringAge = false;
-    }
+    _selectedDate = context.read<UserController>().userEntity?.dateOfBirth;
 
     _ageController.addListener(() {
       if (_isEnteringAge) setState(() {});
@@ -51,75 +49,26 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
     super.dispose();
   }
 
-  bool get _isFormValid {
-    if (_isEnteringAge) {
-      final ageText = _ageController.text;
-      if (ageText.isEmpty) return false;
-      final age = int.tryParse(ageText);
-      if (age == null) return false;
-      return age >= 18;
-    } else {
-      if (_selectedDate == null) return false;
-
-      // 18+ Age validation
-      final today = clock.now();
-      var age = today.year - _selectedDate!.year;
-      if (today.month < _selectedDate!.month ||
-          (today.month == _selectedDate!.month &&
-              today.day < _selectedDate!.day)) {
-        age--;
-      }
-
-      return age >= 18;
-    }
+  /// The entered date of birth, or one estimated from the entered age.
+  DateTime? get _dob {
+    if (!_isEnteringAge) return _selectedDate;
+    final age = int.tryParse(_ageController.text);
+    return age == null ? null : DateTime(clock.now().year - age, 1, 1);
   }
 
-  void _handleContinue() async {
-    if (!_isFormValid || _isSubmitting) {
-      if (!_isEnteringAge && _selectedDate != null) {
-        // Form is invalid despite having a date, meaning they are under 18
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.ageRequirementSnackBar)),
-        );
-      } else if (_isEnteringAge && _ageController.text.isNotEmpty) {
-        final age = int.tryParse(_ageController.text);
-        if (age != null && age < 18) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.l10n.ageRequirementSnackBar)),
-          );
-        }
-      }
+  Future<void> _continue() async {
+    final dob = _dob;
+    if (dob == null) return;
+    if (yearsSince(dob) < 18) {
+      AppSnackBar.showError(context,
+          message: context.l10n.ageRequirementSnackBar);
       return;
     }
-
     FocusScope.of(context).unfocus();
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    DateTime finalDob;
-    if (_isEnteringAge) {
-      final age = int.parse(_ageController.text);
-      finalDob = DateTime(clock.now().year - age, 1, 1);
-    } else {
-      finalDob = _selectedDate!;
-    }
-
-    final controller = context.read<UserController>();
-    final ok = await runWithLoader(
-      context,
-      message: context.l10n.savingDob,
-      action: () => controller.updateDob(dob: finalDob),
-    );
-
-    if (mounted) {
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      if (ok) widget.onContinue();
-    }
+    final users = context.read<UserController>();
+    final saved = await runWithLoader(context,
+        message: context.l10n.savingDob, action: () => users.updateDob(dob));
+    if (saved && mounted) widget.onContinue();
   }
 
   @override
@@ -127,12 +76,9 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
     return StepLayout(
       title: context.l10n.whenWereYouBorn,
       subtitle: context.l10n.dobSubtitle,
-      continueText:
-          _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
-      isContinueEnabled: _isFormValid,
-      isSubmitting: _isSubmitting,
+      isContinueEnabled: _dob != null,
       onBack: widget.onBack,
-      onContinue: _handleContinue,
+      onContinue: _continue,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

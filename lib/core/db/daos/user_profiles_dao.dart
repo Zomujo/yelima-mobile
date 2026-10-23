@@ -23,6 +23,18 @@ class UserProfilesDao extends DatabaseAccessor<AppDatabase>
     return into(userProfiles).insertOnConflictUpdate(profile);
   }
 
+  /// Writes only the columns present in [changes], creating the row first if needed.
+  Future<void> patchProfile(String id, UserProfilesCompanion changes) =>
+      transaction(() async {
+        await into(userProfiles).insert(
+            UserProfilesCompanion.insert(
+                id: id,
+                email: changes.email.present ? changes.email.value : ''),
+            mode: InsertMode.insertOrIgnore);
+        await (update(userProfiles)..where((t) => t.id.equals(id)))
+            .write(changes);
+      });
+
   Future<void> deleteProfile(String id) {
     return (delete(userProfiles)..where((t) => t.id.equals(id))).go();
   }

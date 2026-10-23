@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/options_block.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/router/route_paths.dart';
 import '../../../auth/presentation/widgets/logout_modal.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../shared/utils/app_snackbar.dart';
@@ -16,6 +17,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
+/// The profile tab: patient details and account options.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -62,8 +64,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       key: AppTutorialKeys.profileAvatarKey,
                     ),
                     const SizedBox(height: 40),
-
-                    // Options Blocks
                     StreamBuilder<bool>(
                         stream: ConnectivityService().onNetworkInterfaceChanged,
                         initialData: true,
@@ -77,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 label: context.l10n.editProfile,
                                 icon: Iconsax.profile_circle,
                                 onTap: isOnline
-                                    ? () => context.push('/edit-profile')
+                                    ? () => context.push(RoutePaths.editProfile)
                                     : () => AppSnackBar.showError(context,
                                         message:
                                             context.l10n.onlineToEditProfile),
@@ -85,12 +85,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               OptionBlockItem(
                                 label: context.l10n.settings,
                                 icon: Iconsax.setting_2,
-                                onTap: () => context.push('/settings'),
+                                onTap: () => context.push(RoutePaths.settings),
                               ),
                             ],
                           );
                         }),
-
                     OptionsBlock(
                       key: AppTutorialKeys.profileHealthSummaryOptionsKey,
                       title: context.l10n.healthSummary,
@@ -98,29 +97,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         OptionBlockItem(
                           label: context.l10n.conditions,
                           icon: Iconsax.health,
-                          onTap: () => context.push('/conditions'),
+                          onTap: () => context.push(RoutePaths.healthProfile),
                         ),
                       ],
                     ),
-
                     OptionsBlock(
                       key: AppTutorialKeys.profileLanguageOptionsKey,
                       title: context.l10n.language,
                       blockItems: [
                         OptionBlockItem(
-                          label: (() {
-                            final currentLangCode = context
-                                    .watch<LocaleController>()
-                                    .locale
-                                    ?.languageCode ??
-                                'en';
-                            return switch (currentLangCode) {
-                              'tw' => context.l10n.akanTwi,
-                              'ee' => context.l10n.ewe,
-                              'ga' => context.l10n.ga,
-                              _ => context.l10n.english,
-                            };
-                          })(),
+                          label: context.l10n.languageName(context
+                                  .watch<LocaleController>()
+                                  .locale
+                                  ?.languageCode ??
+                              'en'),
                           icon: Iconsax.language_square,
                           trailing: const Icon(Icons.arrow_forward_ios,
                               size: 16, color: AppColors.slate500),
@@ -130,7 +120,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-
                     OptionsBlock(
                       key: AppTutorialKeys.profileSystemOptionsKey,
                       title: context.l10n.system,
@@ -146,7 +135,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-
                     SizedBox(height: AppSizes.bottomNavClearance(context)),
                   ],
                 ),

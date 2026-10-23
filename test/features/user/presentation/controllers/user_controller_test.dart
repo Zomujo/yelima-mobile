@@ -1,47 +1,43 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/features/auth/domain/entities/auth_user.dart';
+import 'package:yelima/features/user/domain/entities/profile_changes.dart';
 import 'package:yelima/features/user/domain/entities/user_entity.dart';
 import 'package:yelima/features/user/domain/repositories/user_repository.dart';
 import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 
 class MockUserRepository extends Mock implements UserRepository {}
 
-class MockFirebaseAuth extends Mock implements FirebaseAuth {}
-
-class MockUser extends Mock implements User {}
-
 void main() {
+  const ama = AuthUser(uid: 'a', email: 'a@example.com');
   late MockUserRepository repo;
-  late UserController controller;
   late StreamController<UserEntity?> profileWatch;
-  late MockFirebaseAuth auth;
+  late UserController controller;
 
-  UserEntity profile(String id) => UserEntity(id: id, email: '$id@example.com');
+  UserEntity profile(String id,
+          [RegistrationStatus status = RegistrationStatus.personalDetails]) =>
+      UserEntity(id: id, email: '$id@example.com', registrationStatus: status);
 
-  MockUser user(String uid) {
-    final u = MockUser();
-    when(() => u.uid).thenReturn(uid);
-    return u;
-  }
-
-  // Login changes arrive from AuthController; not awaited, like stream events.
-  void emit(User? u) =>
-      controller.onUserChanged(u == null ? null : AuthUser(uid: u.uid));
+  setUpAll(() {
+    registerFallbackValue(const ProfileChanges());
+    registerFallbackValue(profile('x'));
+  });
 
   setUp(() {
     profileWatch = StreamController<UserEntity?>.broadcast();
     repo = MockUserRepository();
-    auth = MockFirebaseAuth();
     when(() => repo.getCachedProfile(any())).thenAnswer(
         (i) async => profile(i.positionalArguments.first as String));
-    when(() => repo.watchUserProfile(any()))
-        .thenAnswer((_) => profileWatch.stream);
-    controller = UserController(repository: repo, firebaseAuth: auth);
+    when(() => repo.fetchProfile(any()))
+        .thenAnswer((i) async => right(profile(i.positionalArguments.first)));
+    when(() => repo.watchProfile(any())).thenAnswer((_) => profileWatch.stream);
+    when(() => repo.updateProfile(any(), any()))
+        .thenAnswer((_) async => right(null));
+    controller = UserController(repository: repo);
   });
 
   tearDown(() async {
@@ -49,12 +45,14 @@ void main() {
     await profileWatch.close();
   });
 
-  test('loads the cached profile when a user signs in', () async {
-    when(() => repo.getUserProfile('a'))
-        .thenAnswer((_) async => right(profile('a')));
-
-    emit(user('a'));
+  // Login changes arrive from AuthController; not awaited, like stream events.
+  Future<void> emit(AuthUser? user) async {
+    controller.onUserChanged(user);
     await pumpEventQueue();
+  }
+
+  test('loads the cached profile when a user signs in', () async {
+    await emit(ama);
 
     expect(controller.isInitialized, isTrue);
     expect(controller.userEntity?.id, 'a');
@@ -62,13 +60,11 @@ void main() {
 
   test('ACC-EC-01: a profile refresh that lands after sign-out is dropped',
       () async {
-    final late = Completer<Either<String, UserEntity?>>();
-    when(() => repo.getUserProfile('a')).thenAnswer((_) => late.future);
+    final late = Completer<Either<AppFailure, UserEntity?>>();
+    when(() => repo.fetchProfile('a')).thenAnswer((_) => late.future);
 
-    emit(user('a'));
-    await pumpEventQueue();
-    emit(null);
-    await pumpEventQueue();
+    await emit(ama);
+    await emit(null);
     late.complete(right(profile('a')));
     await pumpEventQueue();
 
@@ -77,13 +73,8 @@ void main() {
 
   test('ACC-EC-03: sign-out stops watching the previous user\'s profile',
       () async {
-    when(() => repo.getUserProfile('a'))
-        .thenAnswer((_) async => right(profile('a')));
-    emit(user('a'));
-    await pumpEventQueue();
-
-    emit(null);
-    await pumpEventQueue();
+    await emit(ama);
+    await emit(null);
     profileWatch.add(profile('a'));
     await pumpEventQueue();
 
@@ -95,14 +86,12 @@ void main() {
       when(() => repo.getCachedProfile(any())).thenAnswer((_) async => null);
     });
 
-    test(
-        'offline with no cached profile flags it, instead of looking like a new user',
+    test('offline with no cached profile flags it, instead of looking new',
         () async {
-      when(() => repo.getUserProfile('a'))
-          .thenAnswer((_) async => left('Offline user profile not found.'));
+      when(() => repo.fetchProfile('a'))
+          .thenAnswer((_) async => left(const NetworkFailure()));
 
-      emit(user('a'));
-      await pumpEventQueue();
+      await emit(ama);
 
       expect(controller.isInitialized, isTrue);
       expect(controller.profileUnavailable, isTrue);
@@ -110,23 +99,19 @@ void main() {
     });
 
     test('a user with no profile yet is new, not unavailable', () async {
-      when(() => repo.getUserProfile('a')).thenAnswer((_) async => right(null));
+      when(() => repo.fetchProfile('a')).thenAnswer((_) async => right(null));
 
-      emit(user('a'));
-      await pumpEventQueue();
+      await emit(ama);
 
       expect(controller.profileUnavailable, isFalse);
     });
 
     test('retry loads the profile and clears the flag', () async {
-      final u = user('a');
-      when(() => auth.currentUser).thenReturn(u);
-      when(() => repo.getUserProfile('a'))
-          .thenAnswer((_) async => left('offline'));
-      emit(u);
-      await pumpEventQueue();
+      when(() => repo.fetchProfile('a'))
+          .thenAnswer((_) async => left(const NetworkFailure()));
+      await emit(ama);
 
-      when(() => repo.getUserProfile('a'))
+      when(() => repo.fetchProfile('a'))
           .thenAnswer((_) async => right(profile('a')));
       await controller.retryProfile();
 
@@ -135,15 +120,75 @@ void main() {
     });
 
     test('sign-out clears the flag', () async {
-      when(() => repo.getUserProfile('a'))
-          .thenAnswer((_) async => left('offline'));
-      emit(user('a'));
-      await pumpEventQueue();
-
-      emit(null);
-      await pumpEventQueue();
+      when(() => repo.fetchProfile('a'))
+          .thenAnswer((_) async => left(const NetworkFailure()));
+      await emit(ama);
+      await emit(null);
 
       expect(controller.profileUnavailable, isFalse);
+    });
+  });
+
+  group('saving', () {
+    ProfileChanges sent() =>
+        verify(() => repo.updateProfile('a', captureAny())).captured.last
+            as ProfileChanges;
+
+    test('ACC-EC-04: a profile edit never sends a registration status',
+        () async {
+      await emit(ama);
+
+      await controller.updateName(firstName: 'Akua', lastName: 'Mensah');
+
+      final changes = sent();
+      expect(changes.firstName, 'Akua');
+      expect(changes.registrationStatus, isNull);
+      expect(controller.userEntity?.firstName, 'Akua');
+    });
+
+    test('registration never goes backwards', () async {
+      when(() => repo.getCachedProfile('a'))
+          .thenAnswer((_) async => profile('a', RegistrationStatus.complete));
+      when(() => repo.fetchProfile('a')).thenAnswer(
+          (_) async => right(profile('a', RegistrationStatus.complete)));
+      await emit(ama);
+
+      await controller.updateDob(DateTime(1980));
+
+      expect(sent().registrationStatus, RegistrationStatus.complete);
+    });
+
+    test('a failed save leaves the profile as it was', () async {
+      await emit(ama);
+      when(() => repo.updateProfile(any(), any()))
+          .thenAnswer((_) async => left(const StorageFailure()));
+
+      final result =
+          await controller.updateName(firstName: 'Akua', lastName: 'M');
+
+      expect(result, left(const StorageFailure()));
+      expect(controller.userEntity?.firstName, isNull);
+    });
+
+    test('a tutorial is recorded once', () async {
+      await emit(ama);
+
+      await controller.markTutorialCompleted('home');
+      await controller.markTutorialCompleted('home');
+
+      verify(() => repo.updateProfile('a', any())).called(1);
+      expect(controller.userEntity?.completedTutorials, ['home']);
+    });
+
+    test('finishing onboarding shows the completed profile', () async {
+      await emit(ama);
+      final done = profile('a', RegistrationStatus.complete);
+      when(() => repo.completeOnboarding(any(), 'f1'))
+          .thenAnswer((_) async => right(done));
+
+      await controller.submitOnboarding('f1');
+
+      expect(controller.userEntity, done);
     });
   });
 }

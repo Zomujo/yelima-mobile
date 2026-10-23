@@ -7,7 +7,6 @@ import 'features/auth/auth_injection.dart';
 import 'features/user/user_injection.dart';
 import 'features/chat/chat_injection.dart';
 import 'features/progress/progress_injection.dart';
-import 'features/profile/profile_injection.dart';
 import 'features/home/home_injection.dart';
 import 'features/medications/medications_injection.dart';
 import 'features/appointment/appointment_injection.dart';
@@ -34,7 +33,6 @@ Future<void> init() async {
   initUser(sl);
   initChat(sl);
   initProgress(sl);
-  initProfile(sl);
   initHome(sl);
   initMedications(sl);
   initAppointment(sl);

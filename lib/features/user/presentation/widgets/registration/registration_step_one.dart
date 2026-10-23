@@ -11,6 +11,7 @@ import 'package:yelima/shared/widgets/forms/app_form_field.dart';
 import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Registration step 1: name, phone and gender.
 class RegistrationStepOne extends StatefulWidget {
   const RegistrationStepOne({
     super.key,
@@ -28,7 +29,6 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   String? _selectedGender;
-  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -68,55 +68,32 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
         _selectedGender != null;
   }
 
-  void _handleContinue() async {
-    if (!_isFormValid || _isSubmitting) return;
-
+  Future<void> _continue() async {
     FocusScope.of(context).unfocus();
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    String phone = _phoneController.text.trim();
-    if (!phone.startsWith('+233')) {
-      if (phone.startsWith('0')) {
-        phone = '+233${phone.substring(1)}';
-      } else {
-        phone = '+233$phone';
-      }
-    }
-
-    final controller = context.read<UserController>();
-    final ok = await runWithLoader(
-      context,
-      message: context.l10n.savingDetails,
-      action: () => controller.updateBasicInfo(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        gender: _selectedGender!,
-        phoneNumber: phone,
-      ),
-    );
-
-    if (mounted) {
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      if (ok) widget.onContinue();
-    }
+    final users = context.read<UserController>();
+    final saved = await runWithLoader(context,
+        message: context.l10n.savingDetails,
+        action: () => users.updateBasicInfo(
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              gender: _selectedGender!,
+              phoneNumber: _ghanaPhone(_phoneController.text.trim()),
+            ));
+    if (saved && mounted) widget.onContinue();
   }
+
+  /// Adds the +233 prefix the backend expects, dropping a leading 0.
+  static String _ghanaPhone(String digits) => digits.startsWith('+233')
+      ? digits
+      : '+233${digits.startsWith('0') ? digits.substring(1) : digits}';
 
   @override
   Widget build(BuildContext context) {
     return StepLayout(
       title: context.l10n.letsGetToKnowYou,
       subtitle: context.l10n.provideBasicInfo,
-      continueText:
-          _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
       isContinueEnabled: _isFormValid,
-      isSubmitting: _isSubmitting,
-      onContinue: _handleContinue,
+      onContinue: _continue,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

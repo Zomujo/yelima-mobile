@@ -1,82 +1,65 @@
+import 'package:clock/clock.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../../core/api/api_client.dart';
-import '../models/user_model.dart';
-import 'package:yelima/features/user/domain/models/facility_model.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/models/facility_model.dart';
 
+/// Reads and writes the profile in Firestore and registers patients with the API.
 class UserRemoteDataSource {
-  final FirebaseAuth _firebaseAuth;
-  final APIClient _apiClient;
-  final FirebaseFirestore? _firestoreOverride;
-  FirebaseFirestore get _firestore =>
-      _firestoreOverride ?? FirebaseFirestore.instance;
-
   UserRemoteDataSource({
     required FirebaseAuth firebaseAuth,
     required APIClient apiClient,
     FirebaseFirestore? firestore,
-  })  : _firebaseAuth = firebaseAuth,
-        _apiClient = apiClient,
+  })  : _auth = firebaseAuth,
+        _api = apiClient,
         _firestoreOverride = firestore;
 
-  Future<UserModel?> getUserProfile(String uid) async {
-    final doc = await _firestore.collection('users').doc(uid).get();
-    if (!doc.exists || doc.data() == null) {
-      return null;
-    }
+  final FirebaseAuth _auth;
+  final APIClient _api;
+  final FirebaseFirestore? _firestoreOverride;
 
-    final data = doc.data()!;
-    data['id'] = doc.id;
-    data['email'] = data['email'] ?? _firebaseAuth.currentUser?.email ?? '';
+  DocumentReference<Map<String, dynamic>> _doc(String uid) =>
+      (_firestoreOverride ?? FirebaseFirestore.instance)
+          .collection('users')
+          .doc(uid);
 
-    return UserModel.fromJson(data);
+  /// The stored profile, or null if the user has none yet.
+  Future<UserEntity?> getUserProfile(String uid) async {
+    final data = (await _doc(uid).get()).data();
+    if (data == null) return null;
+    return UserEntity.fromJson({
+      ...data,
+      'id': uid,
+      'email': data['email'] ?? _auth.currentUser?.email ?? '',
+    });
   }
 
-  Future<void> saveUser(UserModel user) async {
-    await _firestore
-        .collection('users')
-        .doc(user.id)
-        .set(user.toJson(), SetOptions(merge: true));
-  }
+  /// Merges [data] into the stored profile.
+  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) =>
+      _doc(uid).set(data, SetOptions(merge: true));
 
-  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
-    await _firestore
-        .collection('users')
-        .doc(uid)
-        .set(data, SetOptions(merge: true));
-  }
+  /// Registers [profile] as a patient of [facilityId].
+  Future<void> onboardUser(UserEntity profile, String facilityId) =>
+      _api.post('/api/v1/auth/onboard', data: {
+        'firstname': profile.firstName ?? '',
+        'lastname': profile.lastName ?? '',
+        'gender': profile.gender?.toLowerCase() ?? 'prefer_not_to_say',
+        'dateOfBirth':
+            (profile.dateOfBirth ?? clock.now()).toUtc().toIso8601String(),
+        'age': profile.age ?? 0,
+        'chronicConditions':
+            profile.conditions.map((c) => c.toLowerCase()).toList(),
+        'facilityId': facilityId,
+        'phoneNumber': profile.phoneNumber ?? '',
+      });
 
-  Future<void> onboardUser(Map<String, dynamic> data) async {
-    await _apiClient.post("/api/v1/auth/onboard", data: data);
-  }
-
-  Future<FacilityListResponse> getFacilities({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-  }) async {
-    final queryParams = <String, dynamic>{
-      'page': page,
-      'pageSize': pageSize,
-    };
-    if (search != null && search.isNotEmpty) {
-      queryParams['search'] = search;
-    }
-
-    final response = await _apiClient.get("/api/v1/client/facilities",
-        queryParameters: queryParams);
-
-    if (response == null) {
-      return const FacilityListResponse(
-          rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
-    }
-
-    final data = (response as Map<String, dynamic>)['data'];
-    if (data == null) {
-      return const FacilityListResponse(
-          rows: [], total: 0, pageSize: 10, page: 1, totalPages: 0);
-    }
-
-    return FacilityListResponse.fromJson(data);
+  /// Up to 20 facilities whose name matches [search].
+  Future<List<FacilityModel>> searchFacilities(String search) async {
+    final response = await _api.get('/api/v1/client/facilities',
+        queryParameters: {'page': 1, 'pageSize': 20, 'search': search});
+    final data = response is Map<String, dynamic> ? response['data'] : null;
+    return data == null ? const [] : FacilityListResponse.fromJson(data).rows;
   }
 }

@@ -4,28 +4,27 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
-import '../../../../shared/utils/app_snackbar.dart';
-import '../../../../injection_container.dart';
+import '../../../../shared/utils/run_with_loader.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
 import '../controllers/edit_profile_controller.dart';
-import '../widgets/edit_profile/edit_profile_avatar.dart';
+import '../../../user/presentation/widgets/user_avatar.dart';
 import '../widgets/edit_profile/edit_profile_form.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Edits the name and gender.
 class EditProfileScreen extends StatelessWidget {
   const EditProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<EditProfileController>(
-      create: _initializeController,
+      create: (context) {
+        final users = context.read<UserController>();
+        return EditProfileController(userController: users)
+          ..init(users.userEntity);
+      },
       child: const _EditProfileView(),
     );
-  }
-
-  EditProfileController _initializeController(BuildContext context) {
-    final user = context.read<UserController>().userEntity;
-    return sl<EditProfileController>()..init(user);
   }
 }
 
@@ -44,15 +43,17 @@ class _EditProfileView extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const Expanded(
+            Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    EditProfileAvatar(),
-                    SizedBox(height: 48),
-                    EditProfileForm(),
+                    Center(
+                        child: UserAvatar(
+                            user: context.watch<UserController>().userEntity)),
+                    const SizedBox(height: 48),
+                    const EditProfileForm(),
                   ],
                 ),
               ),
@@ -62,28 +63,16 @@ class _EditProfileView extends StatelessWidget {
               child: Consumer<EditProfileController>(
                 builder: (context, controller, child) {
                   return AppButton(
-                    text: controller.state.isSaving
-                        ? context.l10n.savingChanges
-                        : context.l10n.saveChanges,
-                    isDisabled: !controller.state.isButtonEnabled ||
-                        controller.state.isSaving,
-                    isLoading: controller.state.isSaving,
+                    text: context.l10n.saveChanges,
+                    isDisabled: !controller.state.isButtonEnabled,
                     onPressed: () async {
                       FocusScope.of(context).unfocus();
-                      final response = await controller.saveProfile();
-
-                      if (context.mounted) {
-                        response.fold(
-                          (failure) =>
-                              AppSnackBar.showError(context, message: failure),
-                          (_) {
-                            AppSnackBar.showSuccess(context,
-                                message:
-                                    context.l10n.profileUpdatedSuccessfully);
-                            context.pop();
-                          },
-                        );
-                      }
+                      final saved = await runWithLoader(context,
+                          message: context.l10n.savingChanges,
+                          successMessage:
+                              context.l10n.profileUpdatedSuccessfully,
+                          action: controller.saveProfile);
+                      if (saved && context.mounted) context.pop();
                     },
                     width: double.infinity,
                   );

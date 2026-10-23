@@ -26,7 +26,7 @@ mixin _$UserEntity {
   List<String> get completedTutorials;
   bool get hasConsented;
   RegistrationStatus get registrationStatus;
-  String? get modeOfRegistration; // 'google', 'apple', 'email'
+  String? get modeOfRegistration;
   String? get facilityId;
   DateTime? get createdAt;
 
@@ -273,7 +273,6 @@ class _UserEntity extends UserEntity {
   final RegistrationStatus registrationStatus;
   @override
   final String? modeOfRegistration;
-// 'google', 'apple', 'email'
   @override
   final String? facilityId;
   @override

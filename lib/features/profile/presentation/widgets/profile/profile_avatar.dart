@@ -3,46 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../user/presentation/controllers/user_controller.dart';
+import '../../../../user/presentation/widgets/user_avatar.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The patient's avatar, name and role at the top of the profile tab.
 class ProfileAvatar extends StatelessWidget {
   const ProfileAvatar({super.key});
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserController>().userEntity;
-    final fullName = user?.fullName ?? context.l10n.unknownUser;
-    final initial = user?.firstName?.isNotEmpty == true
-        ? user!.firstName![0].toUpperCase()
-        : (fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U');
+    final name = user?.fullName ?? '';
 
     return Center(
       child: Column(
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Color(0xFF34D399), Color(0xFF059669)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
+          UserAvatar(user: user),
           const SizedBox(height: 16),
           AppText.titleLarge(
-            fullName,
+            name.isEmpty ? context.l10n.unknownUser : name,
             fontWeight: FontWeight.w600,
             color: AppColors.slate800,
           ),

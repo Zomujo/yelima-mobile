@@ -4,15 +4,14 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'app_text.dart';
 import 'app_button.dart';
 
+/// A registration step: title, subtitle, content, and Back/Continue buttons.
 class StepLayout extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget child;
   final VoidCallback? onBack;
   final VoidCallback? onContinue;
-  final String continueText;
   final bool isContinueEnabled;
-  final bool isSubmitting;
 
   const StepLayout({
     super.key,
@@ -21,9 +20,7 @@ class StepLayout extends StatelessWidget {
     required this.child,
     this.onBack,
     this.onContinue,
-    this.continueText = 'Continue',
     this.isContinueEnabled = true,
-    this.isSubmitting = false,
   });
 
   @override
@@ -65,12 +62,12 @@ class StepLayout extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             _buildBackButton(context),
-                            _buildContinueButton(),
+                            _buildContinueButton(context),
                           ],
                         )
                       : Align(
                           alignment: Alignment.centerRight,
-                          child: _buildContinueButton(),
+                          child: _buildContinueButton(context),
                         ),
                 ),
               ],
@@ -83,7 +80,7 @@ class StepLayout extends StatelessWidget {
 
   Widget _buildBackButton(BuildContext context) {
     return GestureDetector(
-      onTap: isSubmitting ? null : onBack,
+      onTap: onBack,
       child: Container(
         height: 56,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -107,23 +104,17 @@ class StepLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildContinueButton() {
+  Widget _buildContinueButton(BuildContext context) {
     return AppButton(
-      text: continueText,
-      onPressed: (isContinueEnabled && !isSubmitting) ? onContinue : null,
-      backgroundColor: (isContinueEnabled && !isSubmitting)
-          ? AppColors.primary
-          : AppColors.slate400,
+      text: context.l10n.continueText,
+      onPressed: isContinueEnabled ? onContinue : null,
+      backgroundColor:
+          isContinueEnabled ? AppColors.primary : AppColors.slate400,
       width: 160,
       height: 50,
       borderRadius: 24,
-      suffixIcon: isSubmitting
-          ? null
-          : const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white,
-              size: 12,
-            ),
+      suffixIcon:
+          const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 12),
     );
   }
 }

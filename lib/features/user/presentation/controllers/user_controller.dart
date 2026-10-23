@@ -1,39 +1,31 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+
+import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 
-import '../../domain/entities/user_entity.dart';
-import '../../domain/repositories/user_repository.dart';
-import '../../../../core/utils/custom_types.dart';
-import '../../../../core/exceptions/exceptions.dart';
-import '../../../auth/domain/entities/auth_user.dart';
-import 'user_state.dart';
+import '../../../../core/failures/app_failure.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import 'package:clock/clock.dart';
+import '../../../auth/domain/entities/auth_user.dart';
+import '../../domain/entities/profile_changes.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/models/facility_model.dart';
+import '../../domain/repositories/user_repository.dart';
+import 'user_state.dart';
 
+/// Holds the signed-in patient's profile and saves changes to it.
 class UserController extends ChangeNotifier with SafeNotifier {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies                  |
-  // --------------------------------------------------------------------------
+  UserController({required UserRepository repository})
+      : _repository = repository;
 
   final UserRepository _repository;
-  final FirebaseAuth _firebaseAuth;
-  StreamSubscription<UserEntity?>? _userProfileSubscription;
+  StreamSubscription<UserEntity?>? _watch;
+  AuthUser? _user;
 
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle                |
-  // --------------------------------------------------------------------------
-
-  UserController({
-    required UserRepository repository,
-    required FirebaseAuth firebaseAuth,
-  })  : _repository = repository,
-        _firebaseAuth = firebaseAuth;
+  /// Bumped on every login change, so late results for a previous user are dropped.
+  int _stamp = 0;
 
   UserState _state = const UserState();
   UserState get state => _state;
-
   set state(UserState value) {
     if (_state == value) return;
     _state = value;
@@ -43,342 +35,151 @@ class UserController extends ChangeNotifier with SafeNotifier {
   UserEntity? get userEntity => _state.userEntity;
   bool get isInitialized => _state.isInitialized;
 
-  int _userEventStamp = 0;
+  /// The profile couldn't be loaded, so the app offers a retry instead of registration.
+  bool get profileUnavailable => _state.profileUnavailable;
 
   /// Loads the signed-in user's profile, or clears it on sign-out. Called by AuthController.
   Future<void> onUserChanged(AuthUser? user) async {
-    final stamp = ++_userEventStamp;
-
+    final stamp = ++_stamp;
+    _user = user;
     if (user == null) {
-      await _userProfileSubscription?.cancel();
-      _userProfileSubscription = null;
-      state = state.copyWith(
-          userEntity: null, isInitialized: true, profileUnavailable: false);
-    } else {
-      state = state.copyWith(isInitialized: false);
-
-      UserEntity? resolvedProfile =
-          await _repository.getCachedProfile(user.uid);
-      if (stamp != _userEventStamp) return;
-
-      var unavailable = false;
-      if (resolvedProfile == null) {
-        final result = await _repository.getUserProfile(user.uid).timeout(
-              const Duration(seconds: 6),
-              onTimeout: () => left('Profile fetch timed out'),
-            );
-        if (stamp != _userEventStamp) return;
-        result.fold(
-          // Couldn't load it: don't treat a registered user as new.
-          (error) => unavailable = true,
-          (profile) => resolvedProfile = profile,
-        );
-      }
-
-      state = state.copyWith(
-          userEntity: resolvedProfile,
-          isInitialized: true,
-          profileUnavailable: unavailable);
-      if (!unavailable) refreshProfile(user.uid);
+      await _watch?.cancel();
+      _watch = null;
+      state = const UserState(isInitialized: true);
+      return;
     }
-  }
+    state = state.copyWith(isInitialized: false);
+    var profile = await _repository.getCachedProfile(user.uid);
+    if (stamp != _stamp) return;
 
-  /// Refreshes the profile from the network and watches it for local changes.
-  Future<void> refreshProfile(String uid) async {
-    final stamp = _userEventStamp;
-    final profileResult = await _repository.getUserProfile(uid);
-    if (stamp != _userEventStamp) return;
-    profileResult.fold(
-      (error) {},
-      (profile) {
-        if (profile != null && profile != state.userEntity) {
-          state = state.copyWith(userEntity: profile);
-        }
-      },
-    );
-
-    _userProfileSubscription?.cancel();
-    _userProfileSubscription =
-        _repository.watchUserProfile(uid).listen((entity) {
-      if (entity != null || state.userEntity == null) {
-        state = state.copyWith(userEntity: entity);
-      }
-    });
+    var unavailable = false;
+    if (profile == null) {
+      final result = await _repository.fetchProfile(user.uid).timeout(
+          const Duration(seconds: 6),
+          onTimeout: () => left(const NetworkFailure()));
+      if (stamp != _stamp) return;
+      // Not loaded is not the same as new: don't send a registered user to registration.
+      result.fold((_) => unavailable = true, (p) => profile = p);
+    }
+    state = state.copyWith(
+        userEntity: profile,
+        isInitialized: true,
+        profileUnavailable: unavailable);
+    if (!unavailable) _refresh(user.uid, stamp);
   }
 
   /// Tries loading the profile again after it couldn't be loaded.
   Future<void> retryProfile() async {
-    final user = _firebaseAuth.currentUser;
+    final user = _user;
     if (user == null) return;
-    final stamp = _userEventStamp;
+    final stamp = _stamp;
     state = state.copyWith(isLoading: true);
-    final result = await _repository.getUserProfile(user.uid);
-    if (stamp != _userEventStamp) return;
+    final result = await _repository.fetchProfile(user.uid);
+    if (stamp != _stamp) return;
     result.fold(
       (_) => state = state.copyWith(isLoading: false),
       (profile) {
         state = state.copyWith(
             userEntity: profile, profileUnavailable: false, isLoading: false);
-        refreshProfile(user.uid);
+        _refresh(user.uid, stamp);
       },
     );
   }
 
-  /// The profile couldn't be loaded, so the app shows a retry screen instead of registration.
-  bool get profileUnavailable => _state.profileUnavailable;
-
-  @override
-  void dispose() {
-    _userProfileSubscription?.cancel();
-    super.dispose();
-  }
-
-  /// Marks a tutorial as completed by the user
-  Future<void> markTutorialCompleted(String tutorialId) async {
-    final user = _firebaseAuth.currentUser;
-    if (user == null || state.userEntity == null) return;
-
-    final currentTutorials =
-        List<String>.from(state.userEntity!.completedTutorials);
-    if (currentTutorials.contains(tutorialId)) return;
-
-    currentTutorials.add(tutorialId);
-
-    // Update state immediately for fast UI feedback
-    state = state.copyWith(
-      userEntity: state.userEntity!.copyWith(
-        completedTutorials: currentTutorials,
-      ),
-    );
-
-    // Persist to backend and local DB
-    final data = {
-      'completedTutorials': currentTutorials,
-    };
-    await _repository.updateUserProfile(user.uid, data);
-  }
-
-  /// Updates the user's basic information such as name and gender.
-  AsyncResponse<void> updateBasicInfo({
+  /// Saves the name, gender and phone from registration step one.
+  AsyncResult<void> updateBasicInfo({
     required String firstName,
     required String lastName,
     required String gender,
     required String phoneNumber,
-  }) async {
-    final user = _firebaseAuth.currentUser;
-    if (user == null) return left('User not authenticated');
+  }) =>
+      _save(ProfileChanges(
+        email: _user?.email ?? '',
+        firstName: firstName,
+        lastName: lastName,
+        gender: gender,
+        phoneNumber: phoneNumber,
+        registrationStatus: _reached(RegistrationStatus.dob),
+      ));
 
-    final response = await ExceptionWrapper.runAsync<void>(
-      () async {
-        final newStatus = (state.userEntity?.registrationStatus ??
-                RegistrationStatus.personalDetails)
-            .atLeast(RegistrationStatus.dob);
+  /// Saves the date of birth.
+  AsyncResult<void> updateDob(DateTime dob) => _save(ProfileChanges(
+        dateOfBirth: dob,
+        registrationStatus: _reached(RegistrationStatus.healthConditions),
+      ));
 
-        final data = {
-          'id': user.uid,
-          'email': user.email ?? '',
-          'firstName': firstName,
-          'lastName': lastName,
-          'gender': gender,
-          'phoneNumber': phoneNumber,
-          'registrationStatus': newStatus.name,
-        };
+  /// Saves the patient's conditions and consent.
+  AsyncResult<void> updateHealthConditions(
+          {required HealthConditionCategory category,
+          required bool consented}) =>
+      _save(ProfileChanges(
+        conditions: category.conditions,
+        hasConsented: consented,
+        registrationStatus: _reached(RegistrationStatus.facilitySelection),
+      ));
 
-        return await _repository.updateUserProfile(user.uid, data);
-      },
-      operationName: 'updateBasicInfo',
-    );
+  /// Saves a profile edit; the registration status is never touched.
+  AsyncResult<void> updateName(
+          {required String firstName,
+          required String lastName,
+          String? gender}) =>
+      _save(ProfileChanges(
+          firstName: firstName, lastName: lastName, gender: gender));
 
-    return response.fold(
-      (error) {
-        return left(error);
-      },
-      (_) {
-        final newStatus = (state.userEntity?.registrationStatus ??
-                RegistrationStatus.personalDetails)
-            .atLeast(RegistrationStatus.dob);
-
-        final currentEntity = state.userEntity ??
-            UserEntity(id: user.uid, email: user.email ?? '');
-
-        state = state.copyWith(
-          userEntity: currentEntity.copyWith(
-            firstName: firstName,
-            lastName: lastName,
-            gender: gender,
-            phoneNumber: phoneNumber,
-            registrationStatus: newStatus,
-          ),
-        );
-        return right(null);
-      },
-    );
+  /// Records that a tutorial was seen.
+  Future<void> markTutorialCompleted(String tutorialId) async {
+    final seen = userEntity?.completedTutorials;
+    if (seen == null || seen.contains(tutorialId)) return;
+    await _save(ProfileChanges(completedTutorials: [...seen, tutorialId]));
   }
 
-  /// Updates the user's date of birth.
-  AsyncResponse<void> updateDob({required DateTime dob}) async {
-    final user = _firebaseAuth.currentUser;
-    if (user == null) return left('User not authenticated');
-
-    final response = await ExceptionWrapper.runAsync<void>(
-      () async {
-        final newStatus = (state.userEntity?.registrationStatus ??
-                RegistrationStatus.personalDetails)
-            .atLeast(RegistrationStatus.healthConditions);
-
-        final data = {
-          'dateOfBirth': dob.toIso8601String(),
-          'registrationStatus': newStatus.name,
-        };
-
-        return await _repository.updateUserProfile(user.uid, data);
-      },
-      operationName: 'updateDob',
-    );
-
-    return response.fold(
-      (error) {
-        return left(error);
-      },
-      (_) {
-        final newStatus = (state.userEntity?.registrationStatus ??
-                RegistrationStatus.personalDetails)
-            .atLeast(RegistrationStatus.healthConditions);
-
-        if (state.userEntity != null) {
-          state = state.copyWith(
-            userEntity: state.userEntity!.copyWith(
-              dateOfBirth: dob,
-              registrationStatus: newStatus,
-            ),
-          );
-        }
-        return right(null);
-      },
-    );
+  /// Registers the patient with [facilityId], which completes registration.
+  AsyncResult<void> submitOnboarding(String facilityId) async {
+    final profile = userEntity;
+    if (profile == null) return left(const NotFoundFailure());
+    final result = await _repository.completeOnboarding(profile, facilityId);
+    result.fold((_) {}, (done) => state = state.copyWith(userEntity: done));
+    return result;
   }
 
-  /// Finalizes onboarding by updating the user's health conditions and consent.
-  /// Saves health conditions and transitions to facility selection.
-  AsyncResponse<void> updateHealthConditions({
-    required HealthConditionCategory? category,
-    required bool consented,
-  }) async {
-    final user = _firebaseAuth.currentUser;
-    if (user == null || state.userEntity == null || category == null) {
-      return left('Invalid user state or missing category');
+  /// Health facilities whose name matches [search].
+  AsyncResult<List<FacilityModel>> searchFacilities(String search) =>
+      _repository.searchFacilities(search);
+
+  RegistrationStatus _reached(RegistrationStatus step) =>
+      (userEntity?.registrationStatus ?? RegistrationStatus.personalDetails)
+          .atLeast(step);
+
+  AsyncResult<void> _save(ProfileChanges changes) async {
+    final user = _user;
+    if (user == null) return left(const UnauthorizedFailure());
+    final result = await _repository.updateProfile(user.uid, changes);
+    if (result.isRight()) {
+      final current =
+          userEntity ?? UserEntity(id: user.uid, email: user.email ?? '');
+      state = state.copyWith(userEntity: changes.applyTo(current));
     }
-
-    final conditionsPayload = category.toBackendPayload;
-
-    final response = await ExceptionWrapper.runAsync<void>(
-      () async {
-        final newStatus = (state.userEntity?.registrationStatus ??
-                RegistrationStatus.personalDetails)
-            .atLeast(RegistrationStatus.facilitySelection);
-
-        final data = {
-          'conditions': conditionsPayload,
-          'hasConsented': consented,
-          'registrationStatus': newStatus.name,
-        };
-
-        return await _repository.updateUserProfile(user.uid, data);
-      },
-      operationName: 'updateHealthConditions',
-    );
-
-    return response.fold(
-      (error) {
-        return left(error);
-      },
-      (_) {
-        final newStatus = (state.userEntity?.registrationStatus ??
-                RegistrationStatus.personalDetails)
-            .atLeast(RegistrationStatus.facilitySelection);
-
-        state = state.copyWith(
-          userEntity: state.userEntity!.copyWith(
-            conditions: conditionsPayload,
-            hasConsented: consented,
-            registrationStatus: newStatus,
-          ),
-        );
-        return right(null);
-      },
-    );
+    return result;
   }
 
-  /// Finalizes onboarding by updating the user's facility and calling the onboard API.
-  AsyncResponse<void> submitOnboarding({
-    required String facilityId,
-  }) async {
-    final user = _firebaseAuth.currentUser;
-    if (user == null || state.userEntity == null) {
-      return left('Invalid user state');
-    }
+  /// Refreshes from the server, then follows this phone's copy for later changes.
+  Future<void> _refresh(String uid, int stamp) async {
+    final result = await _repository.fetchProfile(uid);
+    if (stamp != _stamp) return;
+    result.fold((_) {}, (profile) {
+      if (profile != null) state = state.copyWith(userEntity: profile);
+    });
+    await _watch?.cancel();
+    _watch = _repository.watchProfile(uid).listen((profile) {
+      if (profile != null || userEntity == null) {
+        state = state.copyWith(userEntity: profile);
+      }
+    });
+  }
 
-    final response = await ExceptionWrapper.runAsync<void>(
-      () async {
-        final onboardData = {
-          "firstname": state.userEntity!.firstName ?? '',
-          "lastname": state.userEntity!.lastName ?? '',
-          "gender":
-              state.userEntity!.gender?.toLowerCase() ?? 'prefer_not_to_say',
-          "dateOfBirth":
-              state.userEntity!.dateOfBirth?.toUtc().toIso8601String() ??
-                  clock.now().toUtc().toIso8601String(),
-          "age": state.userEntity!.age ?? 0,
-          "chronicConditions":
-              state.userEntity!.conditions.map((c) => c.toLowerCase()).toList(),
-          "facilityId": facilityId,
-          "phoneNumber": state.userEntity!.phoneNumber ?? '',
-        };
-
-        final onboardResult = await _repository.onboardUser(onboardData);
-
-        return await onboardResult.fold(
-          (error) async {
-            // Treat 409 Conflict as success (user already onboarded)
-            final msg = error.message?.toLowerCase() ?? '';
-            if (msg.contains('409') || msg.contains('already exists')) {
-              final data = {
-                'facilityId': facilityId,
-                'registrationStatus': RegistrationStatus.complete.name,
-                'createdAt': clock.now().toIso8601String(),
-              };
-              return await _repository.updateUserProfile(user.uid, data);
-            }
-            return left(error.message ?? 'Failed to onboard');
-          },
-          (_) async {
-            final data = {
-              'facilityId': facilityId,
-              'registrationStatus': RegistrationStatus.complete.name,
-              'createdAt': clock.now().toIso8601String(),
-            };
-
-            return await _repository.updateUserProfile(user.uid, data);
-          },
-        );
-      },
-      operationName: 'submitOnboarding',
-    );
-
-    return response.fold(
-      (error) {
-        return left(error);
-      },
-      (_) {
-        state = state.copyWith(
-          userEntity: state.userEntity!.copyWith(
-            facilityId: facilityId,
-            registrationStatus: RegistrationStatus.complete,
-            createdAt: clock.now(),
-          ),
-        );
-        return right(null);
-      },
-    );
+  @override
+  void dispose() {
+    _watch?.cancel();
+    super.dispose();
   }
 }

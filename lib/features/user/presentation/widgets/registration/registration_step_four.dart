@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
-import 'package:yelima/features/user/domain/repositories/user_repository.dart';
 import 'package:yelima/features/user/domain/models/facility_model.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/step_layout.dart';
@@ -11,6 +9,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
+/// Registration step 4: pick the health facility.
 class RegistrationStepFour extends StatefulWidget {
   const RegistrationStepFour({
     super.key,
@@ -26,7 +25,6 @@ class RegistrationStepFour extends StatefulWidget {
 }
 
 class _RegistrationStepFourState extends State<RegistrationStepFour> {
-  bool _isSubmitting = false;
   bool _isLoadingFacilities = false;
   bool _isDropdownVisible = false;
   List<FacilityModel> _options = [];
@@ -56,32 +54,13 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
     super.dispose();
   }
 
-  bool get _isFormValid => _selectedFacility != null;
-
-  void _handleContinue() async {
-    if (!_isFormValid || _isSubmitting) return;
-
+  Future<void> _continue() async {
     FocusScope.of(context).unfocus();
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    final userController = context.read<UserController>();
-    final ok = await runWithLoader(
-      context,
-      message: context.l10n.completingProfile,
-      action: () =>
-          userController.submitOnboarding(facilityId: _selectedFacility!.id),
-    );
-
-    if (mounted) {
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      if (ok) widget.onContinue();
-    }
+    final users = context.read<UserController>();
+    final saved = await runWithLoader(context,
+        message: context.l10n.completingProfile,
+        action: () => users.submitOnboarding(_selectedFacility!.id));
+    if (saved && mounted) widget.onContinue();
   }
 
   void _onSearchChanged(String query) async {
@@ -109,17 +88,12 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
     await Future.delayed(const Duration(milliseconds: 350));
     if (token != _searchToken || !mounted) return;
 
-    final userRepository = GetIt.instance<UserRepository>();
-    final result =
-        await userRepository.getFacilities(search: query, pageSize: 20);
+    final result = await context.read<UserController>().searchFacilities(query);
 
     if (mounted && token == _searchToken) {
       setState(() {
         _isLoadingFacilities = false;
-        _options = result.fold(
-          (l) => [],
-          (r) => r.rows,
-        );
+        _options = result.getOrElse((_) => const []);
       });
     }
   }
@@ -129,11 +103,8 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
     return StepLayout(
       title: context.l10n.selectFacilityTitle,
       subtitle: context.l10n.selectFacilitySubtitle,
-      continueText:
-          _isSubmitting ? context.l10n.savingText : context.l10n.continueText,
-      isContinueEnabled: _isFormValid,
-      isSubmitting: _isSubmitting,
-      onContinue: _handleContinue,
+      isContinueEnabled: _selectedFacility != null,
+      onContinue: _continue,
       onBack: widget.onBack,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

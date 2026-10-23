@@ -5,6 +5,7 @@ import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// Lets the user switch the app language.
 class LanguagePickerModal extends StatelessWidget {
   const LanguagePickerModal({super.key});
 
@@ -23,13 +24,6 @@ class LanguagePickerModal extends StatelessWidget {
     final localeController = context.watch<LocaleController>();
     final currentLanguageCode = localeController.locale?.languageCode ?? 'en';
 
-    final languages = [
-      {'code': 'en', 'name': context.l10n.english},
-      {'code': 'tw', 'name': context.l10n.akanTwi},
-      {'code': 'ee', 'name': context.l10n.ewe},
-      {'code': 'ga', 'name': context.l10n.ga},
-    ];
-
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -41,7 +35,6 @@ class LanguagePickerModal extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Handle bar
             Center(
               child: Container(
                 width: 40,
@@ -72,13 +65,11 @@ class LanguagePickerModal extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ...languages.map((lang) {
-              final isSelected = currentLanguageCode == lang['code'];
+            ...const ['en', 'tw', 'ee', 'ga'].map((code) {
+              final isSelected = currentLanguageCode == code;
               return InkWell(
                 onTap: () {
-                  context
-                      .read<LocaleController>()
-                      .setLocale(Locale(lang['code']!));
+                  context.read<LocaleController>().setLocale(Locale(code));
                   Navigator.pop(context);
                 },
                 child: Container(
@@ -91,7 +82,7 @@ class LanguagePickerModal extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       AppText.bodyLarge(
-                        lang['name']!,
+                        context.l10n.languageName(code),
                         color:
                             isSelected ? AppColors.primary : AppColors.slate800,
                         fontWeight:

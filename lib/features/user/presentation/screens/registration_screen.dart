@@ -12,6 +12,7 @@ import 'package:yelima/features/user/presentation/widgets/registration/registrat
 import 'package:yelima/features/user/presentation/widgets/registration/registration_step_four.dart';
 import 'package:yelima/features/auth/presentation/widgets/logout_flow.dart';
 
+/// The four registration steps, resuming where the user left off.
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 

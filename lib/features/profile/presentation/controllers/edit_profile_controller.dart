@@ -1,139 +1,70 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fpdart/fpdart.dart';
-import '../../../../core/exceptions/exceptions.dart';
-import '../../../../core/utils/custom_types.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/utils/safe_notifier.dart';
 import '../../../user/domain/entities/user_entity.dart';
-import '../../../user/domain/repositories/user_repository.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
 import '../states/edit_profile_state.dart';
-import '../../../../core/utils/safe_notifier.dart';
 
+/// Holds the edit-profile form and saves it through [UserController].
 class EditProfileController extends ChangeNotifier with SafeNotifier {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies      |
-  // --------------------------------------------------------------------------
+  EditProfileController({required UserController userController})
+      : _users = userController;
 
-  final UserRepository _repository;
-  final UserController _userController;
-  final FirebaseAuth _firebaseAuth;
-
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle   |
-  // --------------------------------------------------------------------------
-
-  EditProfileController({
-    required UserRepository repository,
-    required UserController userController,
-    required FirebaseAuth firebaseAuth,
-  })  : _repository = repository,
-        _userController = userController,
-        _firebaseAuth = firebaseAuth;
+  final UserController _users;
+  EditProfileState _initial = const EditProfileState();
 
   EditProfileState _state = const EditProfileState();
   EditProfileState get state => _state;
-
   set state(EditProfileState value) {
     if (_state == value) return;
     _state = value;
     notifyListeners();
   }
 
-  String _initialFirstName = '';
-  String _initialLastName = '';
-  String? _initialGender;
-
-  /// Initializes the controller with the current user's profile data.
+  /// Fills the form from [user].
   void init(UserEntity? user) {
     if (user == null) return;
-
-    _initialFirstName = user.firstName ?? '';
-    _initialLastName = user.lastName ?? '';
-    _initialGender = user.gender;
-
-    _state = _state.copyWith(
-      firstName: _initialFirstName,
-      lastName: _initialLastName,
-      gender: _initialGender,
-    );
+    _initial = EditProfileState(
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
+        gender: user.gender);
+    _state = _initial;
   }
 
-  /// Updates the form state and validates the changes.
+  /// Updates the form and whether it can be saved.
   void updateForm({String? firstName, String? lastName, String? gender}) {
+    final first = (firstName ?? state.firstName);
+    final last = (lastName ?? state.lastName);
+    final g = gender ?? state.gender;
+    final changed = first.trim() != _initial.firstName ||
+        last.trim() != _initial.lastName ||
+        g != _initial.gender;
     state = state.copyWith(
-      firstName: firstName ?? state.firstName,
-      lastName: lastName ?? state.lastName,
-      gender: gender ?? state.gender,
-    );
-    _validateForm();
-  }
-
-  void _validateForm() {
-    final first = state.firstName.trim();
-    final last = state.lastName.trim();
-
-    final hasChanged = first != _initialFirstName ||
-        last != _initialLastName ||
-        state.gender != _initialGender;
-
-    final isValid = first.isNotEmpty &&
-        last.isNotEmpty &&
-        state.gender != null &&
-        hasChanged;
-
-    state = state.copyWith(
-      hasChanged: hasChanged,
-      isButtonEnabled: isValid,
+      firstName: first,
+      lastName: last,
+      gender: g,
+      hasChanged: changed,
+      isButtonEnabled: changed &&
+          first.trim().isNotEmpty &&
+          last.trim().isNotEmpty &&
+          g != null,
     );
   }
 
-  /// Submits the updated profile data to the backend.
-  AsyncResponse<void> saveProfile() async {
-    final user = _firebaseAuth.currentUser;
-    if (user == null) {
-      return left('User not authenticated.');
+  /// Saves the form.
+  AsyncResult<void> saveProfile() async {
+    final result = await _users.updateName(
+        firstName: state.firstName.trim(),
+        lastName: state.lastName.trim(),
+        gender: state.gender);
+    if (result.isRight()) {
+      _initial = EditProfileState(
+          firstName: state.firstName.trim(),
+          lastName: state.lastName.trim(),
+          gender: state.gender);
+      state = state.copyWith(hasChanged: false, isButtonEnabled: false);
     }
-
-    state = state.copyWith(isSaving: true);
-
-    final response = await ExceptionWrapper.runAsync<void>(
-      () async {
-        final data = {
-          'id': user.uid,
-          'email': user.email ?? '',
-          'firstName': state.firstName.trim(),
-          'lastName': state.lastName.trim(),
-          'gender': state.gender,
-          // No registrationStatus: editing a profile must never move registration backwards.
-        };
-
-        return await _repository.updateUserProfile(user.uid, data);
-      },
-      operationName: 'updateUserProfile',
-    );
-
-    return response.fold(
-      (failure) {
-        state = state.copyWith(isSaving: false);
-        return left(failure);
-      },
-      (_) async {
-        // Fetch fresh user data to update global state
-        await _userController.refreshProfile(user.uid);
-
-        state = state.copyWith(
-          isSaving: false,
-          hasChanged: false,
-          isButtonEnabled: false,
-        );
-
-        // Update initials since it saved successfully
-        _initialFirstName = state.firstName;
-        _initialLastName = state.lastName;
-        _initialGender = state.gender;
-
-        return right(null);
-      },
-    );
+    return result;
   }
 }

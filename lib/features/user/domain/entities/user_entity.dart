@@ -4,6 +4,7 @@ import 'package:clock/clock.dart';
 part 'user_entity.freezed.dart';
 part 'user_entity.g.dart';
 
+/// Registration steps in order; the profile is usable once [complete].
 enum RegistrationStatus {
   @JsonValue('personalDetails')
   personalDetails,
@@ -23,42 +24,47 @@ extension RegistrationStatusX on RegistrationStatus {
       index >= step.index ? this : step;
 }
 
-enum HealthConditionCategory { hypertension, diabetes, both }
+/// The chronic conditions a patient can register with.
+enum HealthConditionCategory {
+  hypertension(['hypertension']),
+  diabetes(['diabetes']),
+  both(['diabetes', 'hypertension']);
 
-extension HealthConditionCategoryX on HealthConditionCategory {
-  List<String> get toBackendPayload {
-    switch (this) {
-      case HealthConditionCategory.hypertension:
-        return ['hypertension'];
-      case HealthConditionCategory.diabetes:
-        return ['diabetes'];
-      case HealthConditionCategory.both:
-        return ['diabetes', 'hypertension'];
-    }
-  }
+  const HealthConditionCategory(this.conditions);
+
+  /// The condition names the backend stores.
+  final List<String> conditions;
+
+  /// The category matching stored [names], or null if there are none.
+  static HealthConditionCategory? from(List<String> names) =>
+      switch ((names.contains('hypertension'), names.contains('diabetes'))) {
+        (true, true) => both,
+        (true, false) => hypertension,
+        (false, true) => diabetes,
+        _ => null,
+      };
 }
 
+/// Whole years between [date] and today.
+int yearsSince(DateTime date) {
+  final today = clock.now();
+  final hadBirthday = today.month > date.month ||
+      (today.month == date.month && today.day >= date.day);
+  return today.year - date.year - (hadBirthday ? 0 : 1);
+}
+
+/// A patient's profile.
 @freezed
 abstract class UserEntity with _$UserEntity {
   const UserEntity._();
 
-  String get fullName {
-    final first = firstName ?? '';
-    final last = lastName ?? '';
-    final name = '$first $last'.trim();
-    return name.isEmpty ? 'Unknown User' : name;
-  }
+  /// First and last name, or empty if neither is set.
+  String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
 
-  int? get age {
-    if (dateOfBirth == null) return null;
-    final today = clock.now();
-    int age = today.year - dateOfBirth!.year;
-    if (today.month < dateOfBirth!.month ||
-        (today.month == dateOfBirth!.month && today.day < dateOfBirth!.day)) {
-      age--;
-    }
-    return age;
-  }
+  /// The first letter of the name, for avatars; empty if there is no name.
+  String get initial => fullName.isEmpty ? '' : fullName[0].toUpperCase();
+
+  int? get age => dateOfBirth == null ? null : yearsSince(dateOfBirth!);
 
   String get patientId {
     if (id.length >= 5) {
@@ -80,7 +86,7 @@ abstract class UserEntity with _$UserEntity {
     @Default(false) bool hasConsented,
     @Default(RegistrationStatus.personalDetails)
     RegistrationStatus registrationStatus,
-    String? modeOfRegistration, // 'google', 'apple', 'email'
+    String? modeOfRegistration,
     String? facilityId,
     DateTime? createdAt,
   }) = _UserEntity;
