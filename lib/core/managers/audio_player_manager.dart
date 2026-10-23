@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 
+/// Lets only one voice note play at a time and pauses them when the app goes to the background.
 class AudioPlayerManager with WidgetsBindingObserver {
   static final AudioPlayerManager _instance = AudioPlayerManager._internal();
   factory AudioPlayerManager() {

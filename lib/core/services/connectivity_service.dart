@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
+/// Whether the phone is online, now and as it changes.
 class ConnectivityService {
   static final ConnectivityService _instance = ConnectivityService._internal();
 
@@ -11,7 +12,8 @@ class ConnectivityService {
   ConnectivityService._internal();
 
   final Connectivity _connectivity = Connectivity();
-  final InternetConnection _internetConnection = InternetConnection.createInstance(
+  final InternetConnection _internetConnection =
+      InternetConnection.createInstance(
     checkInterval: const Duration(seconds: 10),
   );
 
@@ -21,8 +23,9 @@ class ConnectivityService {
     return !result.contains(ConnectivityResult.none);
   }
 
-  Stream<bool> get onNetworkInterfaceChanged => _connectivity.onConnectivityChanged
-      .map((result) => !result.contains(ConnectivityResult.none));
+  Stream<bool> get onNetworkInterfaceChanged =>
+      _connectivity.onConnectivityChanged
+          .map((result) => !result.contains(ConnectivityResult.none));
 
   // Robust ping checks (for background sync engines)
   Future<bool> get isConnected async {

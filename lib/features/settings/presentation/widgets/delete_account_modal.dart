@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
-import '../../../../shared/widgets/forms/app_text_field.dart';
+import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
@@ -15,17 +15,7 @@ class DeleteAccountModal extends StatefulWidget {
   const DeleteAccountModal({super.key});
 
   static void show(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      useSafeArea: false,
-      builder: (context) => OverlayModal(
-        isDismissible: true,
-        animationDuration: const Duration(milliseconds: 300),
-        onDismiss: () => Navigator.of(context).pop(),
-        child: const DeleteAccountModal(),
-      ),
-    );
+    showAppDialog(context, const DeleteAccountModal());
   }
 
   @override
@@ -72,8 +62,8 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
           ),
           if (_isPasswordProvider) ...[
             const SizedBox(height: 24),
-            AppTextField(
-              labelText: context.l10n.password,
+            AppFormField(
+              label: context.l10n.password,
               hintText: context.l10n.enterPasswordToConfirm,
               controller: _passwordController,
               isPassword: true,

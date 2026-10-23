@@ -1,40 +1,13 @@
 import 'package:flutter/material.dart';
+
 import '../../shared/widgets/modals/app_modal.dart';
 
-/// Global variable to track current overlay for general modals
+/// The one modal shown through [ContextExtensions.showModal], if any.
 OverlayEntry? _currentModalOverlay;
 
+/// Shows and hides the app's overlay modal (used where a dialog route won't do).
 extension ContextExtensions on BuildContext {
-  // --- Navigation Helpers (GoRouter) ---
-  // void push(String location, {Object? extra}) => GoRouter.of(this).push(location, extra: extra);
-  // void go(String location, {Object? extra}) => GoRouter.of(this).go(location, extra: extra);
-  // void pop() => GoRouter.of(this).pop();
-
-  // --- Snackbar Helpers ---
-  void showSnackBar(String message, {Color? backgroundColor}) {
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-
-  void showErrorSnackBar(String message) {
-    showSnackBar(message, backgroundColor: Colors.redAccent);
-  }
-
-  void showSuccessSnackBar(String message) {
-    showSnackBar(message, backgroundColor: Colors.green);
-  }
-
-  void showInfoSnackBar(String message) {
-    showSnackBar(message, backgroundColor: Theme.of(this).primaryColor);
-  }
-
-  // --- Overlay Modal Helpers ---
+  /// Shows [child] over everything, replacing any modal already open.
   void showModal({
     required Widget child,
     bool isDismissible = true,
@@ -42,7 +15,6 @@ extension ContextExtensions on BuildContext {
     ModalAlignment? alignment,
   }) {
     removeModal();
-
     _currentModalOverlay = OverlayEntry(
       builder: (context) => OverlayModal(
         isDismissible: isDismissible,
@@ -53,22 +25,12 @@ extension ContextExtensions on BuildContext {
         child: child,
       ),
     );
-
     Overlay.of(this, rootOverlay: true).insert(_currentModalOverlay!);
   }
 
+  /// Closes the modal opened with [showModal].
   void removeModal() {
-    if (_currentModalOverlay != null) {
-      _currentModalOverlay!.remove();
-      _currentModalOverlay = null;
-    }
+    _currentModalOverlay?.remove();
+    _currentModalOverlay = null;
   }
-
-  bool get hasActiveModal => _currentModalOverlay != null;
-
-  // --- Theme & Size Helpers ---
-  ThemeData get theme => Theme.of(this);
-  TextTheme get textTheme => Theme.of(this).textTheme;
-  ColorScheme get colorScheme => Theme.of(this).colorScheme;
-  Size get screenSize => MediaQuery.of(this).size;
 }

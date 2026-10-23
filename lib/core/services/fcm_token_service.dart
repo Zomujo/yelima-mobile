@@ -5,6 +5,7 @@ import '../managers/token_manager.dart';
 import '../utils/logger.dart';
 import 'connectivity_service.dart';
 
+/// Sends the device's push token to the backend.
 class FCMTokenService {
   final APIClient _apiClient;
   final ConnectivityService _connectivityService;

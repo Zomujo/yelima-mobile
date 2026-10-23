@@ -52,17 +52,9 @@ class UnsyncedChangesDialog extends StatelessWidget {
 
   static Future<UnsyncedChoice> show(BuildContext context,
       {required int waiting, required int failed}) async {
-    final choice = await showDialog<UnsyncedChoice>(
-      context: context,
-      barrierColor: Colors.transparent,
-      useSafeArea: false,
-      builder: (context) => OverlayModal(
-        isDismissible: true,
-        animationDuration: const Duration(milliseconds: 300),
-        onDismiss: () => Navigator.of(context).pop(UnsyncedChoice.cancel),
-        child: UnsyncedChangesDialog(waiting: waiting, failed: failed),
-      ),
-    );
+    final choice = await showAppDialog<UnsyncedChoice>(
+        context, UnsyncedChangesDialog(waiting: waiting, failed: failed),
+        dismissValue: UnsyncedChoice.cancel);
     return choice ?? UnsyncedChoice.cancel;
   }
 

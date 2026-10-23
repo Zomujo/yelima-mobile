@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
+/// Shared shadows and background decorations.
 class AppDecoration {
-  // --- Shadows ---
   static List<BoxShadow> shadowXs = [
     BoxShadow(
       color: AppColors.textBlack.withValues(alpha: 0.12),
@@ -28,7 +28,6 @@ class AppDecoration {
     ),
   ];
 
-  // --- Backgrounds ---
   static final BoxDecoration whiteOverlayGradientCircle = BoxDecoration(
     shape: BoxShape.circle,
     gradient: LinearGradient(

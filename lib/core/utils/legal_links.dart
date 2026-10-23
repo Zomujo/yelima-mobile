@@ -1,5 +1,6 @@
 import 'package:url_launcher/url_launcher.dart';
 
+/// Opens the terms and privacy policy.
 class LegalLinks {
   static const String privacyPolicy =
       'https://doc-hosting.flycricket.io/yelima-privacy-policy/8f70bb5e-1319-46ea-88db-ff7843e9e403/privacy';

@@ -38,8 +38,7 @@ class AppointmentsDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> clearPastAppointments() {
     return (delete(appointments)
-          ..where(
-              (t) => t.appointmentDate.isSmallerOrEqualValue(clock.now())))
+          ..where((t) => t.appointmentDate.isSmallerOrEqualValue(clock.now())))
         .go();
   }
 }

@@ -1,3 +1,4 @@
+/// Form field checks for email and password.
 class Validators {
   /// Validates an email address format
   static bool isValidEmail(String email) {

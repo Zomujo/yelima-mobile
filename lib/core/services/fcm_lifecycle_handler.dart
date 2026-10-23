@@ -5,6 +5,7 @@ import 'fcm_token_service.dart';
 import 'notification_service.dart';
 import 'connectivity_service.dart';
 
+/// Registers the push token when a session starts and removes it when it ends.
 class FCMLifecycleHandler implements SessionLifecycleHandler {
   FCMLifecycleHandler({
     required ConnectivityService connectivity,

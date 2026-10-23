@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../utils/safe_notifier.dart';
 import 'package:clock/clock.dart';
 
+/// Records voice notes with the microphone.
 class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
   late RecorderController _recorderController;
   final ValueNotifier<RecorderValue> _recorderValue =
@@ -144,6 +145,7 @@ class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
   }
 }
 
+/// The recorder's state and elapsed time.
 class RecorderValue {
   final String? audioPath;
   final Duration duration;

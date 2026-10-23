@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// A shimmering placeholder while content loads.
 class AppShimmer extends StatefulWidget {
   final Widget child;
   final bool enabled;

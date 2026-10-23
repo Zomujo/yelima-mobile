@@ -29,6 +29,7 @@ import 'core/localization/fallback_localization_delegates.dart';
 
 import 'package:go_router/go_router.dart';
 
+/// The app root: providers, theme, translations and router.
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -83,8 +84,7 @@ class _MyAppState extends State<MyApp> {
             Provider<SharedPrefsService>.value(value: sl()),
             ChangeNotifierProvider.value(value: sl<ProgressController>()),
             ChangeNotifierProvider(
-                create: (_) =>
-                    sl<SymptomsController>()..fetchSymptoms()),
+                create: (_) => sl<SymptomsController>()..fetchSymptoms()),
           ],
           child: Consumer<LocaleController>(
             builder: (context, localeController, child) {

@@ -39,6 +39,7 @@ import '../../injection_container.dart';
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final shellNavigatorKey = GlobalKey<NavigatorState>();
 
+/// The app's routes and redirect rules.
 class AppRouter {
   static GoRouter createRouter(
       AuthController authController, UserController userController) {

@@ -4,7 +4,7 @@ import '../api/i_remote_mutation.dart';
 import '../db/app_database.dart';
 import '../services/connectivity_service.dart';
 import '../services/session_lifecycle_service.dart';
-import '../exceptions/exceptions.dart';
+import '../failures/app_failure.dart';
 import '../utils/logger.dart';
 
 enum _MutationOutcome {
@@ -16,6 +16,7 @@ enum _MutationOutcome {
   retry,
 }
 
+/// Sends queued offline changes when online, retrying with backoff; rejected ones go to the failed list.
 class MutationSyncManager implements SessionLifecycleHandler {
   final ConnectivityService _connectivityService;
   final AppDatabase _db;
@@ -214,12 +215,10 @@ class MutationSyncManager implements SessionLifecycleHandler {
           await Future.delayed(const Duration(milliseconds: 100));
         }
       }
-    } on ApiException catch (e) {
-      // 401/403 needs a new login, not a timed retry.
-      debugPrint("Mutation sync stopped: ${e.code}");
     } catch (e) {
-      debugPrint("Error during mutation sync: $e");
-      needsRetry = true;
+      debugPrint("Mutation sync stopped: $e");
+      // A lost login needs a new sign-in, not a timed retry.
+      needsRetry = AppFailure.from(e) is! UnauthorizedFailure;
     } finally {
       _isSyncing = false;
     }
@@ -272,41 +271,26 @@ class MutationSyncManager implements SessionLifecycleHandler {
       }
 
       return didRemap ? _MutationOutcome.remapped : _MutationOutcome.resolved;
-    } on ApiException catch (e) {
-      if (e.code == '409' || e.code == '404' || e.code == '400') {
-        if (e.code == '404' && mutation.action.startsWith('delete')) {
-          debugPrint(
-              "Mutation ${mutation.id} (DELETE) got 404. Item already deleted on server. Resolving.");
+    } catch (e) {
+      switch (AppFailure.from(e)) {
+        case NotFoundFailure() when mutation.action.startsWith('delete'):
+          // Already deleted on the server.
           await _db.pendingMutationsDao.removePendingMutation(mutation.id);
           _syncBroadcast.add(mutation.entityType);
           return _MutationOutcome.resolved;
-        }
-
-        debugPrint(
-            "Mutation ${mutation.id} rejected by server (${e.code}). Marking as blocked instead of silently deleting.");
-
-        await _db.pendingMutationsDao.markRejected(mutation.id);
-
-        return _MutationOutcome.blocked;
+        case NotFoundFailure() || ServerFailure(status: 400 || 409):
+          // Rejected: kept on the failed list for the user, never silently dropped.
+          debugPrint("Mutation ${mutation.id} rejected by the server.");
+          await _db.pendingMutationsDao.markRejected(mutation.id);
+          return _MutationOutcome.blocked;
+        case UnauthorizedFailure() || NetworkFailure():
+          // Stop the run: wait for a new login or a connection.
+          rethrow;
+        default:
+          // 5xx and anything else: count a try for this item only and keep going.
+          await _handleFailedMutation(mutation, e.toString());
+          return _MutationOutcome.retry;
       }
-
-      if (e.code == '401' || e.code == '403') {
-        debugPrint(
-            "Unauthorized (${e.code}) during mutation sync. Aborting sync to preserve data until login.");
-        rethrow;
-      }
-
-      // 5xx and other errors: count a try for this item only and keep going.
-      await _handleFailedMutation(mutation, e.toString());
-      return _MutationOutcome.retry;
-    } on NetworkException {
-      debugPrint(
-          "Connection error syncing mutation for ${mutation.id}. Aborting sync to try again later.");
-      rethrow;
-    } catch (e) {
-      debugPrint("Unexpected error syncing mutation ${mutation.id}: $e");
-      await _handleFailedMutation(mutation, e.toString());
-      return _MutationOutcome.retry;
     }
   }
 

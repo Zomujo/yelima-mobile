@@ -64,6 +64,8 @@ part 'app_database.g.dart';
   AudioCacheDao,
   SymptomsDao
 ])
+
+/// The encrypted local database (SQLCipher) and its migrations.
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 

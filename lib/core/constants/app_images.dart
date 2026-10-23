@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 
+/// Image and icon assets.
 class AppImages {
   AppImages._();
 
-  // --------------------------------------------------------------------------
-  // |                            Background Images                            |
-  // --------------------------------------------------------------------------
   static const AssetImage apple = AssetImage('assets/images/apple.png');
   static const AssetImage google = AssetImage('assets/images/google.png');
   static const AssetImage logoPng = AssetImage('assets/images/logo_png.png');
   static const AssetImage logoJpg = AssetImage('assets/images/logo_jpg.jpg');
 
-  // --------------------------------------------------------------------------
-  // |                            Icons                                        |
-  // --------------------------------------------------------------------------
   static const AssetImage appointmentIcon =
       AssetImage('assets/icons/appointment.svg');
   static const AssetImage calendarIcon =

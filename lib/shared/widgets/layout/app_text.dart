@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Text styles from the theme.
 enum AppTextVariant {
   displayLarge,
   displayMedium,
@@ -18,6 +19,7 @@ enum AppTextVariant {
   labelSmall,
 }
 
+/// Themed text; use the named constructors for each style.
 class AppText extends StatelessWidget {
   final String text;
   final AppTextVariant variant;
@@ -48,7 +50,6 @@ class AppText extends StatelessWidget {
     this.letterSpacing,
   });
 
-  // --- Display ---
   const AppText.displayLarge(this.text,
       {super.key,
       this.color,
@@ -89,7 +90,6 @@ class AppText extends StatelessWidget {
       this.letterSpacing})
       : variant = AppTextVariant.displaySmall;
 
-  // --- Headline ---
   const AppText.headlineLarge(this.text,
       {super.key,
       this.color,
@@ -130,7 +130,6 @@ class AppText extends StatelessWidget {
       this.letterSpacing})
       : variant = AppTextVariant.headlineSmall;
 
-  // --- Title ---
   const AppText.titleLarge(this.text,
       {super.key,
       this.color,
@@ -171,7 +170,6 @@ class AppText extends StatelessWidget {
       this.letterSpacing})
       : variant = AppTextVariant.titleSmall;
 
-  // --- Body ---
   const AppText.bodyLarge(this.text,
       {super.key,
       this.color,
@@ -212,7 +210,6 @@ class AppText extends StatelessWidget {
       this.letterSpacing})
       : variant = AppTextVariant.bodySmall;
 
-  // --- Label ---
   const AppText.labelLarge(this.text,
       {super.key,
       this.color,

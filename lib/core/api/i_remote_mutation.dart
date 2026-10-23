@@ -1,3 +1,4 @@
+/// Sends one feature's queued changes to the server.
 abstract class IRemoteMutationSource {
   /// Syncs a mutation to the backend.
   Future<String?> syncMutation({

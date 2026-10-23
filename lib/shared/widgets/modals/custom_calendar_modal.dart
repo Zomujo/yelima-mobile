@@ -5,6 +5,7 @@ import '../layout/app_text.dart';
 import '../layout/app_button.dart';
 import 'package:clock/clock.dart';
 
+/// A month calendar for picking a day.
 class CustomCalendarModal extends StatefulWidget {
   final DateTime initialDate;
   final ValueChanged<DateTime> onDateSelected;

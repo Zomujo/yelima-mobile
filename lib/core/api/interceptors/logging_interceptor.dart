@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+/// Logs requests and responses in debug builds.
 class LoggingInterceptor extends Interceptor {
   Map<String, dynamic> _redactedHeaders(Map<String, dynamic> headers) {
     final copy = Map<String, dynamic>.from(headers);

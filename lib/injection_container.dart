@@ -24,10 +24,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => sharedPreferences);
   sl.registerLazySingleton(() => SharedPrefsService(sl()));
 
-  // --- Core Infrastructure & Services ---
   initCore(sl);
 
-  // --- Features ---
   initSymptoms(sl);
   initAuth(sl);
   initUser(sl);

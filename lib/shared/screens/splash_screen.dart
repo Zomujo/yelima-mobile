@@ -7,6 +7,7 @@ import '../../core/constants/app_images.dart';
 import '../../core/theme/app_colors.dart';
 import '../../injection_container.dart';
 
+/// Shown while the app starts and the login is checked.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 

@@ -27,7 +27,6 @@ class _EmailAuthFormState extends State<EmailAuthForm> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _isValid = false;
-  bool _obscure = true;
 
   @override
   void initState() {
@@ -83,12 +82,7 @@ class _EmailAuthFormState extends State<EmailAuthForm> {
           label: l10n.passwordLabel,
           hintText: l10n.passwordHint,
           prefixIcon: Icons.lock_outline,
-          obscureText: _obscure,
-          suffixIcon: IconButton(
-            icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                color: AppColors.slate400, size: 20),
-            onPressed: () => setState(() => _obscure = !_obscure),
-          ),
+          isPassword: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: Validators.passwordValidator,
         ),

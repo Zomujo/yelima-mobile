@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import 'app_text.dart';
 
+/// The app bar used across screens.
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final Widget? titleWidget;

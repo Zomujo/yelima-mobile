@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../utils/logger.dart';
 
+/// Steps of app startup.
 enum StartupPhase {
   idle,
   initializingGlobal,
@@ -12,6 +13,7 @@ enum StartupPhase {
   error
 }
 
+/// Where startup is, for the splash screen.
 class StartupStatus {
   final StartupPhase phase;
 
@@ -20,6 +22,7 @@ class StartupStatus {
   });
 }
 
+/// Runs startup steps and reports progress.
 class AppStartupService extends ValueNotifier<StartupStatus> {
   bool isAnimationComplete = false;
 

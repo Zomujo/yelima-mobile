@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Shared radii and layout clearances.
 class AppSizes {
-  // --- Radius ---
   static const r4 = Radius.circular(4);
   static const r8 = Radius.circular(8);
   static const r12 = Radius.circular(12);
@@ -14,7 +14,6 @@ class AppSizes {
   static final borderRadius16 = BorderRadius.circular(16);
   static final borderRadius24 = BorderRadius.circular(24);
 
-  // --- Layout Clearances ---
   static double bottomNavClearance(BuildContext context) {
     // 24 (margin) + 52 (nav bar height) + 24 (extra breathing room) + safe area bottom
     return 100.0 + MediaQuery.paddingOf(context).bottom;

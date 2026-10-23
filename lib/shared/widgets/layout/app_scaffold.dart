@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// A scaffold with the app background.
 class AppScaffold extends StatelessWidget {
   final Widget body;
   final PreferredSizeWidget? appBar;

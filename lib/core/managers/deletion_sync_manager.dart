@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../exceptions/exceptions.dart';
+import '../failures/app_failure.dart';
 import '../api/i_remote_deletion.dart';
 import '../db/app_database.dart';
 import '../services/connectivity_service.dart';
 import '../services/session_lifecycle_service.dart';
 
+/// Sends queued deletions (chat messages) when online.
 class DeletionSyncManager implements SessionLifecycleHandler {
   final ConnectivityService _connectivityService;
   final AppDatabase _db;
@@ -111,43 +112,21 @@ class DeletionSyncManager implements SessionLifecycleHandler {
           pendingDeletion.messageId, pendingDeletion.source);
       debugPrint(
           "Successfully synced deletion for message: ${pendingDeletion.messageId}");
-    } on ApiException catch (e) {
-      // 404 means the message is already deleted on the server.
-      if (e.code == '404') {
-        debugPrint(
-            "Message ${pendingDeletion.messageId} not found on server (already deleted). Removing from local queue.");
-        await _db.aiChatDao.removePendingDeletion(
-            pendingDeletion.messageId, pendingDeletion.source);
-        return;
-      }
-
-      if (e.code == '401' || e.code == '403') {
-        debugPrint(
-            "Unauthorized (${e.code}) during deletion sync. Aborting sync to preserve data until login.");
-        rethrow;
-      }
-
-      if (e.code != null && e.code!.startsWith('5')) {
-        debugPrint(
-            "Server error (${e.code}) during deletion sync. Aborting sync to preserve data until server recovers.");
-        rethrow;
-      }
-
-      await _handleDeletionError(e, pendingDeletion);
-    } on NetworkException {
-      debugPrint(
-          "Connection error syncing deletion for ${pendingDeletion.messageId}. Aborting sync.");
-      rethrow;
     } catch (e) {
-      if (e.toString().toLowerCase().contains('not found')) {
-        debugPrint(
-            "Message ${pendingDeletion.messageId} not found on server (already deleted or never sent). Removing from local queue.");
-        await _db.aiChatDao.removePendingDeletion(
-            pendingDeletion.messageId, pendingDeletion.source);
-        return;
+      switch (AppFailure.from(e)) {
+        case NotFoundFailure():
+          // Already deleted on the server.
+          await _db.aiChatDao.removePendingDeletion(
+              pendingDeletion.messageId, pendingDeletion.source);
+        case UnauthorizedFailure() || NetworkFailure():
+          // Stop the run until the login or connection is back.
+          rethrow;
+        case ServerFailure(:final status?) when status >= 500:
+          // Stop the run until the server recovers.
+          rethrow;
+        default:
+          await _handleDeletionError(e, pendingDeletion);
       }
-
-      await _handleDeletionError(e, pendingDeletion);
     }
   }
 

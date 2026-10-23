@@ -8,11 +8,13 @@ import '../exceptions/exceptions.dart';
 
 typedef JSON = Map<String, dynamic>;
 
+/// The `data` and `message` of an API response.
 extension ResponseData on Response {
   JSON? get value => data is Map ? data['data'] : null;
   String? get message => data is Map ? data['message'] : "Unknown error";
 }
 
+/// The server's message on a failed request.
 extension DioExceptionExtension on DioException {
   String? get responseMessage {
     if (response?.data is Map) {
@@ -25,6 +27,7 @@ extension DioExceptionExtension on DioException {
   }
 }
 
+/// The HTTP client for the backend: auth, error and logging interceptors.
 class APIClient {
   late final Dio _dio;
 

@@ -25,7 +25,6 @@ import 'managers/deletion_sync_manager.dart';
 import 'managers/mutation_sync_manager.dart';
 
 void initCore(GetIt sl) {
-  // --- Core Infrastructure ---
   sl.registerLazySingleton(() => FirebaseAuth.instance);
   sl.registerLazySingleton(() => FirebaseMessaging.instance);
   sl.registerLazySingleton(() => SessionExpiry());
@@ -36,7 +35,6 @@ void initCore(GetIt sl) {
   sl.registerLazySingleton(() => sl<AppDatabase>().aiChatDao);
   sl.registerLazySingleton(() => sl<AppDatabase>().medicationsDao);
 
-  // --- Services ---
   sl.registerLazySingleton(() => ConnectivityService());
   sl.registerLazySingleton(() => SessionLifecycleService());
   sl.registerLazySingleton<FileService>(() => FileServiceImpl());

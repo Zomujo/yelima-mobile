@@ -2,6 +2,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+/// `context.l10n` for the current translations.
 extension LocalizationExtension on BuildContext {
   AppLocalizations get l10n => AppLocalizations.of(this)!;
 }
@@ -11,6 +12,7 @@ final languageCodes = [
   for (final l in AppLocalizations.supportedLocales) l.languageCode
 ];
 
+/// Translated words built from app data: months, dates, languages, gender, conditions.
 extension MonthNames on AppLocalizations {
   /// "12th July 2026", with the month in the app's language.
   String longDate(DateTime date) {

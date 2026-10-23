@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Small non-sensitive flags: onboarding done, tutorials seen.
 class SharedPrefsService {
   final SharedPreferences _prefs;
   const SharedPrefsService(this._prefs);

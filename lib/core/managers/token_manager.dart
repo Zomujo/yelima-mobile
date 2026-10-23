@@ -9,22 +9,19 @@ import '../services/fcm_token_service.dart';
 import '../utils/logger.dart';
 
 // Manages retrieval of authentication and FCM tokens.
+/// Keeps the API tokens in secure storage.
 class TokenManager {
   static final TokenManager _instance = TokenManager._internal();
   factory TokenManager() => _instance;
   TokenManager._internal();
 
-  
-  
   String? _cachedAuthToken;
   String? _cachedFCMToken;
   StreamSubscription? _tokenRefreshSubscription;
   final _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  // ---------------------------------------------------------------------------
   // Auth Token
-  // ---------------------------------------------------------------------------
 
   // Retrieves the current Firebase Auth JWT token.
   Future<String?> getAuthToken() async {
@@ -60,9 +57,7 @@ class TokenManager {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // FCM Token
-  // ---------------------------------------------------------------------------
 
   // Fetches the device FCM token.
   Future<String?> getFCMToken() async {
@@ -123,9 +118,7 @@ class TokenManager {
     return _cachedFCMToken;
   }
 
-  // ---------------------------------------------------------------------------
   // Lifecycle
-  // ---------------------------------------------------------------------------
 
   // Clears all cached tokens.
   Future<void> clearTokens() async {

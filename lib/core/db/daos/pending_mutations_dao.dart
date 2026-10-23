@@ -39,7 +39,9 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
     final query = select(pendingMutations)
       ..where((t) =>
           t.retryCount.isSmallerThanValue(maxTries) &
-          (entityId == null ? const Constant(true) : t.entityId.equals(entityId)) &
+          (entityId == null
+              ? const Constant(true)
+              : t.entityId.equals(entityId)) &
           (entityType == null
               ? const Constant(true)
               : t.entityType.equals(entityType)))

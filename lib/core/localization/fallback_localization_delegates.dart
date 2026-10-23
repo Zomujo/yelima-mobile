@@ -4,7 +4,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Provides a fallback to English for Material components (like date pickers, dialogs)
 /// when the user switches to a custom locale (like 'tw') that Flutter doesn't natively support.
-class FallbackMaterialLocalizationDelegate extends LocalizationsDelegate<MaterialLocalizations> {
+class FallbackMaterialLocalizationDelegate
+    extends LocalizationsDelegate<MaterialLocalizations> {
   const FallbackMaterialLocalizationDelegate();
 
   @override
@@ -20,10 +21,14 @@ class FallbackMaterialLocalizationDelegate extends LocalizationsDelegate<Materia
   }
 
   @override
-  bool shouldReload(covariant LocalizationsDelegate<MaterialLocalizations> old) => false;
+  bool shouldReload(
+          covariant LocalizationsDelegate<MaterialLocalizations> old) =>
+      false;
 }
 
-class FallbackCupertinoLocalizationDelegate extends LocalizationsDelegate<CupertinoLocalizations> {
+/// English Cupertino texts for languages Flutter has none for (Twi, Ewe, Ga).
+class FallbackCupertinoLocalizationDelegate
+    extends LocalizationsDelegate<CupertinoLocalizations> {
   const FallbackCupertinoLocalizationDelegate();
 
   @override
@@ -38,10 +43,14 @@ class FallbackCupertinoLocalizationDelegate extends LocalizationsDelegate<Cupert
   }
 
   @override
-  bool shouldReload(covariant LocalizationsDelegate<CupertinoLocalizations> old) => false;
+  bool shouldReload(
+          covariant LocalizationsDelegate<CupertinoLocalizations> old) =>
+      false;
 }
 
-class FallbackWidgetsLocalizationDelegate extends LocalizationsDelegate<WidgetsLocalizations> {
+/// English widget texts for languages Flutter has none for.
+class FallbackWidgetsLocalizationDelegate
+    extends LocalizationsDelegate<WidgetsLocalizations> {
   const FallbackWidgetsLocalizationDelegate();
 
   @override
@@ -56,5 +65,7 @@ class FallbackWidgetsLocalizationDelegate extends LocalizationsDelegate<WidgetsL
   }
 
   @override
-  bool shouldReload(covariant LocalizationsDelegate<WidgetsLocalizations> old) => false;
+  bool shouldReload(
+          covariant LocalizationsDelegate<WidgetsLocalizations> old) =>
+      false;
 }

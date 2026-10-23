@@ -16,17 +16,9 @@ class DeleteMedicationModal extends StatelessWidget {
   });
 
   static Future<bool?> show(BuildContext context, MedicationEntity medication) {
-    return showDialog<bool>(
-      context: context,
-      barrierColor: Colors.transparent,
-      useSafeArea: false,
-      builder: (context) => OverlayModal(
-        isDismissible: true,
-        animationDuration: const Duration(milliseconds: 300),
-        onDismiss: () => Navigator.of(context).pop(false),
-        child: DeleteMedicationModal(medication: medication),
-      ),
-    );
+    return showAppDialog<bool>(
+        context, DeleteMedicationModal(medication: medication),
+        dismissValue: false);
   }
 
   @override

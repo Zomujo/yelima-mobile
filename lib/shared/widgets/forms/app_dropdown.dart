@@ -2,6 +2,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../layout/app_text.dart';
 
+/// A styled dropdown with labels for its values.
 class AppDropdown<T> extends StatelessWidget {
   final T? value;
   final String hintText;

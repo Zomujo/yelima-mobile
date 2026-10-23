@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'app_text.dart';
 
+/// An icon and message for an empty list.
 class AppEmptyState extends StatelessWidget {
   final String title;
   final String iconAsset;

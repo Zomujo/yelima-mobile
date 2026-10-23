@@ -6,21 +6,12 @@ import '../layout/app_button.dart';
 import 'app_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Asks before closing the app with Back.
 class ExitConfirmationModal extends StatelessWidget {
   const ExitConfirmationModal({super.key});
 
   static void show(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      useSafeArea: false,
-      builder: (context) => OverlayModal(
-        isDismissible: true,
-        animationDuration: const Duration(milliseconds: 300),
-        onDismiss: () => Navigator.of(context).pop(),
-        child: const ExitConfirmationModal(),
-      ),
-    );
+    showAppDialog(context, const ExitConfirmationModal());
   }
 
   @override

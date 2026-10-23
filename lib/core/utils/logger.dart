@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+/// Kinds of log line.
 enum LogType { info, warning, error, success, debug }
 
 class _AnsiColors {
@@ -20,6 +21,7 @@ class _AnsiColors {
   static const String dim = '\x1B[2m';
 }
 
+/// How a log type is printed.
 class LogConfig {
   final String color;
   final String emoji;
@@ -36,6 +38,7 @@ const Map<LogType, LogConfig> logConfigs = {
   LogType.debug: LogConfig(_AnsiColors.magenta, '🐛', 'DEBUG'),
 };
 
+/// Coloured debug logging; silent in release builds.
 class AppLogger {
   AppLogger._();
 

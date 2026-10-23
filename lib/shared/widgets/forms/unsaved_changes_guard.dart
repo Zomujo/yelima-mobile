@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../modals/discard_changes_modal.dart';
 
+/// Asks before leaving a screen with unsaved changes.
 class UnsavedChangesGuard extends StatefulWidget {
   final Widget child;
   final bool Function() hasUnsavedChanges;

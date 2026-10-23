@@ -2,6 +2,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'app_text.dart';
 
+/// One row in an [OptionsBlock].
 class OptionBlockItem {
   final String label;
   final IconData icon;
@@ -20,6 +21,7 @@ class OptionBlockItem {
   });
 }
 
+/// A titled group of tappable rows, as in profile and settings.
 class OptionsBlock extends StatelessWidget {
   final String title;
   final List<OptionBlockItem> blockItems;

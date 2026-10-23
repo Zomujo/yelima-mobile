@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../shared/utils/failure_message.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
-import '../../../../shared/widgets/forms/app_text_field.dart';
+import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_layout.dart';
@@ -56,10 +56,10 @@ class _SessionExpiredScreenState extends State<SessionExpiredScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (auth.reauthNeedsPassword) ...[
-              AppTextField(
+              AppFormField(
                 key: const ValueKey('reauth-password'),
                 controller: _password,
-                labelText: l10n.passwordLabel,
+                label: l10n.passwordLabel,
                 isPassword: true,
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _signInAgain(),

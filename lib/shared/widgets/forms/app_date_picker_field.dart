@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../layout/app_text.dart';
 import 'package:clock/clock.dart';
 
+/// A field that opens a date wheel.
 class AppDatePickerField extends StatefulWidget {
   final String label;
   final String? hintText;

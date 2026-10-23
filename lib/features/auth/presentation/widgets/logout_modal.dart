@@ -12,17 +12,7 @@ class LogoutModal extends StatelessWidget {
   const LogoutModal({super.key});
 
   static void show(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      useSafeArea: false,
-      builder: (context) => OverlayModal(
-        isDismissible: true,
-        animationDuration: const Duration(milliseconds: 300),
-        onDismiss: () => Navigator.of(context).pop(),
-        child: const LogoutModal(),
-      ),
-    );
+    showAppDialog(context, const LogoutModal());
   }
 
   @override

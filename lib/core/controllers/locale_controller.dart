@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/shared_prefs_service.dart';
 
+/// The chosen app language, saved between launches.
 class LocaleController extends ChangeNotifier {
   final SharedPrefsService _prefsService;
   static const _localeKey = 'selected_locale';

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// Button styles.
 enum AppButtonVariant { filled, outlined, text }
 
+/// The app's button, with loading and disabled states.
 class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;

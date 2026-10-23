@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// A full-screen loader with a message, shown over everything.
 class GlobalAsyncLoader extends StatelessWidget {
   final String? message;
 

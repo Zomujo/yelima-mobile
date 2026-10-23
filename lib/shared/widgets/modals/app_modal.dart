@@ -2,11 +2,13 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+/// Where an overlay modal sits.
 enum ModalAlignment {
   center,
   bottomCenter,
 }
 
+/// Dims the screen and animates a modal in.
 class OverlayModal extends StatefulWidget {
   final Widget child;
   final bool isDismissible;
@@ -139,6 +141,7 @@ class _OverlayModalState extends State<OverlayModal>
   }
 }
 
+/// The card a modal's content sits in.
 class ModalContainer extends StatelessWidget {
   final Widget? child;
   final String? title;
@@ -245,3 +248,18 @@ class ModalContainer extends StatelessWidget {
     );
   }
 }
+
+/// Shows [child] as a dialog over a clear barrier; tapping outside returns [dismissValue].
+Future<T?> showAppDialog<T>(BuildContext context, Widget child,
+        {T? dismissValue, Color barrierColor = Colors.transparent}) =>
+    showDialog<T>(
+      context: context,
+      barrierColor: barrierColor,
+      useSafeArea: false,
+      builder: (context) => OverlayModal(
+        isDismissible: true,
+        animationDuration: const Duration(milliseconds: 300),
+        onDismiss: () => Navigator.of(context).pop(dismissValue),
+        child: child,
+      ),
+    );

@@ -5,6 +5,7 @@ import 'package:yelima/shared/widgets/layout/app_button.dart';
 import '../../core/router/route_paths.dart';
 import '../widgets/layout/app_scaffold.dart';
 
+/// Shown for an unknown route.
 class NotFoundScreen extends StatelessWidget {
   const NotFoundScreen({super.key});
 

@@ -1,3 +1,4 @@
+/// Every route path in one place.
 class RoutePaths {
   RoutePaths._();
 

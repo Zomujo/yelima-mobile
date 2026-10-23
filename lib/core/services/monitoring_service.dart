@@ -59,10 +59,6 @@ class MonitoringService implements SessionLifecycleHandler {
     }
   }
 
-  // --------------------------------------------------------------------------
-  // |                            Analytics Methods                             |
-  // --------------------------------------------------------------------------
-
   /// Logs a screen view event.
   Future<void> logScreenView({
     required String screenName,
@@ -195,10 +191,6 @@ class MonitoringService implements SessionLifecycleHandler {
     }
   }
 
-  // --------------------------------------------------------------------------
-  // |                            Crashlytics Methods                           |
-  // --------------------------------------------------------------------------
-
   /// Records an error or exception to Crashlytics.
   Future<void> recordError(
     dynamic exception,
@@ -267,10 +259,6 @@ class MonitoringService implements SessionLifecycleHandler {
       debugPrint('MonitoringService: Failed to set Crashlytics user ID: $e');
     }
   }
-
-  // --------------------------------------------------------------------------
-  // |                            Combined Methods                              |
-  // --------------------------------------------------------------------------
 
   /// Identifies the user on both Analytics and Crashlytics, by uid only (no email or other PII).
   Future<void> identifyUser({
