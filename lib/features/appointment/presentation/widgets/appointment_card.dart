@@ -9,6 +9,7 @@ import '../../domain/entities/appointment_entity.dart';
 import 'package:clock/clock.dart';
 import '../../../../core/extensions/l10n_extension.dart';
 
+/// One appointment: date, title, clinician and facility.
 class AppointmentCard extends StatelessWidget {
   const AppointmentCard({
     super.key,
@@ -85,44 +86,6 @@ class AppointmentCard extends StatelessWidget {
               ),
             ],
           ),
-          // if (!isPast) ...[
-          //   const SizedBox(height: 20),
-          //   Row(
-          //     children: [
-          //       Expanded(
-          //         child: AppButton(
-          //           text: 'Message clinic',
-          //           variant: AppButtonVariant.outlined,
-          //           backgroundColor: Colors.grey.shade300,
-          //           foregroundColor: AppColors.slate800,
-          //           padding: const EdgeInsets.symmetric(horizontal: 4),
-          //           onPressed: () {},
-          //           outlineColor: const Color(0xFFE2E1E1),
-          //           height: 44,
-          //           borderRadius: 24,
-          //           fontSize: 14,
-          //           fontWeight: FontWeight.w400,
-          //         ),
-          //       ),
-          //       const SizedBox(width: 12),
-          //       Expanded(
-          //         child: AppButton(
-          //           text: 'Reschedule',
-          //           variant: AppButtonVariant.outlined,
-          //           backgroundColor: Colors.grey.shade300,
-          //           foregroundColor: AppColors.slate800,
-          //           padding: const EdgeInsets.symmetric(horizontal: 4),
-          //           onPressed: () {},
-          //           outlineColor: const Color(0xFFE2E1E1),
-          //           height: 44,
-          //           borderRadius: 24,
-          //           fontSize: 14,
-          //           fontWeight: FontWeight.w400,
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ],
         ],
       ),
     );

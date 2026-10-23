@@ -16,6 +16,24 @@ extension MonthNames on AppLocalizations {
     return '$d$suffix ${monthNames[date.month - 1]} ${date.year}';
   }
 
+  /// The stored gender (`Male`, `Female`, `Other`) in the app's language.
+  String genderName(String? gender) => switch (gender?.toLowerCase()) {
+        'male' => male,
+        'female' => female,
+        'other' => otherGender,
+        null || '' => notAvailable,
+        _ => gender!,
+      };
+
+  /// A stored condition name in the app's language.
+  String conditionName(String condition) => switch (condition.toLowerCase()) {
+        'hypertension' => hypertension,
+        'diabetes' => diabetes,
+        _ => condition.isEmpty
+            ? condition
+            : condition[0].toUpperCase() + condition.substring(1),
+      };
+
   /// "Today", "Yesterday", or the [longDate].
   String dayLabel(DateTime date) {
     final now = clock.now();

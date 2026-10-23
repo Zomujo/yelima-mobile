@@ -5,6 +5,7 @@ import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/features/appointment/presentation/controllers/appointment_controller.dart';
 import '../next_clinic_visit_card.dart';
+import 'package:yelima/shared/utils/failure_message.dart';
 
 /// Upcoming appointments on home.
 class HomeUpcomingVisitsSection extends StatelessWidget {
@@ -18,8 +19,7 @@ class HomeUpcomingVisitsSection extends StatelessWidget {
         builder: (context, controller, child) {
           if (controller.state.nearestError != null) {
             return Center(
-              child: AppText.bodyMedium(context.l10n
-                  .errorWithMessage('${controller.state.nearestError}')),
+              child: AppText.bodyMedium(controller.state.nearestError!.message(context.l10n) ?? ''),
             );
           }
 

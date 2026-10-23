@@ -33,4 +33,16 @@ void main() {
     final twi = lookupAppLocalizations(const Locale('tw'));
     expect(twi.longDate(DateTime(2026, 7, 1)), '1st ${twi.monthJuly} 2026');
   });
+
+  test('gender is stored in English and shown in the app\'s language', () {
+    final twi = lookupAppLocalizations(const Locale('tw'));
+    expect(twi.genderName('Male'), twi.male);
+    expect(l10n.genderName('female'), 'Female');
+    expect(l10n.genderName(null), l10n.notAvailable);
+  });
+
+  test('condition names are translated', () {
+    expect(l10n.conditionName('hypertension'), l10n.hypertension);
+    expect(l10n.conditionName('asthma'), 'Asthma');
+  });
 }

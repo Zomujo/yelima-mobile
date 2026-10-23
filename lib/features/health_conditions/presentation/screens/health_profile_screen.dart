@@ -11,6 +11,7 @@ import '../widgets/health_expansion_card.dart';
 import '../widgets/health_info_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The patient's details and chronic conditions.
 class HealthProfileScreen extends StatelessWidget {
   const HealthProfileScreen({super.key});
 
@@ -33,32 +34,24 @@ class HealthProfileScreen extends StatelessWidget {
             children: [
               if (user != null) HealthProfileCard(user: user),
               const SizedBox(height: 24),
-              // Chronic Conditions
-              if (user != null && user.conditions.isNotEmpty)
+              if (user != null)
                 HealthExpansionCard(
                   title: context.l10n.chronicConditions,
                   icon: Iconsax.activity,
-                  child: Column(
-                    children: user.conditions.map((condition) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: HealthInfoCard(
-                          title: condition[0].toUpperCase() +
-                              condition.substring(1),
-                          status: context.l10n.active,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              if (user != null && user.conditions.isEmpty)
-                HealthExpansionCard(
-                  title: context.l10n.chronicConditions,
-                  icon: Iconsax.activity,
-                  child: AppText.bodyMedium(
-                    context.l10n.noChronicConditionsReported,
-                    color: AppColors.slate500,
-                  ),
+                  child: user.conditions.isEmpty
+                      ? AppText.bodyMedium(
+                          context.l10n.noChronicConditionsReported,
+                          color: AppColors.slate500)
+                      : Column(children: [
+                          for (final condition in user.conditions)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: HealthInfoCard(
+                                title: context.l10n.conditionName(condition),
+                                status: context.l10n.active,
+                              ),
+                            ),
+                        ]),
                 ),
             ],
           ),

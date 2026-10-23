@@ -4,6 +4,7 @@ import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/features/appointment/data/datasources/appointment_remote_datasource.dart';
 import 'package:yelima/features/appointment/data/repositories/appointment_repository_impl.dart';
+import 'package:yelima/features/appointment/domain/entities/appointment_entity.dart';
 
 import '../../helpers/fake_api.dart';
 import '../../helpers/fakes.dart';
@@ -46,8 +47,7 @@ void main() {
       session = SessionEpoch();
       api = FakeApi();
       repo = AppointmentRepositoryImpl(
-        remoteDataSource:
-            AppointmentRemoteDataSourceImpl(apiClient: api.client),
+        remoteDataSource: AppointmentRemoteDataSource(apiClient: api.client),
         connectivityService: FakeConnectivity(),
         db: db,
         session: session,
@@ -72,7 +72,8 @@ void main() {
             'total': 1
           })));
 
-      await repo.getAppointments(page: 1, pageSize: 3, filter: 'upcoming');
+      await repo.getAppointments(
+          page: 1, pageSize: 3, filter: AppointmentFilter.upcoming);
 
       expect(await db.select(db.appointments).get(), isEmpty);
     });

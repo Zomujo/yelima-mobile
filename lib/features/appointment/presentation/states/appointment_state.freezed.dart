@@ -17,11 +17,9 @@ T _$identity<T>(T value) => value;
 mixin _$PaginatedAppointmentState {
   List<AppointmentEntity> get items;
   bool get isLoading;
-  bool get isFetchingMore;
-  String? get error;
+  AppFailure? get error;
   int get page;
   int get totalPages;
-  bool get hasNextPage;
 
   /// Create a copy of PaginatedAppointmentState
   /// with the given fields replaced by the non-null parameter values.
@@ -39,14 +37,10 @@ mixin _$PaginatedAppointmentState {
             const DeepCollectionEquality().equals(other.items, items) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
-            (identical(other.isFetchingMore, isFetchingMore) ||
-                other.isFetchingMore == isFetchingMore) &&
             (identical(other.error, error) || other.error == error) &&
             (identical(other.page, page) || other.page == page) &&
             (identical(other.totalPages, totalPages) ||
-                other.totalPages == totalPages) &&
-            (identical(other.hasNextPage, hasNextPage) ||
-                other.hasNextPage == hasNextPage));
+                other.totalPages == totalPages));
   }
 
   @override
@@ -54,15 +48,13 @@ mixin _$PaginatedAppointmentState {
       runtimeType,
       const DeepCollectionEquality().hash(items),
       isLoading,
-      isFetchingMore,
       error,
       page,
-      totalPages,
-      hasNextPage);
+      totalPages);
 
   @override
   String toString() {
-    return 'PaginatedAppointmentState(items: $items, isLoading: $isLoading, isFetchingMore: $isFetchingMore, error: $error, page: $page, totalPages: $totalPages, hasNextPage: $hasNextPage)';
+    return 'PaginatedAppointmentState(items: $items, isLoading: $isLoading, error: $error, page: $page, totalPages: $totalPages)';
   }
 }
 
@@ -75,11 +67,9 @@ abstract mixin class $PaginatedAppointmentStateCopyWith<$Res> {
   $Res call(
       {List<AppointmentEntity> items,
       bool isLoading,
-      bool isFetchingMore,
-      String? error,
+      AppFailure? error,
       int page,
-      int totalPages,
-      bool hasNextPage});
+      int totalPages});
 }
 
 /// @nodoc
@@ -97,11 +87,9 @@ class _$PaginatedAppointmentStateCopyWithImpl<$Res>
   $Res call({
     Object? items = null,
     Object? isLoading = null,
-    Object? isFetchingMore = null,
     Object? error = freezed,
     Object? page = null,
     Object? totalPages = null,
-    Object? hasNextPage = null,
   }) {
     return _then(_self.copyWith(
       items: null == items
@@ -112,14 +100,10 @@ class _$PaginatedAppointmentStateCopyWithImpl<$Res>
           ? _self.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
               as bool,
-      isFetchingMore: null == isFetchingMore
-          ? _self.isFetchingMore
-          : isFetchingMore // ignore: cast_nullable_to_non_nullable
-              as bool,
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as AppFailure?,
       page: null == page
           ? _self.page
           : page // ignore: cast_nullable_to_non_nullable
@@ -128,10 +112,6 @@ class _$PaginatedAppointmentStateCopyWithImpl<$Res>
           ? _self.totalPages
           : totalPages // ignore: cast_nullable_to_non_nullable
               as int,
-      hasNextPage: null == hasNextPage
-          ? _self.hasNextPage
-          : hasNextPage // ignore: cast_nullable_to_non_nullable
-              as bool,
     ));
   }
 }
@@ -142,11 +122,9 @@ class _PaginatedAppointmentState implements PaginatedAppointmentState {
   const _PaginatedAppointmentState(
       {final List<AppointmentEntity> items = const [],
       this.isLoading = false,
-      this.isFetchingMore = false,
       this.error,
       this.page = 1,
-      this.totalPages = 1,
-      this.hasNextPage = true})
+      this.totalPages = 1})
       : _items = items;
 
   final List<AppointmentEntity> _items;
@@ -162,19 +140,13 @@ class _PaginatedAppointmentState implements PaginatedAppointmentState {
   @JsonKey()
   final bool isLoading;
   @override
-  @JsonKey()
-  final bool isFetchingMore;
-  @override
-  final String? error;
+  final AppFailure? error;
   @override
   @JsonKey()
   final int page;
   @override
   @JsonKey()
   final int totalPages;
-  @override
-  @JsonKey()
-  final bool hasNextPage;
 
   /// Create a copy of PaginatedAppointmentState
   /// with the given fields replaced by the non-null parameter values.
@@ -194,14 +166,10 @@ class _PaginatedAppointmentState implements PaginatedAppointmentState {
             const DeepCollectionEquality().equals(other._items, _items) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
-            (identical(other.isFetchingMore, isFetchingMore) ||
-                other.isFetchingMore == isFetchingMore) &&
             (identical(other.error, error) || other.error == error) &&
             (identical(other.page, page) || other.page == page) &&
             (identical(other.totalPages, totalPages) ||
-                other.totalPages == totalPages) &&
-            (identical(other.hasNextPage, hasNextPage) ||
-                other.hasNextPage == hasNextPage));
+                other.totalPages == totalPages));
   }
 
   @override
@@ -209,15 +177,13 @@ class _PaginatedAppointmentState implements PaginatedAppointmentState {
       runtimeType,
       const DeepCollectionEquality().hash(_items),
       isLoading,
-      isFetchingMore,
       error,
       page,
-      totalPages,
-      hasNextPage);
+      totalPages);
 
   @override
   String toString() {
-    return 'PaginatedAppointmentState(items: $items, isLoading: $isLoading, isFetchingMore: $isFetchingMore, error: $error, page: $page, totalPages: $totalPages, hasNextPage: $hasNextPage)';
+    return 'PaginatedAppointmentState(items: $items, isLoading: $isLoading, error: $error, page: $page, totalPages: $totalPages)';
   }
 }
 
@@ -232,11 +198,9 @@ abstract mixin class _$PaginatedAppointmentStateCopyWith<$Res>
   $Res call(
       {List<AppointmentEntity> items,
       bool isLoading,
-      bool isFetchingMore,
-      String? error,
+      AppFailure? error,
       int page,
-      int totalPages,
-      bool hasNextPage});
+      int totalPages});
 }
 
 /// @nodoc
@@ -254,11 +218,9 @@ class __$PaginatedAppointmentStateCopyWithImpl<$Res>
   $Res call({
     Object? items = null,
     Object? isLoading = null,
-    Object? isFetchingMore = null,
     Object? error = freezed,
     Object? page = null,
     Object? totalPages = null,
-    Object? hasNextPage = null,
   }) {
     return _then(_PaginatedAppointmentState(
       items: null == items
@@ -269,14 +231,10 @@ class __$PaginatedAppointmentStateCopyWithImpl<$Res>
           ? _self.isLoading
           : isLoading // ignore: cast_nullable_to_non_nullable
               as bool,
-      isFetchingMore: null == isFetchingMore
-          ? _self.isFetchingMore
-          : isFetchingMore // ignore: cast_nullable_to_non_nullable
-              as bool,
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as AppFailure?,
       page: null == page
           ? _self.page
           : page // ignore: cast_nullable_to_non_nullable
@@ -285,10 +243,6 @@ class __$PaginatedAppointmentStateCopyWithImpl<$Res>
           ? _self.totalPages
           : totalPages // ignore: cast_nullable_to_non_nullable
               as int,
-      hasNextPage: null == hasNextPage
-          ? _self.hasNextPage
-          : hasNextPage // ignore: cast_nullable_to_non_nullable
-              as bool,
     ));
   }
 }
@@ -299,8 +253,7 @@ mixin _$AppointmentState {
   PaginatedAppointmentState get pastState;
   AppointmentEntity? get nearestAppointment;
   bool get isNearestLoading;
-  String? get nearestError;
-  bool get isRequestingAppointment;
+  AppFailure? get nearestError;
 
   /// Create a copy of AppointmentState
   /// with the given fields replaced by the non-null parameter values.
@@ -324,25 +277,16 @@ mixin _$AppointmentState {
             (identical(other.isNearestLoading, isNearestLoading) ||
                 other.isNearestLoading == isNearestLoading) &&
             (identical(other.nearestError, nearestError) ||
-                other.nearestError == nearestError) &&
-            (identical(
-                    other.isRequestingAppointment, isRequestingAppointment) ||
-                other.isRequestingAppointment == isRequestingAppointment));
+                other.nearestError == nearestError));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      upcomingState,
-      pastState,
-      nearestAppointment,
-      isNearestLoading,
-      nearestError,
-      isRequestingAppointment);
+  int get hashCode => Object.hash(runtimeType, upcomingState, pastState,
+      nearestAppointment, isNearestLoading, nearestError);
 
   @override
   String toString() {
-    return 'AppointmentState(upcomingState: $upcomingState, pastState: $pastState, nearestAppointment: $nearestAppointment, isNearestLoading: $isNearestLoading, nearestError: $nearestError, isRequestingAppointment: $isRequestingAppointment)';
+    return 'AppointmentState(upcomingState: $upcomingState, pastState: $pastState, nearestAppointment: $nearestAppointment, isNearestLoading: $isNearestLoading, nearestError: $nearestError)';
   }
 }
 
@@ -357,8 +301,7 @@ abstract mixin class $AppointmentStateCopyWith<$Res> {
       PaginatedAppointmentState pastState,
       AppointmentEntity? nearestAppointment,
       bool isNearestLoading,
-      String? nearestError,
-      bool isRequestingAppointment});
+      AppFailure? nearestError});
 
   $PaginatedAppointmentStateCopyWith<$Res> get upcomingState;
   $PaginatedAppointmentStateCopyWith<$Res> get pastState;
@@ -382,7 +325,6 @@ class _$AppointmentStateCopyWithImpl<$Res>
     Object? nearestAppointment = freezed,
     Object? isNearestLoading = null,
     Object? nearestError = freezed,
-    Object? isRequestingAppointment = null,
   }) {
     return _then(_self.copyWith(
       upcomingState: null == upcomingState
@@ -404,11 +346,7 @@ class _$AppointmentStateCopyWithImpl<$Res>
       nearestError: freezed == nearestError
           ? _self.nearestError
           : nearestError // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isRequestingAppointment: null == isRequestingAppointment
-          ? _self.isRequestingAppointment
-          : isRequestingAppointment // ignore: cast_nullable_to_non_nullable
-              as bool,
+              as AppFailure?,
     ));
   }
 
@@ -436,15 +374,13 @@ class _$AppointmentStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _AppointmentState extends AppointmentState {
+class _AppointmentState implements AppointmentState {
   const _AppointmentState(
       {this.upcomingState = const PaginatedAppointmentState(),
       this.pastState = const PaginatedAppointmentState(),
       this.nearestAppointment,
       this.isNearestLoading = false,
-      this.nearestError,
-      this.isRequestingAppointment = false})
-      : super._();
+      this.nearestError});
 
   @override
   @JsonKey()
@@ -458,10 +394,7 @@ class _AppointmentState extends AppointmentState {
   @JsonKey()
   final bool isNearestLoading;
   @override
-  final String? nearestError;
-  @override
-  @JsonKey()
-  final bool isRequestingAppointment;
+  final AppFailure? nearestError;
 
   /// Create a copy of AppointmentState
   /// with the given fields replaced by the non-null parameter values.
@@ -485,25 +418,16 @@ class _AppointmentState extends AppointmentState {
             (identical(other.isNearestLoading, isNearestLoading) ||
                 other.isNearestLoading == isNearestLoading) &&
             (identical(other.nearestError, nearestError) ||
-                other.nearestError == nearestError) &&
-            (identical(
-                    other.isRequestingAppointment, isRequestingAppointment) ||
-                other.isRequestingAppointment == isRequestingAppointment));
+                other.nearestError == nearestError));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      upcomingState,
-      pastState,
-      nearestAppointment,
-      isNearestLoading,
-      nearestError,
-      isRequestingAppointment);
+  int get hashCode => Object.hash(runtimeType, upcomingState, pastState,
+      nearestAppointment, isNearestLoading, nearestError);
 
   @override
   String toString() {
-    return 'AppointmentState(upcomingState: $upcomingState, pastState: $pastState, nearestAppointment: $nearestAppointment, isNearestLoading: $isNearestLoading, nearestError: $nearestError, isRequestingAppointment: $isRequestingAppointment)';
+    return 'AppointmentState(upcomingState: $upcomingState, pastState: $pastState, nearestAppointment: $nearestAppointment, isNearestLoading: $isNearestLoading, nearestError: $nearestError)';
   }
 }
 
@@ -520,8 +444,7 @@ abstract mixin class _$AppointmentStateCopyWith<$Res>
       PaginatedAppointmentState pastState,
       AppointmentEntity? nearestAppointment,
       bool isNearestLoading,
-      String? nearestError,
-      bool isRequestingAppointment});
+      AppFailure? nearestError});
 
   @override
   $PaginatedAppointmentStateCopyWith<$Res> get upcomingState;
@@ -547,7 +470,6 @@ class __$AppointmentStateCopyWithImpl<$Res>
     Object? nearestAppointment = freezed,
     Object? isNearestLoading = null,
     Object? nearestError = freezed,
-    Object? isRequestingAppointment = null,
   }) {
     return _then(_AppointmentState(
       upcomingState: null == upcomingState
@@ -569,11 +491,7 @@ class __$AppointmentStateCopyWithImpl<$Res>
       nearestError: freezed == nearestError
           ? _self.nearestError
           : nearestError // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isRequestingAppointment: null == isRequestingAppointment
-          ? _self.isRequestingAppointment
-          : isRequestingAppointment // ignore: cast_nullable_to_non_nullable
-              as bool,
+              as AppFailure?,
     ));
   }
 

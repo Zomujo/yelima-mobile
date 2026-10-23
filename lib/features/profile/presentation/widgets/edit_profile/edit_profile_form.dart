@@ -83,12 +83,9 @@ class _EditProfileFormState extends State<EditProfileForm> {
             return AppDropdown<String>(
               value: gender,
               hintText: context.l10n.selectGender,
-              items: [
-                context.l10n.male,
-                context.l10n.female,
-                context.l10n.otherGender
-              ],
-              itemLabelBuilder: (item) => item,
+              // Stored in English like registration; only the label is translated.
+              items: const ['Male', 'Female', 'Other'],
+              itemLabelBuilder: context.l10n.genderName,
               onChanged: (value) {
                 context.read<EditProfileController>().updateForm(gender: value);
               },

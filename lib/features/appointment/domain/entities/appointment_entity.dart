@@ -1,5 +1,9 @@
 import 'package:equatable/equatable.dart';
 
+/// Which appointments a list shows; the name is the server's filter.
+enum AppointmentFilter { upcoming, past }
+
+/// A clinic appointment.
 class AppointmentEntity extends Equatable {
   final String id;
   final String title;
@@ -17,6 +21,7 @@ class AppointmentEntity extends Equatable {
   List<Object?> get props => [id, title, appointmentDate, hostPersonnel];
 }
 
+/// The clinician holding the appointment.
 class HostPersonnelEntity extends Equatable {
   final String id;
   final String userName;
@@ -32,6 +37,7 @@ class HostPersonnelEntity extends Equatable {
   List<Object?> get props => [id, userName, facility];
 }
 
+/// Where the clinician works.
 class FacilityEntity extends Equatable {
   final String name;
 

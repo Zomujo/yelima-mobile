@@ -1,74 +1,28 @@
-import 'package:yelima/core/api/api_client.dart';
-import 'package:yelima/core/exceptions/exceptions.dart';
+import '../../../../core/api/api_client.dart';
 import '../models/appointment_model.dart';
 
-abstract class AppointmentRemoteDataSource {
-  Future<AppointmentListResponseModel> getAppointments({
-    required int page,
-    required int pageSize,
-    required String filter,
-  });
+/// The appointment endpoints of the API.
+class AppointmentRemoteDataSource {
+  AppointmentRemoteDataSource({required this.apiClient});
 
-  Future<AppointmentModel?> getNearestAppointment();
-
-  Future<void> requestAppointment({required String note});
-}
-
-class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
   final APIClient apiClient;
 
-  AppointmentRemoteDataSourceImpl({required this.apiClient});
+  /// One page of appointments for [filter] (`upcoming` or `past`).
+  Future<AppointmentListResponseModel> getAppointments(
+          {required int page,
+          required int pageSize,
+          required String filter}) async =>
+      AppointmentListResponseModel.fromJson(await apiClient
+          .get('/api/v1/client/appointments', queryParameters: {
+        'page': page,
+        'pageSize': pageSize,
+        'filter': filter
+      }));
 
-  @override
-  Future<AppointmentListResponseModel> getAppointments({
-    required int page,
-    required int pageSize,
-    required String filter,
-  }) async {
-    try {
-      final response = await apiClient.get(
-        '/api/v1/client/appointments',
-        queryParameters: {
-          'page': page,
-          'pageSize': pageSize,
-          'filter': filter,
-        },
-      );
-
-      return AppointmentListResponseModel.fromJson(response);
-    } catch (e) {
-      throw _asApiError(e);
-    }
-  }
-
-  @override
+  /// The next appointment, or null if there is none.
   Future<AppointmentModel?> getNearestAppointment() async {
-    try {
-      final response =
-          await apiClient.get('/api/v1/client/appointments/nearest');
-      if (response['data'] == null) {
-        return null;
-      }
-      return AppointmentModel.fromJson(response['data']);
-    } catch (e) {
-      throw _asApiError(e);
-    }
+    final data =
+        (await apiClient.get('/api/v1/client/appointments/nearest'))['data'];
+    return data == null ? null : AppointmentModel.fromJson(data);
   }
-
-  @override
-  Future<void> requestAppointment({required String note}) async {
-    try {
-      await apiClient.post(
-        '/api/v1/client/appointment-requests',
-        data: {'type': "SCHEDULE", 'note': note},
-      );
-    } catch (e) {
-      throw _asApiError(e);
-    }
-  }
-
-  /// Keeps API and network errors as they are (with their status code); wraps anything else.
-  Object _asApiError(Object e) => e is ApiException || e is NetworkException
-      ? e
-      : ApiException(e.toString());
 }

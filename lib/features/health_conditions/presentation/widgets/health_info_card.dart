@@ -2,6 +2,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// One condition and its status.
 class HealthInfoCard extends StatelessWidget {
   final String title;
   final String status;

@@ -8,12 +8,16 @@ import '../../../../shared/widgets/layout/app_shimmer.dart';
 import '../controllers/appointment_controller.dart';
 import '../states/appointment_state.dart';
 import 'appointment_card.dart';
+import '../../domain/entities/appointment_entity.dart';
+import '../../../../shared/widgets/layout/page_navigator.dart';
+import '../../../../shared/utils/failure_message.dart';
 
+/// One appointment list with loading, empty and page controls.
 class PaginatedAppointmentList extends StatelessWidget {
   final PaginatedAppointmentState state;
   final bool isPast;
   final String emptyMessage;
-  final String filter;
+  final AppointmentFilter filter;
   final AppointmentController controller;
 
   const PaginatedAppointmentList({
@@ -45,8 +49,7 @@ class PaginatedAppointmentList extends StatelessWidget {
 
     if (state.error != null && state.items.isEmpty) {
       return Center(
-        child:
-            AppText.bodyMedium(context.l10n.errorWithMessage('${state.error}')),
+        child: AppText.bodyMedium(state.error!.message(context.l10n) ?? ''),
       );
     }
 
@@ -99,70 +102,21 @@ class PaginatedAppointmentList extends StatelessWidget {
 }
 
 class _PaginationControls extends StatelessWidget {
+  const _PaginationControls(
+      {required this.state, required this.filter, required this.controller});
+
   final PaginatedAppointmentState state;
-  final String filter;
+  final AppointmentFilter filter;
   final AppointmentController controller;
 
-  const _PaginationControls({
-    required this.state,
-    required this.filter,
-    required this.controller,
-  });
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          AppText.bodyMedium(
-            context.l10n.pageOfTotal(state.page, state.totalPages),
-            color: const Color(0xFF575F69),
-            fontWeight: FontWeight.w600,
-          ),
-          Row(
-            children: [
-              _buildNavButton(
-                icon: Icons.chevron_left,
-                onPressed: state.page > 1
-                    ? () => controller.fetchAppointments(
-                          filter: filter,
-                          targetPage: state.page - 1,
-                        )
-                    : null,
-              ),
-              const SizedBox(width: 8),
-              _buildNavButton(
-                icon: Icons.chevron_right,
-                onPressed: state.page < state.totalPages
-                    ? () => controller.fetchAppointments(
-                          filter: filter,
-                          targetPage: state.page + 1,
-                        )
-                    : null,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavButton(
-      {required IconData icon, required VoidCallback? onPressed}) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.orange300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: AppColors.orange300),
-        onPressed: onPressed,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: PageNavigator(
+          page: state.page,
+          totalPages: state.totalPages,
+          onPage: (page) =>
+              controller.fetchAppointments(filter: filter, page: page),
+        ),
+      );
 }

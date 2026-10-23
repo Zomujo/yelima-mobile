@@ -10,6 +10,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/router/router.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
+/// Confirms, then deletes the account (password users re-enter it).
 class DeleteAccountModal extends StatefulWidget {
   const DeleteAccountModal({super.key});
 
@@ -93,9 +94,8 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
               Expanded(
                 child: AppButton(
                   text: context.l10n.delete,
-                  backgroundColor: _isButtonEnabled
-                      ? AppColors.red500
-                      : Colors.grey, // Red 500
+                  backgroundColor:
+                      _isButtonEnabled ? AppColors.red500 : Colors.grey,
                   onPressed: _isButtonEnabled
                       ? () async {
                           final controller = context.read<AuthController>();

@@ -17,7 +17,8 @@ extension ProfileChangesData on ProfileChanges {
         if (phoneNumber != null) 'phoneNumber': phoneNumber,
         if (dateOfBirth != null) 'dateOfBirth': dateOfBirth!.toIso8601String(),
         if (conditions != null) 'conditions': conditions,
-        if (completedTutorials != null) 'completedTutorials': completedTutorials,
+        if (completedTutorials != null)
+          'completedTutorials': completedTutorials,
         if (hasConsented != null) 'hasConsented': hasConsented,
         if (registrationStatus != null)
           'registrationStatus': registrationStatus!.name,
@@ -33,8 +34,8 @@ extension ProfileChangesData on ProfileChanges {
         gender: Value.absentIfNull(gender),
         phoneNumber: Value.absentIfNull(phoneNumber),
         dateOfBirth: Value.absentIfNull(dateOfBirth),
-        conditionsJson:
-            Value.absentIfNull(conditions == null ? null : jsonEncode(conditions)),
+        conditionsJson: Value.absentIfNull(
+            conditions == null ? null : jsonEncode(conditions)),
         completedTutorialsJson: Value.absentIfNull(
             completedTutorials == null ? null : jsonEncode(completedTutorials)),
         hasConsented: Value.absentIfNull(hasConsented),

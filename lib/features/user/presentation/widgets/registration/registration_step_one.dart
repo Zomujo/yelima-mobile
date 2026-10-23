@@ -159,11 +159,7 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
             value: _selectedGender,
             hintText: context.l10n.selectGender,
             items: const ['Male', 'Female'],
-            itemLabelBuilder: (gender) {
-              if (gender == 'Male') return context.l10n.male;
-              if (gender == 'Female') return context.l10n.female;
-              return gender;
-            },
+            itemLabelBuilder: context.l10n.genderName,
             onChanged: (value) {
               setState(() {
                 _selectedGender = value;

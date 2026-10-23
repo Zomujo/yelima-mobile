@@ -2,8 +2,10 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../user/domain/entities/user_entity.dart';
+import '../../../user/presentation/widgets/user_avatar.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The patient's name, id, age and gender.
 class HealthProfileCard extends StatelessWidget {
   final UserEntity user;
 
@@ -11,23 +13,9 @@ class HealthProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial =
-        user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U';
-    final ageStr = user.age != null
-        ? '${user.age} ${context.l10n.yrs}'
-        : context.l10n.notAvailable;
-    String genderStr = context.l10n.notAvailable;
-    if (user.gender != null && user.gender!.isNotEmpty) {
-      final g = user.gender!.toLowerCase();
-      if (g == 'male') {
-        genderStr = context.l10n.male;
-      } else if (g == 'female') {
-        genderStr = context.l10n.female;
-      } else {
-        genderStr = user.gender![0].toUpperCase() +
-            user.gender!.substring(1).toLowerCase();
-      }
-    }
+    final l10n = context.l10n;
+    final age =
+        user.age == null ? l10n.notAvailable : '${user.age} ${l10n.yrs}';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -41,27 +29,7 @@ class HealthProfileCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF34D399), Color(0xFF059669)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+              UserAvatar(user: user, size: 60),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -84,13 +52,13 @@ class HealthProfileCard extends StatelessWidget {
           IntrinsicHeight(
             child: Row(
               children: [
-                Expanded(
-                    child: _InfoStat(label: context.l10n.age, value: ageStr)),
+                Expanded(child: _InfoStat(label: l10n.age, value: age)),
                 const VerticalDivider(
                     color: AppColors.slate200, thickness: 1, width: 32),
                 Expanded(
                     child: _InfoStat(
-                        label: context.l10n.gender, value: genderStr)),
+                        label: l10n.gender,
+                        value: l10n.genderName(user.gender))),
               ],
             ),
           ),

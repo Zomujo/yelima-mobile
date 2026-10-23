@@ -6,7 +6,7 @@ import '../../../../helpers/fake_api.dart';
 
 void main() {
   late FakeApi api;
-  late AppointmentRemoteDataSourceImpl dataSource;
+  late AppointmentRemoteDataSource dataSource;
 
   const listPath = 'api/v1/client/appointments';
   const nearestPath = 'api/v1/client/appointments/nearest';
@@ -24,7 +24,7 @@ void main() {
 
   setUp(() {
     api = FakeApi();
-    dataSource = AppointmentRemoteDataSourceImpl(apiClient: api.client);
+    dataSource = AppointmentRemoteDataSource(apiClient: api.client);
   });
 
   group('getAppointments', () {
@@ -107,15 +107,5 @@ void main() {
 
       expect(result?.appointmentDate.isUtc, isFalse);
     });
-  });
-
-  test('requestAppointment posts the note as a SCHEDULE request', () async {
-    const path = 'api/v1/client/appointment-requests';
-    api.on('POST', path, FakeReply.ok('req1', status: 201));
-
-    await dataSource.requestAppointment(note: 'Headaches');
-
-    expect(api.sent('POST', path).single.data,
-        {'type': 'SCHEDULE', 'note': 'Headaches'});
   });
 }

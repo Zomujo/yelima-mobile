@@ -94,7 +94,6 @@
   "save": "Save",
   "yourAppointments": "Your appointments",
   "appointmentsDescription": "Appointments scheduled by your clinic will appear below.",
-  "askForAppointment": "Ask for an appointment",
   "comingUp": "COMING UP",
   "noUpcomingAppointments": "No upcoming appointments.",
   "pastVisits": "PAST VISITS",
@@ -158,10 +157,6 @@
   "morningLabel": "Morning",
   "afternoonLabel": "Afternoon",
   "eveningLabel": "Evening",
-  "requestAppointment": "Request an appointment",
-  "describeWhatYouNeed": "Describe what you need so your HCP can prepare.",
-  "requestAppointmentHint": "e.g. My BP readings have been high this week...",
-  "sendRequest": "Send request",
   "sending": "Sending...",
   "logOut": "Log Out",
   "logOutConfirmation": "Are you sure you want to log out of your account?",
@@ -493,14 +488,6 @@
   "symptomReported": "Symptom reported successfully",
   "readingSaved": "Reading saved successfully",
   "readingErrorSystolicNotAbove": "The top number (systolic) must be higher than the bottom number (diastolic).",
-  "errorWithMessage": "Error: {message}",
-  "@errorWithMessage": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
   "pageOfTotal": "Page {page} of {total}",
   "@pageOfTotal": {
     "placeholders": {

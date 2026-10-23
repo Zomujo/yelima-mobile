@@ -2,6 +2,7 @@ import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/appointment_list_response.dart';
 import 'package:clock/clock.dart';
 
+/// An appointment as the server sends it.
 class AppointmentModel extends AppointmentEntity {
   const AppointmentModel({
     required super.id,
@@ -22,6 +23,7 @@ class AppointmentModel extends AppointmentEntity {
   }
 }
 
+/// The clinician as the server sends it.
 class HostPersonnelModel extends HostPersonnelEntity {
   const HostPersonnelModel({
     required super.id,
@@ -38,6 +40,7 @@ class HostPersonnelModel extends HostPersonnelEntity {
   }
 }
 
+/// The facility as the server sends it.
 class FacilityModel extends FacilityEntity {
   const FacilityModel({
     required super.name,
@@ -50,6 +53,7 @@ class FacilityModel extends FacilityEntity {
   }
 }
 
+/// A page of appointments as the server sends it.
 class AppointmentListResponseModel extends AppointmentListResponse {
   const AppointmentListResponseModel({
     required super.rows,

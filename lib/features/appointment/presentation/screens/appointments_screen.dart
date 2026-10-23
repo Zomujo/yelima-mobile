@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../domain/entities/appointment_entity.dart';
 
 import 'package:provider/provider.dart';
 import '../controllers/appointment_controller.dart';
@@ -10,6 +11,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
+/// Upcoming and past appointments.
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
 
@@ -72,7 +74,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 state: upcomingState,
                 isPast: false,
                 emptyMessage: context.l10n.noUpcomingAppointments,
-                filter: 'upcoming',
+                filter: AppointmentFilter.upcoming,
                 controller: controller,
               ),
               const SizedBox(height: 32),
@@ -87,7 +89,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 state: pastState,
                 isPast: true,
                 emptyMessage: context.l10n.noPastAppointments,
-                filter: 'past',
+                filter: AppointmentFilter.past,
                 controller: controller,
               ),
               SizedBox(height: AppSizes.bottomNavClearance(context)),

@@ -1,25 +1,31 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import '../../domain/repositories/appointment_repository.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../states/appointment_state.dart';
-import 'package:yelima/core/utils/session_scoped.dart';
+import 'package:flutter/foundation.dart';
 
+import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/utils/session_scoped.dart';
+import '../../domain/entities/appointment_entity.dart';
+import '../../domain/entities/appointment_list_response.dart';
+import '../../domain/repositories/appointment_repository.dart';
+import '../states/appointment_state.dart';
+
+/// Upcoming and past appointment pages, and the next appointment for home.
 class AppointmentController extends ChangeNotifier
     with SafeNotifier, SessionScoped {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies      |
-  // --------------------------------------------------------------------------
-
-  final AppointmentRepository repository;
-  int _nearestFetchStamp = 0;
-
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle                |
-  // --------------------------------------------------------------------------
-
   AppointmentController({required this.repository}) {
     joinSession();
+  }
+
+  final AppointmentRepository repository;
+  static const _pageSize = 3;
+
+  /// Bumped per nearest-appointment fetch, so a slow old answer can't win.
+  int _nearestStamp = 0;
+
+  AppointmentState _state = const AppointmentState();
+  AppointmentState get state => _state;
+  set state(AppointmentState value) {
+    if (_state == value) return;
+    _state = value;
+    notifyListeners();
   }
 
   @override
@@ -29,165 +35,65 @@ class AppointmentController extends ChangeNotifier
   Future<void> onSessionStarted(String userId) async {}
 
   @override
-  Future<void> onSessionEnded() async {
-    _state = const AppointmentState();
-    notifyListeners();
-  }
+  Future<void> onSessionEnded() async => state = const AppointmentState();
 
-  AppointmentState _state = const AppointmentState();
-  AppointmentState get state => _state;
-
-  set state(AppointmentState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
-  }
-
-  /// Initializes the controller by fetching paginated appointments.
+  /// Loads the first page of both lists.
   void initialize() {
-    fetchAppointments(filter: 'upcoming', isRefresh: true);
-    fetchAppointments(filter: 'past', isRefresh: true);
+    for (final filter in AppointmentFilter.values) {
+      fetchAppointments(filter: filter);
+    }
   }
 
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                     |
-  // --------------------------------------------------------------------------
-
-  /// Fetches the single nearest upcoming appointment for the dashboard.
-
+  /// Shows the cached next appointment at once, then the server's.
   Future<void> fetchNearestAppointment() async {
-    final stamp = ++_nearestFetchStamp;
+    final stamp = ++_nearestStamp;
+    final cached =
+        (await repository.getCachedNearestAppointment()).toNullable();
+    state = state.copyWith(
+        nearestAppointment: cached ?? state.nearestAppointment,
+        isNearestLoading: (cached ?? state.nearestAppointment) == null);
 
-    // 1. Instantly display local cache if available
-    final localResult = await repository.getLocalNearestAppointment();
-    localResult.fold(
-      (_) {},
-      (data) {
-        if (data != null) {
-          state =
-              state.copyWith(nearestAppointment: data, isNearestLoading: false);
-        }
-      },
-    );
-
-    // Show loading only if we have no local data
-    if (state.nearestAppointment == null) {
-      state = state.copyWith(isNearestLoading: true, nearestError: null);
-    }
-
-    // 2. Fetch from remote in background
     final result = await repository.getNearestAppointment();
-
-    if (stamp != _nearestFetchStamp) return;
-
+    if (stamp != _nearestStamp) return;
     state = result.fold(
-      (error) => state.copyWith(isNearestLoading: false, nearestError: error),
-      (data) => state.copyWith(
-          isNearestLoading: false,
-          nearestAppointment: data,
-          nearestError: null),
+      (f) => state.copyWith(isNearestLoading: false, nearestError: f),
+      (a) => state.copyWith(
+          isNearestLoading: false, nearestAppointment: a, nearestError: null),
     );
   }
 
-  /// Fetches a paginated list of appointments filtered by 'upcoming' or 'past'.
-  Future<void> fetchAppointments({
-    required String filter,
-    bool isRefresh = false,
-    int? targetPage,
-  }) async {
-    final isUpcoming = filter == 'upcoming';
-    var currentPaginatedState =
-        isUpcoming ? state.upcomingState : state.pastState;
-
-    final pageToFetch =
-        targetPage ?? (isRefresh ? 1 : currentPaginatedState.page + 1);
-
-    if (isRefresh || targetPage != null) {
-      // 1. SWR: Try to load instantly from local DB
-      final localRes = await repository.getLocalAppointments(
-          page: pageToFetch, pageSize: 3, filter: filter);
-
-      localRes.fold((_) {}, (data) {
-        if (data.rows.isNotEmpty) {
-          currentPaginatedState = currentPaginatedState.copyWith(
-            items: data.rows,
-            isLoading: false,
-            page: data.page,
-            totalPages: data.totalPages,
-            hasNextPage: data.nextPage != null,
-          );
-          _updatePaginatedState(filter, currentPaginatedState);
-        }
-      });
-
-      if (currentPaginatedState.items.isEmpty &&
-          currentPaginatedState.hasNextPage) {
-        currentPaginatedState = currentPaginatedState.copyWith(isLoading: true);
-        _updatePaginatedState(filter, currentPaginatedState);
-      }
-    } else {
-      if (!currentPaginatedState.hasNextPage ||
-          currentPaginatedState.isLoading ||
-          currentPaginatedState.isFetchingMore) {
-        return;
-      }
-      currentPaginatedState =
-          currentPaginatedState.copyWith(isFetchingMore: true);
-      _updatePaginatedState(filter, currentPaginatedState);
+  /// Shows [page] of [filter]'s list: the phone's copy first, then the server's.
+  Future<void> fetchAppointments(
+      {required AppointmentFilter filter, int page = 1}) async {
+    final cached = (await repository.getCachedAppointments(
+            page: page, pageSize: _pageSize, filter: filter))
+        .toNullable();
+    if (cached != null && cached.rows.isNotEmpty) {
+      _show(filter, cached);
+    } else if (_list(filter).items.isEmpty) {
+      _set(filter, _list(filter).copyWith(isLoading: true));
     }
 
-    final result = await repository.getAppointments(
-      page: pageToFetch,
-      pageSize: 3,
-      filter: filter,
-    );
-
-    result.fold(
-      (error) {
-        _updatePaginatedState(
-          filter,
-          currentPaginatedState.copyWith(
-              isLoading: false, isFetchingMore: false, error: error),
-        );
-      },
-      (data) {
-        final newItems = (isRefresh || targetPage != null)
-            ? data.rows
-            : [...currentPaginatedState.items, ...data.rows];
-
-        _updatePaginatedState(
-          filter,
-          currentPaginatedState.copyWith(
-            error: null,
-            isLoading: false,
-            isFetchingMore: false,
-            items: newItems,
-            page: data.page,
-            totalPages: data.totalPages,
-            hasNextPage: data.nextPage != null,
-          ),
-        );
-      },
+    (await repository.getAppointments(
+            page: page, pageSize: _pageSize, filter: filter))
+        .fold(
+      (f) => _set(filter, _list(filter).copyWith(isLoading: false, error: f)),
+      (data) => _show(filter, data),
     );
   }
 
-  /// Submits a request for a new appointment with the provided note.
-  Future<String?> requestAppointment({required String note}) async {
-    if (state.isRequestingAppointment) return null;
+  PaginatedAppointmentState _list(AppointmentFilter filter) =>
+      filter == AppointmentFilter.upcoming
+          ? state.upcomingState
+          : state.pastState;
 
-    state = state.copyWith(isRequestingAppointment: true);
-    final result = await repository.requestAppointment(note: note);
-    state = state.copyWith(isRequestingAppointment: false);
+  void _show(AppointmentFilter filter, AppointmentListResponse data) => _set(
+      filter,
+      PaginatedAppointmentState(
+          items: data.rows, page: data.page, totalPages: data.totalPages));
 
-    return result.fold((error) => error, (_) => null);
-  }
-
-  void _updatePaginatedState(
-      String filter, PaginatedAppointmentState newState) {
-    if (filter == 'upcoming') {
-      state = state.copyWith(upcomingState: newState);
-    } else {
-      state = state.copyWith(pastState: newState);
-    }
-  }
+  void _set(AppointmentFilter filter, PaginatedAppointmentState list) =>
+      state = filter == AppointmentFilter.upcoming
+          ? state.copyWith(upcomingState: list)
+          : state.copyWith(pastState: list);
 }

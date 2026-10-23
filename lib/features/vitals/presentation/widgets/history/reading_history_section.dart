@@ -2,6 +2,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/page_navigator.dart';
 import 'package:yelima/features/vitals/presentation/widgets/history/reading_history_item.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
@@ -61,8 +62,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
           delegate: _PaginationHeaderDelegate(
             currentPage: _currentPage,
             totalPages: totalPages,
-            onPrev: () => setState(() => _currentPage--),
-            onNext: () => setState(() => _currentPage++),
+            onPage: (page) => setState(() => _currentPage = page),
           ),
         ),
         SliverPadding(
@@ -98,47 +98,25 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
 }
 
 class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final int currentPage;
-  final int totalPages;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-
   _PaginationHeaderDelegate({
     required this.currentPage,
     required this.totalPages,
-    required this.onPrev,
-    required this.onNext,
+    required this.onPage,
   });
+
+  final int currentPage;
+  final int totalPages;
+  final ValueChanged<int> onPage;
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: const Color(0xFFFFF7ED),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          AppText.bodyMedium(
-            context.l10n.pageOfTotal(currentPage, totalPages),
-            color: const Color(0xFF575F69),
-            fontWeight: FontWeight.w600,
-          ),
-          Row(
-            children: [
-              _PageButton(
-                  icon: Icons.chevron_left,
-                  onPressed: currentPage > 1 ? onPrev : null),
-              const SizedBox(width: 8),
-              _PageButton(
-                  icon: Icons.chevron_right,
-                  onPressed: currentPage < totalPages ? onNext : null),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+          BuildContext context, double shrinkOffset, bool overlapsContent) =>
+      Container(
+        color: const Color(0xFFFFF7ED),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        child: PageNavigator(
+            page: currentPage, totalPages: totalPages, onPage: onPage),
+      );
 
   @override
   double get maxExtent => 56.0;
@@ -147,28 +125,7 @@ class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => 56.0;
 
   @override
-  bool shouldRebuild(covariant _PaginationHeaderDelegate oldDelegate) {
-    return oldDelegate.currentPage != currentPage ||
-        oldDelegate.totalPages != totalPages;
-  }
-}
-
-class _PageButton extends StatelessWidget {
-  const _PageButton({required this.icon, required this.onPressed});
-
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: AppColors.orange300),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: IconButton(
-            icon: Icon(icon, color: AppColors.orange300), onPressed: onPressed),
-      );
+  bool shouldRebuild(covariant _PaginationHeaderDelegate oldDelegate) =>
+      oldDelegate.currentPage != currentPage ||
+      oldDelegate.totalPages != totalPages;
 }

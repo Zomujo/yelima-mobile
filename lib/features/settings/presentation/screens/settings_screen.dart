@@ -8,6 +8,7 @@ import '../../../../core/utils/legal_links.dart';
 import '../widgets/delete_account_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Legal links and account deletion.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 

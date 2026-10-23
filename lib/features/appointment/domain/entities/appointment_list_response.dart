@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'appointment_entity.dart';
 
+/// One page of appointments.
 class AppointmentListResponse extends Equatable {
   final List<AppointmentEntity> rows;
   final int total;

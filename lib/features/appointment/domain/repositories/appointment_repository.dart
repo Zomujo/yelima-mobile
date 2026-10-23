@@ -1,23 +1,24 @@
-import 'package:yelima/core/utils/custom_types.dart';
+import '../../../../core/failures/app_failure.dart';
 import '../entities/appointment_entity.dart';
 import '../entities/appointment_list_response.dart';
 
+/// Clinic appointments, cached on the phone for offline viewing.
 abstract class AppointmentRepository {
-  AsyncResponse<AppointmentListResponse> getAppointments({
-    required int page,
-    required int pageSize,
-    required String filter,
-  });
+  /// A page from the server (cached here), or from the phone when that fails.
+  AsyncResult<AppointmentListResponse> getAppointments(
+      {required int page,
+      required int pageSize,
+      required AppointmentFilter filter});
 
-  AsyncResponse<AppointmentListResponse> getLocalAppointments({
-    required int page,
-    required int pageSize,
-    required String filter,
-  });
+  /// A page from the phone only, for showing straight away.
+  AsyncResult<AppointmentListResponse> getCachedAppointments(
+      {required int page,
+      required int pageSize,
+      required AppointmentFilter filter});
 
-  AsyncResponse<AppointmentEntity?> getNearestAppointment();
+  /// The next appointment from the server, or from the phone when that fails.
+  AsyncResult<AppointmentEntity?> getNearestAppointment();
 
-  AsyncResponse<AppointmentEntity?> getLocalNearestAppointment();
-
-  AsyncResponse<void> requestAppointment({required String note});
+  /// The next appointment saved on the phone.
+  AsyncResult<AppointmentEntity?> getCachedNearestAppointment();
 }
