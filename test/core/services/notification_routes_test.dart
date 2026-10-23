@@ -7,17 +7,18 @@ void main() {
         '/medications');
   });
 
-  test('a clinician chat message opens chat', () {
-    expect(notificationRoute({'notification_type': 'chat'}), '/chat');
-    expect(notificationRoute({'chat_id': 'room-1'}), '/chat');
+  test('a clinician chat push opens home (there is no clinician chat)', () {
+    expect(notificationRoute({'notification_type': 'chat'}), '/home');
+    expect(notificationRoute({'chat_id': 'room-1'}), '/home');
   });
 
   test('an AI message opens the AI chat', () {
-    expect(notificationRoute({'notification_type': 'zyptyk_ai'}), '/ai-chat');
+    expect(notificationRoute({'notification_type': 'ai_chat'}), '/ai-chat');
   });
 
   test('anything else, or no data, opens home', () {
     expect(notificationRoute({'notification_type': 'notification'}), '/home');
+    expect(notificationRoute({'notification_type': 'zyptyk_ai'}), '/home');
     expect(notificationRoute({}), '/home');
   });
 }

@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../widgets/chat_action_card.dart';
 import '../../../../core/constants/app_sizes.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
-/// The chat tab: entry cards for the chats on offer.
+/// The chat tab: the way into the AI daily check-in.
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
 
@@ -31,29 +30,6 @@ class ChatScreen extends StatelessWidget {
             onTap: () {
               context.push(RoutePaths.aiChat);
             },
-          ),
-          const SizedBox(height: 40),
-          AppText.labelMedium(
-            context.l10n.recentMessages,
-            color: AppColors.textGrey,
-            fontWeight: FontWeight.w600,
-          ),
-          const SizedBox(height: 84),
-          Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline,
-                  color: Colors.grey.shade300,
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                AppText.bodyMedium(
-                  context.l10n.noRecentMessages,
-                  color: AppColors.textGrey,
-                ),
-              ],
-            ),
           ),
           SizedBox(height: AppSizes.bottomNavClearance(context)),
         ],

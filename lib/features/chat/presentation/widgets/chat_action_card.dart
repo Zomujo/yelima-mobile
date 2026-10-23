@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
-/// A card that opens one kind of chat.
+/// A gradient card that opens a chat.
 class ChatActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String description;
   final LinearGradient gradient;
   final VoidCallback onTap;
-  final String? badgeText;
 
   const ChatActionCard({
     super.key,
@@ -17,13 +16,12 @@ class ChatActionCard extends StatelessWidget {
     required this.description,
     required this.gradient,
     required this.onTap,
-    this.badgeText,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: badgeText != null ? null : onTap,
+      onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
@@ -43,33 +41,10 @@ class ChatActionCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: AppText.titleMedium(
-                                title,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (badgeText != null) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: AppText.labelSmall(
-                                  badgeText!,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ],
+                        AppText.titleMedium(
+                          title,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                         const SizedBox(height: 4),
                         AppText.labelMedium(
@@ -79,9 +54,8 @@ class ChatActionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (badgeText == null)
-                    const Icon(Icons.chevron_right,
-                        color: Colors.white, size: 20),
+                  const Icon(Icons.chevron_right,
+                      color: Colors.white, size: 20),
                 ],
               ),
               const SizedBox(height: 16),
