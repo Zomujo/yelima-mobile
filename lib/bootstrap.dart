@@ -12,6 +12,7 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:ui';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'core/failures/guard.dart';
 import 'core/services/monitoring_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/utils/time_zone.dart';
@@ -37,6 +38,8 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
 
   // Initialize Monitoring Service (Crashlytics + Analytics)
   await MonitoringService.instance.initialize();
+  reportUnexpectedFailure =
+      (e, stack) => MonitoringService.instance.recordNonFatalError(e, stack);
 
   // Initialize timezone data and the device zone, so reminders fire at local time.
   tz.initializeTimeZones();

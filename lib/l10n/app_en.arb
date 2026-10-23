@@ -542,5 +542,22 @@
         "type": "String"
       }
     }
-  }
+  },
+  "failureOffline": "You're offline. Check your connection and try again.",
+  "failureUnauthorized": "You're not allowed to do this. Sign in again and try again.",
+  "failureNotFound": "We couldn't find this. It may have been removed.",
+  "failureRejected": "We couldn't save this. Check the details and try again.",
+  "failureServer": "Something went wrong on our side. Please try again later.",
+  "failureStorage": "We couldn't read or save data on this phone. Restart the app and try again.",
+  "failureUnexpected": "Something went wrong. Please try again.",
+  "authErrorUserNotFound": "No account found for that email.",
+  "authErrorWrongPassword": "The email or password is wrong.",
+  "authErrorEmailInUse": "An account already exists for that email.",
+  "authErrorCredentialInUse": "This sign-in is already linked to another account.",
+  "authErrorUserMismatch": "Sign in with the account linked to this profile.",
+  "authErrorWeakPassword": "Choose a stronger password.",
+  "authErrorInvalidEmail": "Enter a valid email address.",
+  "authErrorUserDisabled": "This account has been disabled.",
+  "authErrorTooManyRequests": "Too many attempts. Wait a moment and try again.",
+  "authErrorRequiresRecentLogin": "For your security, sign in again and retry."
 }

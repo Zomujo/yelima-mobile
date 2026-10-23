@@ -8,13 +8,6 @@ import '../utils/custom_types.dart';
 import '../utils/logger.dart';
 import '../services/connectivity_service.dart';
 
-// --- Legacy Failure classes (for existing template logic) ---
-abstract class Failure {
-  final String message;
-  final String? code;
-  Failure(this.message, {this.code});
-}
-
 class ApiException extends ErrorException {
   final String? code;
   const ApiException(String? message, {this.code}) : super(message: message);
@@ -29,27 +22,6 @@ class ApiException extends ErrorException {
     return ApiException(message?.toString() ?? "An unexpected error occurred",
         code: e.response?.statusCode?.toString());
   }
-}
-
-class ServerFailure extends Failure {
-  ServerFailure([super.message = "Server error", String? code])
-      : super(code: code);
-}
-
-class NetworkFailure extends Failure {
-  NetworkFailure([super.message = "No internet connection"]);
-}
-
-class CacheFailure extends Failure {
-  CacheFailure([super.message = "Cache error"]);
-}
-
-class AuthFailure extends Failure {
-  AuthFailure([super.message = "Authentication failed"]);
-}
-
-class ValidationFailure extends Failure {
-  ValidationFailure([super.message = "Invalid input"]);
 }
 
 // --- New ExceptionWrapper Architecture (Coasted / Zyptyk) ---
