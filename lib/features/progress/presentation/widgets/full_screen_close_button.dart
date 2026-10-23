@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Closes the full-screen chart.
 class FullScreenCloseButton extends StatelessWidget {
   final VoidCallback onTap;
 

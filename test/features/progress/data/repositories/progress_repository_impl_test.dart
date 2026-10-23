@@ -1,132 +1,80 @@
 import 'dart:convert';
-import 'package:drift/native.dart';
-import 'package:drift/drift.dart' as drift;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:yelima/core/services/connectivity_service.dart';
 import 'package:yelima/core/db/app_database.dart';
+import 'package:yelima/core/failures/app_failure.dart';
+import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/features/progress/data/datasources/progress_remote_datasource.dart';
 import 'package:yelima/features/progress/data/repositories/progress_repository_impl.dart';
 import 'package:yelima/features/progress/domain/entities/vital_trends.dart';
-import 'package:yelima/core/services/session_epoch.dart';
 
-class MockProgressRemoteDataSource extends Mock
-    implements ProgressRemoteDataSource {}
+import '../../../../helpers/fakes.dart';
 
-class MockConnectivityService extends Mock implements ConnectivityService {}
+class MockRemote extends Mock implements ProgressRemoteDataSource {}
 
 void main() {
-  late ProgressRepositoryImpl repository;
-  late MockProgressRemoteDataSource mockRemoteDataSource;
-  late MockConnectivityService mockConnectivityService;
-  late AppDatabase testDb;
+  const week = ChartDateRange.thisWeek;
+  const bp = BPTrend(
+      labels: ['Mon', 'Tue'], systolic: [120, 122], diastolic: [80, 82]);
+  const sugar = VitalTrend(labels: ['Mon'], values: [5.5], latestValue: 5.5);
+  late MockRemote remote;
+  late AppDatabase db;
+
+  ProgressRepositoryImpl repo({bool online = true}) => ProgressRepositoryImpl(
+        remoteDataSource: remote,
+        connectivityService: FakeConnectivity(online: online),
+        db: db,
+        session: SessionEpoch(),
+      );
 
   setUp(() {
-    mockRemoteDataSource = MockProgressRemoteDataSource();
-    mockConnectivityService = MockConnectivityService();
-    // Use an in-memory database for testing
-    testDb = AppDatabase(executor: NativeDatabase.memory());
-
-    repository = ProgressRepositoryImpl(
-      remoteDataSource: mockRemoteDataSource,
-      connectivityService: mockConnectivityService,
-      db: testDb,
-      session: SessionEpoch(),
-    );
+    remote = MockRemote();
+    db = testDb();
+    when(() => remote.getBPTrend(dateRange: 'thisWeek'))
+        .thenAnswer((_) async => bp);
+    when(() => remote.getVitalTrend(
+        vitalType: 'bloodSugar',
+        dateRange: 'thisWeek')).thenAnswer((_) async => sugar);
   });
 
-  tearDown(() async {
-    await testDb.close();
+  tearDown(() => db.close());
+
+  test('an online trend is returned and cached under its old key', () async {
+    expect((await repo().getBPTrend(week)).toNullable(), bp);
+
+    final row = (await db.vitalsDao.getAllVitals()).single;
+    expect(row.id, 'bp_trend_cache_thisWeek');
+    expect(jsonDecode(row.value)['labels'], ['Mon', 'Tue']);
   });
 
-  group('getBPTrend', () {
-    const tDateRange = ChartDateRange.thisWeek;
-    final tBPTrend = const BPTrend(
-      labels: ['Mon', 'Tue'],
-      systolic: [120, 122],
-      diastolic: [80, 82],
-    );
+  test('offline, the cached trend comes back as it was saved', () async {
+    await repo().getBPTrend(week);
+    await repo().getSugarTrend(week);
 
-    test(
-        'should return remote data and cache it when online and request is successful',
-        () async {
-      // Arrange
-      when(() => mockConnectivityService.isConnected)
-          .thenAnswer((_) async => true);
-      when(() => mockRemoteDataSource.getBPTrend(
-              dateRange: tDateRange.backendString))
-          .thenAnswer((_) async => tBPTrend);
+    expect((await repo(online: false).getBPTrend(week)).toNullable(), bp);
+    expect((await repo(online: false).getSugarTrend(week)).toNullable(), sugar);
+    verify(() => remote.getBPTrend(dateRange: 'thisWeek')).called(1);
+  });
 
-      // Act
-      final result = await repository.getBPTrend(dateRange: tDateRange);
+  test('offline with nothing cached says offline, not "not found"', () async {
+    expect((await repo(online: false).getBPTrend(week)).getLeft().toNullable(),
+        const NetworkFailure());
+  });
 
-      // Assert
-      expect(result.isRight(), true);
-      expect(result.getRight().toNullable(), tBPTrend);
+  test('a server error falls back to the cached trend', () async {
+    await repo().getBPTrend(week);
+    when(() => remote.getBPTrend(dateRange: 'thisWeek'))
+        .thenThrow(Exception('500'));
 
-      verify(() => mockRemoteDataSource.getBPTrend(
-          dateRange: tDateRange.backendString)).called(1);
+    expect((await repo().getBPTrend(week)).toNullable(), bp);
+  });
 
-      // Verify it was cached in the local database
-      final cachedVitals = await testDb.vitalsDao.getAllVitals();
-      expect(cachedVitals.length, 1);
-      expect(
-          cachedVitals.first.id, 'bp_trend_cache_${tDateRange.backendString}');
+  test('a vitals refresh leaves cached trends alone', () async {
+    await repo().getBPTrend(week);
 
-      final cachedJson = jsonDecode(cachedVitals.first.value);
-      expect(cachedJson['labels'], ['Mon', 'Tue']);
-    });
+    await db.vitalsDao.clearVitals();
 
-    test('should return cached data when offline', () async {
-      // Arrange
-      when(() => mockConnectivityService.isConnected)
-          .thenAnswer((_) async => false);
-
-      // Pre-populate the database with cached data
-      final trendJson = jsonEncode({
-        'labels': ['Wed'],
-        'systolic': [118],
-        'diastolic': [78],
-      });
-      await testDb.vitalsDao.insertVitals([
-        VitalHistoriesCompanion(
-          id: const drift.Value('bp_trend_cache_thisWeek'),
-          vitalType: const drift.Value('PROGRESS_BP_TREND'),
-          vitalName: const drift.Value('BP Trend thisWeek'),
-          value: drift.Value(trendJson),
-          unit: const drift.Value('json'),
-          severity: const drift.Value('normal'),
-          recordedAt: drift.Value(DateTime.now()),
-        )
-      ]);
-
-      // Act
-      final result = await repository.getBPTrend(dateRange: tDateRange);
-
-      // Assert
-      expect(result.isRight(), true);
-      final returnedTrend = result.getRight().toNullable();
-      expect(returnedTrend?.labels, ['Wed']);
-      expect(returnedTrend?.systolic, [118]);
-
-      verifyNever(() =>
-          mockRemoteDataSource.getBPTrend(dateRange: any(named: 'dateRange')));
-    });
-
-    test('should return Failure when offline and no cached data exists',
-        () async {
-      // Arrange
-      when(() => mockConnectivityService.isConnected)
-          .thenAnswer((_) async => false);
-      // Database is empty
-
-      // Act
-      final result = await repository.getBPTrend(dateRange: tDateRange);
-
-      // Assert
-      expect(result.isLeft(), true);
-      expect(result.getLeft().toNullable(),
-          'No offline data available for BP trend. Please connect to the internet to fetch it.');
-    });
+    expect((await repo().getCachedBPTrend(week)).toNullable(), bp);
   });
 }

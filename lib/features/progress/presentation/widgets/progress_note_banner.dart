@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The server's note on the trends, expandable.
 class ProgressNoteBanner extends StatefulWidget {
   final String note;
 
@@ -32,14 +33,12 @@ class _ProgressNoteBannerState extends State<ProgressNoteBanner> {
         ],
       ),
       child: Padding(
-        padding:
-            const EdgeInsets.only(left: 6), // 6px width for the side stripe
+        padding: const EdgeInsets.only(left: 6),
         child: Container(
           decoration: const BoxDecoration(
-            color: AppColors.slate100, // Soft greyish-blue background
+            color: AppColors.slate100,
             borderRadius: BorderRadius.only(
-              topLeft:
-                  Radius.circular(10), // 16 - 6 = 10 (perfect uniform curve)
+              topLeft: Radius.circular(10),
               bottomLeft: Radius.circular(10),
               topRight: Radius.circular(16),
               bottomRight: Radius.circular(16),

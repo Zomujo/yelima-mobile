@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'trend_view.dart';
 import 'package:provider/provider.dart';
-import '../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../domain/entities/vital_trends.dart';
 import '../controllers/progress_controller.dart';
 import '../screens/full_screen_graph_view.dart';
@@ -8,6 +8,7 @@ import 'graphs/glucose_graph.dart';
 import 'progress_graph_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The blood sugar chart card.
 class BloodGlucoseSection extends StatelessWidget {
   final String durationLabel;
 
@@ -21,11 +22,6 @@ class BloodGlucoseSection extends StatelessWidget {
           title: context.l10n.bloodGlucose,
           latestValue: _getLatestGlucose(controller.glucoseTrendState.data),
           latestSubtext: context.l10n.mmolL,
-          badgeText: context.l10n.inGoodRange,
-          badgeIcon: Icons.check,
-          badgeColor: const Color(0xFFDCFCE7),
-          badgeTextColor: const Color(0xFF166534),
-          badgeTrailingIcon: Icons.arrow_downward,
           description: context.l10n.bloodGlucoseTrend,
           graph: _buildGlucoseGraph(context, controller),
           onExpand: () => _openFullScreen(context, controller, 'glucose'),
@@ -43,18 +39,10 @@ class BloodGlucoseSection extends StatelessWidget {
   }
 
   Widget _buildGlucoseGraph(
-      BuildContext context, ProgressController controller) {
-    if (controller.glucoseTrendState.data != null) {
-      return GlucoseGraph(data: controller.glucoseTrendState.data!);
-    }
-    if (controller.glucoseTrendState.isLoading) {
-      return Center(child: AppShimmer.box(width: double.infinity, height: 180));
-    }
-    if (controller.glucoseTrendState.error != null) {
-      return Center(child: Text(controller.glucoseTrendState.error!));
-    }
-    return Center(child: Text(context.l10n.noDataAvailable));
-  }
+          BuildContext context, ProgressController controller) =>
+      TrendView(
+          state: controller.glucoseTrendState,
+          chart: (d) => GlucoseGraph(data: d));
 
   void _openFullScreen(
       BuildContext context, ProgressController controller, String tab) {

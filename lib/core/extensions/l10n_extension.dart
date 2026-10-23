@@ -6,6 +6,11 @@ extension LocalizationExtension on BuildContext {
   AppLocalizations get l10n => AppLocalizations.of(this)!;
 }
 
+/// The language codes the app is translated into.
+final languageCodes = [
+  for (final l in AppLocalizations.supportedLocales) l.languageCode
+];
+
 extension MonthNames on AppLocalizations {
   /// "12th July 2026", with the month in the app's language.
   String longDate(DateTime date) {

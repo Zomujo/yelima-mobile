@@ -1,161 +1,106 @@
 import 'dart:convert';
-import 'dart:isolate';
-import 'package:fpdart/fpdart.dart';
-import 'package:drift/drift.dart' as drift;
-import '../../../../core/services/connectivity_service.dart';
-import '../../../../core/utils/custom_types.dart';
-import '../../../../core/exceptions/exceptions.dart';
+
+import 'package:clock/clock.dart';
+import 'package:drift/drift.dart' show Value;
+
 import '../../../../core/db/app_database.dart';
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/failures/guard.dart';
+import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/session_epoch.dart';
 import '../../domain/entities/vital_trends.dart';
 import '../../domain/repositories/progress_repository.dart';
 import '../datasources/progress_remote_datasource.dart';
-import '../utils/progress_isolate_parsers.dart';
-import 'package:clock/clock.dart';
-import '../../../../core/services/session_epoch.dart';
 
+/// [ProgressRepository] that keeps the last trend of each range on the phone.
+///
+/// Trends are stored as JSON rows in the vitals table; its refresh leaves TREND rows alone.
 class ProgressRepositoryImpl implements ProgressRepository {
-  final ProgressRemoteDataSource _remoteDataSource;
-  final ConnectivityService connectivityService;
-  final AppDatabase db;
-
   ProgressRepositoryImpl({
     required ProgressRemoteDataSource remoteDataSource,
     required this.connectivityService,
     required this.db,
     required this.session,
-  }) : _remoteDataSource = remoteDataSource;
+  }) : _remote = remoteDataSource;
 
+  final ProgressRemoteDataSource _remote;
+  final ConnectivityService connectivityService;
+  final AppDatabase db;
   final SessionEpoch session;
 
-  @override
-  AsyncResponse<BPTrend> getCachedBPTrend(
-          {required ChartDateRange dateRange}) =>
-      _fetchLocalBPTrend(dateRange);
+  static String _bpKey(ChartDateRange r) => 'bp_trend_cache_${r.name}';
+  static String _sugarKey(ChartDateRange r) =>
+      'vital_trend_cache_bloodSugar_${r.name}';
 
   @override
-  AsyncResponse<VitalTrend> getCachedVitalTrend(
-          {required String vitalType, required ChartDateRange dateRange}) =>
-      _fetchLocalVitalTrend(vitalType, dateRange);
+  AsyncResult<BPTrend> getCachedBPTrend(ChartDateRange range) =>
+      guard(() => _cached(_bpKey(range), BPTrend.fromJson));
 
   @override
-  AsyncResponse<BPTrend> getBPTrend({required ChartDateRange dateRange}) {
-    return ExceptionWrapper.runAsync<BPTrend>(
-      () async {
+  AsyncResult<VitalTrend> getCachedSugarTrend(ChartDateRange range) =>
+      guard(() => _cached(_sugarKey(range), VitalTrend.fromJson));
+
+  @override
+  AsyncResult<BPTrend> getBPTrend(ChartDateRange range) => _fetch(
+      key: _bpKey(range),
+      type: 'PROGRESS_BP_TREND',
+      fetch: () => _remote.getBPTrend(dateRange: range.name),
+      toJson: (t) => t.toJson(),
+      fromJson: BPTrend.fromJson);
+
+  @override
+  AsyncResult<VitalTrend> getSugarTrend(ChartDateRange range) => _fetch(
+      key: _sugarKey(range),
+      type: 'PROGRESS_VITAL_TREND',
+      fetch: () =>
+          _remote.getVitalTrend(vitalType: 'bloodSugar', dateRange: range.name),
+      toJson: (t) => t.toJson(),
+      fromJson: VitalTrend.fromJson);
+
+  /// Fetches and caches a trend; when that fails, the cached one, else the original failure.
+  AsyncResult<T> _fetch<T>({
+    required String key,
+    required String type,
+    required Future<T> Function() fetch,
+    required Map<String, dynamic> Function(T) toJson,
+    required T Function(Map<String, dynamic>) fromJson,
+  }) =>
+      guard(() async {
         try {
           if (!await connectivityService.isConnected) {
-            throw const NetworkException();
+            throw const NetworkFailure();
           }
           final epoch = session.current;
-          final result = await _remoteDataSource.getBPTrend(
-              dateRange: dateRange.backendString);
+          final trend = await fetch();
           session.ensure(epoch);
-
-          final trendJson = jsonEncode({
-            'labels': result.labels,
-            'systolic': result.systolic,
-            'diastolic': result.diastolic,
-            if (result.note != null) 'note': result.note,
-          });
-
-          final cacheModel = VitalHistoriesCompanion(
-            id: drift.Value('bp_trend_cache_${dateRange.backendString}'),
-            vitalType: const drift.Value("PROGRESS_BP_TREND"),
-            vitalName: drift.Value('BP Trend ${dateRange.backendString}'),
-            value: drift.Value(trendJson),
-            unit: const drift.Value('json'),
-            severity: const drift.Value('normal'),
-            recordedAt: drift.Value(clock.now()),
-          );
-          await db.vitalsDao.insertVitals([cacheModel]);
-
-          return right(result);
+          await db.vitalsDao.insertVitals([
+            VitalHistoriesCompanion(
+              id: Value(key),
+              vitalType: Value(type),
+              vitalName: Value(key),
+              value: Value(jsonEncode(toJson(trend))),
+              unit: const Value('json'),
+              severity: const Value('normal'),
+              recordedAt: Value(clock.now()),
+            )
+          ]);
+          return trend;
         } catch (_) {
-          final localResult = await _fetchLocalBPTrend(dateRange);
-          return localResult;
+          final cached = await _cachedOrNull(key, fromJson);
+          if (cached != null) return cached;
+          rethrow;
         }
-      },
-      operationName: 'ProgressRepositoryImpl.getBPTrend',
-    );
-  }
+      });
 
-  AsyncResponse<BPTrend> _fetchLocalBPTrend(ChartDateRange dateRange) async {
-    try {
-      final vitals = await db.vitalsDao.getAllVitals();
-      final cacheKey = 'bp_trend_cache_${dateRange.backendString}';
-      final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
+  Future<T> _cached<T>(
+          String key, T Function(Map<String, dynamic>) fromJson) async =>
+      await _cachedOrNull(key, fromJson) ?? (throw const NotFoundFailure());
 
-      if (cachedVital != null) {
-        final trend = await Isolate.run(() => parseBpTrend(cachedVital.value));
-        return right(trend);
-      }
-      return left(
-          'No offline data available for BP trend. Please connect to the internet to fetch it.');
-    } catch (e) {
-      return left('Failed to load cached BP trend.');
-    }
-  }
-
-  @override
-  AsyncResponse<VitalTrend> getVitalTrend(
-      {required String vitalType, required ChartDateRange dateRange}) {
-    return ExceptionWrapper.runAsync<VitalTrend>(
-      () async {
-        try {
-          if (!await connectivityService.isConnected) {
-            throw const NetworkException();
-          }
-          final epoch = session.current;
-          final result = await _remoteDataSource.getVitalTrend(
-              vitalType: vitalType, dateRange: dateRange.backendString);
-          session.ensure(epoch);
-
-          final trendJson = jsonEncode({
-            'labels': result.labels,
-            'values': result.values,
-            if (result.latestValue != null) 'latestValue': result.latestValue,
-            if (result.note != null) 'note': result.note,
-          });
-
-          final cacheModel = VitalHistoriesCompanion(
-            id: drift.Value(
-                'vital_trend_cache_${vitalType}_${dateRange.backendString}'),
-            vitalType: const drift.Value("PROGRESS_VITAL_TREND"),
-            vitalName: drift.Value(
-                'Vital Trend $vitalType ${dateRange.backendString}'),
-            value: drift.Value(trendJson),
-            unit: const drift.Value('json'),
-            severity: const drift.Value('normal'),
-            recordedAt: drift.Value(clock.now()),
-          );
-          await db.vitalsDao.insertVitals([cacheModel]);
-
-          return right(result);
-        } catch (_) {
-          final localResult = await _fetchLocalVitalTrend(vitalType, dateRange);
-          return localResult;
-        }
-      },
-      operationName: 'ProgressRepositoryImpl.getVitalTrend',
-    );
-  }
-
-  AsyncResponse<VitalTrend> _fetchLocalVitalTrend(
-      String vitalType, ChartDateRange dateRange) async {
-    try {
-      final vitals = await db.vitalsDao.getAllVitals();
-      final cacheKey =
-          'vital_trend_cache_${vitalType}_${dateRange.backendString}';
-      final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
-
-      if (cachedVital != null) {
-        final trend =
-            await Isolate.run(() => parseVitalTrend(cachedVital.value));
-        return right(trend);
-      }
-      return left(
-          'No offline data available for $vitalType trend. Please connect to the internet to fetch it.');
-    } catch (e) {
-      return left('Failed to load cached $vitalType trend.');
-    }
+  Future<T?> _cachedOrNull<T>(
+      String key, T Function(Map<String, dynamic>) fromJson) async {
+    final row = (await db.vitalsDao.getAllVitals())
+        .where((v) => v.id == key)
+        .firstOrNull;
+    return row == null ? null : fromJson(jsonDecode(row.value));
   }
 }

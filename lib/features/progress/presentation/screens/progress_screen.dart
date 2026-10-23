@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../injection_container.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../controllers/progress_controller.dart';
@@ -14,6 +13,7 @@ import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_s
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 import '../../domain/entities/vital_trends.dart';
 
+/// Blood pressure and sugar charts over 24 hours, a week or a month.
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
 
@@ -22,43 +22,23 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
-  String duration = '1w';
-  late final ProgressController _controller;
+  ChartDateRange _range = ChartDateRange.thisWeek;
+  late final _controller = context.read<ProgressController>();
 
   @override
   void initState() {
     super.initState();
-    _controller = sl<ProgressController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchData();
-      if (mounted) {
-        AppTutorialService.showProgressTutorial(context);
-      }
+      _controller.load(_range);
+      if (mounted) AppTutorialService.showProgressTutorial(context);
     });
   }
 
-  void _fetchData() {
-    final dateRange = _getDateRange();
-    _controller.fetchBPTrend(dateRange: dateRange);
-    _controller.fetchGlucoseTrend(dateRange: dateRange);
-  }
-
-  ChartDateRange _getDateRange() {
-    switch (duration) {
-      case '1w':
-        return ChartDateRange.thisWeek;
-      case '1m':
-        return ChartDateRange.thisMonth;
-      default:
-        return ChartDateRange.today;
-    }
-  }
-
-  String getDurationLabel(BuildContext context) {
-    if (duration == '24h') return context.l10n.last24Hours;
-    if (duration == '1w') return context.l10n.last7Days;
-    return context.l10n.last30Days;
-  }
+  String _rangeLabel(BuildContext context) => switch (_range) {
+        ChartDateRange.today => context.l10n.last24Hours,
+        ChartDateRange.thisWeek => context.l10n.last7Days,
+        ChartDateRange.thisMonth => context.l10n.last30Days,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -75,23 +55,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           children: [
             AppText.labelMedium(
-              '${getDurationLabel(context)} • ${context.l10n.updatedToday}',
+              '${_rangeLabel(context)} • ${context.l10n.updatedToday}',
               color: AppColors.textGrey,
             ),
             const SizedBox(height: 16),
-
-            // Time Tabs (Duration Selector)
             DurationSelector(
-              duration: duration,
-              onDurationChanged: (newDuration) {
-                setState(() {
-                  duration = newDuration;
-                });
-                _fetchData();
+              range: _range,
+              onChanged: (range) {
+                setState(() => _range = range);
+                _controller.load(range);
               },
             ),
             const SizedBox(height: 24),
-
             Consumer<ProgressController>(
               builder: (context, controller, child) {
                 final note = controller.bpTrendState.data?.note ??
@@ -102,16 +77,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 return const SizedBox.shrink();
               },
             ),
-
-            // Blood Pressure Card
             BloodPressureSection(
               key: AppTutorialKeys.progressGraphKey,
-              durationLabel: getDurationLabel(context),
+              durationLabel: _rangeLabel(context),
             ),
             const SizedBox(height: 24),
-
-            // Blood Glucose Card
-            BloodGlucoseSection(durationLabel: getDurationLabel(context)),
+            BloodGlucoseSection(durationLabel: _rangeLabel(context)),
             const SizedBox(height: 24),
           ],
         ),

@@ -6,12 +6,12 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
 import 'package:yelima/core/services/shared_prefs_service.dart';
-import 'package:yelima/injection_container.dart';
 import 'package:yelima/core/controllers/locale_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/constants/app_images.dart';
 import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
 
+/// First launch: pick the app language, then continue to sign-in.
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -28,7 +28,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final currentLocale =
           context.read<LocaleController>().locale?.languageCode;
-      if (['en', 'tw', 'ee', 'ga'].contains(currentLocale)) {
+      if (languageCodes.contains(currentLocale)) {
         setState(() {
           _selectedLang = currentLocale!;
         });
@@ -38,7 +38,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   void _onContinue() async {
     context.read<LocaleController>().setLocale(Locale(_selectedLang));
-    await sl<SharedPrefsService>().setOnboardingCompleted();
+    await context.read<SharedPrefsService>().setOnboardingCompleted();
     if (mounted) {
       context.go(RoutePaths.signIn);
     }
@@ -86,21 +86,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               AppDropdown<String>(
                 value: _selectedLang,
                 hintText: context.l10n.chooseLanguage,
-                items: const ['en', 'tw', 'ee', 'ga'],
-                itemLabelBuilder: (code) {
-                  switch (code) {
-                    case 'en':
-                      return context.l10n.english;
-                    case 'tw':
-                      return context.l10n.akanTwi;
-                    case 'ee':
-                      return context.l10n.ewe;
-                    case 'ga':
-                      return context.l10n.ga;
-                    default:
-                      return context.l10n.english;
-                  }
-                },
+                items: languageCodes,
+                itemLabelBuilder: context.l10n.languageName,
                 onChanged: (code) {
                   setState(() {
                     _selectedLang = code;

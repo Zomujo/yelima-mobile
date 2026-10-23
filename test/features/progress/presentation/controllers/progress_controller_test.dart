@@ -1,108 +1,80 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-import 'package:fpdart/fpdart.dart';
+import 'dart:async';
 
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/features/progress/domain/entities/vital_trends.dart';
 import 'package:yelima/features/progress/domain/repositories/progress_repository.dart';
 import 'package:yelima/features/progress/presentation/controllers/progress_controller.dart';
 
-class MockProgressRepository extends Mock implements ProgressRepository {}
+class MockRepo extends Mock implements ProgressRepository {}
 
 void main() {
+  late MockRepo repo;
   late ProgressController controller;
-  late MockProgressRepository mockRepository;
+  const today = ChartDateRange.today;
+  const bp = BPTrend(
+      labels: ['2026-10-23T10:00:00Z'], systolic: [120], diastolic: [80]);
+  const sugar = VitalTrend(labels: ['2026-10-23T10:00:00Z'], values: [5.5]);
+
+  setUpAll(() => registerFallbackValue(today));
 
   setUp(() {
-    mockRepository = MockProgressRepository();
-
-    controller = ProgressController(mockRepository);
+    repo = MockRepo();
+    when(() => repo.getCachedBPTrend(any()))
+        .thenAnswer((_) async => left(const NotFoundFailure()));
+    when(() => repo.getCachedSugarTrend(any()))
+        .thenAnswer((_) async => left(const NotFoundFailure()));
+    when(() => repo.getBPTrend(any())).thenAnswer((_) async => right(bp));
+    when(() => repo.getSugarTrend(any())).thenAnswer((_) async => right(sugar));
+    controller = ProgressController(repo);
   });
 
-  group('ProgressController', () {
-    const tDateRange = ChartDateRange.today;
-    final tBPTrend = const BPTrend(
-      labels: ['10:00 AM'],
-      systolic: [120],
-      diastolic: [80],
-    );
+  tearDown(() => controller.dispose());
 
-    test('fetchBPTrend successfully updates state with data', () async {
-      // Arrange
-      // First it tries to get cached data, let's say cache is empty
-      when(() => mockRepository.getCachedBPTrend(dateRange: tDateRange))
-          .thenAnswer((_) async => const Left('No cache'));
+  test('loads both charts', () async {
+    await controller.load(today);
 
-      // Then it fetches from network
-      when(() => mockRepository.getBPTrend(dateRange: tDateRange))
-          .thenAnswer((_) async => Right(tBPTrend));
+    expect(controller.bpTrendState.data, bp);
+    expect(controller.glucoseTrendState.data, sugar);
+    expect(controller.bpTrendState.isLoading, isFalse);
+  });
 
-      // We can also verify that listeners are notified, but testing the state is sufficient
-      int listenerCallCount = 0;
-      controller.addListener(() {
-        listenerCallCount++;
-      });
+  test('a failure with nothing cached shows the error', () async {
+    when(() => repo.getBPTrend(any()))
+        .thenAnswer((_) async => left(const NetworkFailure()));
 
-      // Act
-      await controller.fetchBPTrend(dateRange: tDateRange);
+    await controller.load(today);
 
-      // Assert
-      expect(controller.bpTrendState.data, tBPTrend);
-      expect(controller.bpTrendState.isLoading, false);
-      expect(controller.bpTrendState.error, null);
+    expect(controller.bpTrendState.data, isNull);
+    expect(controller.bpTrendState.error, const NetworkFailure());
+  });
 
-      // It should notify listeners when loading starts, (maybe cache fails), loading continues, and success
-      expect(listenerCallCount, greaterThan(0));
+  test('the cached chart stays when the refresh fails', () async {
+    when(() => repo.getCachedBPTrend(today)).thenAnswer((_) async => right(bp));
+    when(() => repo.getBPTrend(today))
+        .thenAnswer((_) async => left(const NetworkFailure()));
 
-      verify(() => mockRepository.getCachedBPTrend(dateRange: tDateRange))
-          .called(1);
-      verify(() => mockRepository.getBPTrend(dateRange: tDateRange)).called(1);
-    });
+    await controller.load(today);
 
-    test('fetchBPTrend sets error state on failure', () async {
-      // Arrange
-      const errorMessage = 'Network error';
-      when(() => mockRepository.getCachedBPTrend(dateRange: tDateRange))
-          .thenAnswer((_) async => const Left('No cache'));
+    expect(controller.bpTrendState.data, bp);
+    expect(controller.bpTrendState.error, const NetworkFailure());
+  });
 
-      when(() => mockRepository.getBPTrend(dateRange: tDateRange))
-          .thenAnswer((_) async => const Left(errorMessage));
+  test('an answer for a range the user left is ignored', () async {
+    final slow = Completer<Either<AppFailure, BPTrend>>();
+    when(() => repo.getBPTrend(today)).thenAnswer((_) => slow.future);
+    const month = BPTrend(
+        labels: ['2026-10-01T10:00:00Z'], systolic: [130], diastolic: [85]);
+    when(() => repo.getBPTrend(ChartDateRange.thisMonth))
+        .thenAnswer((_) async => right(month));
 
-      // Act
-      await controller.fetchBPTrend(dateRange: tDateRange);
+    final first = controller.load(today);
+    await controller.load(ChartDateRange.thisMonth);
+    slow.complete(right(bp));
+    await first;
 
-      // Assert
-      expect(controller.bpTrendState.data, null);
-      expect(controller.bpTrendState.isLoading, false);
-      expect(controller.bpTrendState.error, errorMessage);
-
-      verify(() => mockRepository.getCachedBPTrend(dateRange: tDateRange))
-          .called(1);
-      verify(() => mockRepository.getBPTrend(dateRange: tDateRange)).called(1);
-    });
-
-    test('fetchBPTrend uses cached data first if available', () async {
-      // Arrange
-      when(() => mockRepository.getCachedBPTrend(dateRange: tDateRange))
-          .thenAnswer((_) async => Right(tBPTrend));
-
-      // The network call might still happen in the background or fail
-      when(() => mockRepository.getBPTrend(dateRange: tDateRange))
-          .thenAnswer((_) async => const Left('Network offline'));
-
-      // Act
-      await controller.fetchBPTrend(dateRange: tDateRange);
-
-      // Assert
-      // Because cache was successful, data should be tBPTrend,
-      // but since the network call failed afterwards, it might set error.
-      // Let's check how the controller handles it.
-      // Actually, looking at ProgressController:
-      // result.fold((err) => bpTrendState.copyWith(error: err.message), ...)
-      // So it will overwrite the error state, but the data will remain since copyWith doesn't clear data unless specified!
-
-      expect(controller.bpTrendState.data, tBPTrend);
-      expect(controller.bpTrendState.error, 'Network offline');
-      expect(controller.bpTrendState.isLoading, false);
-    });
+    expect(controller.bpTrendState.data, month);
   });
 }

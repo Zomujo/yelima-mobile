@@ -17,9 +17,7 @@ T _$identity<T>(T value) => value;
 mixin _$ProgressState<T> {
   T? get data;
   bool get isLoading;
-  String? get error;
-  bool get isSyncFailed;
-  DateTime? get lastUpdated;
+  AppFailure? get error;
 
   /// Create a copy of ProgressState
   /// with the given fields replaced by the non-null parameter values.
@@ -37,25 +35,16 @@ mixin _$ProgressState<T> {
             const DeepCollectionEquality().equals(other.data, data) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
-            (identical(other.error, error) || other.error == error) &&
-            (identical(other.isSyncFailed, isSyncFailed) ||
-                other.isSyncFailed == isSyncFailed) &&
-            (identical(other.lastUpdated, lastUpdated) ||
-                other.lastUpdated == lastUpdated));
+            (identical(other.error, error) || other.error == error));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(data),
-      isLoading,
-      error,
-      isSyncFailed,
-      lastUpdated);
+      runtimeType, const DeepCollectionEquality().hash(data), isLoading, error);
 
   @override
   String toString() {
-    return 'ProgressState<$T>(data: $data, isLoading: $isLoading, error: $error, isSyncFailed: $isSyncFailed, lastUpdated: $lastUpdated)';
+    return 'ProgressState<$T>(data: $data, isLoading: $isLoading, error: $error)';
   }
 }
 
@@ -65,12 +54,7 @@ abstract mixin class $ProgressStateCopyWith<T, $Res> {
           ProgressState<T> value, $Res Function(ProgressState<T>) _then) =
       _$ProgressStateCopyWithImpl;
   @useResult
-  $Res call(
-      {T? data,
-      bool isLoading,
-      String? error,
-      bool isSyncFailed,
-      DateTime? lastUpdated});
+  $Res call({T? data, bool isLoading, AppFailure? error});
 }
 
 /// @nodoc
@@ -89,8 +73,6 @@ class _$ProgressStateCopyWithImpl<T, $Res>
     Object? data = freezed,
     Object? isLoading = null,
     Object? error = freezed,
-    Object? isSyncFailed = null,
-    Object? lastUpdated = freezed,
   }) {
     return _then(_self.copyWith(
       data: freezed == data
@@ -104,15 +86,7 @@ class _$ProgressStateCopyWithImpl<T, $Res>
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isSyncFailed: null == isSyncFailed
-          ? _self.isSyncFailed
-          : isSyncFailed // ignore: cast_nullable_to_non_nullable
-              as bool,
-      lastUpdated: freezed == lastUpdated
-          ? _self.lastUpdated
-          : lastUpdated // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+              as AppFailure?,
     ));
   }
 }
@@ -120,12 +94,7 @@ class _$ProgressStateCopyWithImpl<T, $Res>
 /// @nodoc
 
 class _ProgressState<T> implements ProgressState<T> {
-  const _ProgressState(
-      {this.data,
-      this.isLoading = false,
-      this.error,
-      this.isSyncFailed = false,
-      this.lastUpdated});
+  const _ProgressState({this.data, this.isLoading = false, this.error});
 
   @override
   final T? data;
@@ -133,12 +102,7 @@ class _ProgressState<T> implements ProgressState<T> {
   @JsonKey()
   final bool isLoading;
   @override
-  final String? error;
-  @override
-  @JsonKey()
-  final bool isSyncFailed;
-  @override
-  final DateTime? lastUpdated;
+  final AppFailure? error;
 
   /// Create a copy of ProgressState
   /// with the given fields replaced by the non-null parameter values.
@@ -156,25 +120,16 @@ class _ProgressState<T> implements ProgressState<T> {
             const DeepCollectionEquality().equals(other.data, data) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
-            (identical(other.error, error) || other.error == error) &&
-            (identical(other.isSyncFailed, isSyncFailed) ||
-                other.isSyncFailed == isSyncFailed) &&
-            (identical(other.lastUpdated, lastUpdated) ||
-                other.lastUpdated == lastUpdated));
+            (identical(other.error, error) || other.error == error));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(data),
-      isLoading,
-      error,
-      isSyncFailed,
-      lastUpdated);
+      runtimeType, const DeepCollectionEquality().hash(data), isLoading, error);
 
   @override
   String toString() {
-    return 'ProgressState<$T>(data: $data, isLoading: $isLoading, error: $error, isSyncFailed: $isSyncFailed, lastUpdated: $lastUpdated)';
+    return 'ProgressState<$T>(data: $data, isLoading: $isLoading, error: $error)';
   }
 }
 
@@ -186,12 +141,7 @@ abstract mixin class _$ProgressStateCopyWith<T, $Res>
       __$ProgressStateCopyWithImpl;
   @override
   @useResult
-  $Res call(
-      {T? data,
-      bool isLoading,
-      String? error,
-      bool isSyncFailed,
-      DateTime? lastUpdated});
+  $Res call({T? data, bool isLoading, AppFailure? error});
 }
 
 /// @nodoc
@@ -210,8 +160,6 @@ class __$ProgressStateCopyWithImpl<T, $Res>
     Object? data = freezed,
     Object? isLoading = null,
     Object? error = freezed,
-    Object? isSyncFailed = null,
-    Object? lastUpdated = freezed,
   }) {
     return _then(_ProgressState<T>(
       data: freezed == data
@@ -225,15 +173,7 @@ class __$ProgressStateCopyWithImpl<T, $Res>
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isSyncFailed: null == isSyncFailed
-          ? _self.isSyncFailed
-          : isSyncFailed // ignore: cast_nullable_to_non_nullable
-              as bool,
-      lastUpdated: freezed == lastUpdated
-          ? _self.lastUpdated
-          : lastUpdated // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+              as AppFailure?,
     ));
   }
 }

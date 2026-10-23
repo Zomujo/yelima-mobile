@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// A chart card: title, latest value, chart and legend.
 class ProgressGraphCard extends StatelessWidget {
   final String title;
   final String latestValue;
   final String latestSubtext;
-  final String badgeText;
-  final IconData badgeIcon;
-  final Color badgeColor;
-  final Color badgeTextColor;
-  final IconData? badgeTrailingIcon;
   final String description;
   final Widget graph;
   final Widget? legend;
@@ -21,11 +17,6 @@ class ProgressGraphCard extends StatelessWidget {
     required this.title,
     required this.latestValue,
     required this.latestSubtext,
-    required this.badgeText,
-    required this.badgeIcon,
-    required this.badgeColor,
-    required this.badgeTextColor,
-    this.badgeTrailingIcon,
     required this.description,
     required this.graph,
     this.legend,

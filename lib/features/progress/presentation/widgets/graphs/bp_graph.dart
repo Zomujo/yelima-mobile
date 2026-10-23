@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/vital_trends.dart';
 import 'base_vital_graph.dart';
 
+/// Systolic and diastolic lines.
 class BPGraph extends StatelessWidget {
   final BPTrend data;
 
@@ -50,7 +51,7 @@ class BPGraph extends StatelessWidget {
       bottomLabels: data.formattedLabels.isEmpty ? [''] : data.formattedLabels,
       leftLabelValues: leftLabelValues,
       targetLineY: 130,
-      targetLineColor: const Color(0xFFF59E0B), // Orange dashed line
+      targetLineColor: const Color(0xFFF59E0B),
       getExtraLinesOnTouch: (showingTooltipOnX) {
         final index = showingTooltipOnX.toInt();
         if (index >= 0 &&
@@ -94,17 +95,17 @@ class BPGraph extends StatelessWidget {
               .where((e) => e.value != null)
               .map((e) => FlSpot(e.key.toDouble(), e.value!.toDouble()))
               .toList(),
-          isCurved: false, // Straight lines between points as in screenshot
-          color: AppColors.red500, // Zyptyk Red
+          isCurved: false,
+          color: AppColors.red500,
           barWidth: 2,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, barData, index) {
               return FlDotCirclePainter(
                 radius: 4,
-                color: const Color(0xFFFCA5A5), // Lighter red fill
+                color: const Color(0xFFFCA5A5),
                 strokeWidth: 2,
-                strokeColor: AppColors.red500, // Border matches line
+                strokeColor: AppColors.red500,
               );
             },
           ),
@@ -118,7 +119,7 @@ class BPGraph extends StatelessWidget {
               .map((e) => FlSpot(e.key.toDouble(), e.value!.toDouble()))
               .toList(),
           isCurved: false,
-          color: AppColors.blue500, // Zyptyk Blue
+          color: AppColors.blue500,
           barWidth: 2,
           dotData: FlDotData(
             show: true,
@@ -127,7 +128,7 @@ class BPGraph extends StatelessWidget {
                 radius: 4,
                 color: const Color(0xFF93C5FD), // Lighter blue fill
                 strokeWidth: 2,
-                strokeColor: AppColors.blue500, // Border matches line
+                strokeColor: AppColors.blue500,
               );
             },
           ),

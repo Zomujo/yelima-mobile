@@ -70,8 +70,6 @@ void main() {
         multiLine: true);
     final appDb = RegExp(r"^import '[^']*(core/db/|injection_container\.dart)",
         multiLine: true);
-    // Features not cleaned up yet; remove each one as it's done.
-    const pending = {'onboarding', 'progress'};
     final bad = <String>[];
     for (final f in Directory('lib/features')
         .listSync(recursive: true)
@@ -79,8 +77,7 @@ void main() {
       final path = f.path;
       if (!path.endsWith('.dart') ||
           RegExp(r'\.(g|freezed)\.dart$').hasMatch(path) ||
-          !(path.contains('/domain/') || path.contains('/presentation/')) ||
-          pending.contains(path.split('/')[2])) {
+          !(path.contains('/domain/') || path.contains('/presentation/'))) {
         continue;
       }
       final src = f.readAsStringSync();

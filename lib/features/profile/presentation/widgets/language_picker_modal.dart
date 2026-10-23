@@ -65,7 +65,7 @@ class LanguagePickerModal extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ...const ['en', 'tw', 'ee', 'ga'].map((code) {
+            ...languageCodes.map((code) {
               final isSelected = currentLanguageCode == code;
               return InkWell(
                 onTap: () {

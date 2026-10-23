@@ -1,44 +1,28 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/utils/session_scoped.dart';
 import '../../domain/entities/vital_trends.dart';
 import '../../domain/repositories/progress_repository.dart';
 import 'progress_state.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import 'package:clock/clock.dart';
-import 'package:yelima/core/utils/session_scoped.dart';
 
+/// The progress screen's blood pressure and blood sugar charts.
 class ProgressController extends ChangeNotifier
     with SafeNotifier, SessionScoped {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies                  |
-  // --------------------------------------------------------------------------
-
-  final ProgressRepository _repository;
-
-  ProgressState<BPTrend> _bpTrendState = const ProgressState(isLoading: true);
-  ProgressState<VitalTrend> _glucoseTrendState =
-      const ProgressState(isLoading: true);
-
-  ProgressState<BPTrend> get bpTrendState => _bpTrendState;
-  ProgressState<VitalTrend> get glucoseTrendState => _glucoseTrendState;
-
-  set bpTrendState(ProgressState<BPTrend> value) {
-    if (_bpTrendState == value) return;
-    _bpTrendState = value;
-    notifyListeners();
-  }
-
-  set glucoseTrendState(ProgressState<VitalTrend> value) {
-    if (_glucoseTrendState == value) return;
-    _glucoseTrendState = value;
-    notifyListeners();
-  }
-
-  ChartDateRange _currentBPRange = ChartDateRange.today;
-  ChartDateRange _currentGlucoseRange = ChartDateRange.today;
-
-  ProgressController(this._repository) {
+  ProgressController(ProgressRepository repository) {
+    _bp = _Trend(
+        repository.getCachedBPTrend, repository.getBPTrend, notifyListeners);
+    _sugar = _Trend(repository.getCachedSugarTrend, repository.getSugarTrend,
+        notifyListeners);
     joinSession();
   }
+
+  late final _Trend<BPTrend> _bp;
+  late final _Trend<VitalTrend> _sugar;
+
+  ProgressState<BPTrend> get bpTrendState => _bp.state;
+  ProgressState<VitalTrend> get glucoseTrendState => _sugar.state;
 
   @override
   String get serviceName => 'ProgressController';
@@ -48,111 +32,48 @@ class ProgressController extends ChangeNotifier
 
   @override
   Future<void> onSessionEnded() async {
-    _bpTrendState = const ProgressState(isLoading: true);
-    _glucoseTrendState = const ProgressState(isLoading: true);
+    _bp.reset();
+    _sugar.reset();
     notifyListeners();
   }
 
-  /// Fetches the Blood Pressure trends for the specified date range.
+  /// Loads both charts for [range].
+  Future<void> load(ChartDateRange range) =>
+      Future.wait([_bp.load(range), _sugar.load(range)]);
+}
 
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                    |
-  // --------------------------------------------------------------------------
+/// One chart: the phone's copy at once, then the server's, ignoring answers for an old range.
+class _Trend<T extends TrendLabels> {
+  _Trend(this._cached, this._fetch, this._notify);
 
-  Future<void> fetchBPTrend(
-      {ChartDateRange dateRange = ChartDateRange.today}) async {
-    bool isNewRange = _currentBPRange != dateRange || bpTrendState.data == null;
-    _currentBPRange = dateRange;
+  final AsyncResult<T> Function(ChartDateRange) _cached;
+  final AsyncResult<T> Function(ChartDateRange) _fetch;
+  final VoidCallback _notify;
+  ProgressState<T> state = const ProgressState(isLoading: true);
+  ChartDateRange? _range;
 
-    // Load from cache if it's a new range or empty
-    if (isNewRange) {
-      bpTrendState = const ProgressState(isLoading: true);
-      final cachedResult =
-          await _repository.getCachedBPTrend(dateRange: dateRange);
-      cachedResult.fold((_) {}, (data) {
-        if (data.labels.isNotEmpty) {
-          bpTrendState =
-              bpTrendState.copyWith(data: data, isLoading: false, error: null);
-        }
-      });
+  Future<void> load(ChartDateRange range) async {
+    if (range != _range || state.data == null) {
+      _range = range;
+      _set(const ProgressState(isLoading: true));
+      final cached = (await _cached(range)).toNullable();
+      if (cached != null && cached.labels.isNotEmpty) {
+        _set(ProgressState(data: cached));
+      }
     }
-
-    // Emit loading state only if we still don't have data
-    if (bpTrendState.data == null) {
-      bpTrendState = bpTrendState.copyWith(isLoading: true, error: null);
-    }
-
-    // Fetch from network silently
-    final result = await _repository.getBPTrend(dateRange: dateRange);
-
-    result.fold(
-      (err) {
-        if (_currentBPRange == dateRange) {
-          bpTrendState = bpTrendState.copyWith(error: err, isLoading: false);
-        }
-      },
-      (data) {
-        if (_currentBPRange == dateRange) {
-          bpTrendState = bpTrendState.copyWith(
-            data: data,
-            isLoading: false,
-            isSyncFailed: false,
-            lastUpdated: clock.now(),
-            error: null,
-          );
-        }
-      },
-    );
+    final result = await _fetch(range);
+    if (range != _range) return;
+    result.fold((f) => _set(state.copyWith(isLoading: false, error: f)),
+        (data) => _set(ProgressState(data: data)));
   }
 
-  /// Fetches the Blood Glucose trends for the specified date range.
-  Future<void> fetchGlucoseTrend(
-      {ChartDateRange dateRange = ChartDateRange.today}) async {
-    bool isNewRange =
-        _currentGlucoseRange != dateRange || glucoseTrendState.data == null;
-    _currentGlucoseRange = dateRange;
+  void reset() {
+    _range = null;
+    state = const ProgressState(isLoading: true);
+  }
 
-    // Load from cache if it's a new range or empty
-    if (isNewRange) {
-      glucoseTrendState = const ProgressState(isLoading: true);
-      final cachedResult = await _repository.getCachedVitalTrend(
-          vitalType: 'bloodSugar', dateRange: dateRange);
-      cachedResult.fold((_) {}, (data) {
-        if (data.labels.isNotEmpty) {
-          glucoseTrendState = glucoseTrendState.copyWith(
-              data: data, isLoading: false, error: null);
-        }
-      });
-    }
-
-    // Emit loading state only if we still don't have data
-    if (glucoseTrendState.data == null) {
-      glucoseTrendState =
-          glucoseTrendState.copyWith(isLoading: true, error: null);
-    }
-
-    // Fetch from network silently
-    final result = await _repository.getVitalTrend(
-        vitalType: 'bloodSugar', dateRange: dateRange);
-
-    result.fold(
-      (err) {
-        if (_currentGlucoseRange == dateRange) {
-          glucoseTrendState =
-              glucoseTrendState.copyWith(error: err, isLoading: false);
-        }
-      },
-      (data) {
-        if (_currentGlucoseRange == dateRange) {
-          glucoseTrendState = glucoseTrendState.copyWith(
-            data: data,
-            isLoading: false,
-            isSyncFailed: false,
-            lastUpdated: clock.now(),
-            error: null,
-          );
-        }
-      },
-    );
+  void _set(ProgressState<T> value) {
+    state = value;
+    _notify();
   }
 }

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import '../widgets/trend_view.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../controllers/progress_controller.dart';
 import '../widgets/graphs/bp_graph.dart';
 import '../widgets/graphs/glucose_graph.dart';
 import '../widgets/full_screen_close_button.dart';
 
+/// One chart in landscape, filling the screen.
 class FullScreenGraphView extends StatefulWidget {
   final String activeTab;
   final String durationLabel;
@@ -56,7 +57,6 @@ class _FullScreenGraphViewState extends State<FullScreenGraphView> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Full-screen graph
             Positioned.fill(
               child: Padding(
                 padding: const EdgeInsets.only(
@@ -93,8 +93,6 @@ class _FullScreenGraphViewState extends State<FullScreenGraphView> {
                 ),
               ),
             ),
-
-            // Minimize FAB
             FullScreenCloseButton(
               onTap: () => Navigator.of(context).pop(),
             ),
@@ -106,34 +104,14 @@ class _FullScreenGraphViewState extends State<FullScreenGraphView> {
 
   Widget _buildGraph(BuildContext context) {
     final controller = context.watch<ProgressController>();
-
-    if (widget.activeTab == 'bp') {
-      if (controller.bpTrendState.isLoading) return _loader();
-      if (controller.bpTrendState.error != null) {
-        return Center(
-            child: AppText.bodyMedium(controller.bpTrendState.error!));
-      }
-      if (controller.bpTrendState.data == null) {
-        return Center(child: AppText.bodyMedium(context.l10n.noDataAvailable));
-      }
-      return BPGraph(data: controller.bpTrendState.data!);
-    } else {
-      if (controller.glucoseTrendState.isLoading) return _loader();
-      if (controller.glucoseTrendState.error != null) {
-        return Center(
-            child: AppText.bodyMedium(controller.glucoseTrendState.error!));
-      }
-      if (controller.glucoseTrendState.data == null) {
-        return Center(child: AppText.bodyMedium(context.l10n.noDataAvailable));
-      }
-      return GlucoseGraph(data: controller.glucoseTrendState.data!);
-    }
+    return widget.activeTab == 'bp'
+        ? TrendView(
+            state: controller.bpTrendState,
+            chart: (d) => BPGraph(data: d),
+            height: null)
+        : TrendView(
+            state: controller.glucoseTrendState,
+            chart: (d) => GlucoseGraph(data: d),
+            height: null);
   }
-
-  Widget _loader() => Center(
-        child: AppShimmer.box(
-          width: double.infinity,
-          height: double.infinity,
-        ),
-      );
 }

@@ -1,7 +1,7 @@
 import 'package:yelima/core/theme/app_colors.dart';
+import 'trend_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../domain/entities/vital_trends.dart';
 import '../controllers/progress_controller.dart';
 import '../screens/full_screen_graph_view.dart';
@@ -10,6 +10,7 @@ import 'progress_graph_card.dart';
 import 'progress_legend_item.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The blood pressure chart card.
 class BloodPressureSection extends StatelessWidget {
   final String durationLabel;
 
@@ -23,10 +24,6 @@ class BloodPressureSection extends StatelessWidget {
           title: context.l10n.bloodPressure,
           latestValue: _getLatestBP(controller.bpTrendState.data),
           latestSubtext: context.l10n.latestReading,
-          badgeText: context.l10n.improving,
-          badgeIcon: Icons.check,
-          badgeColor: const Color(0xFFDCFCE7),
-          badgeTextColor: const Color(0xFF166534),
           description: context.l10n.bloodPressureTrend,
           graph: _buildBPGraph(context, controller),
           onExpand: () => _openFullScreen(context, controller, 'bp'),
@@ -52,18 +49,8 @@ class BloodPressureSection extends StatelessWidget {
     return '${sysValues.last?.toInt()}/${diaValues.last?.toInt()}';
   }
 
-  Widget _buildBPGraph(BuildContext context, ProgressController controller) {
-    if (controller.bpTrendState.data != null) {
-      return BPGraph(data: controller.bpTrendState.data!);
-    }
-    if (controller.bpTrendState.isLoading) {
-      return Center(child: AppShimmer.box(width: double.infinity, height: 180));
-    }
-    if (controller.bpTrendState.error != null) {
-      return Center(child: Text(controller.bpTrendState.error!));
-    }
-    return Center(child: Text(context.l10n.noDataAvailable));
-  }
+  Widget _buildBPGraph(BuildContext context, ProgressController controller) =>
+      TrendView(state: controller.bpTrendState, chart: (d) => BPGraph(data: d));
 
   void _openFullScreen(
       BuildContext context, ProgressController controller, String tab) {

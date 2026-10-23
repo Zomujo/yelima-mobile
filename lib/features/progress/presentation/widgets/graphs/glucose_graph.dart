@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/vital_trends.dart';
 import 'base_vital_graph.dart';
 
+/// The blood sugar line.
 class GlucoseGraph extends StatelessWidget {
   final VitalTrend data;
 
@@ -47,7 +48,7 @@ class GlucoseGraph extends StatelessWidget {
       bottomLabels: data.formattedLabels.isEmpty ? [''] : data.formattedLabels,
       leftLabelValues: leftLabelValues,
       targetLineY: 5.6,
-      targetLineColor: AppColors.emerald500, // Green dashed line
+      targetLineColor: AppColors.emerald500,
       lineBarsData: [
         LineChartBarData(
           spots: data.values
@@ -56,17 +57,17 @@ class GlucoseGraph extends StatelessWidget {
               .where((e) => e.value != null)
               .map((e) => FlSpot(e.key.toDouble(), e.value!.toDouble()))
               .toList(),
-          isCurved: true, // Smooth curves for glucose
-          color: AppColors.blue500, // Zyptyk Blue
+          isCurved: true,
+          color: AppColors.blue500,
           barWidth: 3,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, barData, index) {
               return FlDotCirclePainter(
                 radius: 4,
-                color: const Color(0xFF93C5FD), // Lighter blue fill
+                color: const Color(0xFF93C5FD),
                 strokeWidth: 2,
-                strokeColor: AppColors.blue500, // Border matches line
+                strokeColor: AppColors.blue500,
               );
             },
           ),

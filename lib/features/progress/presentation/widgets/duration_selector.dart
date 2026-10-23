@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:yelima/core/extensions/l10n_extension.dart';
 
+import '../../../../core/extensions/l10n_extension.dart';
+import '../../domain/entities/vital_trends.dart';
+
+/// 24h / 1 week / 1 month tabs.
 class DurationSelector extends StatelessWidget {
-  final String duration;
-  final Function(String) onDurationChanged;
-
   const DurationSelector(
-      {super.key, required this.duration, required this.onDurationChanged});
+      {super.key, required this.range, required this.onChanged});
+
+  final ChartDateRange range;
+  final ValueChanged<ChartDateRange> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
@@ -18,43 +22,42 @@ class DurationSelector extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: Row(
         children: [
-          _buildDurationButton('24h', context.l10n.twentyFourHours),
-          _buildDurationButton('1w', context.l10n.oneWeek),
-          _buildDurationButton('1m', context.l10n.oneMonth),
+          for (final (r, label) in [
+            (ChartDateRange.today, l10n.twentyFourHours),
+            (ChartDateRange.thisWeek, l10n.oneWeek),
+            (ChartDateRange.thisMonth, l10n.oneMonth),
+          ])
+            Expanded(child: _tab(r, label)),
         ],
       ),
     );
   }
 
-  Widget _buildDurationButton(String id, String label) {
-    final isActive = duration == id;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => onDurationChanged(id),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isActive
-                ? [
-                    const BoxShadow(
+  Widget _tab(ChartDateRange r, String label) {
+    final active = r == range;
+    return GestureDetector(
+      onTap: () => onChanged(r),
+      child: Container(
+        decoration: BoxDecoration(
+          color: active ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: active
+              ? const [
+                  BoxShadow(
                       color: Colors.black12,
                       blurRadius: 5,
-                      offset: Offset(0, 2),
-                    ),
-                  ]
-                : [],
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              color:
-                  isActive ? const Color(0xFF1F2937) : const Color(0xFF6B7280),
-            ),
+                      offset: Offset(0, 2))
+                ]
+              : const [],
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            color: active ? const Color(0xFF1F2937) : const Color(0xFF6B7280),
           ),
         ),
       ),

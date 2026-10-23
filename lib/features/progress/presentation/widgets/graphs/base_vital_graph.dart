@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+/// The scrollable line chart both trends are drawn with.
 class BaseVitalGraph extends StatefulWidget {
   final List<LineChartBarData> lineBarsData;
   final double minY;
@@ -51,11 +52,10 @@ class _BaseVitalGraphState extends State<BaseVitalGraph> {
     const double pointSpacing = 46.0;
 
     // 60 is the padding/reserved size for titles
-    final double minChartWidth = screenWidth - 48; // Account for screen padding
+    final double minChartWidth = screenWidth - 48;
     final double actualDataWidth = pointCount * pointSpacing + 60;
     final double chartWidth = max(minChartWidth, actualDataWidth);
 
-    // Calculate how many points would fit in the screen width
     final double fitCount = (screenWidth - 60) / pointSpacing;
     final double maxX = max(pointCount.toDouble() - 1, fitCount - 1) + 0.5;
 

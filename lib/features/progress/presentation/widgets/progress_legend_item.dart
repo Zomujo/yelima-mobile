@@ -1,6 +1,7 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+/// A coloured dot and its label.
 class ProgressLegendItem extends StatelessWidget {
   final Color color;
   final String label;

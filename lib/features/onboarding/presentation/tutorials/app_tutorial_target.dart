@@ -6,6 +6,7 @@ import 'package:yelima/shared/widgets/layout/app_button.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Builds one step of a guided tour.
 class AppTutorialTarget {
   static TargetFocus create({
     required String identify,
