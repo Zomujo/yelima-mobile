@@ -1,15 +1,14 @@
 import 'dart:io';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/managers/audio_player_manager.dart';
-import '../../../../../injection_container.dart';
+import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../domain/services/audio_cache_manager.dart';
+import '../../../domain/repositories/ai_chat_repository.dart';
 
+/// A voice note: download, play and waveform.
 class AudioMessageBubble extends StatefulWidget {
   final String audioUrl;
   final bool isUser;
@@ -38,10 +37,14 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
   bool _isDownloading = false;
   String? _localPath;
 
+  /// The ids a downloaded copy may be saved under.
+  List<String> get _ids =>
+      [widget.messageId, if (widget.localChatId != null) widget.localChatId!];
+
   @override
   void initState() {
     super.initState();
-    _playerManager = sl<AudioPlayerManager>();
+    _playerManager = context.read<AudioPlayerManager>();
     _playerController = PlayerController();
 
     _checkInitialState();
@@ -58,10 +61,8 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
   Future<void> _checkInitialState() async {
     _playerManager.register(_playerController);
 
-    String? cachedPath = await AudioCacheManager().getPath(widget.messageId);
-    if (cachedPath == null && widget.localChatId != null) {
-      cachedPath = await AudioCacheManager().getPath(widget.localChatId!);
-    }
+    final cachedPath =
+        await context.read<AiChatRepository>().cachedAudioPath(_ids);
 
     if (cachedPath != null) {
       _localPath = cachedPath;
@@ -104,7 +105,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
 
       _waveformData = data;
 
-      // Delay briefly to allow native platform to parse duration
+      // Give the platform a moment to read the duration.
       await Future.delayed(const Duration(milliseconds: 100));
       final duration = await _playerController.getDuration(DurationType.max);
       if (duration == 0) {
@@ -117,7 +118,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
       if (mounted) setState(() {});
     } catch (e) {
       debugPrint("Error preparing audio player: $e");
-      // If preparation fails or duration is 0, the file is likely corrupted
+      // A file that won't prepare is corrupt (often an error page saved as audio).
       if (widget.audioUrl.startsWith('http') && _localPath != null) {
         final file = File(_localPath!);
         if (await file.exists()) {
@@ -129,7 +130,6 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
           });
         }
       } else if (!widget.audioUrl.startsWith('http')) {
-        // If it's a local file and corrupted, just hide it or show error
         if (mounted) {
           setState(() {
             _isDownloaded = false;
@@ -149,29 +149,16 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
       _isDownloading = true;
     });
 
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final safeFileName = 'audio_${widget.audioUrl.hashCode.abs()}.m4a';
-      _localPath = '${directory.path}/$safeFileName';
-
-      await Dio().download(widget.audioUrl, _localPath!);
-
-      await AudioCacheManager().savePath(widget.messageId, _localPath!);
-      if (widget.localChatId != null) {
-        await AudioCacheManager().savePath(widget.localChatId!, _localPath!);
-      }
-
+    final path = (await context
+            .read<AiChatRepository>()
+            .downloadAudio(widget.audioUrl, _ids))
+        .toNullable();
+    if (path != null) {
+      _localPath = path;
       _isDownloaded = true;
-      await _prepareAudio(_localPath!);
-    } catch (e) {
-      debugPrint("Download error: $e");
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isDownloading = false;
-        });
-      }
+      await _prepareAudio(path);
     }
+    if (mounted) setState(() => _isDownloading = false);
   }
 
   @override
@@ -224,7 +211,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
             color: widget.isUser ? Colors.white : Colors.black87,
             fontWeight: FontWeight.w500,
           ),
-          const SizedBox(width: 24), // Extra spacing
+          const SizedBox(width: 24),
         ],
       );
     }

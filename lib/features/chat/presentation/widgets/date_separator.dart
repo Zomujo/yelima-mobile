@@ -3,6 +3,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/utils/app_date_formats.dart';
 import 'package:clock/clock.dart';
 
+/// The day label between messages from different days.
 class DateSeparator extends StatelessWidget {
   final DateTime date;
 

@@ -6,13 +6,16 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../../../../shared/utils/app_snackbar.dart';
-import '../../../../injection_container.dart';
+import '../../../../core/services/connectivity_service.dart';
+import '../../../../shared/utils/failure_message.dart';
+import '../../domain/repositories/ai_chat_repository.dart';
 import '../controllers/ai_chat_controller.dart';
 import '../widgets/ai_messages_list_view.dart';
 import '../widgets/chat_input_area.dart';
 
 import '../../../home/presentation/controllers/home_metrics_controller.dart';
 
+/// The AI daily check-in chat.
 class AiChatScreen extends StatefulWidget {
   const AiChatScreen({super.key});
 
@@ -27,14 +30,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
   @override
   void initState() {
     super.initState();
-    _chatController = sl<AiChatController>()
+    _chatController = AiChatController(
+        context.read<AiChatRepository>(), ConnectivityService())
       ..addListener(_onChatControllerChanged);
   }
 
   void _onChatControllerChanged() {
     final error = _chatController.error;
     if (error != null && mounted) {
-      AppSnackBar.showError(context, message: error);
+      AppSnackBar.showError(context,
+          message: error.message(context.l10n) ?? '');
       _chatController.clearError();
     }
   }
@@ -94,7 +99,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7E0), // Light orange/beige background
+              color: const Color(0xFFFFF7E0),
               borderRadius: BorderRadius.circular(12),
             ),
             child: AppText.labelMedium(

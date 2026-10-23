@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// A card that opens one kind of chat.
 class ChatActionCard extends StatelessWidget {
   final String title;
   final String subtitle;

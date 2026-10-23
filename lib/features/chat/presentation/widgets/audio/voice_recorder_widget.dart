@@ -5,9 +5,9 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../core/services/voice_recording_service.dart';
-import '../../../../../injection_container.dart';
 import '../../controllers/ai_chat_controller.dart';
 
+/// Records a voice note and sends it.
 class VoiceRecorderWidget extends StatefulWidget {
   final VoidCallback onClose;
 
@@ -25,9 +25,8 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _recordingService = sl<VoiceRecordingService>();
+    _recordingService = context.read<VoiceRecordingService>();
     _recordingService.addListener(_onRecordingServiceChanged);
-    // Start recording automatically when widget opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recordingService.startRecording();
     });

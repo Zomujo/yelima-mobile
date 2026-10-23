@@ -357,7 +357,9 @@ mixin _$AiChatMessageDto {
   String get createdAt;
   String get role;
   String get content;
-  dynamic get localChatId; // Use dynamic to handle int or String from API
+
+  /// The server sends it as an int or a string.
+  dynamic get localChatId;
   String? get type;
   String? get audioUrl;
   List<String> get suggestions;
@@ -512,9 +514,10 @@ class _AiChatMessageDto extends AiChatMessageDto {
   final String role;
   @override
   final String content;
+
+  /// The server sends it as an int or a string.
   @override
   final dynamic localChatId;
-// Use dynamic to handle int or String from API
   @override
   final String? type;
   @override

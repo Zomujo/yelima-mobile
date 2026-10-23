@@ -6,6 +6,7 @@ import '../controllers/ai_chat_controller.dart';
 import 'ai_message_tile.dart';
 import 'date_separator.dart';
 
+/// The messages, newest at the bottom, loading older ones on scroll.
 class AiMessagesListView extends StatefulWidget {
   const AiMessagesListView({super.key});
 
@@ -155,8 +156,6 @@ class _AiMessagesListViewState extends State<AiMessagesListView> {
                 );
               },
             ),
-
-            // Scroll to bottom button
             Positioned(
               right: 16,
               bottom: 16,

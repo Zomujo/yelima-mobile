@@ -3,10 +3,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'ai_chat_message.freezed.dart';
 part 'ai_chat_message.g.dart';
 
+/// A chat message is typed text or a voice note.
 enum MessageType { text, audio }
 
+/// Where a user message is: on its way, delivered, or failed to send.
 enum MessageStatus { sending, sent, failed }
 
+/// One message in the AI chat, from the user or the bot.
 @freezed
 abstract class AiChatMessage with _$AiChatMessage {
   // ignore: unused_element
@@ -14,7 +17,9 @@ abstract class AiChatMessage with _$AiChatMessage {
 
   const factory AiChatMessage({
     required String id,
-    required String sender, // 'bot' or 'user'
+
+    /// 'bot' or 'user'.
+    required String sender,
     required MessageType type,
     required String value,
     required DateTime createdAt,

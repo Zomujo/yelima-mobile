@@ -1,35 +1,27 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:fpdart/fpdart.dart';
+
+import 'package:clock/clock.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+
+import '../../../../core/failures/app_failure.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/utils/safe_notifier.dart';
 import '../../domain/entities/ai_chat_message.dart';
+import '../../domain/entities/paginated_chat_result.dart';
 import '../../domain/repositories/ai_chat_repository.dart';
 import 'ai_chat_state.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/managers/mutation_sync_manager.dart';
-import 'package:clock/clock.dart';
 
+/// The AI chat: history, paging, sending with offline queueing, retry and delete.
 class AiChatController extends ChangeNotifier with SafeNotifier {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies                  |
-  // --------------------------------------------------------------------------
-
-  final AiChatRepository _repository;
-  final ConnectivityService _connectivityService;
-  final MutationSyncManager _mutationSyncManager;
-
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle               |
-  // --------------------------------------------------------------------------
-
-  AiChatController(
-      this._repository, this._connectivityService, this._mutationSyncManager) {
+  AiChatController(this._repository, this._connectivityService) {
     _init();
   }
 
+  final AiChatRepository _repository;
+  final ConnectivityService _connectivityService;
   StreamSubscription<bool>? _connectivitySubscription;
-  StreamSubscription<String>? _syncSubscription;
+  StreamSubscription<void>? _syncSubscription;
   Future<void>? _activeSync;
 
   AiChatState _state = const AiChatState();
@@ -43,15 +35,15 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     }
   }
 
-  // Expose messages and booleans for compatibility with UI (to minimize UI breakage)
   List<AiChatMessage> get messages => state.messages;
   bool get isLoading => state.isLoading;
   bool get isLoadingMore => state.isLoadingMore;
   bool get hasMoreMessages => state.hasMoreMessages;
   bool get isOnline => state.isOnline;
   bool get isSending => state.isSending;
-  String? get error => state.error;
+  AppFailure? get error => state.error;
 
+  /// Marks the error as shown.
   void clearError() {
     state = state.copyWith(error: null);
   }
@@ -65,15 +57,10 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     super.dispose();
   }
 
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                    |
-  // --------------------------------------------------------------------------
-
   Future<void> _init() async {
     final isConnected = await _connectivityService.isConnected;
     state = state.copyWith(isOnline: isConnected);
 
-    // Listen for connection changes
     _connectivitySubscription =
         _connectivityService.onConnectivityChanged.listen((isConnected) {
       final wasOffline = !state.isOnline;
@@ -84,13 +71,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
       }
     });
 
-    // Listen for background sync completion
-    _syncSubscription =
-        _mutationSyncManager.onMutationSynced.listen((entityType) {
-      if (entityType == 'chat' || entityType.startsWith('remap:chat:')) {
-        syncConversations();
-      }
-    });
+    _syncSubscription = _repository.onSynced.listen((_) => syncConversations());
 
     await syncConversations();
   }
@@ -156,9 +137,9 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
         }
         final initialRes = await _repository.loadInitialMessage();
         await initialRes.fold(
-          (err) async => state = state.copyWith(
-              // Ignore offline errors during background sync.
-              error: err.contains('No internet connection') ? null : err,
+          (f) async => state = state.copyWith(
+              // Being offline during a background sync is not worth a message.
+              error: f is NetworkFailure ? null : f,
               isLoading: false),
           (initialMsg) async {
             final withGreeting = initialMsg == null ? msgs : [initialMsg];
@@ -172,7 +153,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  /// Fetches older paginated conversations from the database.
+  /// Loads the next page of older messages from the server.
   Future<void> loadMoreMessages() async {
     if (state.isLoadingMore || !state.hasMoreMessages) return;
 
@@ -268,7 +249,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
   /// Shows [draft] optimistically, sends it, then applies the server's reply.
   Future<void> _send(
     AiChatMessage Function(String localId) draft,
-    Future<Either<String, Map<String, dynamic>>> Function(String localId) call,
+    AsyncResult<ChatReply> Function(String localId) call,
   ) async {
     if (state.isSending) return;
 
@@ -291,22 +272,19 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
         }
         state = state.copyWith(messages: msgs, isSending: false, error: err);
       },
-      (data) {
-        final bot = data['outResponse'] as Map<String, dynamic>?;
-        final userServerId =
-            (data['inResponse'] as Map<String, dynamic>?)?['_id'] as String?;
+      (reply) {
+        final bot = reply.bot;
         if (index != -1) {
           msgs[index] = msgs[index].copyWith(
-            id: userServerId ?? msgs[index].id,
-            // An empty result means the send was queued for later.
+            id: reply.userMessageId ?? msgs[index].id,
+            // No answer yet means the send was queued for later.
             status: bot == null ? MessageStatus.sending : MessageStatus.sent,
           );
         }
         if (bot != null) {
-          final botMsg = _botMessage(bot, localId);
           msgs
-            ..removeWhere((m) => m.id == botMsg.id)
-            ..insert(0, botMsg);
+            ..removeWhere((m) => m.id == bot.id)
+            ..insert(0, bot);
         }
         state = state.copyWith(messages: msgs, isSending: false);
       },
@@ -314,18 +292,6 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     await _repository.saveConversations(msgs);
     _triggerPendingSyncIfAny();
   }
-
-  AiChatMessage _botMessage(Map<String, dynamic> bot, String localId) =>
-      AiChatMessage(
-        id: bot['_id'] as String,
-        sender: 'bot',
-        type: MessageType.text,
-        value: bot['text'] as String,
-        createdAt: clock.now(),
-        status: MessageStatus.sent,
-        suggestions: List<String>.from(bot['suggestions'] ?? const []),
-        localChatId: localId,
-      );
 
   /// Retries sending a previously failed message.
   Future<void> retryMessage(AiChatMessage failedMsg) async {

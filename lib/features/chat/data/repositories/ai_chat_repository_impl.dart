@@ -1,33 +1,24 @@
-import 'package:fpdart/fpdart.dart';
+import 'package:clock/clock.dart';
 
-import '../../../../core/utils/custom_types.dart';
-import '../../../../core/exceptions/exceptions.dart';
-import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/failures/guard.dart';
 import '../../../../core/managers/deletion_sync_manager.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
+import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/file_service.dart';
+import '../../../../core/services/session_epoch.dart';
+import '../../../../core/services/session_lifecycle_service.dart';
+import '../../domain/entities/ai_chat_message.dart';
+import '../../domain/entities/paginated_chat_result.dart';
+import '../../domain/repositories/ai_chat_repository.dart';
 import '../datasources/ai_chat_local_datasource.dart';
 import '../datasources/ai_chat_remote_datasource.dart';
-import '../../domain/entities/ai_chat_message.dart';
-import '../../domain/repositories/ai_chat_repository.dart';
-import '../../domain/entities/paginated_chat_result.dart';
-import '../../../../core/services/session_lifecycle_service.dart';
-
 import '../models/ai_chat_response.dart';
-import '../../../../core/managers/mutation_sync_manager.dart';
-import '../../../../core/services/file_service.dart';
-import 'package:clock/clock.dart';
-import '../../../../core/services/session_epoch.dart';
-import '../../domain/services/audio_cache_manager.dart';
+import '../services/audio_cache.dart';
 
+/// Offline-first [AiChatRepository]; clears the chat and its voice notes when a session ends.
 class AiChatRepositoryImpl
     implements AiChatRepository, SessionLifecycleHandler {
-  final AiChatLocalDataSource _localDataSource;
-  final AiChatRemoteDataSource _remoteDataSource;
-  final DeletionSyncManager _deletionSyncManager;
-  final ConnectivityService _connectivityService;
-  final MutationSyncManager _mutationSyncManager;
-  final FileService _fileService;
-  final SessionEpoch _session;
-
   AiChatRepositoryImpl({
     required AiChatLocalDataSource localDataSource,
     required AiChatRemoteDataSource remoteDataSource,
@@ -35,242 +26,153 @@ class AiChatRepositoryImpl
     required ConnectivityService connectivityService,
     required MutationSyncManager mutationSyncManager,
     required FileService fileService,
+    required AudioCache audioCache,
     required SessionEpoch session,
-  })  : _localDataSource = localDataSource,
-        _remoteDataSource = remoteDataSource,
-        _deletionSyncManager = deletionSyncManager,
-        _connectivityService = connectivityService,
-        _mutationSyncManager = mutationSyncManager,
-        _fileService = fileService,
+  })  : _local = localDataSource,
+        _remote = remoteDataSource,
+        _deletions = deletionSyncManager,
+        _connectivity = connectivityService,
+        _sync = mutationSyncManager,
+        _files = fileService,
+        _audio = audioCache,
         _session = session;
 
-  /// Returns the designated service name for this repository.
+  final AiChatLocalDataSource _local;
+  final AiChatRemoteDataSource _remote;
+  final DeletionSyncManager _deletions;
+  final ConnectivityService _connectivity;
+  final MutationSyncManager _sync;
+  final FileService _files;
+  final AudioCache _audio;
+  final SessionEpoch _session;
+
   @override
   String get serviceName => 'AiChat Repository';
 
-  /// Lifecycle hook invoked when a user session begins.
   @override
   Future<void> onSessionStarted(String userId) async {}
 
-  /// Lifecycle hook invoked when a user session ends, clearing local data.
   @override
   Future<void> onSessionEnded() async {
     try {
-      final localMessages = await _localDataSource.getChats();
-      for (final msg in localMessages) {
+      for (final msg in await _local.getChats()) {
         if (msg.type == MessageType.audio) {
-          await _fileService.deleteLocalAudioFile(msg.audioUrl);
+          await _files.deleteLocalAudioFile(msg.audioUrl);
         }
       }
-      await _localDataSource.clearChats();
+      await _local.clearChats();
       // Cached voice notes too, before the database wipe drops the list of them.
-      await AudioCacheManager().clearCache();
+      await _audio.clear();
     } catch (_) {}
   }
 
-  /// Fetches paginated AI conversations from the remote source.
   @override
-  AsyncResponse<PaginatedChatResult> fetchPaginatedConversations(
-      {required int page}) async {
-    return ExceptionWrapper.runAsyncWithNetworkCheck(
-      () async {
-        final apiResponseJson =
-            await _remoteDataSource.fetchChats(page: page, limit: 20);
-        final responseData = AiChatData.fromJson(apiResponseJson);
-        final messages =
-            responseData.rows.map((row) => row.toEntity()).toList();
-        return right(PaginatedChatResult(
-          messages: messages,
-          totalPages: responseData.totalPages,
-        ));
-      },
-      connectivityService: _connectivityService,
-    );
-  }
+  Stream<void> get onSynced => _sync.onMutationSynced
+      .where((e) => e == 'chat' || e.startsWith('remap:chat:'));
 
-  /// Loads all cached AI conversations from the local database.
   @override
-  AsyncResponse<List<AiChatMessage>> loadConversations() async {
-    return ExceptionWrapper.runAsync(() async {
-      final chats = await _localDataSource.getChats();
-      return right(chats);
-    });
-  }
+  AsyncResult<PaginatedChatResult> fetchPaginatedConversations(
+          {required int page}) =>
+      guardOnline(_connectivity, () async {
+        final data = AiChatData.fromJson(await _remote.fetchChats(page: page));
+        return PaginatedChatResult(
+            messages: [for (final row in data.rows) row.toEntity()],
+            totalPages: data.totalPages);
+      });
 
-  /// Persists a list of AI conversations directly into the local database.
   @override
-  AsyncResponse<void> saveConversations(
-      List<AiChatMessage> conversations) async {
-    return ExceptionWrapper.runAsync(() async {
-      await _localDataSource.saveChats(conversations);
-      return right(null);
-    });
-  }
+  AsyncResult<List<AiChatMessage>> loadConversations() =>
+      guard(_local.getChats);
 
-  /// Remove all AI conversations from the local database.
   @override
-  AsyncResponse<void> clearConversations() async {
-    return ExceptionWrapper.runAsync(() async {
-      await _localDataSource.clearChats();
-      return right(null);
-    });
-  }
+  AsyncResult<void> saveConversations(List<AiChatMessage> conversations) =>
+      guard(() => _local.saveChats(conversations));
 
-  /// Deletes a specific message locally without notifying the remote source.
   @override
-  AsyncResponse<void> deleteLocalMessageOnly(String id) async {
-    return ExceptionWrapper.runAsync(() async {
-      await _localDataSource.deleteChat(id);
-      return right(null);
-    });
-  }
+  AsyncResult<void> deleteLocalMessageOnly(String id) =>
+      guard(() => _local.deleteChat(id));
 
-  /// Deletes a message locally and enqueues a deletion mutation for synchronization.
   @override
-  AsyncResponse<void> deleteMessage(String id) async {
-    return ExceptionWrapper.runAsync(() async {
-      final chats = await _localDataSource.getChats();
-      final message = chats.where((m) => m.id == id).firstOrNull;
-      if (message != null && message.type == MessageType.audio) {
-        await _fileService.deleteLocalAudioFile(message.audioUrl);
-      }
-
-      await _localDataSource.deleteChat(id);
-      await _localDataSource.queueDeletion(id);
-      _deletionSyncManager.triggerSync();
-      return right(null);
-    });
-  }
-
-  Future<Map<String, dynamic>> _executeWithOfflineFallback({
-    required String action,
-    required Map<String, dynamic> payload,
-    String? localChatId,
-    required Future<Map<String, dynamic>> Function() remoteCall,
-  }) async {
-    final isConnected = await _connectivityService.isConnected;
-
-    if (!isConnected) {
-      await _localDataSource.queueOfflineMessageMutation(
-        entityId:
-            localChatId ?? 'offline_chat_${clock.now().millisecondsSinceEpoch}',
-        action: action,
-        payload: payload,
-      );
-      _mutationSyncManager.triggerSync();
-      return <String, dynamic>{};
-    }
-
-    try {
-      return await remoteCall();
-    } catch (e) {
-      if (e is ApiException && (e.code == '401' || e.code == '403')) {
-        rethrow;
-      }
-
-      await _localDataSource.queueOfflineMessageMutation(
-        entityId:
-            localChatId ?? 'offline_chat_${clock.now().millisecondsSinceEpoch}',
-        action: action,
-        payload: payload,
-      );
-
-      _mutationSyncManager.triggerSync();
-
-      return <String, dynamic>{};
-    }
-  }
-
-  /// Sends a text message to the AI, queuing it locally if offline.
-  @override
-  AsyncResponse<Map<String, dynamic>> sendMessage(String message,
-      {String? localChatId}) async {
-    return ExceptionWrapper.runAsync<Map<String, dynamic>>(
-      () async {
-        final res = await _executeWithOfflineFallback(
-          action: 'sendMessage',
-          payload: {'message': message, 'localChatId': localChatId},
-          localChatId: localChatId,
-          remoteCall: () =>
-              _remoteDataSource.sendMessage(message, localChatId: localChatId),
-        );
-        return right(res);
-      },
-      operationName: 'AiChatRepositoryImpl.sendMessage',
-    );
-  }
-
-  /// Sends an audio file message to the AI, queuing it locally if offline.
-  @override
-  AsyncResponse<Map<String, dynamic>> sendAudioMessage({
-    required String filePath,
-    String? localChatId,
-  }) async {
-    return ExceptionWrapper.runAsync<Map<String, dynamic>>(
-      () async {
-        final filename = filePath.split('/').last;
-        final res = await _executeWithOfflineFallback(
-          action: 'sendAudioMessage',
-          payload: {'filePath': filename, 'localChatId': localChatId},
-          localChatId: localChatId,
-          remoteCall: () => _remoteDataSource.sendAudioMessage(
-              filePath: filePath, localChatId: localChatId),
-        );
-        return right(res);
-      },
-      operationName: 'AiChatRepositoryImpl.sendAudioMessage',
-    );
-  }
-
-  /// Fetches the initial AI greeting message from the remote source.
-  @override
-  AsyncResponse<AiChatMessage?> loadInitialMessage() async {
-    return ExceptionWrapper.runAsyncWithNetworkCheck(
-      () async {
-        final messageData = await _remoteDataSource.getInitialMessage();
-        if (messageData == null) return right(null);
-
-        List<String> suggestions = [];
-        if (messageData['suggestions'] != null) {
-          suggestions = List<String>.from(messageData['suggestions']);
+  AsyncResult<void> deleteMessage(String id) => guard(() async {
+        final message =
+            (await _local.getChats()).where((m) => m.id == id).firstOrNull;
+        if (message?.type == MessageType.audio) {
+          await _files.deleteLocalAudioFile(message!.audioUrl);
         }
+        await _local.deleteChat(id);
+        await _local.queueDeletion(id);
+        _deletions.triggerSync();
+      });
 
-        final msg = AiChatMessage(
-          id: messageData['_id'] as String,
-          sender: 'bot',
-          type: MessageType.text,
-          value: messageData['text'] as String,
-          createdAt: messageData['createdAt'] == null
-              ? clock.now()
-              : DateTime.parse(messageData['createdAt'] as String),
-          status: MessageStatus.sent,
-          suggestions: suggestions,
-        );
-        return right(msg);
-      },
-      connectivityService: _connectivityService,
-    );
-  }
-
-  /// Synchronizes remote chat history with local caching while preserving pending offline messages.
   @override
-  AsyncResponse<void> syncRemoteConversations() async {
-    return ExceptionWrapper.runAsyncWithNetworkCheck(
-      () async {
+  AsyncResult<ChatReply> sendMessage(String message, {String? localChatId}) =>
+      _sendOrQueue(
+          'sendMessage',
+          {'message': message, 'localChatId': localChatId},
+          localChatId,
+          () => _remote.sendMessage(message, localChatId: localChatId));
+
+  @override
+  AsyncResult<ChatReply> sendAudioMessage(
+          {required String filePath, String? localChatId}) =>
+      _sendOrQueue(
+          'sendAudioMessage',
+          // Only the file name: the app folder path can change between launches.
+          {'filePath': filePath.split('/').last, 'localChatId': localChatId},
+          localChatId,
+          () => _remote.sendAudioMessage(
+              filePath: filePath, localChatId: localChatId));
+
+  /// Sends now, or queues the send when offline or when it fails; only a lost login is reported.
+  AsyncResult<ChatReply> _sendOrQueue(
+          String action,
+          Map<String, dynamic> payload,
+          String? localChatId,
+          Future<Map<String, dynamic>> Function() send) =>
+      guard(() async {
+        if (await _connectivity.isConnected) {
+          try {
+            return chatReplyFromJson(await send(), localChatId);
+          } catch (e) {
+            if (AppFailure.from(e) is UnauthorizedFailure) rethrow;
+          }
+        }
+        await _local.queueSend(
+            entityId: localChatId ??
+                'offline_chat_${clock.now().millisecondsSinceEpoch}',
+            action: action,
+            payload: payload);
+        _sync.triggerSync();
+        return const ChatReply.queued();
+      });
+
+  @override
+  AsyncResult<AiChatMessage?> loadInitialMessage() =>
+      guardOnline(_connectivity, () async {
+        final json = await _remote.getInitialMessage();
+        return json == null ? null : botMessageFromJson(json);
+      });
+
+  @override
+  Future<String?> cachedAudioPath(List<String> ids) => _audio.pathFor(ids);
+
+  @override
+  AsyncResult<String> downloadAudio(String url, List<String> ids) =>
+      guardOnline(_connectivity, () => _audio.download(url, ids));
+
+  @override
+  AsyncResult<void> syncRemoteConversations() =>
+      guardOnline(_connectivity, () async {
         final epoch = _session.current;
-        final apiResponseJson =
-            await _remoteDataSource.fetchChats(page: 1, limit: 20);
+        final data = AiChatData.fromJson(await _remote.fetchChats(page: 1));
         _session.ensure(epoch);
-        final responseData = AiChatData.fromJson(apiResponseJson);
-        var remoteMessages =
-            responseData.rows.map((row) => row.toEntity()).toList();
 
-        final pendingDeletions = await _localDataSource.getPendingDeletions();
-        remoteMessages = remoteMessages
-            .where((m) => !pendingDeletions.contains(m.id))
-            .toList();
-
-        final localMessages = await _localDataSource.getChats();
+        final pendingDeletions = await _local.getPendingDeletions();
+        final remoteMessages = [
+          for (final row in data.rows)
+            if (!pendingDeletions.contains(row.id)) row.toEntity()
+        ];
+        final localMessages = await _local.getChats();
 
         final messagesToKeep =
             _getPendingAndFailedLocalMessages(localMessages, remoteMessages);
@@ -281,17 +183,10 @@ class AiChatRepositoryImpl
         await _purgeUnlinkedMediaAssets(
             localMessages, remoteMessages, messagesToKeep);
 
-        await _localDataSource.clearChats();
-
-        final combined = [...remoteMessages, ...messagesToKeep];
-        combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-        await _localDataSource.saveChats(combined);
-        return right(null);
-      },
-      connectivityService: _connectivityService,
-    );
-  }
+        await _local.clearChats();
+        await _local.saveChats([...remoteMessages, ...messagesToKeep]
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+      });
 
   List<AiChatMessage> _getPendingAndFailedLocalMessages(
       List<AiChatMessage> localMessages, List<AiChatMessage> remoteMessages) {
@@ -308,7 +203,6 @@ class AiChatRepositoryImpl
         continue;
       }
 
-      // Strict match based on real ID or localChatId
       final isDuplicate = remoteMessageIds.contains(localMsg.id) ||
           (localMsg.localChatId != null &&
               remoteLocalIds.contains(localMsg.localChatId));
@@ -377,7 +271,7 @@ class AiChatRepositoryImpl
       if (!idsToKeep.contains(localMsg.id) &&
           !remoteIds.contains(localMsg.id)) {
         if (localMsg.type == MessageType.audio) {
-          await _fileService.deleteLocalAudioFile(localMsg.audioUrl);
+          await _files.deleteLocalAudioFile(localMsg.audioUrl);
         }
       }
     }

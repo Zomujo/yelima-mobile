@@ -1,112 +1,90 @@
 import 'dart:convert';
+
 import 'package:drift/drift.dart';
+
 import '../../../../core/db/app_database.dart';
 import '../../domain/entities/ai_chat_message.dart';
 
-abstract class AiChatLocalDataSource {
-  Future<List<AiChatMessage>> getChats();
-  Future<void> saveChats(List<AiChatMessage> chats);
-  Future<void> clearChats();
-  Future<void> deleteChat(String id);
-  Future<void> queueDeletion(String id);
-  Future<List<String>> getPendingDeletions();
-  Future<void> queueOfflineMessageMutation({
-    required String entityId,
-    required String action,
-    required Map<String, dynamic> payload,
-  });
-}
+/// The chat history and its queues in the local database.
+class AiChatLocalDataSource {
+  AiChatLocalDataSource(this._db);
 
-class AiChatLocalDataSourceImpl implements AiChatLocalDataSource {
   final AppDatabase _db;
 
-  AiChatLocalDataSourceImpl(this._db);
+  /// Every saved message; one still "sending" from before a restart counts as failed.
+  Future<List<AiChatMessage>> getChats() async => [
+        for (final e in await _db.aiChatDao.getAllAiChats())
+          AiChatMessage(
+            id: e.id,
+            sender: e.sender,
+            type: e.type == 'audio' ? MessageType.audio : MessageType.text,
+            value: e.value,
+            createdAt: e.createdAt,
+            status: switch (MessageStatus.values
+                .where((s) => s.name == e.status)
+                .firstOrNull) {
+              MessageStatus.sending => MessageStatus.failed,
+              final s? => s,
+              null => MessageStatus.sent,
+            },
+            suggestions: _strings(e.suggestionsJson),
+            localChatId: e.localChatId,
+            audioUrl: e.audioUrl,
+          ),
+      ];
 
-  @override
-  Future<List<AiChatMessage>> getChats() async {
-    final conversations = await _db.aiChatDao.getAllAiChats();
-    return conversations.map((e) {
-      List<String> suggestions = [];
-      if (e.suggestionsJson != null && e.suggestionsJson!.isNotEmpty) {
-        try {
-          suggestions = List<String>.from(jsonDecode(e.suggestionsJson!));
-        } catch (_) {}
-      }
-      var mappedStatus = MessageStatus.values.firstWhere(
-          (s) => s.name == e.status,
-          orElse: () => MessageStatus.sent);
-      // Edge Case 3: If status was 'sending' when the app restarted, it's actually 'failed'
-      if (mappedStatus == MessageStatus.sending) {
-        mappedStatus = MessageStatus.failed;
-      }
-      return AiChatMessage(
-        id: e.id,
-        sender: e.sender,
-        type: e.type == 'audio' ? MessageType.audio : MessageType.text,
-        value: e.value,
-        createdAt: e.createdAt,
-        status: mappedStatus,
-        suggestions: suggestions,
-        localChatId: e.localChatId,
-        audioUrl: e.audioUrl,
-      );
-    }).toList();
-  }
+  /// Saves (or replaces) [chats].
+  Future<void> saveChats(List<AiChatMessage> chats) =>
+      _db.aiChatDao.insertAiChats([
+        for (final c in chats)
+          AiChatConversationsCompanion.insert(
+            id: c.id,
+            sender: c.sender,
+            type: c.type.name,
+            value: c.value,
+            createdAt: c.createdAt,
+            status: c.status.name,
+            suggestionsJson: Value(jsonEncode(c.suggestions)),
+            localChatId: Value(c.localChatId),
+            audioUrl: Value(c.audioUrl),
+          ),
+      ]);
 
-  @override
-  Future<void> saveChats(List<AiChatMessage> chats) async {
-    final companions = chats.map((chat) {
-      return AiChatConversationsCompanion.insert(
-        id: chat.id,
-        sender: chat.sender,
-        type: chat.type.name,
-        value: chat.value,
-        createdAt: chat.createdAt,
-        status: chat.status.name,
-        suggestionsJson: Value(jsonEncode(chat.suggestions)),
-        localChatId: Value(chat.localChatId),
-        audioUrl: Value(chat.audioUrl),
-      );
-    }).toList();
+  Future<void> clearChats() => _db.aiChatDao.clearAiChats();
 
-    await _db.aiChatDao.insertAiChats(companions);
-  }
+  Future<void> deleteChat(String id) => _db.aiChatDao.deleteAiChat(id);
 
-  @override
-  Future<void> clearChats() async {
-    await _db.aiChatDao.clearAiChats();
-  }
+  /// Gives a message its server id.
+  Future<void> updateMessageId(String oldId, String newId) =>
+      _db.aiChatDao.updateMessageId(oldId, newId);
 
-  @override
-  Future<void> deleteChat(String id) async {
-    await _db.aiChatDao.deleteAiChat(id);
-  }
+  /// Remembers to delete [id] on the server once online.
+  Future<void> queueDeletion(String id) =>
+      _db.aiChatDao.insertPendingDeletion(id, 'chat');
 
-  @override
-  Future<void> queueDeletion(String id) async {
-    await _db.aiChatDao.insertPendingDeletion(id, 'chat');
-  }
+  /// Ids still waiting to be deleted on the server.
+  Future<Set<String>> getPendingDeletions() async => {
+        for (final d in await _db.aiChatDao.getPendingDeletions())
+          if (d.source == 'chat') d.messageId
+      };
 
-  @override
-  Future<List<String>> getPendingDeletions() async {
-    final deletions = await _db.aiChatDao.getPendingDeletions();
-    return deletions
-        .where((d) => d.source == 'chat')
-        .map((d) => d.messageId)
-        .toList();
-  }
+  /// Queues a send to replay once online.
+  Future<void> queueSend(
+          {required String entityId,
+          required String action,
+          required Map<String, dynamic> payload}) =>
+      _db.pendingMutationsDao.queueMutation(
+          entityId: entityId,
+          entityType: 'chat',
+          action: action,
+          payload: payload);
 
-  @override
-  Future<void> queueOfflineMessageMutation({
-    required String entityId,
-    required String action,
-    required Map<String, dynamic> payload,
-  }) async {
-    await _db.pendingMutationsDao.queueMutation(
-      entityId: entityId,
-      entityType: 'chat',
-      action: action,
-      payload: payload,
-    );
+  static List<String> _strings(String? json) {
+    if (json == null || json.isEmpty) return const [];
+    try {
+      return List<String>.from(jsonDecode(json));
+    } catch (_) {
+      return const [];
+    }
   }
 }

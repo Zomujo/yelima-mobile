@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../controllers/ai_chat_controller.dart';
 import 'audio/voice_recorder_widget.dart';
 
+/// Text field, send and voice-note buttons.
 class ChatInputArea extends StatefulWidget {
   const ChatInputArea({super.key});
 

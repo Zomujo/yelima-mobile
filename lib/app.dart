@@ -15,7 +15,10 @@ import 'features/medications/presentation/controllers/medication_controller.dart
 import 'features/medications/presentation/controllers/all_medicines_controller.dart';
 import 'features/medications/domain/repositories/medication_repository.dart';
 import 'features/appointment/presentation/controllers/appointment_controller.dart';
+import 'core/managers/audio_player_manager.dart';
 import 'core/managers/mutation_sync_manager.dart';
+import 'core/services/voice_recording_service.dart';
+import 'features/chat/domain/repositories/ai_chat_repository.dart';
 import 'features/vitals/domain/repositories/vitals_repository.dart';
 import 'features/symptoms/presentation/controllers/symptoms_controller.dart';
 import 'injection_container.dart';
@@ -72,6 +75,9 @@ class _MyAppState extends State<MyApp> {
                 create: (_) => sl<AppointmentController>()..initialize()),
             Provider<VitalsRepository>(create: (_) => sl()),
             Provider<MutationSyncManager>.value(value: sl()),
+            Provider<AiChatRepository>.value(value: sl()),
+            Provider<AudioPlayerManager>.value(value: sl()),
+            Provider<VoiceRecordingService>.value(value: sl()),
             ChangeNotifierProvider(
                 create: (_) =>
                     sl<SymptomsController>()..fetchSymptoms()),

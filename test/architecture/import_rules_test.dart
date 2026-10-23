@@ -71,7 +71,7 @@ void main() {
     final appDb = RegExp(r"^import '[^']*(core/db/|injection_container\.dart)",
         multiLine: true);
     // Features not cleaned up yet; remove each one as it's done.
-    const pending = {'chat', 'onboarding', 'progress'};
+    const pending = {'onboarding', 'progress'};
     final bad = <String>[];
     for (final f in Directory('lib/features')
         .listSync(recursive: true)

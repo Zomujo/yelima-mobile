@@ -16,7 +16,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AiChatMessage {
   String get id;
-  String get sender; // 'bot' or 'user'
+
+  /// 'bot' or 'user'.
+  String get sender;
   MessageType get type;
   String get value;
   DateTime get createdAt;
@@ -178,9 +180,10 @@ class _AiChatMessage extends AiChatMessage {
 
   @override
   final String id;
+
+  /// 'bot' or 'user'.
   @override
   final String sender;
-// 'bot' or 'user'
   @override
   final MessageType type;
   @override

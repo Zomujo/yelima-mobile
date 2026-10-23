@@ -22,7 +22,7 @@ mixin _$AiChatState {
   bool get isOnline;
   bool get isSending;
   bool get syncPending;
-  String? get error;
+  AppFailure? get error;
   int get currentPage;
 
   /// Create a copy of AiChatState
@@ -88,7 +88,7 @@ abstract mixin class $AiChatStateCopyWith<$Res> {
       bool isOnline,
       bool isSending,
       bool syncPending,
-      String? error,
+      AppFailure? error,
       int currentPage});
 }
 
@@ -146,7 +146,7 @@ class _$AiChatStateCopyWithImpl<$Res> implements $AiChatStateCopyWith<$Res> {
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as AppFailure?,
       currentPage: null == currentPage
           ? _self.currentPage
           : currentPage // ignore: cast_nullable_to_non_nullable
@@ -198,7 +198,7 @@ class _AiChatState implements AiChatState {
   @JsonKey()
   final bool syncPending;
   @override
-  final String? error;
+  final AppFailure? error;
   @override
   @JsonKey()
   final int currentPage;
@@ -269,7 +269,7 @@ abstract mixin class _$AiChatStateCopyWith<$Res>
       bool isOnline,
       bool isSending,
       bool syncPending,
-      String? error,
+      AppFailure? error,
       int currentPage});
 }
 
@@ -327,7 +327,7 @@ class __$AiChatStateCopyWithImpl<$Res> implements _$AiChatStateCopyWith<$Res> {
       error: freezed == error
           ? _self.error
           : error // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as AppFailure?,
       currentPage: null == currentPage
           ? _self.currentPage
           : currentPage // ignore: cast_nullable_to_non_nullable

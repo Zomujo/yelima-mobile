@@ -1,62 +1,51 @@
 import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:get_it/get_it.dart';
+
 import '../../../../core/db/app_database.dart';
 
-class AudioCacheManager {
-  static final AudioCacheManager _instance = AudioCacheManager._internal();
+/// Downloaded voice notes on the phone, found by message id.
+class AudioCache {
+  AudioCache(this._db);
 
-  factory AudioCacheManager() {
-    return _instance;
-  }
+  final AppDatabase _db;
 
-  AudioCacheManager._internal();
+  Future<String> get _dir async =>
+      (await getApplicationDocumentsDirectory()).path;
 
-  Future<void> savePath(String messageId, String absolutePath) async {
-    final filename = absolutePath.split('/').last; // Only store filename
-    await GetIt.instance<AppDatabase>()
-        .audioCacheDao
-        .savePath(messageId, filename);
-  }
-
-  Future<String?> getPath(String messageId) async {
-    final filename =
-        await GetIt.instance<AppDatabase>().audioCacheDao.getPath(messageId);
-
-    if (filename != null) {
-      final directory = await getApplicationDocumentsDirectory();
-      final fullPath = '${directory.path}/$filename';
-
-      final file = File(fullPath);
-      if (await file.exists()) {
-        return fullPath;
-      } else {
-        await GetIt.instance<AppDatabase>().audioCacheDao.removePath(messageId);
-        return null;
-      }
+  /// The saved file for the first of [ids] that has one, or null.
+  Future<String?> pathFor(List<String> ids) async {
+    for (final id in ids) {
+      final name = await _db.audioCacheDao.getPath(id);
+      if (name == null) continue;
+      final path = '${await _dir}/$name';
+      if (await File(path).exists()) return path;
+      await _db.audioCacheDao.removePath(id);
     }
     return null;
   }
 
-  Future<void> clearCache() async {
-    final filenames =
-        await GetIt.instance<AppDatabase>().audioCacheDao.getAllFilenames();
-
-    if (filenames.isEmpty) return;
-
-    final directory = await getApplicationDocumentsDirectory();
-
-    for (final filename in filenames) {
-      try {
-        final file = File('${directory.path}/$filename');
-        if (await file.exists()) {
-          await file.delete();
-        }
-      } catch (_) {
-        // Ignore deletion errors for individual files
-      }
+  /// Downloads [url] and remembers it under each of [ids]; returns the file path.
+  Future<String> download(String url, List<String> ids) async {
+    final name = 'audio_${ids.first}.m4a';
+    final path = '${await _dir}/$name';
+    await Dio().download(url, path);
+    for (final id in ids) {
+      await _db.audioCacheDao.savePath(id, name);
     }
+    return path;
+  }
 
-    await GetIt.instance<AppDatabase>().audioCacheDao.clearCache();
+  /// Deletes every downloaded voice note.
+  Future<void> clear() async {
+    final dir = await _dir;
+    for (final name in await _db.audioCacheDao.getAllFilenames()) {
+      try {
+        final file = File('$dir/$name');
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
+    }
+    await _db.audioCacheDao.clearCache();
   }
 }

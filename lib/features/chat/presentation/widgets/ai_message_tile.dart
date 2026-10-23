@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'audio/audio_message_bubble.dart';
 
+/// One message bubble with its status, suggestions and retry.
 class AiMessageTile extends StatelessWidget {
   final AiChatMessage message;
 
@@ -162,7 +163,7 @@ class AiMessageTile extends StatelessWidget {
         if (!isUser && message.suggestions.isNotEmpty) ...[
           const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.only(left: 40), // Align with bubble
+            padding: const EdgeInsets.only(left: 40),
             child: Consumer<AiChatController>(
               builder: (context, controller, child) {
                 final isSending = controller.isSending;

@@ -8,6 +8,7 @@ import '../widgets/chat_action_card.dart';
 import '../../../../core/constants/app_sizes.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// The chat tab: entry cards for the chats on offer.
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
 
@@ -31,15 +32,6 @@ class ChatScreen extends StatelessWidget {
               context.push(RoutePaths.aiChat);
             },
           ),
-          // const SizedBox(height: 16),
-          // ChatActionCard(
-          //   title: context.l10n.healthcareProfessional,
-          //   subtitle: context.l10n.directMessaging,
-          //   description: context.l10n.hcpDescription,
-          //   gradient: AppColors.greenGradient,
-          //   badgeText: context.l10n.comingSoon,
-          //   onTap: () {},
-          // ),
           const SizedBox(height: 40),
           AppText.labelMedium(
             context.l10n.recentMessages,
@@ -63,7 +55,6 @@ class ChatScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Bottom padding for navbar
           SizedBox(height: AppSizes.bottomNavClearance(context)),
         ],
       ),

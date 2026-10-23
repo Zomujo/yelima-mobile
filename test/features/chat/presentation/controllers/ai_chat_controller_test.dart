@@ -4,7 +4,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/services/connectivity_service.dart';
-import 'package:yelima/core/managers/mutation_sync_manager.dart';
+import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/features/chat/domain/entities/ai_chat_message.dart';
 import 'package:yelima/features/chat/presentation/controllers/ai_chat_controller.dart';
 
@@ -14,12 +14,9 @@ class MockAiChatRepository extends Mock implements AiChatRepository {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 
-class MockMutationSyncManager extends Mock implements MutationSyncManager {}
-
 void main() {
   late MockAiChatRepository mockRepository;
   late MockConnectivityService mockConnectivityService;
-  late MockMutationSyncManager mockMutationSyncManager;
 
   AiChatMessage botMessage(String id, {String value = 'bot reply'}) {
     return AiChatMessage(
@@ -32,25 +29,18 @@ void main() {
     );
   }
 
-  /// The repository returns the server's `data`: the user message and the bot reply.
-  Map<String, dynamic> chatResponse({
+  /// The server's answer: the user message's id and the bot reply.
+  ChatReply chatResponse({
     required String userId,
     required String botId,
     String botText = 'hi',
-  }) {
-    return {
-      'inResponse': {'_id': userId},
-      'outResponse': {'_id': botId, 'text': botText, 'suggestions': <String>[]},
-    };
-  }
+  }) =>
+      ChatReply(userMessageId: userId, bot: botMessage(botId, value: botText));
 
   setUp(() {
     mockRepository = MockAiChatRepository();
     mockConnectivityService = MockConnectivityService();
-    mockMutationSyncManager = MockMutationSyncManager();
-
-    when(() => mockMutationSyncManager.onMutationSynced)
-        .thenAnswer((_) => const Stream.empty());
+    when(() => mockRepository.onSynced).thenAnswer((_) => const Stream.empty());
 
     when(() => mockConnectivityService.isConnected)
         .thenAnswer((_) async => true);
@@ -72,8 +62,8 @@ void main() {
   }) async {
     when(() => mockRepository.loadConversations())
         .thenAnswer((_) async => right(initialMessages));
-    final controller = AiChatController(
-        mockRepository, mockConnectivityService, mockMutationSyncManager);
+    final controller =
+        AiChatController(mockRepository, mockConnectivityService);
     // Let the constructor's fire-and-forget initial syncConversations() settle.
     await Future<void>.delayed(Duration.zero);
     await Future<void>.delayed(Duration.zero);
@@ -116,7 +106,7 @@ void main() {
         return right(<AiChatMessage>[]);
       });
 
-      final sendCompleter = Completer<Either<String, Map<String, dynamic>>>();
+      final sendCompleter = Completer<Either<AppFailure, ChatReply>>();
       when(() => mockRepository.sendMessage(any(),
               localChatId: any(named: 'localChatId')))
           .thenAnswer((_) => sendCompleter.future);
@@ -196,7 +186,8 @@ void main() {
         return right(<AiChatMessage>[]);
       });
 
-      final pageCompleter = Completer<Either<String, PaginatedChatResult>>();
+      final pageCompleter =
+          Completer<Either<AppFailure, PaginatedChatResult>>();
       when(() => mockRepository.fetchPaginatedConversations(
           page: any(named: 'page'))).thenAnswer((_) => pageCompleter.future);
 
@@ -270,7 +261,7 @@ void main() {
       () async {
     final controller = await createController();
     clearInteractions(mockRepository);
-    final reply = Completer<Either<String, Map<String, dynamic>>>();
+    final reply = Completer<Either<AppFailure, ChatReply>>();
     when(() => mockRepository.sendMessage(any(),
             localChatId: any(named: 'localChatId')))
         .thenAnswer((_) => reply.future);
@@ -282,5 +273,28 @@ void main() {
     await sending;
 
     verifyNever(() => mockRepository.saveConversations(any()));
+  });
+
+  test('offline during a background sync shows no error', () async {
+    when(() => mockRepository.loadInitialMessage())
+        .thenAnswer((_) async => left(const NetworkFailure()));
+
+    final controller = await createController();
+    await pumpEventQueue();
+
+    expect(controller.error, isNull);
+    controller.dispose();
+  });
+
+  test('a queued send stays "sending" until it syncs', () async {
+    final controller = await createController();
+    when(() => mockRepository.sendMessage(any(),
+            localChatId: any(named: 'localChatId')))
+        .thenAnswer((_) async => right(const ChatReply.queued()));
+
+    await controller.sendMessage('Hello');
+
+    expect(controller.messages.single.status, MessageStatus.sending);
+    controller.dispose();
   });
 }
