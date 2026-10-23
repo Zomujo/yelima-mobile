@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
@@ -106,6 +107,8 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
             child: TextFormField(
               controller: _controller,
               maxLines: 4,
+              // The server's limit for a symptom description.
+              inputFormatters: [LengthLimitingTextInputFormatter(1000)],
               enabled: !_isLoading,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {

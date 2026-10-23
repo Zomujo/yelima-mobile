@@ -49,21 +49,26 @@ class GlobalAsyncLoader extends StatelessWidget {
   }
 
   static OverlayEntry? _overlayEntry;
+  static OverlayState? _overlay;
 
   /// Shows the loader over the whole app, once.
   static void show(BuildContext context, {String? message}) {
     if (_overlayEntry != null) return;
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => GlobalAsyncLoader(message: message),
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
+    // The root navigator's overlay outlives tab and modal navigators, and works
+    // even when [context] is the navigator itself.
+    final overlay = Navigator.of(context, rootNavigator: true).overlay;
+    if (overlay == null) return;
+    _overlay = overlay;
+    _overlayEntry =
+        OverlayEntry(builder: (_) => GlobalAsyncLoader(message: message));
+    overlay.insert(_overlayEntry!);
   }
 
   /// Removes the loader if it is showing.
   static void hide() {
-    _overlayEntry?.remove();
+    // If the overlay itself was torn down, the entry went with it.
+    if (_overlay?.mounted ?? false) _overlayEntry?.remove();
     _overlayEntry = null;
+    _overlay = null;
   }
 }

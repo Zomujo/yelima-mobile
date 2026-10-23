@@ -1,4 +1,5 @@
 import 'package:clock/clock.dart';
+import 'package:dio/dio.dart' show DioException;
 
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
@@ -158,7 +159,27 @@ class AiChatRepositoryImpl
 
   @override
   AsyncResult<String> downloadAudio(String url, List<String> ids) =>
-      guardOnline(_connectivity, () => _audio.download(url, ids));
+      guardOnline(_connectivity, () async {
+        try {
+          return await _audio.download(url, ids);
+        } on DioException {
+          // Voice-note links expire after 15 minutes: get a fresh one once.
+          final fresh = await _freshAudioUrl(ids);
+          if (fresh == null || fresh == url) rethrow;
+          return _audio.download(fresh, ids);
+        }
+      });
+
+  /// The current link for the voice note saved under any of [ids], from recent history.
+  Future<String?> _freshAudioUrl(List<String> ids) async {
+    final page = AiChatData.fromJson(await _remote.fetchChats(
+        page: 1, limit: AiChatRemoteDataSource.maxPageSize));
+    for (final row in page.rows) {
+      final m = row.toEntity();
+      if (ids.contains(m.id) || ids.contains(m.localChatId)) return m.audioUrl;
+    }
+    return null;
+  }
 
   @override
   AsyncResult<void> syncRemoteConversations() =>

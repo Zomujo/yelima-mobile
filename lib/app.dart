@@ -80,7 +80,7 @@ class _MyAppState extends State<MyApp> {
             Provider<MutationSyncManager>.value(value: sl()),
             Provider<AiChatRepository>.value(value: sl()),
             Provider<AudioPlayerManager>.value(value: sl()),
-            Provider<VoiceRecordingService>.value(value: sl()),
+            ChangeNotifierProvider<VoiceRecordingService>.value(value: sl()),
             Provider<SharedPrefsService>.value(value: sl()),
             ChangeNotifierProvider.value(value: sl<ProgressController>()),
             ChangeNotifierProvider(

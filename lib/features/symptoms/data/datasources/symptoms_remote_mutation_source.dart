@@ -21,8 +21,11 @@ class SymptomsRemoteMutationSource implements IRemoteMutationSource {
     if (action != 'create') {
       throw UnimplementedError('Unknown action $action for symptom');
     }
-    // The server id replaces the temporary one.
-    return _remote.createSymptom(jsonDecode(payloadJson)['description']);
+    // The server id replaces the temporary one. Older queue items have no onsetDate.
+    final payload = jsonDecode(payloadJson);
+    return _remote.createSymptom(payload['description'],
+        onsetDate: DateTime.tryParse(payload['onsetDate'] ?? '') ?? createdAt,
+        idempotencyKey: entityId);
   }
 
   @override

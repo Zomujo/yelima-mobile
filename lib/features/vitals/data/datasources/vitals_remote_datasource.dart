@@ -1,5 +1,3 @@
-import 'package:dio/dio.dart';
-
 import '../../../../core/api/api_client.dart';
 import '../models/vital_history_model.dart';
 
@@ -26,18 +24,11 @@ class VitalsRemoteDataSource {
 
   /// Saves a reading and returns the server's id for it, if it sent one.
   ///
-  /// A replay from the offline queue passes [idempotencyKey] so a retry never saves twice.
+  /// [idempotencyKey] is the reading's local id, so a retry never saves twice.
   Future<String?> saveVitalReading(Map<String, dynamic> body,
-      {String? idempotencyKey, DateTime? createdAt}) async {
+      {required String idempotencyKey}) async {
     final response = await _api.post(_logs,
-        data: body,
-        options: idempotencyKey == null
-            ? null
-            : Options(headers: {
-                'Idempotency-Key': idempotencyKey,
-                if (createdAt != null)
-                  'If-Unmodified-Since': createdAt.toUtc().toIso8601String(),
-              }));
+        data: body, options: APIClient.idempotent(idempotencyKey));
     final id = response is Map ? response['data'] : null;
     return id is String && id.isNotEmpty ? id : null;
   }

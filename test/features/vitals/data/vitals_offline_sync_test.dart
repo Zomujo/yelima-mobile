@@ -84,6 +84,31 @@ void main() {
     expect(await storedIds(), {'srv-1'});
   });
 
+  test('server rows show when the reading was taken, or else when it was saved',
+      () async {
+    serverHas([
+      {
+        ...serverRow('srv-1', '120/80'),
+        'recordedAt': '2026-10-22T07:41:00.000Z'
+      },
+      {
+        ...serverRow('srv-2', '130/85'),
+        'createdAt': '2026-10-21T09:00:00.000Z'
+      },
+    ]);
+
+    await repo().refresh();
+
+    final times = {
+      for (final r in await repo().watchReadings().first)
+        r.id: r.recordedAt?.toUtc()
+    };
+    expect(times, {
+      'srv-1': DateTime.utc(2026, 10, 22, 7, 41),
+      'srv-2': DateTime.utc(2026, 10, 21, 9),
+    });
+  });
+
   test('older server rows without a grade count as normal', () async {
     serverHas([serverRow('srv-1', '120/80')]);
 
@@ -166,13 +191,17 @@ void main() {
       expect((await repo().watchReadings().first).length, 1);
     });
 
-    test('a server error queues it and still counts as saved', () async {
+    test(
+        'a server error queues it, with the same idempotency key for the retry',
+        () async {
       api.on('POST', logsPath, FakeReply.error(500));
 
       final result = await repo().saveReading(bp(150, 95));
 
       expect(result.isRight(), isTrue);
-      expect((await db.select(db.pendingMutations).get()).length, 1);
+      final queued = (await db.select(db.pendingMutations).get()).single;
+      expect(api.sent('POST', logsPath).single.headers['Idempotency-Key'],
+          queued.entityId);
     });
 
     test('VIT-EC-11: an impossible reading is refused and not stored',

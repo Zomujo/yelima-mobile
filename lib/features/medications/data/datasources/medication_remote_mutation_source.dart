@@ -24,8 +24,9 @@ class MedicationRemoteMutationSource implements IRemoteMutationSource {
     switch (action) {
       case 'createMedication':
         // The server id replaces the local one.
-        return _remoteDataSource
-            .createMedication(CreateMedicationModel.fromJson(payload));
+        return _remoteDataSource.createMedication(
+            CreateMedicationModel.fromJson(payload),
+            idempotencyKey: entityId);
 
       case 'updateMedication':
         await _remoteDataSource.updateMedication(
@@ -33,9 +34,10 @@ class MedicationRemoteMutationSource implements IRemoteMutationSource {
         return null;
 
       case 'confirmMedication':
+        // The day it was taken, so a dose confirmed offline lands on that day.
         await _remoteDataSource.confirmMedication(
             entityId, payload['section'] as String,
-            date: payload['date'] as String?);
+            scheduledFor: payload['date'] as String?);
         return null;
 
       case 'deleteMedication':

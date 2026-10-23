@@ -278,8 +278,9 @@ class MutationSyncManager implements SessionLifecycleHandler {
           await _db.pendingMutationsDao.removePendingMutation(mutation.id);
           _syncBroadcast.add(mutation.entityType);
           return _MutationOutcome.resolved;
-        case NotFoundFailure() || ServerFailure(status: 400 || 409):
-          // Rejected: kept on the failed list for the user, never silently dropped.
+        case NotFoundFailure() || ServerFailure(status: 400 || 413 || 422):
+          // Rejected (422: idempotency key reused for another payload): kept on
+          // the failed list for the user, never silently dropped.
           debugPrint("Mutation ${mutation.id} rejected by the server.");
           await _db.pendingMutationsDao.markRejected(mutation.id);
           return _MutationOutcome.blocked;
@@ -287,7 +288,8 @@ class MutationSyncManager implements SessionLifecycleHandler {
           // Stop the run: wait for a new login or a connection.
           rethrow;
         default:
-          // 5xx and anything else: count a try for this item only and keep going.
+          // 5xx, 409 (the same write is still running) and anything else:
+          // count a try for this item only and keep going.
           await _handleFailedMutation(mutation, e.toString());
           return _MutationOutcome.retry;
       }

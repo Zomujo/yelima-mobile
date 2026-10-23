@@ -70,6 +70,30 @@ void main() {
     return controller;
   }
 
+  test('a retried message keeps its localChatId, so the server answers once',
+      () async {
+    final failed = AiChatMessage(
+      id: 'l-1',
+      sender: 'user',
+      type: MessageType.text,
+      value: 'Hello',
+      createdAt: DateTime(2026, 1, 1),
+      status: MessageStatus.failed,
+      localChatId: 'l-1',
+    );
+    final controller = await createController(initialMessages: [failed]);
+    when(() => mockRepository.sendMessage(any(),
+            localChatId: any(named: 'localChatId')))
+        .thenAnswer((_) async =>
+            right(chatResponse(userId: 'srv-user', botId: 'bot-1')));
+
+    await controller.retryMessage(failed);
+
+    verify(() => mockRepository.sendMessage('Hello', localChatId: 'l-1'))
+        .called(1);
+    controller.dispose();
+  });
+
   group('AiChatController duplicate-message regression', () {
     test(
         'sendMessage upserts the bot reply instead of duplicating a message id already in _messages',

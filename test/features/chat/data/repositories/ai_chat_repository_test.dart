@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/db/app_database.dart';
@@ -20,22 +21,26 @@ class MockDeletions extends Mock implements DeletionSyncManager {}
 
 class MockFiles extends Mock implements FileService {}
 
+class MockAudioCache extends Mock implements AudioCache {}
+
 void main() {
   const chatPath = 'api/v1/client/chat';
   late AppDatabase db;
   late FakeApi api;
 
-  AiChatRepositoryImpl repo({bool online = true}) {
+  AiChatRepositoryImpl repo(
+      {bool online = true, String language = 'en', AudioCache? audio}) {
     final sync = MockSync();
     when(() => sync.triggerSync()).thenAnswer((_) async {});
     return AiChatRepositoryImpl(
       localDataSource: AiChatLocalDataSource(db),
-      remoteDataSource: AiChatRemoteDataSource(api.client),
+      remoteDataSource:
+          AiChatRemoteDataSource(api.client, languageCode: () => language),
       deletionSyncManager: MockDeletions(),
       connectivityService: FakeConnectivity(online: online),
       mutationSyncManager: sync,
       fileService: MockFiles(),
-      audioCache: AudioCache(db),
+      audioCache: audio ?? AudioCache(db),
       session: SessionEpoch(),
     );
   }
@@ -71,6 +76,45 @@ void main() {
     expect(reply.bot?.suggestions, ['Why?']);
     expect(reply.bot?.localChatId, 'l-1');
     expect(await queued(), 0);
+  });
+
+  test('Twi users chat in Twi; every other language falls back to English',
+      () async {
+    api.on('POST', chatPath, FakeReply.ok({'outResponse': null}));
+
+    for (final language in ['tw', 'ee', 'ga', 'en']) {
+      await repo(language: language).sendMessage('Hi', localChatId: language);
+    }
+
+    expect(api.sent('POST', '/$chatPath').map((r) => r.queryParameters['lang']),
+        ['Twi', 'English', 'English', 'English']);
+  });
+
+  test('an expired voice-note link is refreshed from history once', () async {
+    final audio = MockAudioCache();
+    when(() => audio.download('https://old', ['m-1'])).thenThrow(
+        DioException(requestOptions: RequestOptions(path: 'https://old')));
+    when(() => audio.download('https://new', ['m-1']))
+        .thenAnswer((_) async => '/files/audio_m-1.m4a');
+    api.on(
+        'GET',
+        'api/v1/client/chats',
+        FakeReply.ok({
+          'rows': [
+            {
+              'id': 'm-1',
+              'createdAt': '2026-10-23T10:00:00.000Z',
+              'role': 'user',
+              'type': 'audio',
+              'content': 'https://new',
+            }
+          ],
+          'totalPages': 1,
+        }));
+
+    final path = await repo(audio: audio).downloadAudio('https://old', ['m-1']);
+
+    expect(path.toNullable(), '/files/audio_m-1.m4a');
   });
 
   test('offline, the send is queued', () async {

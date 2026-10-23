@@ -1,7 +1,6 @@
 import 'package:clock/clock.dart';
 
 import '../../../../core/db/app_database.dart';
-import '../../../../core/exceptions/exceptions.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
 import '../../../../core/services/connectivity_service.dart';
@@ -70,12 +69,8 @@ class UserRepositoryImpl implements UserRepository {
   AsyncResult<UserEntity> completeOnboarding(
           UserEntity profile, String facilityId) =>
       guardOnline(connectivityService, () async {
-        try {
-          await remoteDataSource.onboardUser(profile, facilityId);
-        } on ApiException catch (e) {
-          // 409 means already onboarded (backend request A4).
-          if (e.code != '409') rethrow;
-        }
+        // A repeat onboard returns 200 with the existing patient, so a retry is safe.
+        await remoteDataSource.onboardUser(profile, facilityId);
         final changes = ProfileChanges(
           facilityId: facilityId,
           registrationStatus: RegistrationStatus.complete,

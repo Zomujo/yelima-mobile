@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -13,19 +12,13 @@ class AuthRemoteDataSource {
     required FirebaseAuth firebaseAuth,
     required APIClient apiClient,
     GoogleSignIn? googleSignIn,
-    FirebaseFirestore? firestore,
   })  : _auth = firebaseAuth,
         _api = apiClient,
-        _google = googleSignIn ?? GoogleSignIn(scopes: ['email']),
-        _firestoreOverride = firestore;
+        _google = googleSignIn ?? GoogleSignIn(scopes: ['email']);
 
   final FirebaseAuth _auth;
   final APIClient _api;
   final GoogleSignIn _google;
-  final FirebaseFirestore? _firestoreOverride;
-
-  FirebaseFirestore get _firestore =>
-      _firestoreOverride ?? FirebaseFirestore.instance;
 
   /// Emits on sign-in and sign-out only.
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -101,14 +94,12 @@ class AuthRemoteDataSource {
     return user;
   }
 
-  /// Deletes in an order where any failure leaves the account usable and retryable:
-  /// identity, server data, profile doc, then the login itself.
+  /// Confirms identity, then the server deletes everything, the login included,
+  /// so this only signs out; a failed server delete leaves the account to retry.
   Future<void> deleteAccount({String? password}) async {
-    final user = await reauthenticate(password: password);
+    await reauthenticate(password: password);
     await _api.delete('api/v1/client/clean');
-    await _firestore.collection('users').doc(user.uid).delete();
-    await user.delete();
-    if (await _google.isSignedIn()) await _google.signOut();
+    await signOut();
   }
 
   Future<OAuthCredential> _googleCredential() async {

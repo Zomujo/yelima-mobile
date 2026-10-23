@@ -141,5 +141,33 @@ void main() {
     expect(id, 'srv-1');
     expect(await storedIds(), ['srv-1']);
     expect(await db.select(db.pendingMutations).get(), isEmpty);
+    final sent = api.sent('POST', path).single;
+    expect(sent.headers['Idempotency-Key'], startsWith('temp_'));
+    expect(DateTime.tryParse(sent.data['onsetDate']), isNotNull);
+  });
+
+  test('a queued symptom is replayed with the time it was reported', () async {
+    await db.pendingMutationsDao.queueMutation(
+        entityId: 'temp_1',
+        entityType: 'symptom',
+        action: 'create',
+        payload: {
+          'description': 'Headache',
+          'onsetDate': '2026-10-22T06:30:00.000Z'
+        });
+    api.on('POST', path, FakeReply.ok('srv-1', status: 201));
+    final source = SymptomsRemoteMutationSource(
+        SymptomsRemoteDataSource(apiClient: api.client), db);
+
+    await source.syncMutation(
+        entityId: 'temp_1',
+        action: 'create',
+        payloadJson:
+            (await db.select(db.pendingMutations).getSingle()).payloadJson,
+        createdAt: DateTime(2026, 10, 23));
+
+    final sent = api.sent('POST', path).single;
+    expect(sent.data['onsetDate'], '2026-10-22T06:30:00.000Z');
+    expect(sent.headers['Idempotency-Key'], 'temp_1');
   });
 }

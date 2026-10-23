@@ -23,7 +23,7 @@ class VitalsRemoteMutationSource implements IRemoteMutationSource {
     }
     // The server's id replaces the local one.
     return await _remote.saveVitalReading(jsonDecode(payloadJson),
-            idempotencyKey: entityId, createdAt: createdAt) ??
+            idempotencyKey: entityId) ??
         entityId;
   }
 

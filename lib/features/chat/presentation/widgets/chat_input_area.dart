@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -87,6 +88,8 @@ class _ChatInputAreaState extends State<ChatInputArea> {
                     readOnly: controller.isSending,
                     minLines: 1,
                     maxLines: 4,
+                    // The server's limit for one chat message.
+                    inputFormatters: [LengthLimitingTextInputFormatter(2000)],
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
                     onSubmitted:

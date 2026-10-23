@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/controllers/locale_controller.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../core/managers/deletion_sync_manager.dart';
 import '../../core/managers/mutation_sync_manager.dart';
 import '../../core/services/session_lifecycle_service.dart';
@@ -13,7 +15,8 @@ import 'domain/repositories/ai_chat_repository.dart';
 /// Registers the chat feature.
 void initChat(GetIt sl) {
   sl.registerLazySingleton(() => AiChatLocalDataSource(sl()));
-  sl.registerLazySingleton(() => AiChatRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => AiChatRemoteDataSource(sl(),
+      languageCode: () => l10nFor(sl<LocaleController>().locale).localeName));
   sl<DeletionSyncManager>()
       .registerSource('chat', sl<AiChatRemoteDataSource>());
 

@@ -31,11 +31,13 @@ class MedicationRemoteDataSource {
     ];
   }
 
-  /// Confirms a dose for [section] on [date] (yyyy-MM-dd).
+  /// Confirms the [section] dose of [scheduledFor] (yyyy-MM-dd, at most 48 h ago), or of today.
   Future<void> confirmMedication(String medicationId, String section,
-          {String? date}) =>
-      apiClient.put('$_base/$medicationId/confirm',
-          queryParameters: {'section': section, if (date != null) 'date': date});
+          {String? scheduledFor}) =>
+      apiClient.put('$_base/$medicationId/confirm', queryParameters: {
+        'section': section,
+        if (scheduledFor != null) 'scheduledFor': scheduledFor,
+      });
 
   /// One page of all medications.
   Future<MedicationListResponseModel> getAllMedications(
@@ -50,10 +52,12 @@ class MedicationRemoteDataSource {
           '$_base/$medicationId/adherence',
           queryParameters: {'date': date}))['data']);
 
-  /// Creates a medication and returns its server id.
-  Future<String> createMedication(CreateMedicationModel data) async {
-    final created =
-        (await apiClient.post(_base, data: _withEmptySlots(data.toJson())))['data'];
+  /// Creates a medication and returns its server id; [idempotencyKey] is its local id.
+  Future<String> createMedication(CreateMedicationModel data,
+      {required String idempotencyKey}) async {
+    final created = (await apiClient.post(_base,
+        data: _withEmptySlots(data.toJson()),
+        options: APIClient.idempotent(idempotencyKey)))['data'];
     return created is Map
         ? (created['id'] ?? created['_id']).toString()
         : created.toString();
@@ -72,10 +76,10 @@ class MedicationRemoteDataSource {
 
   /// One page of the preloaded medication list.
   Future<SeededMedicationListResponseModel> getPreloadedMedications(
-          {int page = 1, int limit = 10}) async =>
+          {int page = 1, int pageSize = 10}) async =>
       SeededMedicationListResponseModel.fromJson((await apiClient.get(
           '$_base/preloaded',
-          queryParameters: {'page': page, 'limit': limit}))['data']);
+          queryParameters: {'page': page, 'pageSize': pageSize}))['data']);
 
   /// The server wants every slot present: a removed slot is sent as null.
   static Map<String, dynamic> _withEmptySlots(Map<String, dynamic> json) => {

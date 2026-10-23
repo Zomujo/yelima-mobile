@@ -78,6 +78,34 @@ void main() {
     expect(syncableMutations.isEmpty, true);
   });
 
+  Future<int> retryCountAfter(String status) async {
+    await memoryDb.pendingMutationsDao.queueMutation(
+        entityId: 'ent_1',
+        entityType: 'test_entity',
+        action: 'create',
+        payload: {'data': 'x'});
+    when(() => mockRemoteSource.syncMutation(
+          entityId: any(named: 'entityId'),
+          action: any(named: 'action'),
+          payloadJson: any(named: 'payloadJson'),
+          createdAt: any(named: 'createdAt'),
+        )).thenThrow(ApiException('x', code: status));
+    await syncManager.onSessionStarted('user_1');
+    await syncManager.triggerSync();
+    return (await memoryDb.select(memoryDb.pendingMutations).getSingle())
+        .retryCount;
+  }
+
+  test('409 (the same idempotent write is still running) is retried later',
+      () async {
+    expect(await retryCountAfter('409'), 1);
+  });
+
+  test('422 (idempotency key reused for another payload) is rejected',
+      () async {
+    expect(await retryCountAfter('422'), 9999);
+  });
+
   test('should gracefully handle 3 sequential failures by blocking', () async {
     // 1. Arrange: Insert a pending mutation
     await memoryDb.pendingMutationsDao.queueMutation(

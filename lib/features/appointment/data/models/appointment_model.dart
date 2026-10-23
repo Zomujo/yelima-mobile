@@ -68,10 +68,12 @@ class AppointmentListResponseModel extends AppointmentListResponse {
     final data = json['data'] as Map<String, dynamic>? ?? json;
 
     return AppointmentListResponseModel(
-      rows: (data['rows'] as List<dynamic>?)
-              ?.map((e) => AppointmentModel.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      // Cancelled visits aren't shown; the server still lists them.
+      rows: [
+        for (final e in (data['rows'] as List<dynamic>? ?? []))
+          if ((e as Map<String, dynamic>)['status'] != 'cancelled')
+            AppointmentModel.fromJson(e),
+      ],
       total: data['total'] as int? ?? 0,
       pageSize: data['pageSize'] as int? ?? 10,
       page: data['page'] as int? ?? 1,

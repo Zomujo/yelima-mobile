@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import '../services/session_expiry.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
-import 'interceptors/error_interceptor.dart';
 import '../exceptions/exceptions.dart';
 
 typedef JSON = Map<String, dynamic>;
@@ -14,21 +13,13 @@ extension ResponseData on Response {
   String? get message => data is Map ? data['message'] : "Unknown error";
 }
 
-/// The server's message on a failed request.
-extension DioExceptionExtension on DioException {
-  String? get responseMessage {
-    if (response?.data is Map) {
-      final data = response!.data as Map;
-      final msg = data['message'] ?? data['error'];
-      if (msg is List) return msg.join(', ');
-      return msg?.toString() ?? message;
-    }
-    return message;
-  }
-}
 
-/// The HTTP client for the backend: auth, error and logging interceptors.
+/// The HTTP client for the backend, with auth and logging interceptors.
 class APIClient {
+  /// Lets the server replay, not repeat, a write sent again with the same [key] within 48 h.
+  static Options idempotent(String key) =>
+      Options(headers: {'Idempotency-Key': key});
+
   late final Dio _dio;
 
   APIClient({required String baseUrl, SessionExpiry? sessionExpiry}) {
@@ -47,7 +38,6 @@ class APIClient {
     _dio.interceptors.addAll([
       LoggingInterceptor(),
       AuthInterceptor(dio: _dio, sessionExpiry: sessionExpiry),
-      ErrorInterceptor(),
     ]);
   }
 
@@ -132,7 +122,6 @@ class APIClient {
   }
 
   void _handleDioError(DioException e) {
-    debugPrint('API Error: ${e.responseMessage}');
     debugPrint('API Raw Data: ${e.response?.data}');
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||
@@ -141,7 +130,6 @@ class APIClient {
       throw const NetworkException(
           'No internet connection. Please check your network and try again.');
     }
-    // Map to custom ApiException
     throw ApiException.fromDioError(e);
   }
 

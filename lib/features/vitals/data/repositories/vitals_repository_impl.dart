@@ -75,7 +75,8 @@ class VitalsRepositoryImpl implements VitalsRepository {
         Object? error;
         if (await connectivityService.isConnected) {
           try {
-            await remoteDataSource.saveVitalReading(body);
+            await remoteDataSource.saveVitalReading(body,
+                idempotencyKey: model.id);
             return db.vitalsDao.insertVitals([model.toDrift()]);
           } catch (e) {
             error = e;

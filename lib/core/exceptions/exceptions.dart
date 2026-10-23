@@ -7,9 +7,11 @@ class ApiException implements Exception {
   /// The response's message, or a fallback; [code] is null when there was no response.
   factory ApiException.fromDioError(DioException e) {
     final data = e.response?.data;
-    final message = data is Map
-        ? data['message'] ?? data['error'] ?? data['errors']?.toString()
+    final raw = data is Map
+        ? data['message'] ?? data['error'] ?? data['errors']
         : null;
+    // NestJS validation errors send a list of messages.
+    final message = raw is List ? raw.join(', ') : raw;
     return ApiException(
         (message ?? e.message ?? 'An unexpected error occurred').toString(),
         code: e.response?.statusCode?.toString());

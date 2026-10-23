@@ -33,13 +33,13 @@ class SeededMedicationsSyncService implements SessionLifecycleHandler {
   Future<void> _sync() async {
     if (!await _connectivityService.isConnected) return;
     final first =
-        await _remoteDataSource.getPreloadedMedications(page: 1, limit: 100);
+        await _remoteDataSource.getPreloadedMedications(page: 1, pageSize: 100);
     await _db.medicationsDao.clearPreloadedMedications();
     await _save(first.rows);
     for (var page = 2; page <= first.totalPages; page++) {
       if (!await _connectivityService.isConnected) break;
       await _save((await _remoteDataSource.getPreloadedMedications(
-              page: page, limit: 100))
+              page: page, pageSize: 100))
           .rows);
     }
   }

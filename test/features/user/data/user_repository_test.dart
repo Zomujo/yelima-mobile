@@ -117,10 +117,8 @@ void main() {
     });
   });
 
-  test('onboarding a patient who already exists (409) still completes',
-      () async {
-    when(() => remote.onboardUser(any(), 'f1'))
-        .thenThrow(const ApiException('exists', code: '409'));
+  test('onboarding completes the profile on the phone', () async {
+    when(() => remote.onboardUser(any(), 'f1')).thenAnswer((_) async {});
 
     final result = await repo.completeOnboarding(ama, 'f1');
 

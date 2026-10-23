@@ -19,8 +19,10 @@ class VitalHistoryModel extends VitalHistoryEntity {
     super.recordedAt,
   });
 
+  /// Older server rows have no `recordedAt`; their save time is the closest we have.
   factory VitalHistoryModel.fromJson(Map<String, dynamic> json) =>
-      _$VitalHistoryModelFromJson(json);
+      _$VitalHistoryModelFromJson(
+          {...json, 'recordedAt': json['recordedAt'] ?? json['createdAt']});
 
   Map<String, dynamic> toJson() => _$VitalHistoryModelToJson(this);
 

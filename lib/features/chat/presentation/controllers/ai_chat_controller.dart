@@ -210,10 +210,11 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     }
   }
 
-  /// Sends a text message to the AI Chat API.
-  Future<void> sendMessage(String text) async {
+  /// Sends a text message; a retry passes the failed message's [localChatId].
+  Future<void> sendMessage(String text, {String? localChatId}) async {
     if (text.trim().isEmpty) return;
     await _send(
+      localChatId,
       (localId) => AiChatMessage(
         id: localId,
         sender: 'user',
@@ -227,10 +228,11 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     );
   }
 
-  /// Sends a voice note/audio file to the AI Chat API.
+  /// Sends a voice note; a retry passes the failed message's [localChatId].
   Future<void> sendAudioMessage(String filePath,
-      [String durationStr = "Voice Message"]) async {
+      {String durationStr = "Voice Message", String? localChatId}) async {
     await _send(
+      localChatId,
       (localId) => AiChatMessage(
         id: localId,
         sender: 'user',
@@ -247,7 +249,10 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Shows [draft] optimistically, sends it, then applies the server's reply.
+  ///
+  /// The same [reuseId] on a retry lets the server answer once, not twice.
   Future<void> _send(
+    String? reuseId,
     AiChatMessage Function(String localId) draft,
     AsyncResult<ChatReply> Function(String localId) call,
   ) async {
@@ -256,7 +261,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     state = state.copyWith(isSending: true);
     if (_activeSync != null) await _activeSync;
 
-    final localId = const Uuid().v4();
+    final localId = reuseId ?? const Uuid().v4();
     state = state.copyWith(messages: [draft(localId), ...state.messages]);
 
     final res = await call(localId);
@@ -307,10 +312,11 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     state = state.copyWith(messages: updatedMessages);
     _repository.deleteLocalMessageOnly(failedMsg.id);
 
+    final id = failedMsg.localChatId;
     if (failedMsg.type == MessageType.audio && failedMsg.audioUrl != null) {
-      await sendAudioMessage(failedMsg.audioUrl!);
+      await sendAudioMessage(failedMsg.audioUrl!, localChatId: id);
     } else {
-      await sendMessage(failedMsg.value);
+      await sendMessage(failedMsg.value, localChatId: id);
     }
   }
 

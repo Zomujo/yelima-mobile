@@ -80,7 +80,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
       final controller = context.read<AiChatController>();
       final durationStr =
           _recordingService.recorderValueNotifier.value.durationString;
-      controller.sendAudioMessage(path, durationStr);
+      controller.sendAudioMessage(path, durationStr: durationStr);
     }
     _recordingService.reset();
     widget.onClose();

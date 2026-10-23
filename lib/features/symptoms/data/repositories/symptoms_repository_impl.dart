@@ -74,19 +74,20 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
           // Saved first so the list updates at once while the request runs.
           await db.symptomsDao.insertOrUpdateSymptom(row);
           try {
-            final id = await remoteDataSource.createSymptom(description);
+            final id = await remoteDataSource.createSymptom(description,
+                onsetDate: now, idempotencyKey: tempId);
             await db.symptomsDao.updateSymptomId(tempId, id);
             return id;
           } catch (_) {
             // Reachable but the request failed: retry later.
-            await _queue(tempId, description);
+            await _queue(tempId, description, now);
             return tempId;
           }
         }
         // Saved and queued in one step, so a crash can't keep one without the other.
         await db.transaction(() async {
           await db.symptomsDao.insertOrUpdateSymptom(row);
-          await _queue(tempId, description);
+          await _queue(tempId, description, now);
         });
         return tempId;
       });
@@ -95,10 +96,13 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
       SymptomsCompanion(
           id: Value(id), description: Value(description), onsetDate: Value(at));
 
-  Future<void> _queue(String id, String description) =>
+  Future<void> _queue(String id, String description, DateTime onsetDate) =>
       db.pendingMutationsDao.queueMutation(
           entityId: id,
           entityType: _type,
           action: 'create',
-          payload: {'description': description});
+          payload: {
+            'description': description,
+            'onsetDate': onsetDate.toUtc().toIso8601String(),
+          });
 }
