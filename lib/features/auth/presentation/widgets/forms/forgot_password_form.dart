@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
@@ -47,8 +48,8 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
       children: [
         AppFormField(
           controller: _emailController,
-          label: 'Email',
-          hintText: 'you@example.com',
+          label: context.l10n.emailLabel,
+          hintText: context.l10n.emailHint,
           prefixIcon: Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -56,7 +57,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
         ),
         const SizedBox(height: 32),
         AppButton(
-          text: 'Send Reset Link',
+          text: context.l10n.sendResetLink,
           isDisabled: !_isButtonEnabled,
           onPressed: _isButtonEnabled
               ? () async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../layout/app_text.dart';
 import '../layout/app_button.dart';
@@ -84,29 +85,21 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  String _monthName(int month) {
-    const months = [
-      '',
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
-    return months[month];
-  }
+  String _monthName(int month) => context.l10n.monthNames[month - 1];
 
   @override
   Widget build(BuildContext context) {
     final days = _getDaysInMonth(_currentMonth);
-    final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final l10n = context.l10n;
+    final weekdays = [
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThu,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+      l10n.weekdaySun,
+    ];
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -122,10 +115,10 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const AppText.headlineSmall(
-                'Select Date',
+              AppText.headlineSmall(
+                l10n.selectDate,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+                color: const Color(0xFF1E293B),
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Color(0xFF94A3B8)),
@@ -246,7 +239,7 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
 
           // Apply Button
           AppButton(
-            text: 'Apply',
+            text: l10n.apply,
             onPressed: () => widget.onDateSelected(_selectedDate),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,

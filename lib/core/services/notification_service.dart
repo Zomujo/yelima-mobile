@@ -9,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../utils/logger.dart';
 import '../../firebase_options.dart';
 import '../utils/time_zone.dart';
+import 'notification_routes.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -29,7 +30,16 @@ class NotificationService {
 
   RemoteMessage? _initialMessage;
   RemoteMessage? get initialMessage => _initialMessage;
-  bool isAppInitialized = false;
+
+  /// Opens a route; set by the app once its router exists.
+  void Function(String route)? _navigate;
+
+  /// Lets taps open screens, and opens the one that launched the app, if any.
+  void attachNavigator(void Function(String route) navigate) {
+    _navigate = navigate;
+    final pending = _initialMessage;
+    if (pending != null) handleMessageNavigation(pending);
+  }
 
   Future<void> initialize() async {
     try {
@@ -103,15 +113,14 @@ class NotificationService {
   Future<void> handleMessageNavigation(RemoteMessage? message) async {
     if (message == null) return;
 
-    if (!isAppInitialized) {
-      _initialMessage = message;
+    final navigate = _navigate;
+    if (navigate == null) {
+      _initialMessage = message; // replayed by attachNavigator
       return;
     }
-
-    final data = getCleanData(message);
-    AppLogger.i('NotificationService: Notification clicked with data: $data');
-
     _initialMessage = null;
+    // Until login and start-up finish, the router keeps this as its ?redirect= target.
+    navigate(notificationRoute(getCleanData(message)));
   }
 
   Map<String, dynamic> getCleanData(RemoteMessage message) {
@@ -193,6 +202,9 @@ class NotificationService {
         title,
         body,
         scheduledDate,
+        payload: jsonEncode({
+          'data': {'notification_type': medicationReminderType}
+        }),
         NotificationDetails(
           android: AndroidNotificationDetails(
             'medication_reminders',

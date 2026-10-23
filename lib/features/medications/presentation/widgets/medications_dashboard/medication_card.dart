@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/constants/app_images.dart';
@@ -140,7 +141,7 @@ class MedicationCard extends StatelessWidget {
             )
           else
             AppButton(
-              text: isEarly ? 'Wait' : 'Confirm',
+              text: isEarly ? context.l10n.wait : context.l10n.confirm,
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               borderRadius: 20,

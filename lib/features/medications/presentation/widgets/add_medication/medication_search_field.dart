@@ -115,7 +115,9 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
             prefixIcon: Icons.search,
             isRequired: true,
             autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+            validator: (v) => v == null || v.trim().isEmpty
+                ? context.l10n.requiredField
+                : null,
           );
         },
       );

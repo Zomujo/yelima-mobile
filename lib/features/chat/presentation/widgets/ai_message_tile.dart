@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../domain/entities/ai_chat_message.dart';
@@ -30,7 +31,7 @@ class AiMessageTile extends StatelessWidget {
             if (message.status == MessageStatus.failed)
               ListTile(
                 leading: const Icon(Icons.refresh, color: Colors.orange),
-                title: const AppText.bodyMedium('Retry Message'),
+                title: AppText.bodyMedium(context.l10n.retryMessage),
                 onTap: () {
                   Navigator.pop(bottomSheetContext);
                   if (message.localChatId != null) {
@@ -41,7 +42,7 @@ class AiMessageTile extends StatelessWidget {
             if (message.status != MessageStatus.sending)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const AppText.bodyMedium('Delete Message',
+                title: AppText.bodyMedium(context.l10n.deleteMessage,
                     color: Colors.red),
                 onTap: () {
                   Navigator.pop(bottomSheetContext);
@@ -143,12 +144,12 @@ class AiMessageTile extends StatelessWidget {
                       context.read<AiChatController>().retryMessage(message);
                     }
                   },
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.refresh, size: 16, color: Colors.red),
-                      SizedBox(width: 4),
-                      AppText.labelSmall('Retry', color: Colors.red),
+                      const Icon(Icons.refresh, size: 16, color: Colors.red),
+                      const SizedBox(width: 4),
+                      AppText.labelSmall(context.l10n.retry, color: Colors.red),
                     ],
                   ),
                 )

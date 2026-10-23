@@ -205,4 +205,15 @@ void main() {
           ));
     });
   });
+
+  test('confirming a dose stamps it with today', () async {
+    final repo = repoWith(MedicationLocalDataSourceImpl(db: db));
+    final id = (await repo.createMedication(data)).getOrElse((_) => '');
+
+    await withClock(Clock.fixed(DateTime(2026, 10, 23, 8, 30)),
+        () => repo.confirmMedication(id, 'MORNING'));
+
+    final row = (await db.select(db.medications).get()).single;
+    expect((row.taken, row.takenOn), (true, DateTime(2026, 10, 23, 8, 30)));
+  });
 }

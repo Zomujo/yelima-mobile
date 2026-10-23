@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../../core/extensions/l10n_extension.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
@@ -203,7 +204,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     final user = _firebaseAuth.currentUser;
     if (user == null) return left('User not authenticated');
 
-    GlobalAsyncLoader.show(context, message: "Saving details...");
+    GlobalAsyncLoader.show(context, message: context.l10n.savingDetails);
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
@@ -261,7 +262,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     final user = _firebaseAuth.currentUser;
     if (user == null) return left('User not authenticated');
 
-    GlobalAsyncLoader.show(context, message: "Saving date of birth...");
+    GlobalAsyncLoader.show(context, message: context.l10n.savingDob);
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {
@@ -316,7 +317,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
       return left('Invalid user state or missing category');
     }
 
-    GlobalAsyncLoader.show(context, message: "Saving health conditions...");
+    GlobalAsyncLoader.show(context,
+        message: context.l10n.savingHealthConditions);
 
     final conditionsPayload = category.toBackendPayload;
 
@@ -371,7 +373,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
       return left('Invalid user state');
     }
 
-    GlobalAsyncLoader.show(context, message: "Completing profile...");
+    GlobalAsyncLoader.show(context, message: context.l10n.completingProfile);
 
     final response = await ExceptionWrapper.runAsync<void>(
       () async {

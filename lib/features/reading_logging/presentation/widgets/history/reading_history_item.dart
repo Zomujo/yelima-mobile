@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
 
@@ -49,7 +50,7 @@ class ReadingHistoryItem extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               AppText.bodySmall(
-                _getSeverityText(severity!),
+                _getSeverityText(context, severity!),
                 color: _getSeverityColor(severity!),
                 fontWeight: FontWeight.w600,
               ),
@@ -86,22 +87,23 @@ class ReadingHistoryItem extends StatelessWidget {
     }
   }
 
-  String _getSeverityText(VitalSeverity sev) {
+  String _getSeverityText(BuildContext context, VitalSeverity sev) {
+    final l10n = context.l10n;
     switch (sev) {
       case VitalSeverity.normal:
-        return 'Normal / Target';
+        return l10n.severityNormal;
       case VitalSeverity.slightlyHigh:
-        return 'Slightly High';
+        return l10n.severitySlightlyHigh;
       case VitalSeverity.low:
-        return 'Low';
+        return l10n.severityLow;
       case VitalSeverity.criticallyLow:
-        return 'Critically Low';
+        return l10n.severityCriticallyLow;
       case VitalSeverity.high:
-        return 'High';
+        return l10n.severityHigh;
       case VitalSeverity.veryHigh:
-        return 'Very High';
+        return l10n.severityVeryHigh;
       case VitalSeverity.critical:
-        return 'Critical';
+        return l10n.severityCritical;
       case VitalSeverity.unknown:
         return '';
     }

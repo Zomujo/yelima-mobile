@@ -22,7 +22,9 @@ class MedicationFormFields extends StatelessWidget {
               hintText: context.l10n.enterDosageStrength,
               isRequired: true,
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? context.l10n.requiredField
+                  : null,
             ),
             if (controller.state.selectedPreloadedMedication != null &&
                 controller.state.selectedPreloadedMedication!.possibleDosages

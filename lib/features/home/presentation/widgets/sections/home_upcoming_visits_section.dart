@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
@@ -16,8 +17,8 @@ class HomeUpcomingVisitsSection extends StatelessWidget {
         builder: (context, controller, child) {
           if (controller.state.nearestError != null) {
             return Center(
-              child:
-                  AppText.bodyMedium('Error: ${controller.state.nearestError}'),
+              child: AppText.bodyMedium(context.l10n
+                  .errorWithMessage('${controller.state.nearestError}')),
             );
           }
 

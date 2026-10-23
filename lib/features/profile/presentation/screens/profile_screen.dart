@@ -79,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ? () => context.push('/edit-profile')
                                     : () => AppSnackBar.showError(context,
                                         message:
-                                            'You must be online to edit your profile.'),
+                                            context.l10n.onlineToEditProfile),
                               ),
                               OptionBlockItem(
                                 label: context.l10n.settings,

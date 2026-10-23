@@ -8,6 +8,7 @@ import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
 import '../states/reading_logging_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import 'package:clock/clock.dart';
+import '../../domain/reading_limits.dart';
 
 class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
@@ -27,8 +28,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   })  : _repository = repository,
         _saveVitalReadingUseCase = saveVitalReadingUseCase;
 
-  ReadingLoggingState _state =
-      ReadingLoggingState(selectedDate: clock.now());
+  ReadingLoggingState _state = ReadingLoggingState(selectedDate: clock.now());
   ReadingLoggingState get state => _state;
 
   set state(ReadingLoggingState value) {
@@ -46,30 +46,30 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   Future<void> init() async {
     final cachedResult = await _repository.getCachedHomeMetrics();
     cachedResult.fold((_) {}, (metrics) {
-      final bp = metrics.parsedBloodPressure;
-      final sugar = metrics.parsedBloodGlucose;
-
-      state = state.copyWith(
-        systolic: bp?.$1 ?? state.systolic,
-        diastolic: bp?.$2 ?? state.diastolic,
-        sugarLevel: sugar ?? state.sugarLevel,
-        isInitializing: false,
-      );
+      _prefillFrom(metrics);
     });
 
     final result = await _repository.getHomeMetrics();
 
     result.fold((_) {}, (metrics) {
-      final bp = metrics.parsedBloodPressure;
-      final sugar = metrics.parsedBloodGlucose;
-
-      state = state.copyWith(
-        systolic: bp?.$1 ?? state.systolic,
-        diastolic: bp?.$2 ?? state.diastolic,
-        sugarLevel: sugar ?? state.sugarLevel,
-        isInitializing: false,
-      );
+      _prefillFrom(metrics);
     });
+  }
+
+  /// Prefills the form with the last reading, skipping values the pickers can't show.
+  void _prefillFrom(HomeMetricsEntity metrics) {
+    final bp = metrics.parsedBloodPressure;
+    final sugar = metrics.parsedBloodGlucose;
+    final bpOk =
+        bp != null && ReadingLimits.bloodPressureError(bp.$1, bp.$2) == null;
+    final sugarOk =
+        sugar != null && ReadingLimits.bloodSugarError(sugar) == null;
+    state = state.copyWith(
+      systolic: bpOk ? bp.$1 : state.systolic,
+      diastolic: bpOk ? bp.$2 : state.diastolic,
+      sugarLevel: sugarOk ? sugar : state.sugarLevel,
+      isInitializing: false,
+    );
   }
 
   /// Updates the currently selected tab (e.g., Blood Pressure vs. Blood Glucose).

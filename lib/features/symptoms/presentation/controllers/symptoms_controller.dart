@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../../../shared/widgets/loaders/global_async_loader.dart';
 import '../../../../shared/utils/app_snackbar.dart';
@@ -13,7 +14,7 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   final SymptomsRepository _repository;
-  
+
   SymptomsState _state = const SymptomsState();
   SymptomsState get state => _state;
 
@@ -41,10 +42,11 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
     }
 
     final result = await _repository.getSymptoms(page: 1, pageSize: 100);
-    
+
     result.fold(
       (error) {
-        state = state.copyWith(isLoading: false, error: error, isInitialized: true);
+        state =
+            state.copyWith(isLoading: false, error: error, isInitialized: true);
       },
       (symptoms) {
         state = state.copyWith(
@@ -58,7 +60,8 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
   }
 
   Future<void> createSymptom(BuildContext context, String description) async {
-    GlobalAsyncLoader.show(context, message: "Reporting symptom...");
+    final l10n = context.l10n;
+    GlobalAsyncLoader.show(context, message: l10n.reportingSymptom);
 
     final result = await _repository.createSymptom(description);
 
@@ -69,7 +72,7 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
         AppSnackBar.showError(context, message: error);
       },
       (id) {
-        AppSnackBar.showSuccess(context, message: 'Symptom reported successfully');
+        AppSnackBar.showSuccess(context, message: l10n.symptomReported);
         // Refresh the list to show the new symptom
         fetchSymptoms(silent: true);
       },
@@ -83,7 +86,7 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
   /// Returns symptoms grouped by date strings like "Today", "Yesterday", "10th July 2026"
   Map<String, List<SymptomEntity>> get groupedSymptoms {
     final Map<String, List<SymptomEntity>> groups = {};
-    
+
     // Sort symptoms descending by date
     final sortedSymptoms = List<SymptomEntity>.from(state.symptoms)
       ..sort((a, b) => b.onsetDate.compareTo(a.onsetDate));

@@ -75,8 +75,6 @@ void main() {
       await pumpCard(tester, now.subtract(const Duration(days: 40)),
           isPast: true);
       expect(find.text('1 month ago'), findsOneWidget);
-    },
-        skip:
-            true); // Known bug: shows "1 months ago"; labels also aren't localized (APPT-EC-09).
+    });
   });
 }

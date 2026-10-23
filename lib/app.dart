@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/router/router.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
-import 'shared/widgets/app_startup_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'core/utils/globals.dart';
@@ -39,6 +39,9 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _router =
         AppRouter.createRouter(sl<AuthController>(), sl<UserController>());
+    // After the first frame, so a notification that launched the app can navigate.
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => NotificationService.instance.attachNavigator(_router.go));
   }
 
   @override
@@ -54,8 +57,8 @@ class _MyAppState extends State<MyApp> {
         systemNavigationBarIconBrightness: Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
-      child: AppStartupWidget(
-        onLoaded: (context) => MultiProvider(
+      child: Builder(
+        builder: (context) => MultiProvider(
           providers: [
             ChangeNotifierProvider.value(value: sl<AuthController>()),
             ChangeNotifierProvider.value(value: sl<UserController>()),
@@ -71,7 +74,8 @@ class _MyAppState extends State<MyApp> {
             ChangeNotifierProvider(
                 create: (_) => sl<ReadingLoggingController>()),
             ChangeNotifierProvider(
-                create: (_) => sl<SymptomsController>()..fetchSymptoms(silent: true)),
+                create: (_) =>
+                    sl<SymptomsController>()..fetchSymptoms(silent: true)),
             Provider<VitalsDao>(create: (_) => sl()),
           ],
           child: Consumer<LocaleController>(

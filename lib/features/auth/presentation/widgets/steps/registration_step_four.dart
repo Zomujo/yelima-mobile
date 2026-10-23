@@ -38,7 +38,9 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
   void initState() {
     super.initState();
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus && _searchController.text.isNotEmpty && _selectedFacility == null) {
+      if (_focusNode.hasFocus &&
+          _searchController.text.isNotEmpty &&
+          _selectedFacility == null) {
         setState(() {
           _isDropdownVisible = true;
         });
@@ -107,7 +109,8 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
     if (token != _searchToken || !mounted) return;
 
     final userRepository = GetIt.instance<UserRepository>();
-    final result = await userRepository.getFacilities(search: query, pageSize: 20);
+    final result =
+        await userRepository.getFacilities(search: query, pageSize: 20);
 
     if (mounted && token == _searchToken) {
       setState(() {
@@ -143,7 +146,8 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
             prefixIcon: Icons.search,
             isRequired: true,
             autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: (v) => _selectedFacility == null ? 'Required' : null,
+            validator: (v) =>
+                _selectedFacility == null ? context.l10n.requiredField : null,
           ),
           if (_isDropdownVisible)
             Padding(
@@ -161,23 +165,23 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                   child: ListView.separated(
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
-                    itemCount: _isLoadingFacilities 
-                        ? 1 
+                    itemCount: _isLoadingFacilities
+                        ? 1
                         : (_options.isEmpty ? 1 : _options.length),
-                    separatorBuilder: (context, index) => const Divider(
-                        height: 1, color: Color(0xFFE2E8F0)),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
                     itemBuilder: (context, index) {
                       if (_isLoadingFacilities) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
                               horizontal: 16.0, vertical: 16.0),
                           child: AppText.bodyMedium(
-                            'Loading...',
+                            context.l10n.loading,
                             color: AppColors.textGrey,
                           ),
                         );
                       }
-                      
+
                       if (_options.isEmpty) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(

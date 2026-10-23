@@ -91,9 +91,7 @@ void main() {
           const CreateMedicationModel(name: 'X', dosage: '1'), 'l'));
 
       expect(rows, isEmpty);
-    },
-        skip:
-            'Known bug MED-EC-38: adds a fallback MORNING row due now. Fix in P4.');
+    });
   });
 
   group('fromUpdateModel', () {
@@ -157,17 +155,65 @@ void main() {
           remote(DateTime(2026, 10, 23, 9)), row('MORNING'), 'MORNING'));
 
       expect(merged.toBeTakenAt, DateTime(2026, 10, 23, 9));
-    },
-        skip:
-            'Known bug MED-EC-25: the local toBeTakenAt always wins. Fix in P4.');
+    });
 
     test('MED-EC-40: a dose due right now keeps its real time', () {
       final merged = atToday(() => MedicationMapper.mergeRemoteWithLocal(
           remote(today), null, 'AFTERNOON'));
 
       expect(merged.toBeTakenAt, today);
-    },
-        skip:
-            'Known bug MED-EC-40: a time within 5 s of now is replaced by a 13:00 guess. Fix in P4.');
+    });
+
+    test('no time from the server keeps the local one, or the section default',
+        () {
+      final noTime = MedicationModel.fromJson(
+          const {'id': 'srv-1', 'name': 'A', 'dosage': '5mg', 'taken': false});
+
+      final keptLocal = atToday(() => MedicationMapper.mergeRemoteWithLocal(
+          noTime, row('EVENING'), 'EVENING'));
+      final fallback = atToday(
+          () => MedicationMapper.mergeRemoteWithLocal(noTime, null, 'EVENING'));
+
+      expect(keptLocal.toBeTakenAt, DateTime(2026, 10, 23, 8));
+      expect(fallback.toBeTakenAt, DateTime(2026, 10, 23, 20));
+    });
+  });
+
+  group('MED-EC-11: taken resets every day', () {
+    Medication confirmedOn(DateTime? day) => Medication(
+          id: 'm1',
+          name: 'Amlodipine',
+          dosage: '5mg',
+          section: 'MORNING',
+          taken: true,
+          takenOn: day,
+          toBeTakenAt: DateTime(2026, 10, 20, 8),
+        );
+
+    test('a dose confirmed today shows as taken', () {
+      final e = atToday(() =>
+          MedicationMapper.toEntity(confirmedOn(DateTime(2026, 10, 23, 8, 5))));
+      expect(e.taken, isTrue);
+    });
+
+    test('yesterday\'s confirmation does not carry over to today', () {
+      final e = atToday(() =>
+          MedicationMapper.toEntity(confirmedOn(DateTime(2026, 10, 22, 8, 5))));
+      expect(e.taken, isFalse);
+    });
+
+    test('a server "taken" is stamped as today', () {
+      final merged = atToday(() => MedicationMapper.mergeRemoteWithLocal(
+          MedicationModel(
+              id: 'srv-1',
+              name: 'A',
+              dosage: '5mg',
+              purpose: '',
+              toBeTakenAt: DateTime(2026, 10, 23, 8),
+              taken: true),
+          null,
+          'MORNING'));
+      expect(merged.takenOn, today);
+    });
   });
 }

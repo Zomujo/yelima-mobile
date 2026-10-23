@@ -46,28 +46,24 @@ enum VitalSeverity {
 }
 
 extension VitalSeverityExt on VitalSeverity {
+  /// Maps a stored grade to a display level. Covers the server's labels (see
+  /// `VitalSeverityThresholds`) and older app labels still in local data.
   static VitalSeverity fromString(String? val) {
-    if (val == null) return VitalSeverity.unknown;
-    switch (val.toLowerCase()) {
-      case 'normal':
-      case 'good':
-      case 'in_target':
+    switch (val?.toLowerCase()) {
+      case 'normal' || 'good' || 'in_target':
         return VitalSeverity.normal;
-      case 'slightly_high':
-      case 'elevated':
+      case 'elevated' || 'slightly_high':
         return VitalSeverity.slightlyHigh;
-      case 'low':
-        return VitalSeverity.low;
-      case 'critically_low':
-        return VitalSeverity.criticallyLow;
-      case 'high':
-      case 'hypertensive':
+      case 'high' || 'hypertensive':
         return VitalSeverity.high;
       case 'very_high':
         return VitalSeverity.veryHigh;
-      case 'critical':
-      case 'crisis':
+      case 'critical' || 'crisis' || 'hypertensive_crisis' || 'critically_high':
         return VitalSeverity.critical;
+      case 'low' || 'hypotensive':
+        return VitalSeverity.low;
+      case 'critically_low' || 'severe_hypotension':
+        return VitalSeverity.criticallyLow;
       default:
         return VitalSeverity.unknown;
     }

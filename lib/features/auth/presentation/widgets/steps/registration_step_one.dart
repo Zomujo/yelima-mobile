@@ -119,14 +119,14 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
           AppFormField(
             controller: _firstNameController,
             label: context.l10n.firstName,
-            hintText: "John",
+            hintText: context.l10n.firstNameHint,
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 24),
           AppFormField(
             controller: _lastNameController,
             label: context.l10n.lastName,
-            hintText: "Doe",
+            hintText: context.l10n.lastNameHint,
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 24),

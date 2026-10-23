@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
@@ -219,7 +220,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
           ),
           const SizedBox(width: 12),
           AppText.labelMedium(
-            "Voice message",
+            context.l10n.voiceMessage,
             color: widget.isUser ? Colors.white : Colors.black87,
             fontWeight: FontWeight.w500,
           ),

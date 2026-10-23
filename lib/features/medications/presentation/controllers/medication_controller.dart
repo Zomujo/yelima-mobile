@@ -8,6 +8,7 @@ import '../../domain/entities/medication_count.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import 'package:clock/clock.dart';
 import 'package:yelima/core/utils/session_scoped.dart';
+import '../../domain/dose_window.dart';
 
 enum MedicationSection { morning, afternoon, evening }
 
@@ -230,11 +231,7 @@ class MedicationController extends ChangeNotifier
     final med = currentList[index];
     if (med.taken) return null;
 
-    final now = clock.now();
-    final todayScheduledTime = DateTime(now.year, now.month, now.day,
-        med.toBeTakenAt.hour, med.toBeTakenAt.minute);
-
-    if (now.isBefore(todayScheduledTime)) {
+    if (!DoseWindow.canConfirm(med.toBeTakenAt, clock.now())) {
       return 'Cannot confirm dose — it\'s not yet time.';
     }
 

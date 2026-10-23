@@ -9,6 +9,7 @@ import '../../controllers/medication_controller.dart';
 import 'medication_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:clock/clock.dart';
+import '../../../domain/dose_window.dart';
 
 class TodaysMedicationsList extends StatelessWidget {
   final MedicationController controller;
@@ -67,10 +68,9 @@ class TodaysMedicationsList extends StatelessWidget {
         (context, index) {
           final med = meds[index];
           final timeString = AppDateFormats.timeShort.format(med.toBeTakenAt);
-          final now = clock.now();
-          final todayScheduledTime = DateTime(
-              now.year, now.month, now.day, med.toBeTakenAt.hour, med.toBeTakenAt.minute);
-              
+          final canConfirm =
+              DoseWindow.canConfirm(med.toBeTakenAt, clock.now());
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: GestureDetector(
@@ -90,8 +90,8 @@ class TodaysMedicationsList extends StatelessWidget {
                 purpose: med.purpose,
                 time: timeString,
                 isTaken: med.taken,
-                isOverdue: !med.taken && now.isAfter(todayScheduledTime),
-                isEarly: !med.taken && now.isBefore(todayScheduledTime),
+                isOverdue: !med.taken && canConfirm,
+                isEarly: !med.taken && !canConfirm,
                 isConfirming:
                     controller.state.confirmingMedicationIds.contains(med.id),
                 onConfirm: () async {

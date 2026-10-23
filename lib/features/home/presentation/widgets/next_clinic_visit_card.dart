@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
@@ -45,10 +46,10 @@ class NextClinicVisitCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const AppText.titleMedium(
-                  'Next clinic visit',
+                AppText.titleMedium(
+                  context.l10n.nextClinicVisit,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF1E293B),
+                  color: const Color(0xFF1E293B),
                 ),
                 const SizedBox(height: 4),
                 AppText.labelMedium(

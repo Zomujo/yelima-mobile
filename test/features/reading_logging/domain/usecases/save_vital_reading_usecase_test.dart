@@ -27,93 +27,81 @@ void main() {
     );
   });
 
-  group('Blood Pressure Severity Logic', () {
-    test('should classify sys >= 180 or dia >= 120 as critical', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 0, systolic: 180, diastolic: 80, sugarLevel: 0.0, vitalSubType: 'random', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'critical');
+  Future<VitalHistoryEntity> save(ReadingFormData data) async {
+    await useCase(data);
+    return verify(() => mockRepository.saveVitalReading(captureAny()))
+        .captured
+        .last as VitalHistoryEntity;
+  }
 
-      await useCase(ReadingFormData(selectedTypeIndex: 0, systolic: 130, diastolic: 120, sugarLevel: 0.0, vitalSubType: 'random', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'critical');
-    });
+  ReadingFormData bp(int sys, int dia) => ReadingFormData(
+      selectedTypeIndex: 0,
+      systolic: sys,
+      diastolic: dia,
+      sugarLevel: 0,
+      recordedAt: DateTime(2026, 10, 23, 8));
 
-    test('should classify sys >= 160 or dia >= 100 as very_high', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 0, systolic: 160, diastolic: 85, sugarLevel: 0.0, vitalSubType: 'random', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'very_high');
-    });
+  ReadingFormData sugar(double level, String subType) => ReadingFormData(
+      selectedTypeIndex: 1,
+      systolic: 0,
+      diastolic: 0,
+      sugarLevel: level,
+      vitalSubType: subType,
+      recordedAt: DateTime(2026, 10, 23, 8));
 
-    test('should classify sys >= 140 or dia >= 90 as high', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 0, systolic: 140, diastolic: 85, sugarLevel: 0.0, vitalSubType: 'random', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'high');
-    });
+  test('a BP reading is saved with the server\'s grade and shape', () async {
+    final v = await save(bp(185, 125));
 
-    test('should classify sys >= 130 or dia >= 80 as slightly_high', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 0, systolic: 130, diastolic: 79, sugarLevel: 0.0, vitalSubType: 'random', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'slightly_high');
-    });
-
-    test('should classify <130/<80 as good', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 0, systolic: 120, diastolic: 79, sugarLevel: 0.0, vitalSubType: 'random', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'good');
-    });
+    expect((v.vitalType, v.value, v.unit, v.severity),
+        ('bloodPressure', '185/125', 'mmHg', 'hypertensive_crisis'));
+    expect(v.recordedAt, DateTime(2026, 10, 23, 8));
   });
 
-  group('Blood Sugar Severity Logic', () {
-    test('should classify < 3.0 as critically_low', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 2.9, vitalSubType: 'fasting', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'critically_low');
+  test('low blood pressure is graded now (it used to show as good)', () async {
+    expect((await save(bp(85, 55))).severity, 'hypotensive');
+  });
+
+  test('a sugar reading is saved in mmol/L with the server\'s grade', () async {
+    final v = await save(sugar(5.25, 'fasting'));
+
+    expect((v.vitalType, v.value, v.unit, v.vitalSubType, v.severity),
+        ('bloodSugar', '5.3', 'mmol/L', 'fasting', 'normal'));
+  });
+
+  test(
+      'post-meal 13.9 and above is critically high, like fasting (no subtype split)',
+      () async {
+    expect(
+        (await save(sugar(15.0, 'postprandial'))).severity, 'critically_high');
+    expect((await save(sugar(15.0, 'fasting'))).severity, 'critically_high');
+  });
+
+  group('validation', () {
+    Future<void> expectRejected(ReadingFormData data, String text) async {
+      final result = await useCase(data);
+
+      expect(result.getLeft().toNullable(), contains(text));
+      verifyNever(() => mockRepository.saveVitalReading(any()));
+    }
+
+    test('VIT-EC-11: systolic must be above diastolic', () async {
+      await expectRejected(bp(90, 120), 'top number');
+      await expectRejected(bp(100, 100), 'top number');
     });
 
-    test('should classify <= 3.8 as low', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 3.8, vitalSubType: 'fasting', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'low');
+    test('VIT-EC-12: out-of-range blood pressure is refused', () async {
+      await expectRejected(bp(300, 20), 'between');
     });
 
-    test('fasting thresholds', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 7.2, vitalSubType: 'fasting', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'in_target');
-
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 9.9, vitalSubType: 'fasting', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'slightly_high');
-
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 13.8, vitalSubType: 'fasting', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'high');
-      
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 16.6, vitalSubType: 'fasting', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'very_high');
-      
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 16.7, vitalSubType: 'fasting', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'critical');
+    test('VIT-EC-13: a mg/dL number is not saved as mmol/L', () async {
+      await expectRejected(sugar(126, 'fasting'), 'between');
     });
 
-    test('postprandial/random thresholds', () async {
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 9.9, vitalSubType: 'postprandial', recordedAt: DateTime.now()));
-      var captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'in_target');
+    test('values at the limits are accepted', () async {
+      await useCase(bp(250, 150));
+      await useCase(sugar(1.0, 'fasting'));
 
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 13.8, vitalSubType: 'random', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'slightly_high');
-
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 16.6, vitalSubType: 'postprandial', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'high');
-      
-      await useCase(ReadingFormData(selectedTypeIndex: 1, systolic: 0, diastolic: 0, sugarLevel: 16.7, vitalSubType: 'postprandial', recordedAt: DateTime.now()));
-      captured = verify(() => mockRepository.saveVitalReading(captureAny())).captured;
-      expect((captured.last as VitalHistoryEntity).severity, 'critical');
+      verify(() => mockRepository.saveVitalReading(any())).called(2);
     });
   });
 }

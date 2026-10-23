@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../utils/logger.dart';
-import 'update_service.dart';
 
 enum StartupPhase {
   idle,
@@ -81,16 +80,6 @@ class AppStartupService extends ValueNotifier<StartupStatus> {
   /// Initialized global services (Database, Firebase, etc.)
   Future<void> _initGlobal() async {
     value = StartupStatus(phase: StartupPhase.initializingGlobal);
-
-    // Global initializations
-    try {
-      // Update Check (OTA) - Run in background so it doesn't block startup
-      UpdateService.checkForOTAPatches().catchError((e) {
-        AppLogger.e('AppStartupService: OTA check failed in background', e);
-      });
-    } catch (e) {
-      AppLogger.e('AppStartupService: Non-fatal error during global init', e);
-    }
 
     AppLogger.i('AppStartupService: Global initialization complete');
   }

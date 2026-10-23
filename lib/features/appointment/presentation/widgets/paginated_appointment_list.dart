@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_images.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
@@ -43,7 +44,8 @@ class PaginatedAppointmentList extends StatelessWidget {
 
     if (state.error != null && state.items.isEmpty) {
       return Center(
-        child: AppText.bodyMedium('Error: ${state.error}'),
+        child:
+            AppText.bodyMedium(context.l10n.errorWithMessage('${state.error}')),
       );
     }
 
@@ -114,7 +116,7 @@ class _PaginationControls extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           AppText.bodyMedium(
-            'Page ${state.page} of ${state.totalPages}',
+            context.l10n.pageOfTotal(state.page, state.totalPages),
             color: const Color(0xFF575F69),
             fontWeight: FontWeight.w600,
           ),

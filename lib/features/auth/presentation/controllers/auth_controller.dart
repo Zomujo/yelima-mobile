@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../../core/extensions/l10n_extension.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/managers/token_manager.dart';
@@ -169,7 +170,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
       BuildContext context, String email, String password) async {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: "Signing in...");
+    GlobalAsyncLoader.show(context, message: context.l10n.signingIn);
 
     final result = await _repository.signIn(email, password);
     _updateState(_state.copyWith(isAuthLoading: false));
@@ -187,7 +188,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
       BuildContext context, String email, String password) async {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: "Creating account...");
+    GlobalAsyncLoader.show(context, message: context.l10n.creatingAccount);
 
     final result = await _repository.register(email, password);
     _updateState(_state.copyWith(isAuthLoading: false));
@@ -204,7 +205,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   Future<void> signInWithGoogle(BuildContext context) async {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: "Continuing with Google...");
+    GlobalAsyncLoader.show(context, message: context.l10n.continuingWithGoogle);
 
     final result = await _repository.signInWithGoogle();
     _updateState(_state.copyWith(isAuthLoading: false));
@@ -221,7 +222,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   Future<void> signInWithApple(BuildContext context) async {
     if (_state.isAuthLoading) return;
     _updateState(_state.copyWith(isAuthLoading: true));
-    GlobalAsyncLoader.show(context, message: "Continuing with Apple...");
+    GlobalAsyncLoader.show(context, message: context.l10n.continuingWithApple);
 
     final result = await _repository.signInWithApple();
     _updateState(_state.copyWith(isAuthLoading: false));
@@ -237,7 +238,8 @@ class AuthController extends ChangeNotifier with SafeNotifier {
 
   Future<bool> sendPasswordResetEmail(
       BuildContext context, String email) async {
-    GlobalAsyncLoader.show(context, message: "Sending reset link...");
+    final l10n = context.l10n;
+    GlobalAsyncLoader.show(context, message: l10n.sendingResetLink);
     final result = await _repository.sendPasswordResetEmail(email);
     GlobalAsyncLoader.hide();
 
@@ -247,15 +249,15 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         return false;
       },
       (_) {
-        AppSnackBar.showSuccess(context,
-            message: 'Password reset link sent! Check your inbox.');
+        AppSnackBar.showSuccess(context, message: l10n.resetLinkSent);
         return true;
       },
     );
   }
 
   Future<void> deleteAccount(BuildContext context, {String? password}) async {
-    GlobalAsyncLoader.show(context, message: "Deleting account...");
+    final l10n = context.l10n;
+    GlobalAsyncLoader.show(context, message: l10n.deletingAccount);
     final result = await _repository.deleteAccount(password: password);
 
     await result.fold(
@@ -272,8 +274,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
         await _tokens.clearTokens();
         GlobalAsyncLoader.hide();
         if (context.mounted) {
-          AppSnackBar.showSuccess(context,
-              message: 'Account successfully deleted.');
+          AppSnackBar.showSuccess(context, message: l10n.accountDeleted);
         }
       },
     );
@@ -299,7 +300,8 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   /// Callers warn about unsynced changes first (see `logOutWithSyncCheck`).
   /// Firebase sign-out only happens once the wipe really emptied the database.
   Future<void> signOut(BuildContext context) async {
-    GlobalAsyncLoader.show(context, message: "Signing out...");
+    final l10n = context.l10n;
+    GlobalAsyncLoader.show(context, message: l10n.signingOut);
 
     try {
       await _sessionLifecycleService.endSession();
@@ -316,7 +318,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
     if (await _db.hasAnyRows().catchError((_) => true)) {
       GlobalAsyncLoader.hide();
       AppSnackBar.showError(context.mounted ? context : null,
-          message: "We couldn't finish logging out. Please try again.");
+          message: l10n.logoutFailed);
       return;
     }
 
@@ -329,7 +331,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
       (error) => _showError(context.mounted ? context : null, error),
       (_) {
         AppSnackBar.showSuccess(context.mounted ? context : null,
-            message: 'Successfully signed out.');
+            message: l10n.signedOut);
       },
     );
   }

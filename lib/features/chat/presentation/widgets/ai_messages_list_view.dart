@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../controllers/ai_chat_controller.dart';
@@ -105,7 +106,7 @@ class _AiMessagesListViewState extends State<AiMessagesListView> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            'Loading more messages...',
+                            context.l10n.loadingMoreMessages,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,

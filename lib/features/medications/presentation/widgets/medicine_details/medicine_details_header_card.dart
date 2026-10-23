@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../data/models/medication_detail_model.dart';
@@ -48,7 +49,8 @@ class MedicineDetailsHeaderCard extends StatelessWidget {
                     height: 200, width: double.infinity, borderRadius: 16);
               } else if (historyState.error != null) {
                 return Center(
-                    child: AppText.bodyMedium('Error: ${historyState.error}'));
+                    child: AppText.bodyMedium(context.l10n
+                        .errorWithMessage('${historyState.error}')));
               } else if (historyState.data != null) {
                 return AdherenceCalendar(
                     medicationId: medicationId, history: historyState.data!);

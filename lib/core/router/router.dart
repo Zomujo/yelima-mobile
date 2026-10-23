@@ -190,16 +190,3 @@ class AppRouter {
     );
   }
 }
-
-// Helper for standardized page transitions
-Page<T> buildPageWithTransition<T>({
-  required Widget child,
-  required GoRouterState state,
-}) {
-  return CustomTransitionPage<T>(
-    key: state.pageKey,
-    child: child,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-        FadeTransition(opacity: animation, child: child),
-  );
-}

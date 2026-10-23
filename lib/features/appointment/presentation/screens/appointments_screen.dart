@@ -60,17 +60,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 color: const Color(0xFF6F7683),
                 fontWeight: FontWeight.w200,
               ),
-              // const SizedBox(height: 24),
-              // AppButton(
-              //   key: AppTutorialKeys.appointmentAskKey,
-              //   text: context.l10n.askForAppointment,
-              //   prefixIcon:
-              //       const Icon(Icons.add, color: Colors.white, size: 20),
-              //   onPressed: () => RequestAppointmentModal.show(context),
-              //   backgroundColor: AppColors.primary,
-              //   foregroundColor: Colors.white,
-              //   borderRadius: 24,
-              // ),
               const SizedBox(height: 32),
               AppText.labelMedium(
                 context.l10n.comingUp,

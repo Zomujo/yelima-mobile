@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../layout/app_text.dart';
@@ -34,21 +35,6 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
   }
 
   String _formatDate(DateTime date) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
-
     String daySuffix(int day) {
       if (day >= 11 && day <= 13) return 'th';
       switch (day % 10) {
@@ -63,7 +49,7 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
       }
     }
 
-    return '${date.day}${daySuffix(date.day)} ${months[date.month - 1]} ${date.year}';
+    return '${date.day}${daySuffix(date.day)} ${context.l10n.monthNames[date.month - 1]} ${date.year}';
   }
 
   void _showDatePicker() {
@@ -88,9 +74,9 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const AppText.bodyMedium(
-                        'Cancel',
-                        color: Color(0xFF64748B),
+                      child: AppText.bodyMedium(
+                        context.l10n.cancel,
+                        color: const Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -102,8 +88,8 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                         widget.onDateSelected(_selectedDate!);
                         Navigator.of(context).pop();
                       },
-                      child: const AppText.bodyMedium(
-                        'Done',
+                      child: AppText.bodyMedium(
+                        context.l10n.done,
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
                       ),

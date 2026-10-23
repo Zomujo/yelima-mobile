@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import 'reading_history_item.dart';
 import 'package:provider/provider.dart';
@@ -64,18 +65,18 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
 
         return CustomScrollView(
           slivers: [
-            const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               sliver: SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 8, bottom: 16),
+                  padding: const EdgeInsets.only(top: 8, bottom: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       AppText.titleMedium(
-                        'Reading History',
+                        context.l10n.readingHistory,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
+                        color: const Color(0xFF1E293B),
                       ),
                     ],
                   ),
@@ -103,7 +104,8 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                     final dateStr = AppDateFormats.dayDateMonth.format(date);
                     final typeLower = vital.vitalType.toLowerCase();
                     final isBP = typeLower == 'bloodpressure';
-                    final vitalName = isBP ? 'BP' : 'Sugar';
+                    final vitalName =
+                        isBP ? context.l10n.bpShort : context.l10n.sugar;
 
                     return ReadingHistoryItem(
                       date: dateStr,
@@ -151,7 +153,7 @@ class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           AppText.bodyMedium(
-            'Page $currentPage of $totalPages',
+            context.l10n.pageOfTotal(currentPage, totalPages),
             color: const Color(0xFF575F69),
             fontWeight: FontWeight.w600,
           ),

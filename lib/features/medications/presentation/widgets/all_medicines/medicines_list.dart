@@ -35,7 +35,9 @@ class MedicinesList extends StatelessWidget {
         }
 
         if (state.error != null) {
-          return Center(child: AppText.bodyMedium('Error: ${state.error}'));
+          return Center(
+              child: AppText.bodyMedium(
+                  context.l10n.errorWithMessage('${state.error}')));
         }
 
         final medications = state.data?.rows ?? [];

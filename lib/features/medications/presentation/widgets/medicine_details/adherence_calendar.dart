@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../core/utils/app_date_formats.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -58,7 +59,16 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
 
   @override
   Widget build(BuildContext context) {
-    final weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
+    final l10n = context.l10n;
+    final weekdays = [
+      l10n.weekdaySun,
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThur,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+    ];
 
     final daysInMonth =
         DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
@@ -67,11 +77,8 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
     final int firstWeekday =
         firstDayOfMonth.weekday % 7; // Sunday = 0, Monday = 1
 
-    // Map data for O(1) lookup
-    final adherenceMap = <int, bool>{};
-    for (var log in widget.history.logs) {
-      adherenceMap[log.takenAt.day] = log.taken;
-    }
+    // Only this month's logs, so other months' days don't show here.
+    final adherenceMap = widget.history.takenByDay(_selectedMonth);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,9 +218,9 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
         // Legend
         Row(
           children: [
-            _buildLegendItem(const Color(0xFF10B981), 'Taken'),
+            _buildLegendItem(const Color(0xFF10B981), l10n.taken),
             const SizedBox(width: 16),
-            _buildLegendItem(const Color(0xFFCBD5E1), 'Missed'),
+            _buildLegendItem(const Color(0xFFCBD5E1), l10n.missed),
           ],
         )
       ],

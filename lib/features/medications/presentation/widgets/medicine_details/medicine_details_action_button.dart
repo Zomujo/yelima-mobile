@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
 import '../../controllers/medicine_details_form_controller.dart';
@@ -27,7 +28,7 @@ class MedicineDetailsActionButton extends StatelessWidget {
                     if (context.mounted) {
                       if (error == null) {
                         AppSnackBar.showSuccess(context,
-                            message: 'Medication updated successfully');
+                            message: context.l10n.medicationUpdatedSuccess);
                       } else {
                         AppSnackBar.showError(context, message: error);
                       }
@@ -52,7 +53,9 @@ class MedicineDetailsActionButton extends StatelessWidget {
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
                 : AppText.bodyMedium(
-                    controller.state.isEditing ? 'Save' : 'Edit',
+                    controller.state.isEditing
+                        ? context.l10n.save
+                        : context.l10n.edit,
                     fontWeight: FontWeight.bold,
                     color: controller.state.isEditing
                         ? Colors.white

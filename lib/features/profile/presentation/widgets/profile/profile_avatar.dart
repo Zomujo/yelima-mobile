@@ -10,7 +10,7 @@ class ProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserController>().userEntity;
-    final fullName = user?.fullName ?? 'Unknown User';
+    final fullName = user?.fullName ?? context.l10n.unknownUser;
     final initial = user?.firstName?.isNotEmpty == true
         ? user!.firstName![0].toUpperCase()
         : (fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U');

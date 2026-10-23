@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
 import '../../core/router/route_paths.dart';
@@ -17,12 +18,12 @@ class NotFoundScreen extends StatelessWidget {
             const Icon(Icons.error_outline, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
-              '404 - Page Not Found',
+              context.l10n.pageNotFound,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 24),
             AppButton(
-              text: 'Go Home',
+              text: context.l10n.goHome,
               onPressed: () => context.go(RoutePaths.home),
             ),
           ],

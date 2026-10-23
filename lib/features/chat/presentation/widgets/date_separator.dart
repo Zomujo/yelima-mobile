@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/utils/app_date_formats.dart';
 import 'package:clock/clock.dart';
 
@@ -10,16 +11,16 @@ class DateSeparator extends StatelessWidget {
     required this.date,
   });
 
-  String _getFormattedDate() {
+  String _getFormattedDate(BuildContext context) {
     final now = clock.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final messageDate = DateTime(date.year, date.month, date.day);
 
     if (messageDate == today) {
-      return 'Today';
+      return context.l10n.today;
     } else if (messageDate == yesterday) {
-      return 'Yesterday';
+      return context.l10n.yesterday;
     } else {
       return AppDateFormats.monthDayYear.format(date);
     }
@@ -54,7 +55,7 @@ class DateSeparator extends StatelessWidget {
                     size: 14, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
-                  _getFormattedDate(),
+                  _getFormattedDate(context),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

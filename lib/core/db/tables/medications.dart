@@ -15,6 +15,8 @@ class Medications extends Table {
   // Flattened for easy local querying (similar to MedicationEntity properties)
   DateTimeColumn get toBeTakenAt => dateTime().nullable()();
   BoolColumn get taken => boolean().withDefault(const Constant(false))();
+  // When the dose was confirmed; "taken" only counts on that day.
+  DateTimeColumn get takenOn => dateTime().nullable()();
   TextColumn get section => text().withDefault(const Constant('UNKNOWN'))();
 
   @override

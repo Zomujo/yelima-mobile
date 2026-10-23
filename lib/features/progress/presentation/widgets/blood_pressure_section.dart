@@ -27,7 +27,7 @@ class BloodPressureSection extends StatelessWidget {
           badgeColor: const Color(0xFFDCFCE7),
           badgeTextColor: const Color(0xFF166534),
           description: context.l10n.bloodPressureTrend,
-          graph: _buildBPGraph(controller),
+          graph: _buildBPGraph(context, controller),
           onExpand: () => _openFullScreen(context, controller, 'bp'),
           legend: Row(
             children: [
@@ -52,7 +52,7 @@ class BloodPressureSection extends StatelessWidget {
     return '${sysValues.last?.toInt()}/${diaValues.last?.toInt()}';
   }
 
-  Widget _buildBPGraph(ProgressController controller) {
+  Widget _buildBPGraph(BuildContext context, ProgressController controller) {
     if (controller.bpTrendState.data != null) {
       return BPGraph(data: controller.bpTrendState.data!);
     }
@@ -62,7 +62,7 @@ class BloodPressureSection extends StatelessWidget {
     if (controller.bpTrendState.error != null) {
       return Center(child: Text(controller.bpTrendState.error!));
     }
-    return const Center(child: Text('No data available'));
+    return Center(child: Text(context.l10n.noDataAvailable));
   }
 
   void _openFullScreen(

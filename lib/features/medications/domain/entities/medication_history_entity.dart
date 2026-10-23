@@ -11,6 +11,14 @@ class MedicationHistoryEntity extends Equatable {
     required this.logs,
   });
 
+  /// Whether a dose was taken, by day of month, for [month]'s logs only.
+  Map<int, bool> takenByDay(DateTime month) => {
+        for (final log in logs)
+          if (log.takenAt.year == month.year &&
+              log.takenAt.month == month.month)
+            log.takenAt.day: log.taken,
+      };
+
   @override
   List<Object?> get props => [medicationName, adherenceRate, logs];
 }

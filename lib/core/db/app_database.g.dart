@@ -2708,6 +2708,12 @@ class $MedicationsTable extends Medications
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("taken" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _takenOnMeta =
+      const VerificationMeta('takenOn');
+  @override
+  late final GeneratedColumn<DateTime> takenOn = GeneratedColumn<DateTime>(
+      'taken_on', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _sectionMeta =
       const VerificationMeta('section');
   @override
@@ -2728,6 +2734,7 @@ class $MedicationsTable extends Medications
         eveningJson,
         toBeTakenAt,
         taken,
+        takenOn,
         section
       ];
   @override
@@ -2793,6 +2800,10 @@ class $MedicationsTable extends Medications
       context.handle(
           _takenMeta, taken.isAcceptableOrUnknown(data['taken']!, _takenMeta));
     }
+    if (data.containsKey('taken_on')) {
+      context.handle(_takenOnMeta,
+          takenOn.isAcceptableOrUnknown(data['taken_on']!, _takenOnMeta));
+    }
     if (data.containsKey('section')) {
       context.handle(_sectionMeta,
           section.isAcceptableOrUnknown(data['section']!, _sectionMeta));
@@ -2826,6 +2837,8 @@ class $MedicationsTable extends Medications
           DriftSqlType.dateTime, data['${effectivePrefix}to_be_taken_at']),
       taken: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}taken'])!,
+      takenOn: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}taken_on']),
       section: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}section'])!,
     );
@@ -2848,6 +2861,7 @@ class Medication extends DataClass implements Insertable<Medication> {
   final String? eveningJson;
   final DateTime? toBeTakenAt;
   final bool taken;
+  final DateTime? takenOn;
   final String section;
   const Medication(
       {required this.id,
@@ -2860,6 +2874,7 @@ class Medication extends DataClass implements Insertable<Medication> {
       this.eveningJson,
       this.toBeTakenAt,
       required this.taken,
+      this.takenOn,
       required this.section});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2886,6 +2901,9 @@ class Medication extends DataClass implements Insertable<Medication> {
       map['to_be_taken_at'] = Variable<DateTime>(toBeTakenAt);
     }
     map['taken'] = Variable<bool>(taken);
+    if (!nullToAbsent || takenOn != null) {
+      map['taken_on'] = Variable<DateTime>(takenOn);
+    }
     map['section'] = Variable<String>(section);
     return map;
   }
@@ -2913,6 +2931,9 @@ class Medication extends DataClass implements Insertable<Medication> {
           ? const Value.absent()
           : Value(toBeTakenAt),
       taken: Value(taken),
+      takenOn: takenOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(takenOn),
       section: Value(section),
     );
   }
@@ -2931,6 +2952,7 @@ class Medication extends DataClass implements Insertable<Medication> {
       eveningJson: serializer.fromJson<String?>(json['eveningJson']),
       toBeTakenAt: serializer.fromJson<DateTime?>(json['toBeTakenAt']),
       taken: serializer.fromJson<bool>(json['taken']),
+      takenOn: serializer.fromJson<DateTime?>(json['takenOn']),
       section: serializer.fromJson<String>(json['section']),
     );
   }
@@ -2948,6 +2970,7 @@ class Medication extends DataClass implements Insertable<Medication> {
       'eveningJson': serializer.toJson<String?>(eveningJson),
       'toBeTakenAt': serializer.toJson<DateTime?>(toBeTakenAt),
       'taken': serializer.toJson<bool>(taken),
+      'takenOn': serializer.toJson<DateTime?>(takenOn),
       'section': serializer.toJson<String>(section),
     };
   }
@@ -2963,6 +2986,7 @@ class Medication extends DataClass implements Insertable<Medication> {
           Value<String?> eveningJson = const Value.absent(),
           Value<DateTime?> toBeTakenAt = const Value.absent(),
           bool? taken,
+          Value<DateTime?> takenOn = const Value.absent(),
           String? section}) =>
       Medication(
         id: id ?? this.id,
@@ -2976,6 +3000,7 @@ class Medication extends DataClass implements Insertable<Medication> {
         eveningJson: eveningJson.present ? eveningJson.value : this.eveningJson,
         toBeTakenAt: toBeTakenAt.present ? toBeTakenAt.value : this.toBeTakenAt,
         taken: taken ?? this.taken,
+        takenOn: takenOn.present ? takenOn.value : this.takenOn,
         section: section ?? this.section,
       );
   Medication copyWithCompanion(MedicationsCompanion data) {
@@ -2995,6 +3020,7 @@ class Medication extends DataClass implements Insertable<Medication> {
       toBeTakenAt:
           data.toBeTakenAt.present ? data.toBeTakenAt.value : this.toBeTakenAt,
       taken: data.taken.present ? data.taken.value : this.taken,
+      takenOn: data.takenOn.present ? data.takenOn.value : this.takenOn,
       section: data.section.present ? data.section.value : this.section,
     );
   }
@@ -3012,6 +3038,7 @@ class Medication extends DataClass implements Insertable<Medication> {
           ..write('eveningJson: $eveningJson, ')
           ..write('toBeTakenAt: $toBeTakenAt, ')
           ..write('taken: $taken, ')
+          ..write('takenOn: $takenOn, ')
           ..write('section: $section')
           ..write(')'))
         .toString();
@@ -3019,7 +3046,7 @@ class Medication extends DataClass implements Insertable<Medication> {
 
   @override
   int get hashCode => Object.hash(id, name, dosage, purpose, notes, morningJson,
-      afternoonJson, eveningJson, toBeTakenAt, taken, section);
+      afternoonJson, eveningJson, toBeTakenAt, taken, takenOn, section);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3034,6 +3061,7 @@ class Medication extends DataClass implements Insertable<Medication> {
           other.eveningJson == this.eveningJson &&
           other.toBeTakenAt == this.toBeTakenAt &&
           other.taken == this.taken &&
+          other.takenOn == this.takenOn &&
           other.section == this.section);
 }
 
@@ -3048,6 +3076,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
   final Value<String?> eveningJson;
   final Value<DateTime?> toBeTakenAt;
   final Value<bool> taken;
+  final Value<DateTime?> takenOn;
   final Value<String> section;
   final Value<int> rowid;
   const MedicationsCompanion({
@@ -3061,6 +3090,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     this.eveningJson = const Value.absent(),
     this.toBeTakenAt = const Value.absent(),
     this.taken = const Value.absent(),
+    this.takenOn = const Value.absent(),
     this.section = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3075,6 +3105,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     this.eveningJson = const Value.absent(),
     this.toBeTakenAt = const Value.absent(),
     this.taken = const Value.absent(),
+    this.takenOn = const Value.absent(),
     this.section = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -3091,6 +3122,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     Expression<String>? eveningJson,
     Expression<DateTime>? toBeTakenAt,
     Expression<bool>? taken,
+    Expression<DateTime>? takenOn,
     Expression<String>? section,
     Expression<int>? rowid,
   }) {
@@ -3105,6 +3137,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       if (eveningJson != null) 'evening_json': eveningJson,
       if (toBeTakenAt != null) 'to_be_taken_at': toBeTakenAt,
       if (taken != null) 'taken': taken,
+      if (takenOn != null) 'taken_on': takenOn,
       if (section != null) 'section': section,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3121,6 +3154,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       Value<String?>? eveningJson,
       Value<DateTime?>? toBeTakenAt,
       Value<bool>? taken,
+      Value<DateTime?>? takenOn,
       Value<String>? section,
       Value<int>? rowid}) {
     return MedicationsCompanion(
@@ -3134,6 +3168,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
       eveningJson: eveningJson ?? this.eveningJson,
       toBeTakenAt: toBeTakenAt ?? this.toBeTakenAt,
       taken: taken ?? this.taken,
+      takenOn: takenOn ?? this.takenOn,
       section: section ?? this.section,
       rowid: rowid ?? this.rowid,
     );
@@ -3172,6 +3207,9 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
     if (taken.present) {
       map['taken'] = Variable<bool>(taken.value);
     }
+    if (takenOn.present) {
+      map['taken_on'] = Variable<DateTime>(takenOn.value);
+    }
     if (section.present) {
       map['section'] = Variable<String>(section.value);
     }
@@ -3194,6 +3232,7 @@ class MedicationsCompanion extends UpdateCompanion<Medication> {
           ..write('eveningJson: $eveningJson, ')
           ..write('toBeTakenAt: $toBeTakenAt, ')
           ..write('taken: $taken, ')
+          ..write('takenOn: $takenOn, ')
           ..write('section: $section, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -6053,6 +6092,7 @@ typedef $$MedicationsTableCreateCompanionBuilder = MedicationsCompanion
   Value<String?> eveningJson,
   Value<DateTime?> toBeTakenAt,
   Value<bool> taken,
+  Value<DateTime?> takenOn,
   Value<String> section,
   Value<int> rowid,
 });
@@ -6068,6 +6108,7 @@ typedef $$MedicationsTableUpdateCompanionBuilder = MedicationsCompanion
   Value<String?> eveningJson,
   Value<DateTime?> toBeTakenAt,
   Value<bool> taken,
+  Value<DateTime?> takenOn,
   Value<String> section,
   Value<int> rowid,
 });
@@ -6110,6 +6151,9 @@ class $$MedicationsTableFilterComposer
 
   ColumnFilters<bool> get taken => $composableBuilder(
       column: $table.taken, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get takenOn => $composableBuilder(
+      column: $table.takenOn, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get section => $composableBuilder(
       column: $table.section, builder: (column) => ColumnFilters(column));
@@ -6155,6 +6199,9 @@ class $$MedicationsTableOrderingComposer
   ColumnOrderings<bool> get taken => $composableBuilder(
       column: $table.taken, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<DateTime> get takenOn => $composableBuilder(
+      column: $table.takenOn, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get section => $composableBuilder(
       column: $table.section, builder: (column) => ColumnOrderings(column));
 }
@@ -6198,6 +6245,9 @@ class $$MedicationsTableAnnotationComposer
   GeneratedColumn<bool> get taken =>
       $composableBuilder(column: $table.taken, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get takenOn =>
+      $composableBuilder(column: $table.takenOn, builder: (column) => column);
+
   GeneratedColumn<String> get section =>
       $composableBuilder(column: $table.section, builder: (column) => column);
 }
@@ -6235,6 +6285,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             Value<String?> eveningJson = const Value.absent(),
             Value<DateTime?> toBeTakenAt = const Value.absent(),
             Value<bool> taken = const Value.absent(),
+            Value<DateTime?> takenOn = const Value.absent(),
             Value<String> section = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -6249,6 +6300,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             eveningJson: eveningJson,
             toBeTakenAt: toBeTakenAt,
             taken: taken,
+            takenOn: takenOn,
             section: section,
             rowid: rowid,
           ),
@@ -6263,6 +6315,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             Value<String?> eveningJson = const Value.absent(),
             Value<DateTime?> toBeTakenAt = const Value.absent(),
             Value<bool> taken = const Value.absent(),
+            Value<DateTime?> takenOn = const Value.absent(),
             Value<String> section = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -6277,6 +6330,7 @@ class $$MedicationsTableTableManager extends RootTableManager<
             eveningJson: eveningJson,
             toBeTakenAt: toBeTakenAt,
             taken: taken,
+            takenOn: takenOn,
             section: section,
             rowid: rowid,
           ),

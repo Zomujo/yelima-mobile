@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
@@ -33,10 +34,9 @@ class _ChatInputAreaState extends State<ChatInputArea> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Microphone permission is required to send voice messages.'),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(context.l10n.micPermissionRequired),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -92,8 +92,8 @@ class _ChatInputAreaState extends State<ChatInputArea> {
                         controller.isSending ? null : (_) => _handleSend(),
                     decoration: InputDecoration(
                       hintText: controller.isSending
-                          ? 'Sending...'
-                          : 'Type your reply...',
+                          ? context.l10n.sending
+                          : context.l10n.typeYourReply,
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8), // Slate 400
                         fontSize: 16,

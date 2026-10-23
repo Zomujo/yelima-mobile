@@ -6,6 +6,9 @@ class MedicationModel extends MedicationEntity {
   final Map<String, dynamic>? afternoon;
   final Map<String, dynamic>? evening;
 
+  /// Whether the server sent `toBeTakenAt`; if not, [toBeTakenAt] is only a placeholder.
+  final bool hasServerTime;
+
   const MedicationModel({
     required super.id,
     required super.name,
@@ -16,6 +19,7 @@ class MedicationModel extends MedicationEntity {
     this.morning,
     this.afternoon,
     this.evening,
+    this.hasServerTime = true,
   });
 
   factory MedicationModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +35,7 @@ class MedicationModel extends MedicationEntity {
       morning: json['morning'],
       afternoon: json['afternoon'],
       evening: json['evening'],
+      hasServerTime: json['toBeTakenAt'] != null,
     );
   }
 }

@@ -12,6 +12,9 @@ class CreateMedicationUseCase {
 
   AsyncResponse<String> call(
       MedicineFormData data, String medicationName) async {
+    if (medicationName.trim().isEmpty || data.dosage.trim().isEmpty) {
+      return left('Medication name and dosage are required.');
+    }
     if (data.morning == null &&
         data.afternoon == null &&
         data.evening == null) {
@@ -19,14 +22,16 @@ class CreateMedicationUseCase {
     }
 
     // Check for duplicates
-    final allMedsRes = await repository.getAllMedications(pageSize: 1000);
+    final allMedsRes = await repository.getAllMedications(pageSize: 100);
     bool isDuplicate = false;
     allMedsRes.fold(
       (l) => null,
       (r) {
         for (final med in r.rows) {
-          if (med.name.toLowerCase().trim() == medicationName.toLowerCase().trim() &&
-              med.dosage.toLowerCase().trim() == data.dosage.toLowerCase().trim()) {
+          if (med.name.toLowerCase().trim() ==
+                  medicationName.toLowerCase().trim() &&
+              med.dosage.toLowerCase().trim() ==
+                  data.dosage.toLowerCase().trim()) {
             isDuplicate = true;
             break;
           }
@@ -39,8 +44,8 @@ class CreateMedicationUseCase {
     }
 
     final createModel = CreateMedicationModel(
-      name: medicationName,
-      dosage: data.dosage,
+      name: medicationName.trim(),
+      dosage: data.dosage.trim(),
       notes: data.notes.isEmpty ? null : data.notes,
       morning: _toModel(data.morning, data.unit),
       afternoon: _toModel(data.afternoon, data.unit),

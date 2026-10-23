@@ -4,6 +4,7 @@ import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../controllers/medicine_details_form_controller.dart';
 import '../../../data/models/medication_detail_model.dart';
 import 'package:provider/provider.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicineDetailsFormFields extends StatelessWidget {
   final MedicationDetailModel data;
@@ -21,17 +22,17 @@ class MedicineDetailsFormFields extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AppText.titleMedium('General Dosage Amount',
-                  fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              AppText.titleMedium(context.l10n.generalDosageAmount,
+                  fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
               const SizedBox(height: 12),
               AppText.bodyMedium(data.dosage, color: const Color(0xFF475569)),
               const SizedBox(height: 32),
-              const AppText.titleMedium('Notes',
-                  fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              AppText.titleMedium(context.l10n.notesLabel,
+                  fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
               const SizedBox(height: 12),
               AppText.bodyMedium(
                   (data.notes?.isEmpty ?? true)
-                      ? 'No notes provided.'
+                      ? context.l10n.noNotesProvided
                       : data.notes!,
                   color: const Color(0xFF475569),
                   height: 1.5),
@@ -44,15 +45,16 @@ class MedicineDetailsFormFields extends StatelessWidget {
           children: [
             AppFormField(
               controller: controller.dosageController,
-              label: 'Dosage Strength',
-              hintText: 'e.g. 500mg, 10ml',
+              label: context.l10n.dosageStrength,
+              hintText: context.l10n.dosageStrengthHint,
               isRequired: true,
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+              validator: (v) =>
+                  v == null || v.isEmpty ? context.l10n.requiredField : null,
             ),
             const SizedBox(height: 24),
-            const AppText.titleMedium('Medication Form / Unit',
-                fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            AppText.titleMedium(context.l10n.medicationFormUnit,
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
             const SizedBox(height: 12),
             PopupMenuButton<String>(
               initialValue: controller.state.selectedUnit,
@@ -117,8 +119,8 @@ class MedicineDetailsFormFields extends StatelessWidget {
             const SizedBox(height: 32),
             AppFormField(
               controller: controller.notesController,
-              label: 'Notes',
-              hintText: 'e.g. To be taken after meals...',
+              label: context.l10n.notesLabel,
+              hintText: context.l10n.notesAfterMealsHint,
               maxLines: 4,
             ),
           ],

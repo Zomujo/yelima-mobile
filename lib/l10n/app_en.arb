@@ -27,12 +27,7 @@
   "letsGetToKnowYou": "Let's get to know you",
   "provideBasicInfo": "Please provide your basic information to get started.",
   "savingText": "Saving...",
-  "firstName": "First name",
-  "lastName": "Last name",
   "genderLabel": "Gender",
-  "selectGender": "Select Gender",
-  "male": "Male",
-  "female": "Female",
   "phoneNumber": "Phone Number",
   "enterPhoneNumber": "e.g. 54*******",
   "whenWereYouBorn": "When were you born?",
@@ -65,13 +60,10 @@
   "byContinuing": "By continuing, you agree to our ",
   "termsOfService": "Terms of Service",
   "andText": " and ",
-  "privacyPolicy": "Privacy Policy",
   "termsSuffix": "",
   "welcomeTitle": "Welcome to Yelima",
   "chooseLanguage": "Choose your preferred language",
   "lastReadings": "LAST READINGS",
-  "bloodPressure": "Blood pressure",
-  "bloodGlucose": "Blood glucose",
   "medicationAdherence": "Medication adherence this month",
   "adherenceGreat": "Keep it up. You're doing great 💪",
   "adherenceImprove": "Let's improve your adherence 🌟",
@@ -81,7 +73,6 @@
   "takesTwoMins": "It only takes 2 minutes. Your nurse will see\nyour report.",
   "startCheckIn": "Start check-in",
   "myMedicines": "My Medicines",
-  "yourProgress": "Your Progress",
   "chatTitle": "Chat",
   "dailyCheckInAIChat": "Daily Check-in (AI Chat)",
   "healthAssistant": "Health assistant",
@@ -113,8 +104,6 @@
   "myAccount": "My Account",
   "patient": "Patient",
   "personal": "PERSONAL",
-  "editProfile": "Edit profile",
-  "settings": "Settings",
   "healthSummary": "HEALTH SUMMARY",
   "conditions": "Conditions",
   "language": "LANGUAGE",
@@ -123,7 +112,6 @@
   "ewe": "Ewe",
   "ga": "Ga",
   "system": "SYSTEM",
-  "logOut": "Log Out",
   "yourProgress": "Your Progress",
   "last24Hours": "Last 24 hours",
   "last7Days": "Last 7 days",
@@ -147,7 +135,6 @@
   "afternoon": "AFTERNOON",
   "evening": "EVENING",
   "noMedicationsScheduled": "No medications scheduled.",
-  "add": "Add",
   "noMedicinesFound": "No medicines found.",
   "addMedication": "Add Medication",
   "medicationDetails": "Medication Details",
@@ -348,5 +335,212 @@
   "changeKindProfile": "Profile",
   "changeKindOther": "Change",
   "profileUnavailableTitle": "We couldn't load your profile",
-  "profileUnavailableBody": "Check your internet connection and try again. Nothing on this phone has been lost."
+  "profileUnavailableBody": "Check your internet connection and try again. Nothing on this phone has been lost.",
+  "relToday": "today",
+  "relTomorrow": "tomorrow",
+  "relYesterday": "yesterday",
+  "relInDays": "{count, plural, =1{in 1 day} other{in {count} days}}",
+  "@relInDays": {
+    "description": "Time until an appointment",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relInWeeks": "{count, plural, =1{in 1 week} other{in {count} weeks}}",
+  "@relInWeeks": {
+    "description": "Time until an appointment",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relInMonths": "{count, plural, =1{in 1 month} other{in {count} months}}",
+  "@relInMonths": {
+    "description": "Time until an appointment",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@relDaysAgo": {
+    "description": "Time since an appointment",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relWeeksAgo": "{count, plural, =1{1 week ago} other{{count} weeks ago}}",
+  "@relWeeksAgo": {
+    "description": "Time since an appointment",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relMonthsAgo": "{count, plural, =1{1 month ago} other{{count} months ago}}",
+  "@relMonthsAgo": {
+    "description": "Time since an appointment",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appointmentWith": "with {name} • {facility}",
+  "@appointmentWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "facility": {
+        "type": "String"
+      }
+    }
+  },
+  "generalDosageAmount": "General Dosage Amount",
+  "notesLabel": "Notes",
+  "noNotesProvided": "No notes provided.",
+  "dosageStrength": "Dosage Strength",
+  "dosageStrengthHint": "e.g. 500mg, 10ml",
+  "requiredField": "Required",
+  "notesAfterMealsHint": "e.g. To be taken after meals...",
+  "noScheduleConfigured": "No schedule configured.",
+  "retryMessage": "Retry Message",
+  "deleteMessage": "Delete Message",
+  "micPermissionRequired": "Microphone permission is required to send voice messages.",
+  "typeYourReply": "Type your reply...",
+  "bpPickerTitle": "Blood Pressure (mmHg)",
+  "sugarPickerTitle": "Blood Glucose (mmol/L)",
+  "bloodPressureTitle": "Blood Pressure",
+  "bloodGlucoseTitle": "Blood Glucose",
+  "noDataAvailable": "No data available",
+  "medicationNotFound": "Medication not found",
+  "resetPassword": "Reset Password",
+  "resetPasswordSubtitle": "Enter your email and we'll send you a link to reset your password.",
+  "backToSignIn": "Back to Sign In",
+  "sendResetLink": "Send Reset Link",
+  "firstNameHint": "John",
+  "lastNameHint": "Doe",
+  "loading": "Loading...",
+  "pageNotFound": "404 - Page Not Found",
+  "goHome": "Go Home",
+  "monthJanuary": "January",
+  "monthFebruary": "February",
+  "monthMarch": "March",
+  "monthApril": "April",
+  "monthMay": "May",
+  "monthJune": "June",
+  "monthJuly": "July",
+  "monthAugust": "August",
+  "monthSeptember": "September",
+  "monthOctober": "October",
+  "monthNovember": "November",
+  "monthDecember": "December",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayThur": "Thur",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "selectDate": "Select Date",
+  "apply": "Apply",
+  "done": "Done",
+  "taken": "Taken",
+  "missed": "Missed",
+  "medicationAddedSuccess": "Medication added successfully!",
+  "medicationUpdatedSuccess": "Medication updated successfully",
+  "edit": "Edit",
+  "readingHistory": "Reading History",
+  "bpShort": "BP",
+  "severityNormal": "Normal / Target",
+  "severitySlightlyHigh": "Slightly High",
+  "severityLow": "Low",
+  "severityCriticallyLow": "Critically Low",
+  "severityHigh": "High",
+  "severityVeryHigh": "Very High",
+  "severityCritical": "Critical",
+  "yesterday": "Yesterday",
+  "dailyCheckInTitle": "Daily Check-in",
+  "aiChat": "AI Chat",
+  "loadingMoreMessages": "Loading more messages...",
+  "nextClinicVisit": "Next clinic visit",
+  "wait": "Wait",
+  "onlineToEditProfile": "You must be online to edit your profile.",
+  "unknownUser": "Unknown User",
+  "voiceMessage": "Voice message",
+  "signingIn": "Signing in...",
+  "creatingAccount": "Creating account...",
+  "continuingWithGoogle": "Continuing with Google...",
+  "continuingWithApple": "Continuing with Apple...",
+  "sendingResetLink": "Sending reset link...",
+  "resetLinkSent": "Password reset link sent! Check your inbox.",
+  "deletingAccount": "Deleting account...",
+  "accountDeleted": "Account successfully deleted.",
+  "signingOut": "Signing out...",
+  "logoutFailed": "We couldn't finish logging out. Please try again.",
+  "signedOut": "Successfully signed out.",
+  "savingDetails": "Saving details...",
+  "savingDob": "Saving date of birth...",
+  "savingHealthConditions": "Saving health conditions...",
+  "completingProfile": "Completing profile...",
+  "reportingSymptom": "Reporting symptom...",
+  "symptomReported": "Symptom reported successfully",
+  "readingSaved": "Reading saved successfully",
+  "readingErrorSystolicNotAbove": "The top number (systolic) must be higher than the bottom number (diastolic).",
+  "errorWithMessage": "Error: {message}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "pageOfTotal": "Page {page} of {total}",
+  "@pageOfTotal": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "readingErrorBpRange": "Blood pressure must be between {systolicMin}/{diastolicMin} and {systolicMax}/{diastolicMax}.",
+  "@readingErrorBpRange": {
+    "placeholders": {
+      "systolicMin": {
+        "type": "int"
+      },
+      "diastolicMin": {
+        "type": "int"
+      },
+      "systolicMax": {
+        "type": "int"
+      },
+      "diastolicMax": {
+        "type": "int"
+      }
+    }
+  },
+  "readingErrorSugarRange": "Blood sugar must be between {min} and {max} mmol/L.",
+  "@readingErrorSugarRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  }
 }

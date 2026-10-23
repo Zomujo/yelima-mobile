@@ -10,6 +10,7 @@ import '../models/update_medication_model.dart';
 import '../models/seeded_medication_model.dart';
 import '../models/medication_model.dart';
 import 'package:clock/clock.dart';
+import '../../domain/dose_window.dart';
 
 class MedicationMapper {
   /// Maps a Drift [Medication] model to a Domain [MedicationEntity].
@@ -20,7 +21,8 @@ class MedicationMapper {
       dosage: med.dosage,
       purpose: med.purpose ?? '',
       toBeTakenAt: med.toBeTakenAt ?? clock.now(),
-      taken: med.taken,
+      // Taken only counts on the day it was confirmed (MED-EC-11).
+      taken: med.taken && DoseWindow.takenToday(med.takenOn, clock.now()),
     );
   }
 
@@ -78,21 +80,7 @@ class MedicationMapper {
     addIfPresent(data.afternoon, 'AFTERNOON');
     addIfPresent(data.evening, 'EVENING');
 
-    if (medsToInsert.isEmpty) {
-      medsToInsert.add(Medication(
-        id: localId,
-        name: data.name,
-        dosage: data.dosage,
-        notes: data.notes,
-        toBeTakenAt: clock.now(),
-        taken: false,
-        section: 'MORNING',
-        morningJson: mJson,
-        afternoonJson: aJson,
-        eveningJson: eJson,
-      ));
-    }
-
+    // No schedule means no rows and no alarm, never a made-up "due now" dose.
     return medsToInsert;
   }
 
@@ -114,9 +102,8 @@ class MedicationMapper {
 
     void addIfPresent(DosingScheduleModel? schedule, String section) {
       if (schedule != null) {
-        final taken =
-            targetMeds.where((m) => m.section == section).firstOrNull?.taken ??
-                false;
+        final previous =
+            targetMeds.where((m) => m.section == section).firstOrNull;
 
         newMeds.add(Medication(
           id: id,
@@ -129,7 +116,8 @@ class MedicationMapper {
             schedule.time.minutes,
             schedule.time.timeDesignators,
           ),
-          taken: taken,
+          taken: previous?.taken ?? false,
+          takenOn: previous?.takenOn,
           section: section,
           morningJson: mJson,
           afternoonJson: aJson,
@@ -189,26 +177,18 @@ class MedicationMapper {
     );
   }
 
-  /// Merges a remote [MedicationModel] with an existing local Drift [Medication],
-  /// preserving local state where appropriate and setting fallback times.
+  /// Merges a remote [MedicationModel] with an existing local Drift [Medication].
+  ///
+  /// The server's dose time wins when it sent one (rows with pending local edits
+  /// are never merged). Without one, the local time stays, or a section default.
   static Medication mergeRemoteWithLocal(
     MedicationModel remote,
     Medication? existing,
     String section,
   ) {
-    DateTime derivedTime = existing?.toBeTakenAt ?? remote.toBeTakenAt;
-    
-    // If existing is null and remote.toBeTakenAt is exactly now (defaulted), try to set a sensible fallback based on section
-    if (existing == null && clock.now().difference(remote.toBeTakenAt).inSeconds.abs() < 5) {
-      final now = clock.now();
-      if (section == 'MORNING') {
-        derivedTime = DateTime(now.year, now.month, now.day, 8, 0);
-      } else if (section == 'AFTERNOON') {
-        derivedTime = DateTime(now.year, now.month, now.day, 13, 0);
-      } else if (section == 'EVENING') {
-        derivedTime = DateTime(now.year, now.month, now.day, 20, 0);
-      }
-    }
+    final derivedTime = remote.hasServerTime
+        ? remote.toBeTakenAt
+        : existing?.toBeTakenAt ?? _sectionDefault(section);
 
     return Medication(
       id: remote.id,
@@ -217,11 +197,21 @@ class MedicationMapper {
       purpose: existing?.purpose ?? remote.purpose,
       toBeTakenAt: derivedTime,
       taken: remote.taken,
+      // The server's "taken" is for today.
+      takenOn: remote.taken ? (existing?.takenOn ?? clock.now()) : null,
       section: section,
       notes: existing?.notes,
       morningJson: existing?.morningJson,
       afternoonJson: existing?.afternoonJson,
       eveningJson: existing?.eveningJson,
     );
+  }
+
+  /// Fallback dose time for a section when neither side knows one: 08:00, 13:00, 20:00.
+  static DateTime _sectionDefault(String section) {
+    final now = clock.now();
+    final hour =
+        switch (section) { 'AFTERNOON' => 13, 'EVENING' => 20, _ => 8 };
+    return DateTime(now.year, now.month, now.day, hour);
   }
 }

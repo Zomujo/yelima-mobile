@@ -14,6 +14,7 @@ import 'package:yelima/features/auth/domain/repositories/auth_repository.dart';
 import 'package:yelima/features/auth/presentation/controllers/auth_controller.dart';
 
 import '../../../../helpers/fakes.dart';
+import '../../../../helpers/pump_app.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -194,7 +195,7 @@ void main() {
         'signs out of Firebase once the session ended and the data is gone',
         (tester) async {
       when(() => repo.signOut()).thenAnswer((_) async => right(null));
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await tester.pumpApp(const SizedBox());
       final context = tester.element(find.byType(Scaffold));
 
       await tester.runAsync(() => controller.signOut(context));
@@ -220,7 +221,7 @@ void main() {
         tokenManager: tokens,
       );
       addTearDown(c.dispose);
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await tester.pumpApp(const SizedBox());
       final context = tester.element(find.byType(Scaffold));
 
       await tester.runAsync(() => c.signOut(context));

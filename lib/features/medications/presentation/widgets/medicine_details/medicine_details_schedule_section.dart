@@ -4,6 +4,7 @@ import '../../controllers/medicine_details_form_controller.dart';
 import '../../../data/models/medication_detail_model.dart';
 import '../../../data/models/dosing_schedule_model.dart';
 import 'package:provider/provider.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class MedicineDetailsScheduleSection extends StatelessWidget {
   final MedicationDetailModel data;
@@ -20,12 +21,12 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const AppText.titleMedium('Dosing Schedule',
-                fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            AppText.titleMedium(context.l10n.dosingSchedule,
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
             const SizedBox(height: 24),
             if (controller.state.isEditing) ...[
               _EditableDosageToggle(
-                label: 'Morning',
+                label: context.l10n.morningLabel,
                 isEnabled: controller.state.hasMorning,
                 time: controller.state.morningTime,
                 quantity: controller.state.morningQuantity,
@@ -41,7 +42,7 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _EditableDosageToggle(
-                label: 'Afternoon',
+                label: context.l10n.afternoonLabel,
                 isEnabled: controller.state.hasAfternoon,
                 time: controller.state.afternoonTime,
                 quantity: controller.state.afternoonQuantity,
@@ -57,7 +58,7 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _EditableDosageToggle(
-                label: 'Evening',
+                label: context.l10n.eveningLabel,
                 isEnabled: controller.state.hasEvening,
                 time: controller.state.eveningTime,
                 quantity: controller.state.eveningQuantity,
@@ -74,22 +75,25 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
             ] else ...[
               if (data.morning != null)
                 _ReadOnlyDosageTime(
-                    timeOfDay: 'Morning', schedule: data.morning!),
+                    timeOfDay: context.l10n.morningLabel,
+                    schedule: data.morning!),
               if (data.afternoon != null) ...[
                 const SizedBox(height: 24),
                 _ReadOnlyDosageTime(
-                    timeOfDay: 'Afternoon', schedule: data.afternoon!),
+                    timeOfDay: context.l10n.afternoonLabel,
+                    schedule: data.afternoon!),
               ],
               if (data.evening != null) ...[
                 const SizedBox(height: 24),
                 _ReadOnlyDosageTime(
-                    timeOfDay: 'Evening', schedule: data.evening!),
+                    timeOfDay: context.l10n.eveningLabel,
+                    schedule: data.evening!),
               ],
               if (data.morning == null &&
                   data.afternoon == null &&
                   data.evening == null)
-                const AppText.bodyMedium('No schedule configured.',
-                    color: Color(0xFF94A3B8)),
+                AppText.bodyMedium(context.l10n.noScheduleConfigured,
+                    color: const Color(0xFF94A3B8)),
             ],
           ],
         );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import '../../../../user/presentation/controllers/user_controller.dart';
 
@@ -8,7 +9,7 @@ class EditProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserController>().userEntity;
-    final fullName = user?.fullName ?? 'Unknown User';
+    final fullName = user?.fullName ?? context.l10n.unknownUser;
     final initial = user?.firstName?.isNotEmpty == true
         ? user!.firstName![0].toUpperCase()
         : (fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U');

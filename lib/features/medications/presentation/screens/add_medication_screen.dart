@@ -28,7 +28,7 @@ class AddMedicationScreen extends StatelessWidget {
           .read<AllMedicinesController>()
           .fetchAllMedicines(forceRefresh: true);
       AppSnackBar.showSuccess(context,
-          message: 'Medication added successfully!');
+          message: context.l10n.medicationAddedSuccess);
       context.pop();
     } else if (error != 'validation_failed' && context.mounted) {
       AppSnackBar.showError(context, message: error!);

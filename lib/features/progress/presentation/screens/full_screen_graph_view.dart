@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
@@ -44,8 +45,8 @@ class _FullScreenGraphViewState extends State<FullScreenGraphView> {
   }
 
   String get _title {
-    if (widget.activeTab == 'bp') return 'Blood Pressure';
-    return 'Blood Glucose';
+    if (widget.activeTab == 'bp') return context.l10n.bloodPressureTitle;
+    return context.l10n.bloodGlucoseTitle;
   }
 
   @override
@@ -113,7 +114,7 @@ class _FullScreenGraphViewState extends State<FullScreenGraphView> {
             child: AppText.bodyMedium(controller.bpTrendState.error!));
       }
       if (controller.bpTrendState.data == null) {
-        return const Center(child: AppText.bodyMedium('No data available'));
+        return Center(child: AppText.bodyMedium(context.l10n.noDataAvailable));
       }
       return BPGraph(data: controller.bpTrendState.data!);
     } else {
@@ -123,7 +124,7 @@ class _FullScreenGraphViewState extends State<FullScreenGraphView> {
             child: AppText.bodyMedium(controller.glucoseTrendState.error!));
       }
       if (controller.glucoseTrendState.data == null) {
-        return const Center(child: AppText.bodyMedium('No data available'));
+        return Center(child: AppText.bodyMedium(context.l10n.noDataAvailable));
       }
       return GlucoseGraph(data: controller.glucoseTrendState.data!);
     }

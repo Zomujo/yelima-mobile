@@ -245,7 +245,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
     // The local "taken" state and its queued sync are saved together or not at all.
     await localDataSource.transaction(() async {
       if (target != null) {
-        await localDataSource.updateMedication(target.copyWith(taken: true));
+        await localDataSource.updateMedication(
+            target.copyWith(taken: true, takenOn: drift.Value(clock.now())));
       }
       await localDataSource.addPendingMutation(pending);
       await localDataSource.markMedicationLogAsTakenOffline(
@@ -366,7 +367,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
       }
     }
 
-    final localLogs = await localDataSource.getLogsForMedication(medicationId);
+    // Offline: only the requested month, like the server returns.
+    final month = DateTime.tryParse(date) ?? clock.now();
+    final localLogs = (await localDataSource.getLogsForMedication(medicationId))
+        .where((l) =>
+            l.takenAt.year == month.year && l.takenAt.month == month.month)
+        .toList();
 
     final medList = await localDataSource.getMedicationById(medicationId);
     final med = medList.firstOrNull;

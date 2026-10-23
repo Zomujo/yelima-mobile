@@ -7,6 +7,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/appointment_entity.dart';
 import 'package:clock/clock.dart';
+import '../../../../core/extensions/l10n_extension.dart';
 
 class AppointmentCard extends StatelessWidget {
   const AppointmentCard({
@@ -26,14 +27,13 @@ class AppointmentCard extends StatelessWidget {
     final iconBgColor =
         isPast ? const Color(0xFFF1F5F9) : const Color(0xFFFFEDD5);
 
-    final timeUntil = isPast
-        ? _formatPast(appointment.appointmentDate)
-        : _formatUpcoming(appointment.appointmentDate);
+    final timeUntil = _relativeLabel(context, appointment.appointmentDate);
 
     final dateTime =
         AppDateFormats.appointmentCard.format(appointment.appointmentDate);
-    final subtitle =
-        'with ${appointment.hostPersonnel.userName} • ${appointment.hostPersonnel.facility.name}';
+    final subtitle = context.l10n.appointmentWith(
+        appointment.hostPersonnel.userName,
+        appointment.hostPersonnel.facility.name);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -129,31 +129,23 @@ class AppointmentCard extends StatelessWidget {
     );
   }
 
-  String _formatUpcoming(DateTime date) {
+  /// "in 3 days", "2 weeks ago", "today"... counted in calendar days from today.
+  String _relativeLabel(BuildContext context, DateTime date) {
+    final l10n = context.l10n;
     final now = clock.now();
     final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(date.year, date.month, date.day);
-    final difference = targetDate.difference(today);
-
-    if (difference.inDays == 0) return 'today';
-    if (difference.inDays == 1) return 'tomorrow';
-    if (difference.inDays < 7) return 'in ${difference.inDays} days';
-    if (difference.inDays < 14) return 'in 1 week';
-    if (difference.inDays < 30) return 'in ${difference.inDays ~/ 7} weeks';
-    return 'in ${difference.inDays ~/ 30} months';
-  }
-
-  String _formatPast(DateTime date) {
-    final now = clock.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(date.year, date.month, date.day);
-    final difference = today.difference(targetDate);
-
-    if (difference.inDays == 0) return 'today';
-    if (difference.inDays == 1) return 'yesterday';
-    if (difference.inDays < 7) return '${difference.inDays} days ago';
-    if (difference.inDays < 14) return '1 week ago';
-    if (difference.inDays < 30) return '${difference.inDays ~/ 7} weeks ago';
-    return '${difference.inDays ~/ 30} months ago';
+    final days = DateTime(date.year, date.month, date.day)
+        .difference(today)
+        .inDays
+        .abs();
+    if (days == 0) return l10n.relToday;
+    if (days == 1) return isPast ? l10n.relYesterday : l10n.relTomorrow;
+    if (days < 7) return isPast ? l10n.relDaysAgo(days) : l10n.relInDays(days);
+    if (days < 30) {
+      return isPast ? l10n.relWeeksAgo(days ~/ 7) : l10n.relInWeeks(days ~/ 7);
+    }
+    return isPast
+        ? l10n.relMonthsAgo(days ~/ 30)
+        : l10n.relInMonths(days ~/ 30);
   }
 }

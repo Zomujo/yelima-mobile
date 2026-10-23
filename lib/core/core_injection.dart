@@ -1,10 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 import 'config/app_config.dart';
-import 'network/network_info.dart';
 
 import 'api/api_client.dart';
 import 'db/app_database.dart';
@@ -36,8 +34,6 @@ void initCore(GetIt sl) {
   // --- Core Infrastructure ---
   sl.registerLazySingleton(() => FirebaseAuth.instance);
   sl.registerLazySingleton(() => FirebaseMessaging.instance);
-  sl.registerLazySingleton(() => InternetConnection());
-  sl.registerLazySingleton<INetworkInfo>(() => NetworkInfoImpl(sl()));
   sl.registerLazySingleton(() => SessionExpiry());
   sl.registerLazySingleton(() =>
       APIClient(baseUrl: AppConfig.instance.apiBaseUrl, sessionExpiry: sl()));

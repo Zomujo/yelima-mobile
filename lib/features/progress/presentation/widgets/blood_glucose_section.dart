@@ -27,7 +27,7 @@ class BloodGlucoseSection extends StatelessWidget {
           badgeTextColor: const Color(0xFF166534),
           badgeTrailingIcon: Icons.arrow_downward,
           description: context.l10n.bloodGlucoseTrend,
-          graph: _buildGlucoseGraph(controller),
+          graph: _buildGlucoseGraph(context, controller),
           onExpand: () => _openFullScreen(context, controller, 'glucose'),
         );
       },
@@ -42,7 +42,8 @@ class BloodGlucoseSection extends StatelessWidget {
     return valid.last!.toStringAsFixed(1);
   }
 
-  Widget _buildGlucoseGraph(ProgressController controller) {
+  Widget _buildGlucoseGraph(
+      BuildContext context, ProgressController controller) {
     if (controller.glucoseTrendState.data != null) {
       return GlucoseGraph(data: controller.glucoseTrendState.data!);
     }
@@ -52,7 +53,7 @@ class BloodGlucoseSection extends StatelessWidget {
     if (controller.glucoseTrendState.error != null) {
       return Center(child: Text(controller.glucoseTrendState.error!));
     }
-    return const Center(child: Text('No data available'));
+    return Center(child: Text(context.l10n.noDataAvailable));
   }
 
   void _openFullScreen(

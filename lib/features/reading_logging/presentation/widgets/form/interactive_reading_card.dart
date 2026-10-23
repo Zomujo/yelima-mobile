@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
 import '../displays/reading_display_card.dart';
@@ -6,6 +7,7 @@ import '../displays/blood_pressure_display.dart';
 import '../displays/sugar_display.dart';
 import '../pickers/value_wheel_picker_bottom_sheet.dart';
 import '../../controllers/reading_logging_controller.dart';
+import '../../../domain/reading_limits.dart';
 
 class InteractiveReadingCard extends StatelessWidget {
   const InteractiveReadingCard({super.key});
@@ -30,13 +32,13 @@ class InteractiveReadingCard extends StatelessWidget {
               if (controller.state.selectedTypeIndex == 0) {
                 ValueWheelPickerBottomSheet.showDual(
                   context,
-                  title: 'Blood Pressure (mmHg)',
+                  title: context.l10n.bpPickerTitle,
                   initialValue1: controller.state.systolic,
                   initialValue2: controller.state.diastolic,
-                  minValue1: 60,
-                  maxValue1: 250,
-                  minValue2: 40,
-                  maxValue2: 150,
+                  minValue1: ReadingLimits.systolicMin,
+                  maxValue1: ReadingLimits.systolicMax,
+                  minValue2: ReadingLimits.diastolicMin,
+                  maxValue2: ReadingLimits.diastolicMax,
                   onChanged: (sys, dia) {
                     controller.setBloodPressure(sys, dia);
                   },
@@ -44,10 +46,10 @@ class InteractiveReadingCard extends StatelessWidget {
               } else {
                 ValueWheelPickerBottomSheet.showSingle(
                   context,
-                  title: 'Blood Glucose (mmol/L)',
+                  title: context.l10n.sugarPickerTitle,
                   initialValue: controller.state.sugarLevel,
-                  minValue: 1.0,
-                  maxValue: 33.3,
+                  minValue: ReadingLimits.sugarMin,
+                  maxValue: ReadingLimits.sugarMax,
                   step: 0.1,
                   onChanged: (val) {
                     controller.setSugarLevel(val);

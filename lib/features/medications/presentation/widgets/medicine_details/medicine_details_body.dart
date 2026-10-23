@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../controllers/medicine_details_form_controller.dart';
 import 'medicine_details_header_card.dart';
@@ -22,9 +23,10 @@ class MedicineDetailsBody extends StatelessWidget {
     if (data == null) {
       if (controller.dataError != null) {
         return Center(
-            child: AppText.bodyMedium('Error: ${controller.dataError}'));
+            child: AppText.bodyMedium(
+                context.l10n.errorWithMessage('${controller.dataError}')));
       }
-      return const Center(child: AppText.bodyMedium('Medication not found'));
+      return Center(child: AppText.bodyMedium(context.l10n.medicationNotFound));
     }
 
     return SingleChildScrollView(

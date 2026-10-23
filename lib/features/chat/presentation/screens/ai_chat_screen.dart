@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -84,10 +85,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
       backgroundColor: AppColors.globalBackground,
       titleWidget: Row(
         children: [
-          const AppText.titleLarge(
-            'Daily Check-in',
+          AppText.titleLarge(
+            context.l10n.dailyCheckInTitle,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF5E6875),
+            color: const Color(0xFF5E6875),
           ),
           const SizedBox(width: 12),
           Container(
@@ -96,9 +97,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
               color: const Color(0xFFFFF7E0), // Light orange/beige background
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const AppText.labelMedium(
-              'AI Chat',
-              color: Color(0xFF475569),
+            child: AppText.labelMedium(
+              context.l10n.aiChat,
+              color: const Color(0xFF475569),
               fontWeight: FontWeight.w600,
             ),
           ),
