@@ -15,7 +15,7 @@ import 'features/medications/presentation/controllers/all_medicines_controller.d
 import 'features/medications/domain/usecases/create_medication_usecase.dart';
 import 'features/medications/domain/usecases/update_medication_usecase.dart';
 import 'features/appointment/presentation/controllers/appointment_controller.dart';
-import 'features/reading_logging/presentation/controllers/reading_logging_controller.dart';
+import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'features/symptoms/presentation/controllers/symptoms_controller.dart';
 import 'core/db/daos/vitals_dao.dart';
 import 'injection_container.dart';

@@ -1,15 +1,15 @@
 import 'package:uuid/uuid.dart';
-import '../../../../core/utils/custom_types.dart';
-import '../../../home/domain/entities/vital_history_entity.dart';
-import '../../../home/domain/repositories/home_metrics_repository.dart';
-import '../entities/reading_form_data.dart';
-import '../reading_limits.dart';
-import '../vital_severity_thresholds.dart';
+import 'package:yelima/core/utils/custom_types.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
+import 'package:yelima/features/vitals/domain/entities/reading_form_data.dart';
+import 'package:yelima/features/vitals/domain/reading_limits.dart';
+import 'package:yelima/features/vitals/domain/vital_severity_thresholds.dart';
 import 'package:fpdart/fpdart.dart';
 
 /// Builds a reading from the form, grades it with the backend's table, and saves it.
 class SaveVitalReadingUseCase {
-  final HomeMetricsRepository repository;
+  final VitalsRepository repository;
 
   const SaveVitalReadingUseCase(this.repository);
 

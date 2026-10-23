@@ -1,26 +1,26 @@
 import 'dart:async';
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/services/connectivity_service.dart';
-import '../../../../core/utils/custom_types.dart';
-import '../../../../core/exceptions/exceptions.dart';
-import '../../domain/entities/vital_history_entity.dart';
-import '../../domain/repositories/home_metrics_repository.dart';
-import '../datasources/home_metrics_remote_datasource.dart';
-import '../datasources/home_metrics_local_datasource.dart';
-import '../models/home_metrics_model.dart';
-import '../models/vital_history_model.dart';
-import '../../../../core/db/app_database.dart';
+import 'package:yelima/core/services/connectivity_service.dart';
+import 'package:yelima/core/utils/custom_types.dart';
+import 'package:yelima/core/exceptions/exceptions.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
+import 'package:yelima/features/vitals/data/datasources/vitals_remote_datasource.dart';
+import 'package:yelima/features/vitals/data/datasources/vitals_local_datasource.dart';
+import 'package:yelima/features/vitals/data/models/home_metrics_model.dart';
+import 'package:yelima/features/vitals/data/models/vital_history_model.dart';
+import 'package:yelima/core/db/app_database.dart';
 import 'package:clock/clock.dart';
-import '../../../../core/services/session_epoch.dart';
+import 'package:yelima/core/services/session_epoch.dart';
 
-class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
-  final HomeMetricsRemoteDataSource remoteDataSource;
-  final HomeMetricsLocalDataSource localDataSource;
+class VitalsRepositoryImpl implements VitalsRepository {
+  final VitalsRemoteDataSource remoteDataSource;
+  final VitalsLocalDataSource localDataSource;
   final ConnectivityService connectivityService;
   final SessionEpoch session;
   final AppDatabase db;
 
-  HomeMetricsRepositoryImpl({
+  VitalsRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.connectivityService,
@@ -107,7 +107,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
 
         return Right(HomeMetricsModel.fromVitals(vitals, adherence));
       },
-      operationName: 'HomeMetricsRepositoryImpl.getHomeMetrics',
+      operationName: 'VitalsRepositoryImpl.getHomeMetrics',
     );
   }
 
@@ -160,7 +160,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
 
         return const Right(null);
       },
-      operationName: 'HomeMetricsRepositoryImpl.saveVitalReading',
+      operationName: 'VitalsRepositoryImpl.saveVitalReading',
     );
   }
 

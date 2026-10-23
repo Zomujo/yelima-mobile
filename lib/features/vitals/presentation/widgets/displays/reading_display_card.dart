@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../../core/constants/app_decoration.dart';
-import '../../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/constants/app_decoration.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingDisplayCard extends StatelessWidget {

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
-import '../displays/reading_display_card.dart';
-import '../displays/blood_pressure_display.dart';
-import '../displays/sugar_display.dart';
-import '../pickers/value_wheel_picker_bottom_sheet.dart';
-import '../../controllers/reading_logging_controller.dart';
-import '../../../domain/reading_limits.dart';
+import 'package:yelima/features/vitals/presentation/widgets/displays/reading_display_card.dart';
+import 'package:yelima/features/vitals/presentation/widgets/displays/blood_pressure_display.dart';
+import 'package:yelima/features/vitals/presentation/widgets/displays/sugar_display.dart';
+import 'package:yelima/features/vitals/presentation/widgets/pickers/value_wheel_picker_bottom_sheet.dart';
+import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
+import 'package:yelima/features/vitals/domain/reading_limits.dart';
 
 class InteractiveReadingCard extends StatelessWidget {
   const InteractiveReadingCard({super.key});

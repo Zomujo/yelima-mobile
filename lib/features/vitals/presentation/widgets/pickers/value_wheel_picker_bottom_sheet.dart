@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter/material.dart';
-import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../../../shared/widgets/layout/app_button.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/app_button.dart';
 
 class ValueWheelPickerBottomSheet extends StatefulWidget {
   final String title;

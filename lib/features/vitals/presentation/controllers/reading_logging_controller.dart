@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import '../../../home/domain/repositories/home_metrics_repository.dart';
+import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
 import 'package:yelima/core/exceptions/exceptions.dart';
 import 'package:yelima/core/utils/custom_types.dart';
-import '../../domain/entities/reading_form_data.dart';
-import '../../domain/usecases/save_vital_reading_usecase.dart';
-import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
-import '../states/reading_logging_state.dart';
-import '../../../../core/utils/safe_notifier.dart';
+import 'package:yelima/features/vitals/domain/entities/reading_form_data.dart';
+import 'package:yelima/features/vitals/domain/usecases/save_vital_reading_usecase.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/presentation/states/reading_logging_state.dart';
+import 'package:yelima/core/utils/safe_notifier.dart';
 import 'package:clock/clock.dart';
-import '../../domain/reading_limits.dart';
+import 'package:yelima/features/vitals/domain/reading_limits.dart';
 
 class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
   // |                                  State & Dependencies      |
   // --------------------------------------------------------------------------
 
-  final HomeMetricsRepository _repository;
+  final VitalsRepository _repository;
   final SaveVitalReadingUseCase _saveVitalReadingUseCase;
 
   // --------------------------------------------------------------------------
@@ -23,7 +23,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   ReadingLoggingController({
-    required HomeMetricsRepository repository,
+    required VitalsRepository repository,
     required SaveVitalReadingUseCase saveVitalReadingUseCase,
   })  : _repository = repository,
         _saveVitalReadingUseCase = saveVitalReadingUseCase;

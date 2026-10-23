@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import '../../../../core/db/app_database.dart';
-import '../../domain/entities/vital_history_entity.dart';
-import '../../domain/repositories/home_metrics_repository.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../states/home_metrics_state.dart';
 import 'package:yelima/core/utils/session_scoped.dart';
@@ -14,14 +14,15 @@ class HomeMetricsController extends ChangeNotifier
   // |                                  State & Dependencies      |
   // --------------------------------------------------------------------------
 
-  final HomeMetricsRepository _repository;
+  final VitalsRepository _repository;
   StreamSubscription? _adherenceSub;
+  StreamSubscription? _readingsSub;
 
   // --------------------------------------------------------------------------
   // |                               Initialization & Lifecycle   |
   // --------------------------------------------------------------------------
 
-  HomeMetricsController({required HomeMetricsRepository repository})
+  HomeMetricsController({required VitalsRepository repository})
       : _repository = repository {
     joinSession();
     _initStream();
@@ -40,6 +41,11 @@ class HomeMetricsController extends ChangeNotifier
   }
 
   void _initStream() {
+    // A reading saved anywhere (e.g. the log screen) updates home from the cache.
+    _readingsSub = _repository.watchVitalHistories().listen((_) async {
+      final cached = await _repository.getCachedHomeMetrics();
+      cached.fold((_) {}, (data) => state = state.copyWith(metrics: data));
+    });
     if (GetIt.instance.isRegistered<AppDatabase>()) {
       _adherenceSub = GetIt.instance<AppDatabase>()
           .adherenceDao
@@ -58,6 +64,7 @@ class HomeMetricsController extends ChangeNotifier
   @override
   void dispose() {
     _adherenceSub?.cancel();
+    _readingsSub?.cancel();
     super.dispose();
   }
 

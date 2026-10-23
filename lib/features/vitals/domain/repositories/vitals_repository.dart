@@ -1,7 +1,7 @@
-import '../../../../core/utils/custom_types.dart';
-import '../entities/vital_history_entity.dart';
+import 'package:yelima/core/utils/custom_types.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 
-abstract class HomeMetricsRepository {
+abstract class VitalsRepository {
   AsyncResponse<HomeMetricsEntity> getCachedHomeMetrics();
   AsyncResponse<HomeMetricsEntity> getHomeMetrics();
   AsyncResponse<void> saveVitalReading(VitalHistoryEntity entity);

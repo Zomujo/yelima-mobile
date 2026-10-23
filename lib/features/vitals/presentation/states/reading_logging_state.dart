@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'reading_logging_state.freezed.dart';
+part 'package:yelima/features/vitals/presentation/states/reading_logging_state.freezed.dart';
 
 @freezed
 abstract class ReadingLoggingState with _$ReadingLoggingState {

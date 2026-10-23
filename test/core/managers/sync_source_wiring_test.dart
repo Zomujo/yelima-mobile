@@ -14,7 +14,7 @@ import 'package:yelima/core/services/notification_service.dart';
 import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/core/services/session_lifecycle_service.dart';
 import 'package:yelima/features/chat/chat_injection.dart';
-import 'package:yelima/features/home/home_injection.dart';
+import 'package:yelima/features/vitals/vitals_injection.dart';
 import 'package:yelima/features/medications/medications_injection.dart';
 import 'package:yelima/features/symptoms/symptoms_injection.dart';
 import 'package:yelima/features/user/user_injection.dart';
@@ -71,7 +71,7 @@ void main() {
     initSymptoms();
     initUser(sl);
     initChat(sl);
-    initHome(sl);
+    initVitals(sl);
     initMedications(sl);
 
     final registered = sl<MutationSyncManager>().sourceTypes;

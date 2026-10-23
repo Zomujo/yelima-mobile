@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yelima/features/reading_logging/domain/reading_limits.dart';
+import 'package:yelima/features/vitals/domain/reading_limits.dart';
 
 void main() {
   test('accepts a normal reading', () {

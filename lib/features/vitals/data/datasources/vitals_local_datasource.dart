@@ -1,8 +1,8 @@
-import '../../../../core/db/app_database.dart';
-import '../models/vital_history_model.dart';
+import 'package:yelima/core/db/app_database.dart';
+import 'package:yelima/features/vitals/data/models/vital_history_model.dart';
 import 'package:clock/clock.dart';
 
-abstract class HomeMetricsLocalDataSource {
+abstract class VitalsLocalDataSource {
   Future<List<VitalHistoryModel>> getCachedVitalHistories();
   Future<void> cacheVitalHistories(List<VitalHistoryModel> vitals);
   Future<void> appendVitalHistory(VitalHistoryModel vital);
@@ -11,10 +11,10 @@ abstract class HomeMetricsLocalDataSource {
   Future<void> clearCachedAdherence();
 }
 
-class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
+class VitalsLocalDataSourceImpl implements VitalsLocalDataSource {
   final AppDatabase _database;
 
-  HomeMetricsLocalDataSourceImpl({required AppDatabase database})
+  VitalsLocalDataSourceImpl({required AppDatabase database})
       : _database = database;
 
   @override

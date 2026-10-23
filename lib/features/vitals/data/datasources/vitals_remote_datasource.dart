@@ -1,16 +1,16 @@
-import '../../../../core/api/api_client.dart';
-import '../models/vital_history_model.dart';
+import 'package:yelima/core/api/api_client.dart';
+import 'package:yelima/features/vitals/data/models/vital_history_model.dart';
 
-abstract class HomeMetricsRemoteDataSource {
+abstract class VitalsRemoteDataSource {
   Future<List<VitalHistoryModel>> fetchVitalHistories();
   Future<Map<String, dynamic>> fetchMedicationAdherence();
   Future<void> saveVitalReading(Map<String, dynamic> body);
 }
 
-class HomeMetricsRemoteDataSourceImpl implements HomeMetricsRemoteDataSource {
+class VitalsRemoteDataSourceImpl implements VitalsRemoteDataSource {
   final APIClient _apiClient;
 
-  HomeMetricsRemoteDataSourceImpl({required APIClient apiClient})
+  VitalsRemoteDataSourceImpl({required APIClient apiClient})
       : _apiClient = apiClient;
 
   @override

@@ -61,4 +61,18 @@ void main() {
       isEmpty,
     );
   });
+
+  test('relative imports never climb above lib/', () {
+    final bad = <String>[];
+    final import = RegExp(r"^(?:import|export) '([^':]+)'", multiLine: true);
+    for (final f
+        in Directory('lib').listSync(recursive: true).whereType<File>()) {
+      if (!f.path.endsWith('.dart')) continue;
+      for (final m in import.allMatches(f.readAsStringSync())) {
+        final target = p.normalize(p.join(p.dirname(f.path), m[1]!));
+        if (!p.isWithin('lib', target)) bad.add('${f.path} -> ${m[1]}');
+      }
+    }
+    expect(bad, isEmpty);
+  });
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../../../core/theme/app_colors.dart';
-import 'log_type_card.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/features/vitals/presentation/widgets/form/log_type_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingTypeSelector extends StatelessWidget {

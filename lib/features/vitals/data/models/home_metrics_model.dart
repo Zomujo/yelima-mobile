@@ -1,4 +1,4 @@
-import '../../domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 
 class HomeMetricsModel extends HomeMetricsEntity {
   const HomeMetricsModel({

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:clock/clock.dart';
 

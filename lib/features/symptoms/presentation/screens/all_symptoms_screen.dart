@@ -5,7 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../../core/extensions/l10n_extension.dart';
-import '../../../home/presentation/widgets/report_symptom_modal.dart';
+import 'package:yelima/features/symptoms/presentation/widgets/report_symptom_modal.dart';
 import '../controllers/symptoms_controller.dart';
 import '../widgets/symptom_card.dart';
 

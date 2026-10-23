@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
-import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 
 class ReadingHistoryItem extends StatelessWidget {
   final String date;

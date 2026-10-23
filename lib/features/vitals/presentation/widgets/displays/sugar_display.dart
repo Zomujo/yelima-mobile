@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
 
 class SugarDisplay extends StatelessWidget {
   const SugarDisplay({

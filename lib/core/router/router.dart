@@ -8,7 +8,7 @@ import '../../shared/screens/splash_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/chat/presentation/screens/ai_chat_screen.dart';
-import '../../features/reading_logging/presentation/screens/reading_logging_screen.dart';
+import 'package:yelima/features/vitals/presentation/screens/reading_logging_screen.dart';
 import '../../features/appointment/presentation/screens/appointments_screen.dart';
 import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';

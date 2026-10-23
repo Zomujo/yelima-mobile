@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yelima/features/reading_logging/domain/vital_severity_thresholds.dart';
+import 'package:yelima/features/vitals/domain/vital_severity_thresholds.dart';
 
 typedef T = VitalSeverityThresholds;
 

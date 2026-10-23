@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../shared/widgets/layout/app_button.dart';
-import '../../../../../shared/utils/app_snackbar.dart';
-import '../../../../home/presentation/controllers/home_metrics_controller.dart';
-import '../../controllers/reading_logging_controller.dart';
-import '../../states/reading_logging_state.dart';
-import '../../../domain/reading_limits.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_button.dart';
+import 'package:yelima/shared/utils/app_snackbar.dart';
+import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
+import 'package:yelima/features/vitals/presentation/states/reading_logging_state.dart';
+import 'package:yelima/features/vitals/domain/reading_limits.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class ReadingSaveButton extends StatelessWidget {
@@ -34,9 +33,6 @@ class ReadingSaveButton extends StatelessWidget {
                 (_) {
                   AppSnackBar.showSuccess(context,
                       message: context.l10n.readingSaved);
-                  try {
-                    context.read<HomeMetricsController>().fetchMetrics();
-                  } catch (_) {}
                 },
               );
             }

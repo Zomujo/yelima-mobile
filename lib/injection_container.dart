@@ -11,7 +11,7 @@ import 'features/profile/profile_injection.dart';
 import 'features/home/home_injection.dart';
 import 'features/medications/medications_injection.dart';
 import 'features/appointment/appointment_injection.dart';
-import 'features/reading_logging/reading_logging_injection.dart';
+import 'package:yelima/features/vitals/vitals_injection.dart';
 import 'features/symptoms/symptoms_injection.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,7 +38,7 @@ Future<void> init() async {
   initHome(sl);
   initMedications(sl);
   initAppointment(sl);
-  initReadingLogging(sl);
+  initVitals(sl);
 
   // Create the sync managers now, so they are registered before the first session starts.
   sl<MutationSyncManager>();

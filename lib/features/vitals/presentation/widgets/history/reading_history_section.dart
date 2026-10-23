@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
-import 'reading_history_item.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/features/vitals/presentation/widgets/history/reading_history_item.dart';
 import 'package:provider/provider.dart';
-import 'package:yelima/features/reading_logging/presentation/controllers/reading_logging_controller.dart';
+import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
-import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:clock/clock.dart';
 
 class ReadingHistorySection extends StatefulWidget {

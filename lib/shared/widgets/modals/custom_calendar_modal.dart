@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:yelima/core/theme/app_colors.dart';
 import '../layout/app_text.dart';
 import '../layout/app_button.dart';
 import 'package:clock/clock.dart';

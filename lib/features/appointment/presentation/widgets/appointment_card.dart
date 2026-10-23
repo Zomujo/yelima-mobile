@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../../core/constants/app_decoration.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/constants/app_decoration.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
 
 import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/appointment_entity.dart';

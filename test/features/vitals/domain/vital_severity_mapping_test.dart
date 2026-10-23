@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
-import 'package:yelima/features/reading_logging/domain/vital_severity_thresholds.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/domain/vital_severity_thresholds.dart';
 
 void main() {
   test(

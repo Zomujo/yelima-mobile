@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 
 part 'home_metrics_state.freezed.dart';
 

@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:drift/drift.dart' as drift;
-import '../../domain/entities/vital_history_entity.dart';
-import '../../../../core/db/app_database.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/core/db/app_database.dart';
 
-part 'vital_history_model.g.dart';
+part 'package:yelima/features/vitals/data/models/vital_history_model.g.dart';
 
 @JsonSerializable()
 class VitalHistoryModel extends VitalHistoryEntity {

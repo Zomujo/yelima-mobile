@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yelima/features/home/data/models/home_metrics_model.dart';
-import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/data/models/home_metrics_model.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 
 void main() {
   VitalHistoryEntity bp(String value,

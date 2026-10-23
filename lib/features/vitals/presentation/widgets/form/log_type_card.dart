@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/constants/app_decoration.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
 
 class LogTypeCard extends StatelessWidget {
   final String title;

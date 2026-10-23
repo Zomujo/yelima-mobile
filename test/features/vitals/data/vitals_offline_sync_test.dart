@@ -2,12 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/core/api/i_remote_mutation.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
-import 'package:yelima/features/home/data/datasources/home_metrics_local_datasource.dart';
-import 'package:yelima/features/home/data/datasources/home_metrics_remote_mutation_source.dart';
-import 'package:yelima/features/home/data/models/vital_history_model.dart';
+import 'package:yelima/features/vitals/data/datasources/vitals_local_datasource.dart';
+import 'package:yelima/features/vitals/data/datasources/vitals_remote_mutation_source.dart';
+import 'package:yelima/features/vitals/data/models/vital_history_model.dart';
 import 'package:yelima/core/services/session_epoch.dart';
-import 'package:yelima/features/home/data/datasources/home_metrics_remote_datasource.dart';
-import 'package:yelima/features/home/data/repositories/home_metrics_repository_impl.dart';
+import 'package:yelima/features/vitals/data/datasources/vitals_remote_datasource.dart';
+import 'package:yelima/features/vitals/data/repositories/vitals_repository_impl.dart';
 
 import '../../../helpers/fake_api.dart';
 import '../../../helpers/fakes.dart';
@@ -15,7 +15,7 @@ import '../../../helpers/fakes.dart';
 void main() {
   const logsPath = 'api/v1/client/vital-histories/logs';
   late AppDatabase db;
-  late HomeMetricsLocalDataSourceImpl local;
+  late VitalsLocalDataSourceImpl local;
 
   VitalHistoryModel reading(String id, String value) => VitalHistoryModel(
         id: id,
@@ -39,7 +39,7 @@ void main() {
 
   setUp(() {
     db = testDb();
-    local = HomeMetricsLocalDataSourceImpl(database: db);
+    local = VitalsLocalDataSourceImpl(database: db);
   });
 
   tearDown(() => db.close());
@@ -67,7 +67,7 @@ void main() {
     final api = FakeApi()
       ..on('POST', logsPath,
           FakeReply.ok('665f00000000000000000001', status: 201));
-    final source = HomeMetricsRemoteMutationSource(api.client, db);
+    final source = VitalsRemoteMutationSource(api.client, db);
 
     final id = await source.syncMutation(
       entityId: 'local-1',
@@ -92,7 +92,7 @@ void main() {
       connectivityService: FakeConnectivity(),
       db: db,
       remoteSources: <String, IRemoteMutationSource>{
-        'vital_history': HomeMetricsRemoteMutationSource(api.client, db),
+        'vital_history': VitalsRemoteMutationSource(api.client, db),
       },
     );
     await manager.onSessionStarted('user_1');
@@ -111,8 +111,8 @@ void main() {
       () async {
     db.pendingMutationsDao.owner = 'user_1';
     final api = FakeApi();
-    final repo = HomeMetricsRepositoryImpl(
-      remoteDataSource: HomeMetricsRemoteDataSourceImpl(apiClient: api.client),
+    final repo = VitalsRepositoryImpl(
+      remoteDataSource: VitalsRemoteDataSourceImpl(apiClient: api.client),
       localDataSource: local,
       connectivityService: FakeConnectivity(online: false),
       session: SessionEpoch(),

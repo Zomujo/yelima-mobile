@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'reading_type_selector.dart';
-import 'interactive_reading_card.dart';
-import 'reading_day_selector.dart';
-import 'reading_save_button.dart';
-import '../../../../../shared/widgets/modals/custom_calendar_modal.dart';
-import '../../../../../shared/widgets/forms/app_dropdown.dart';
-import '../../controllers/reading_logging_controller.dart';
+import 'package:yelima/features/vitals/presentation/widgets/form/reading_type_selector.dart';
+import 'package:yelima/features/vitals/presentation/widgets/form/interactive_reading_card.dart';
+import 'package:yelima/features/vitals/presentation/widgets/form/reading_day_selector.dart';
+import 'package:yelima/features/vitals/presentation/widgets/form/reading_save_button.dart';
+import 'package:yelima/shared/widgets/modals/custom_calendar_modal.dart';
+import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
+import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 

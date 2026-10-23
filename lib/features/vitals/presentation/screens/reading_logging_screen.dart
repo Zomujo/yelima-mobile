@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/layout/app_header.dart';
-import '../controllers/reading_logging_controller.dart';
-import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
-import '../../../../injection_container.dart';
-import '../widgets/form/reading_logging_form.dart';
-import '../widgets/history/reading_history_section.dart';
-import '../../../../shared/widgets/forms/unsaved_changes_guard.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_header.dart';
+import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/injection_container.dart';
+import 'package:yelima/features/vitals/presentation/widgets/form/reading_logging_form.dart';
+import 'package:yelima/features/vitals/presentation/widgets/history/reading_history_section.dart';
+import 'package:yelima/shared/widgets/forms/unsaved_changes_guard.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 

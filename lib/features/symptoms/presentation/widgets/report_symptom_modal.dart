@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../../shared/widgets/layout/app_button.dart';
-import '../../../../../shared/widgets/modals/app_modal.dart';
-import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/app_button.dart';
+import 'package:yelima/shared/widgets/modals/app_modal.dart';
+import 'package:yelima/core/extensions/context_extensions.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
-import '../../../symptoms/presentation/controllers/symptoms_controller.dart';
+import 'package:yelima/features/symptoms/presentation/controllers/symptoms_controller.dart';
 
 class ReportSymptomModal extends StatefulWidget {
   const ReportSymptomModal({super.key});
@@ -134,7 +134,8 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
             builder: (context, value, child) {
               final isValid = value.text.trim().length > 5;
               return AppButton(
-                text: _isLoading ? context.l10n.submitting : context.l10n.submit,
+                text:
+                    _isLoading ? context.l10n.submitting : context.l10n.submit,
                 isDisabled: !isValid || _isLoading,
                 onPressed: (isValid && !_isLoading) ? _sendRequest : null,
                 backgroundColor: AppColors.primary,

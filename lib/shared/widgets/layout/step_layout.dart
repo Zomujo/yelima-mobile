@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'app_text.dart';
 import 'app_button.dart';
 

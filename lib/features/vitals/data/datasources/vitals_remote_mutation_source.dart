@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import '../../../../core/api/api_client.dart';
-import '../../../../core/api/i_remote_mutation.dart';
-import '../../../../core/db/app_database.dart';
+import 'package:yelima/core/api/api_client.dart';
+import 'package:yelima/core/api/i_remote_mutation.dart';
+import 'package:yelima/core/db/app_database.dart';
 
-class HomeMetricsRemoteMutationSource implements IRemoteMutationSource {
+class VitalsRemoteMutationSource implements IRemoteMutationSource {
   final APIClient _apiClient;
   final AppDatabase _db;
 
-  HomeMetricsRemoteMutationSource(this._apiClient, this._db);
+  VitalsRemoteMutationSource(this._apiClient, this._db);
 
   @override
   Future<String?> syncMutation({
