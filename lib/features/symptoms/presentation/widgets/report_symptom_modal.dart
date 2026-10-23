@@ -75,18 +75,18 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
                 child: AppText.headlineSmall(
                   context.l10n.reportSymptom,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.slate800,
                 ),
               ),
               const SizedBox(width: 16),
               Container(
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF1F5F9), // Slate 100
+                  color: AppColors.slate100,
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.close,
-                      size: 20, color: Color(0xFF64748B)),
+                      size: 20, color: AppColors.slate500),
                   constraints:
                       const BoxConstraints(minWidth: 36, minHeight: 36),
                   padding: EdgeInsets.zero,

@@ -43,7 +43,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           child: AppText.headlineSmall(
             context.l10n.yourAppointments,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF1E293B),
+            color: AppColors.slate800,
           ),
         ),
       ),

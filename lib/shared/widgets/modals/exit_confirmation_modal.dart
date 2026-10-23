@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../layout/app_text.dart';
@@ -40,8 +41,8 @@ class ExitConfirmationModal extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   text: context.l10n.cancel,
-                  backgroundColor: const Color(0xFFF1F5F9), // Slate 100
-                  foregroundColor: const Color(0xFF475569), // Slate 600
+                  backgroundColor: AppColors.slate100,
+                  foregroundColor: AppColors.slate600,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -49,7 +50,7 @@ class ExitConfirmationModal extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   text: context.l10n.exit,
-                  backgroundColor: const Color(0xFFEF4444), // Red 500
+                  backgroundColor: AppColors.red500,
                   onPressed: () {
                     Navigator.of(context).pop();
                     exit(0);

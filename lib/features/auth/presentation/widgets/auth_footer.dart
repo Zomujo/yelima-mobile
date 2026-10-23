@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
-/// A reusable footer row for auth screens to toggle between sign in and sign up.
+/// "Already have an account? Sign in" style link row.
 class AuthFooter extends StatelessWidget {
   const AuthFooter({
     super.key,
@@ -24,7 +24,7 @@ class AuthFooter extends StatelessWidget {
         children: [
           AppText.bodyMedium(
             text,
-            color: const Color(0xFF64748B),
+            color: AppColors.slate500,
           ),
           GestureDetector(
             onTap: onActionTap,

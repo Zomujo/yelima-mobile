@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -23,7 +24,7 @@ class MedicineDetailsHeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.slate200),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -34,10 +35,10 @@ class MedicineDetailsHeaderCard extends StatelessWidget {
               AppText.bodyLarge(
                 data.name,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
               const SizedBox(width: 8),
-              AppText.titleMedium(data.dosage, color: const Color(0xFF94A3B8)),
+              AppText.titleMedium(data.dosage, color: AppColors.slate400),
             ],
           ),
           const SizedBox(height: 24),

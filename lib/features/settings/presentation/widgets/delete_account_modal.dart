@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
@@ -83,8 +84,8 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
               Expanded(
                 child: AppButton(
                   text: context.l10n.cancel,
-                  backgroundColor: const Color(0xFFF1F5F9), // Slate 100
-                  foregroundColor: const Color(0xFF475569), // Slate 600
+                  backgroundColor: AppColors.slate100,
+                  foregroundColor: AppColors.slate600,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -93,7 +94,7 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
                 child: AppButton(
                   text: context.l10n.delete,
                   backgroundColor: _isButtonEnabled
-                      ? const Color(0xFFEF4444)
+                      ? AppColors.red500
                       : Colors.grey, // Red 500
                   onPressed: _isButtonEnabled
                       ? () async {

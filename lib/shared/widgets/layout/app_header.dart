@@ -30,7 +30,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       leading: automaticallyImplyLeading
           ? IconButton(
               icon: const Icon(Icons.arrow_back_ios,
-                  color: Color(0xFF1E293B), size: 20),
+                  color: AppColors.slate800, size: 20),
               onPressed: onBackPressed ?? () => Navigator.maybePop(context),
             )
           : null,
@@ -39,7 +39,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               ? AppText.headlineSmall(
                   title!,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.slate800,
                 )
               : const SizedBox()),
       actions: actions,

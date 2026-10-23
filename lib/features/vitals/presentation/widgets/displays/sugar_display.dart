@@ -23,7 +23,7 @@ class SugarDisplay extends StatelessWidget {
           const SizedBox(height: 8),
           AppText.displayMedium(
             sugarLevel,
-            color: const Color(0xFF1E293B),
+            color: AppColors.slate800,
             fontWeight: FontWeight.w500,
           ),
           const SizedBox(height: 8),

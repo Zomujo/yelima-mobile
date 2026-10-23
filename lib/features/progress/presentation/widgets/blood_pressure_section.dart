@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
@@ -32,11 +33,10 @@ class BloodPressureSection extends StatelessWidget {
           legend: Row(
             children: [
               ProgressLegendItem(
-                  color: const Color(0xFFEF4444), label: context.l10n.systolic),
+                  color: AppColors.red500, label: context.l10n.systolic),
               const SizedBox(width: 16),
               ProgressLegendItem(
-                  color: const Color(0xFF3B82F6),
-                  label: context.l10n.diastolic),
+                  color: AppColors.blue500, label: context.l10n.diastolic),
             ],
           ),
         );

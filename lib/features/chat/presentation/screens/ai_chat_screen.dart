@@ -99,7 +99,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
             child: AppText.labelMedium(
               context.l10n.aiChat,
-              color: const Color(0xFF475569),
+              color: AppColors.slate600,
               fontWeight: FontWeight.w600,
             ),
           ),

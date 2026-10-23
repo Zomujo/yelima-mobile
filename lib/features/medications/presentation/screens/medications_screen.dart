@@ -73,7 +73,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                           ),
                           child: AppText.labelMedium(
                             context.l10n.addMedication,
-                            color: const Color(0xFF1E293B),
+                            color: AppColors.slate800,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -100,7 +100,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                   AppText.titleLarge(
                     context.l10n.todaysMedications,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.slate800,
                   ),
                   const SizedBox(height: 16),
                   Consumer<MedicationController>(

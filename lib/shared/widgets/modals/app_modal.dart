@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -218,12 +219,12 @@ class ModalContainer extends StatelessWidget {
                       if (showCloseButton)
                         Container(
                           decoration: const BoxDecoration(
-                            color: Color(0xFFF1F5F9), // Slate 100
+                            color: AppColors.slate100,
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
                             icon: const Icon(Icons.close,
-                                size: 20, color: Color(0xFF64748B)),
+                                size: 20, color: AppColors.slate500),
                             constraints: const BoxConstraints(
                                 minWidth: 36, minHeight: 36),
                             padding: EdgeInsets.zero,

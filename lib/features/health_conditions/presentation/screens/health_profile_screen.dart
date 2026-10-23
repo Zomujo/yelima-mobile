@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +19,7 @@ class HealthProfileScreen extends StatelessWidget {
     final user = context.watch<UserController>().userEntity;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF9F6),
+      backgroundColor: AppColors.offWhite,
       appBar: AppHeader(
         title: context.l10n.healthProfile,
         onBackPressed: () => context.pop(),
@@ -56,7 +57,7 @@ class HealthProfileScreen extends StatelessWidget {
                   icon: Iconsax.activity,
                   child: AppText.bodyMedium(
                     context.l10n.noChronicConditionsReported,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.slate500,
                   ),
                 ),
             ],

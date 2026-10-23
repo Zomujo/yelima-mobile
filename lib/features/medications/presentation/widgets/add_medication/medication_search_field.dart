@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
@@ -57,7 +58,7 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
                 shadowColor: Colors.black.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  side: const BorderSide(color: AppColors.slate200),
                 ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 250),
@@ -68,7 +69,7 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
                       shrinkWrap: true,
                       itemCount: options.length,
                       separatorBuilder: (context, index) =>
-                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                          const Divider(height: 1, color: AppColors.slate200),
                       itemBuilder: (BuildContext context, int index) {
                         final SeededMedicationModel option =
                             options.elementAt(index);
@@ -79,7 +80,7 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16.0, vertical: 16.0),
                             child: AppText.bodyMedium(option.name,
-                                color: const Color(0xFF1E293B)),
+                                color: AppColors.slate800),
                           ),
                         );
                       },

@@ -49,7 +49,7 @@ class NextClinicVisitCard extends StatelessWidget {
                 AppText.titleMedium(
                   context.l10n.nextClinicVisit,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.slate800,
                 ),
                 const SizedBox(height: 4),
                 AppText.labelMedium(

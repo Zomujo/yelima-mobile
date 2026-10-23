@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
@@ -24,7 +25,7 @@ class ReadingHistoryItem extends StatelessWidget {
       children: [
         AppText.labelLarge(
           date,
-          color: const Color(0xFF94A3B8), // Slate 400
+          color: AppColors.slate400,
         ),
         const SizedBox(height: 4),
         Row(
@@ -32,11 +33,11 @@ class ReadingHistoryItem extends StatelessWidget {
             AppText.bodyMedium(
               '$vitalName - ',
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF475569), // Slate 600
+              color: AppColors.slate600,
             ),
             AppText.bodyMedium(
               vitalValue,
-              color: const Color(0xFF475569),
+              color: AppColors.slate600,
             ),
             if (severity != null) ...[
               const SizedBox(width: 8),

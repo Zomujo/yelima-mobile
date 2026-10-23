@@ -1,14 +1,15 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../../user/presentation/controllers/user_controller.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
-import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../../shared/widgets/layout/step_layout.dart';
-import '../../../../../shared/widgets/forms/app_form_field.dart';
-import '../../../../../shared/widgets/forms/app_dropdown.dart';
-import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/step_layout.dart';
+import 'package:yelima/shared/widgets/forms/app_form_field.dart';
+import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 
 class RegistrationStepOne extends StatefulWidget {
   const RegistrationStepOne({
@@ -156,7 +157,7 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
                     '+233',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.slate800,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -164,7 +165,7 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
                   Container(
                     width: 1,
                     height: 24,
-                    color: const Color(0xFFE2E8F0),
+                    color: AppColors.slate200,
                   ),
                 ],
               ),
@@ -174,7 +175,7 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
           AppText.labelMedium(
             context.l10n.genderLabel,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF64748B),
+            color: AppColors.slate500,
           ),
           const SizedBox(height: 8),
           AppDropdown<String>(

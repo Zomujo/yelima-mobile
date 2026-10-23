@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
@@ -6,6 +7,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/router/router.dart';
 import 'logout_flow.dart';
 
+/// Asks the user to confirm logging out.
 class LogoutModal extends StatelessWidget {
   const LogoutModal({super.key});
 
@@ -41,8 +43,8 @@ class LogoutModal extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   text: context.l10n.cancel,
-                  backgroundColor: const Color(0xFFF1F5F9), // Slate 100
-                  foregroundColor: const Color(0xFF475569), // Slate 600
+                  backgroundColor: AppColors.slate100,
+                  foregroundColor: AppColors.slate600,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -50,10 +52,10 @@ class LogoutModal extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   text: context.l10n.logOut,
-                  backgroundColor: const Color(0xFFEF4444), // Red 500
+                  backgroundColor: AppColors.red500,
                   onPressed: () {
                     final host = rootNavigatorKey.currentContext ?? context;
-                    Navigator.of(context).pop(); // dismiss modal
+                    Navigator.of(context).pop();
                     logOutWithSyncCheck(host);
                   },
                 ),

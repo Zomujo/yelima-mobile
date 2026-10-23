@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
@@ -73,8 +74,8 @@ class BPGraph extends StatelessWidget {
               barWidth: 2,
               gradient: const LinearGradient(
                 colors: [
-                  Color(0xFFEF4444),
-                  Color(0xFF3B82F6),
+                  AppColors.red500,
+                  AppColors.blue500,
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -94,7 +95,7 @@ class BPGraph extends StatelessWidget {
               .map((e) => FlSpot(e.key.toDouble(), e.value!.toDouble()))
               .toList(),
           isCurved: false, // Straight lines between points as in screenshot
-          color: const Color(0xFFEF4444), // Zyptyk Red
+          color: AppColors.red500, // Zyptyk Red
           barWidth: 2,
           dotData: FlDotData(
             show: true,
@@ -103,7 +104,7 @@ class BPGraph extends StatelessWidget {
                 radius: 4,
                 color: const Color(0xFFFCA5A5), // Lighter red fill
                 strokeWidth: 2,
-                strokeColor: const Color(0xFFEF4444), // Border matches line
+                strokeColor: AppColors.red500, // Border matches line
               );
             },
           ),
@@ -117,7 +118,7 @@ class BPGraph extends StatelessWidget {
               .map((e) => FlSpot(e.key.toDouble(), e.value!.toDouble()))
               .toList(),
           isCurved: false,
-          color: const Color(0xFF3B82F6), // Zyptyk Blue
+          color: AppColors.blue500, // Zyptyk Blue
           barWidth: 2,
           dotData: FlDotData(
             show: true,
@@ -126,7 +127,7 @@ class BPGraph extends StatelessWidget {
                 radius: 4,
                 color: const Color(0xFF93C5FD), // Lighter blue fill
                 strokeWidth: 2,
-                strokeColor: const Color(0xFF3B82F6), // Border matches line
+                strokeColor: AppColors.blue500, // Border matches line
               );
             },
           ),

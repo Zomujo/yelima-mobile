@@ -77,7 +77,7 @@ class _ChatInputAreaState extends State<ChatInputArea> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE2E8F0)), // Slate 200
+                border: Border.all(color: AppColors.slate200),
               ),
               child: Consumer<AiChatController>(
                 builder: (context, controller, child) {
@@ -95,7 +95,7 @@ class _ChatInputAreaState extends State<ChatInputArea> {
                           ? context.l10n.sending
                           : context.l10n.typeYourReply,
                       hintStyle: const TextStyle(
-                        color: Color(0xFF94A3B8), // Slate 400
+                        color: AppColors.slate400,
                         fontSize: 16,
                         fontFamily: 'ProductSans',
                       ),

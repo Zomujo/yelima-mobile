@@ -62,6 +62,31 @@ void main() {
     );
   });
 
+  test('domain and presentation never touch Firebase, HTTP or the database',
+      () {
+    final infra = RegExp(
+        r"^import 'package:(firebase_\w+|cloud_firestore|dio|drift|sqlite3|google_sign_in|sign_in_with_apple|flutter_secure_storage|shared_preferences)/",
+        multiLine: true);
+    final appDb = RegExp(r"^import '[^']*core/db/", multiLine: true);
+    // Features not cleaned up yet; remove each one as it's done.
+    const pending = {'chat', 'home', 'profile', 'user'};
+    final bad = <String>[];
+    for (final f in Directory('lib/features')
+        .listSync(recursive: true)
+        .whereType<File>()) {
+      final path = f.path;
+      if (!path.endsWith('.dart') ||
+          RegExp(r'\.(g|freezed)\.dart$').hasMatch(path) ||
+          !(path.contains('/domain/') || path.contains('/presentation/')) ||
+          pending.contains(path.split('/')[2])) {
+        continue;
+      }
+      final src = f.readAsStringSync();
+      if (infra.hasMatch(src) || appDb.hasMatch(src)) bad.add(path);
+    }
+    expect(bad, isEmpty);
+  });
+
   test('relative imports never climb above lib/', () {
     final bad = <String>[];
     final import = RegExp(r"^(?:import|export) '([^':]+)'", multiLine: true);

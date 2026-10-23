@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../user/domain/entities/user_entity.dart';
-import '../../../../user/presentation/controllers/user_controller.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../shared/utils/app_snackbar.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../../shared/widgets/layout/step_layout.dart';
-import '../condition_selection_card.dart';
-import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/features/user/domain/entities/user_entity.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/utils/app_snackbar.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/step_layout.dart';
+import 'package:yelima/features/user/presentation/widgets/registration/condition_selection_card.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class RegistrationStepThree extends StatefulWidget {
@@ -144,7 +144,7 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  side: const BorderSide(color: AppColors.slate300),
                   activeColor: AppColors.primary,
                 ),
               ),
@@ -152,7 +152,7 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
               Expanded(
                 child: AppText.bodyMedium(
                   context.l10n.healthDataConsent,
-                  color: const Color(0xFF475569),
+                  color: AppColors.slate600,
                   height: 1.5,
                 ),
               ),

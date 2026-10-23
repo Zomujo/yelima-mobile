@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
@@ -45,8 +46,8 @@ class DeleteMedicationModal extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   text: context.l10n.cancel,
-                  backgroundColor: const Color(0xFFF1F5F9), // Slate 100
-                  foregroundColor: const Color(0xFF475569), // Slate 600
+                  backgroundColor: AppColors.slate100,
+                  foregroundColor: AppColors.slate600,
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
               ),
@@ -54,7 +55,7 @@ class DeleteMedicationModal extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   text: context.l10n.delete,
-                  backgroundColor: const Color(0xFFEF4444), // Red 500
+                  backgroundColor: AppColors.red500,
                   onPressed: () => Navigator.of(context).pop(true),
                 ),
               ),

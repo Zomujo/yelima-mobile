@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/router/router.dart';
@@ -49,11 +50,11 @@ class _MyAppState extends State<MyApp> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         // Status bar (top)
-        statusBarColor: Color(0xFFFDFAF4),
+        statusBarColor: AppColors.globalBackground,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
         // Navigation bar (bottom)
-        systemNavigationBarColor: Color(0xFFFDFAF4),
+        systemNavigationBarColor: AppColors.globalBackground,
         systemNavigationBarIconBrightness: Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),

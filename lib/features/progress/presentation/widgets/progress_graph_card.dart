@@ -53,7 +53,7 @@ class ProgressGraphCard extends StatelessWidget {
                 child: AppText.titleLarge(
                   title,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.slate800,
                 ),
               ),
               Column(
@@ -64,7 +64,7 @@ class ProgressGraphCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.slate800,
                       height: 1.1,
                     ),
                   ),

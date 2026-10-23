@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import '../../../../user/presentation/controllers/user_controller.dart';
-import '../../../../user/domain/repositories/user_repository.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/features/user/domain/repositories/user_repository.dart';
 import 'package:yelima/features/user/domain/models/facility_model.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../../shared/widgets/layout/step_layout.dart';
-import '../../../../../shared/widgets/forms/app_form_field.dart';
-import '../../../../../core/extensions/l10n_extension.dart';
-import '../../../../../core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/step_layout.dart';
+import 'package:yelima/shared/widgets/forms/app_form_field.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 class RegistrationStepFour extends StatefulWidget {
@@ -159,7 +159,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                 shadowColor: Colors.black.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  side: const BorderSide(color: AppColors.slate200),
                 ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 250),
@@ -170,7 +170,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                         ? 1
                         : (_options.isEmpty ? 1 : _options.length),
                     separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        const Divider(height: 1, color: AppColors.slate200),
                     itemBuilder: (context, index) {
                       if (_isLoadingFacilities) {
                         return Padding(
@@ -210,7 +210,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                               horizontal: 16.0, vertical: 16.0),
                           child: AppText.bodyMedium(
                             option.name,
-                            color: const Color(0xFF1E293B),
+                            color: AppColors.slate800,
                           ),
                         ),
                       );

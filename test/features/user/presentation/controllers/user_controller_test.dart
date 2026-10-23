@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/features/auth/domain/entities/auth_user.dart';
 import 'package:yelima/features/user/domain/entities/user_entity.dart';
 import 'package:yelima/features/user/domain/repositories/user_repository.dart';
 import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
@@ -29,7 +30,8 @@ void main() {
   }
 
   // Login changes arrive from AuthController; not awaited, like stream events.
-  void emit(User? u) => controller.onUserChanged(u);
+  void emit(User? u) =>
+      controller.onUserChanged(u == null ? null : AuthUser(uid: u.uid));
 
   setUp(() {
     profileWatch = StreamController<UserEntity?>.broadcast();

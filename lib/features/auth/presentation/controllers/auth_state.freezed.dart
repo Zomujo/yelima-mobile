@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$AuthState {
-  User? get currentUser;
+  AuthUser? get currentUser;
   bool get isInitialized;
   bool get isAuthLoading;
   bool get isInitialSyncInProgress;
@@ -59,7 +59,7 @@ abstract mixin class $AuthStateCopyWith<$Res> {
       _$AuthStateCopyWithImpl;
   @useResult
   $Res call(
-      {User? currentUser,
+      {AuthUser? currentUser,
       bool isInitialized,
       bool isAuthLoading,
       bool isInitialSyncInProgress});
@@ -86,7 +86,7 @@ class _$AuthStateCopyWithImpl<$Res> implements $AuthStateCopyWith<$Res> {
       currentUser: freezed == currentUser
           ? _self.currentUser
           : currentUser // ignore: cast_nullable_to_non_nullable
-              as User?,
+              as AuthUser?,
       isInitialized: null == isInitialized
           ? _self.isInitialized
           : isInitialized // ignore: cast_nullable_to_non_nullable
@@ -114,7 +114,7 @@ class _AuthState extends AuthState {
       : super._();
 
   @override
-  final User? currentUser;
+  final AuthUser? currentUser;
   @override
   @JsonKey()
   final bool isInitialized;
@@ -168,7 +168,7 @@ abstract mixin class _$AuthStateCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {User? currentUser,
+      {AuthUser? currentUser,
       bool isInitialized,
       bool isAuthLoading,
       bool isInitialSyncInProgress});
@@ -195,7 +195,7 @@ class __$AuthStateCopyWithImpl<$Res> implements _$AuthStateCopyWith<$Res> {
       currentUser: freezed == currentUser
           ? _self.currentUser
           : currentUser // ignore: cast_nullable_to_non_nullable
-              as User?,
+              as AuthUser?,
       isInitialized: null == isInitialized
           ? _self.isInitialized
           : isInitialized // ignore: cast_nullable_to_non_nullable

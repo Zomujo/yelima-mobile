@@ -38,16 +38,14 @@ class MedicationFormFields extends StatelessWidget {
                   final isSelected = controller.dosageController.text == dosage;
                   return ChoiceChip(
                     label: AppText.bodyMedium(dosage,
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF475569)),
+                        color: isSelected ? Colors.white : AppColors.slate600),
                     selected: isSelected,
                     selectedColor: AppColors.primary,
                     backgroundColor: Colors.white,
                     side: BorderSide(
                         color: isSelected
                             ? AppColors.primary
-                            : const Color(0xFFE2E8F0)),
+                            : AppColors.slate200),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     checkmarkColor: Colors.white,
@@ -64,7 +62,7 @@ class MedicationFormFields extends StatelessWidget {
             ],
             const SizedBox(height: 24),
             AppText.titleMedium(context.l10n.medicationFormUnit,
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
             const SizedBox(height: 12),
             PopupMenuButton<String>(
               initialValue: controller.state.selectedUnit,
@@ -72,7 +70,7 @@ class MedicationFormFields extends StatelessWidget {
               position: PopupMenuPosition.under,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                side: const BorderSide(color: AppColors.slate200),
               ),
               color: Colors.white,
               elevation: 4.0,
@@ -86,15 +84,15 @@ class MedicationFormFields extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.slate200),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     AppText.bodyMedium(controller.state.selectedUnit,
-                        color: const Color(0xFF1E293B)),
+                        color: AppColors.slate800),
                     const Icon(Icons.keyboard_arrow_down,
-                        color: Color(0xFF94A3B8)),
+                        color: AppColors.slate400),
                   ],
                 ),
               ),
@@ -113,14 +111,14 @@ class MedicationFormFields extends StatelessWidget {
                       value: units[i],
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: AppText.bodyMedium(units[i],
-                          color: const Color(0xFF1E293B)),
+                          color: AppColors.slate800),
                     ),
                     if (i < units.length - 1)
                       const PopupMenuItem<String>(
                         enabled: false,
                         height: 1,
                         padding: EdgeInsets.zero,
-                        child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        child: Divider(height: 1, color: AppColors.slate200),
                       ),
                   ]
                 ];

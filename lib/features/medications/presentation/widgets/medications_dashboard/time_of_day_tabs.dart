@@ -24,7 +24,7 @@ class TimeOfDayTabs extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isSelected ? const Color(0xFF64748B) : Colors.transparent,
+              color: isSelected ? AppColors.slate500 : Colors.transparent,
               width: 1,
             ),
           ),
@@ -34,9 +34,7 @@ class TimeOfDayTabs extends StatelessWidget {
           children: [
             AppText.labelMedium(
               title,
-              color: isSelected
-                  ? const Color(0xFF64748B)
-                  : const Color(0xFF94A3B8),
+              color: isSelected ? AppColors.slate500 : AppColors.slate400,
               fontWeight: FontWeight.w600,
             ),
             if (count > 0) ...[

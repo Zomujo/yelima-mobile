@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/utils/globals.dart';
 
@@ -31,7 +32,7 @@ class AppSnackBar {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF10B981), // Emerald 500
+          backgroundColor: AppColors.emerald500,
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -70,7 +71,7 @@ class AppSnackBar {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFFEF4444), // Red 500
+          backgroundColor: AppColors.red500,
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

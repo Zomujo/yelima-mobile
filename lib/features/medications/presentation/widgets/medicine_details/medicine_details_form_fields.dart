@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
@@ -23,18 +24,18 @@ class MedicineDetailsFormFields extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText.titleMedium(context.l10n.generalDosageAmount,
-                  fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                  fontWeight: FontWeight.bold, color: AppColors.slate800),
               const SizedBox(height: 12),
-              AppText.bodyMedium(data.dosage, color: const Color(0xFF475569)),
+              AppText.bodyMedium(data.dosage, color: AppColors.slate600),
               const SizedBox(height: 32),
               AppText.titleMedium(context.l10n.notesLabel,
-                  fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                  fontWeight: FontWeight.bold, color: AppColors.slate800),
               const SizedBox(height: 12),
               AppText.bodyMedium(
                   (data.notes?.isEmpty ?? true)
                       ? context.l10n.noNotesProvided
                       : data.notes!,
-                  color: const Color(0xFF475569),
+                  color: AppColors.slate600,
                   height: 1.5),
             ],
           );
@@ -54,7 +55,7 @@ class MedicineDetailsFormFields extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             AppText.titleMedium(context.l10n.medicationFormUnit,
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
             const SizedBox(height: 12),
             PopupMenuButton<String>(
               initialValue: controller.state.selectedUnit,
@@ -62,7 +63,7 @@ class MedicineDetailsFormFields extends StatelessWidget {
               position: PopupMenuPosition.under,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                side: const BorderSide(color: AppColors.slate200),
               ),
               color: Colors.white,
               elevation: 4.0,
@@ -76,15 +77,15 @@ class MedicineDetailsFormFields extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.slate200),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     AppText.bodyMedium(controller.state.selectedUnit,
-                        color: const Color(0xFF1E293B)),
+                        color: AppColors.slate800),
                     const Icon(Icons.keyboard_arrow_down,
-                        color: Color(0xFF94A3B8)),
+                        color: AppColors.slate400),
                   ],
                 ),
               ),
@@ -103,14 +104,14 @@ class MedicineDetailsFormFields extends StatelessWidget {
                       value: units[i],
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: AppText.bodyMedium(units[i],
-                          color: const Color(0xFF1E293B)),
+                          color: AppColors.slate800),
                     ),
                     if (i < units.length - 1)
                       const PopupMenuItem<String>(
                         enabled: false,
                         height: 1,
                         padding: EdgeInsets.zero,
-                        child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        child: Divider(height: 1, color: AppColors.slate200),
                       ),
                   ]
                 ];

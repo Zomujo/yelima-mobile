@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../layout/app_text.dart';
 
@@ -22,68 +23,68 @@ class AppDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Focus(
-      child: Builder(
-        builder: (context) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              return PopupMenuButton<T>(
-          initialValue: value,
-          position: PopupMenuPosition.under,
-          padding: EdgeInsets.zero,
-          splashRadius: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          constraints: BoxConstraints(
-            minWidth: constraints.maxWidth,
-            maxWidth: constraints.maxWidth,
-          ),
-          onSelected: onChanged,
-          itemBuilder: (context) => items
-              .map(
-                (item) => PopupMenuItem<T>(
-                  value: item,
-                  child: AppText.bodyMedium(
-                    itemLabelBuilder(item),
-                    color: const Color(0xFF1E293B),
+      child: Builder(builder: (context) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return PopupMenuButton<T>(
+              initialValue: value,
+              position: PopupMenuPosition.under,
+              padding: EdgeInsets.zero,
+              splashRadius: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth,
+                maxWidth: constraints.maxWidth,
+              ),
+              onSelected: onChanged,
+              itemBuilder: (context) => items
+                  .map(
+                    (item) => PopupMenuItem<T>(
+                      value: item,
+                      child: AppText.bodyMedium(
+                        itemLabelBuilder(item),
+                        color: AppColors.slate800,
+                      ),
+                    ),
+                  )
+                  .toList(),
+              child: Listener(
+                onPointerDown: (_) => Focus.of(context).requestFocus(),
+                child: Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color:
+                          hasBorder ? AppColors.slate200 : Colors.transparent,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    color: hasBorder ? Colors.white : Colors.transparent,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      AppText.bodyMedium(
+                        value != null ? itemLabelBuilder(value as T) : hintText,
+                        color: value == null
+                            ? AppColors.slate400
+                            : AppColors.slate800,
+                      ),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.slate400,
+                      ),
+                    ],
                   ),
                 ),
-              )
-              .toList(),
-          child: Listener(
-            onPointerDown: (_) => Focus.of(context).requestFocus(),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: hasBorder ? const Color(0xFFE2E8F0) : Colors.transparent,
               ),
-              borderRadius: BorderRadius.circular(16),
-              color: hasBorder ? Colors.white : Colors.transparent,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                AppText.bodyMedium(
-                  value != null ? itemLabelBuilder(value as T) : hintText,
-                  color: value == null
-                      ? const Color(0xFF94A3B8)
-                      : const Color(0xFF1E293B),
-                ),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Color(0xFF94A3B8),
-                ),
-              ],
-            ),
-            ),
-          ),
+            );
+          },
         );
-      },
-          );
-        }
-      ),
+      }),
     );
   }
 }

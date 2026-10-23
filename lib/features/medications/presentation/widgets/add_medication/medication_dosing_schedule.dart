@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -8,7 +9,8 @@ class MedicationDosingSchedule extends StatelessWidget {
   const MedicationDosingSchedule({super.key});
 
   Future<void> _selectTime(BuildContext context, TimeOfDay initialTime,
-      Function(TimeOfDay) onSelected, {bool? isAM}) async {
+      Function(TimeOfDay) onSelected,
+      {bool? isAM}) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
@@ -16,9 +18,9 @@ class MedicationDosingSchedule extends StatelessWidget {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFFFDBA74),
+              primary: AppColors.orange300,
               onPrimary: Colors.white,
-              onSurface: Color(0xFF1E293B),
+              onSurface: AppColors.slate800,
             ),
           ),
           child: child!,
@@ -58,7 +60,7 @@ class MedicationDosingSchedule extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isEnabled ? const Color(0xFFFDBA74) : const Color(0xFFE2E8F0),
+          color: isEnabled ? AppColors.orange300 : AppColors.slate200,
           width: isEnabled ? 2 : 1,
         ),
       ),
@@ -66,16 +68,16 @@ class MedicationDosingSchedule extends StatelessWidget {
         children: [
           SwitchListTile(
             title: AppText.titleMedium(label,
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
             value: isEnabled,
             onChanged: onToggle,
-            activeColor: const Color(0xFFFDBA74),
-            inactiveThumbColor: const Color(0xFFFDBA74),
+            activeColor: AppColors.orange300,
+            inactiveThumbColor: AppColors.orange300,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           if (isEnabled) ...[
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            const Divider(height: 1, color: AppColors.slate200),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -88,18 +90,18 @@ class MedicationDosingSchedule extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: AppColors.slate50,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.slate200),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.access_time,
-                                color: Color(0xFF94A3B8), size: 18),
+                                color: AppColors.slate400, size: 18),
                             const SizedBox(width: 8),
                             AppText.bodyMedium(_formatTime(time),
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1E293B)),
+                                color: AppColors.slate800),
                           ],
                         ),
                       ),
@@ -108,15 +110,15 @@ class MedicationDosingSchedule extends StatelessWidget {
                   const SizedBox(width: 16),
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.slate50,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.slate200),
                     ),
                     child: Row(
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove,
-                              size: 18, color: Color(0xFF64748B)),
+                              size: 18, color: AppColors.slate500),
                           onPressed: quantity > 1
                               ? () => onQuantityChange(quantity - 1)
                               : null,
@@ -125,7 +127,7 @@ class MedicationDosingSchedule extends StatelessWidget {
                             fontWeight: FontWeight.bold),
                         IconButton(
                           icon: const Icon(Icons.add,
-                              size: 18, color: Color(0xFF64748B)),
+                              size: 18, color: AppColors.slate500),
                           onPressed: () => onQuantityChange(quantity + 1),
                         ),
                       ],
@@ -148,10 +150,10 @@ class MedicationDosingSchedule extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText.titleLarge(context.l10n.dosingSchedule,
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
             const SizedBox(height: 8),
             AppText.bodyMedium(context.l10n.selectWhenAndHowMuch,
-                color: const Color(0xFF64748B)),
+                color: AppColors.slate500),
             const SizedBox(height: 24),
             _buildDosageToggle(
               context,

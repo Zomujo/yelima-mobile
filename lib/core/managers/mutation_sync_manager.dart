@@ -5,6 +5,7 @@ import '../db/app_database.dart';
 import '../services/connectivity_service.dart';
 import '../services/session_lifecycle_service.dart';
 import '../exceptions/exceptions.dart';
+import '../utils/logger.dart';
 
 enum _MutationOutcome {
   resolved,
@@ -108,6 +109,20 @@ class MutationSyncManager implements SessionLifecycleHandler {
       }
       await _syncTask;
     }
+  }
+
+  /// Tries to send queued changes (up to 10s), then counts what is still unsent.
+  Future<({int waiting, int failed})> flush() async {
+    try {
+      await triggerSync().timeout(const Duration(seconds: 10));
+    } catch (e) {
+      AppLogger.w('Flush failed or timed out: $e');
+    }
+    final dao = _db.pendingMutationsDao;
+    return (
+      waiting: (await dao.getAllPendingMutations()).length,
+      failed: (await dao.getFailedMutations()).length,
+    );
   }
 
   /// Entity types that have a registered source.

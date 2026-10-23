@@ -300,7 +300,6 @@
   "sessionExpiredTitle": "Your session expired",
   "sessionExpiredBody": "Sign in again to keep using Yelima. Your saved changes are safe on this phone.",
   "signInAgain": "Sign in again",
-  "reauthFailed": "We couldn't sign you in. Check your details and try again.",
   "sendingChanges": "Sending your changes...",
   "unsyncedTitle": "Changes not sent",
   "unsyncedBody": "{count, plural, =1{1 change hasn't been sent yet. If you log out now, it will be lost.} other{{count} changes haven't been sent yet. If you log out now, they will be lost.}}",

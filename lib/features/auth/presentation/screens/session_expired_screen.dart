@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../shared/utils/failure_message.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../shared/widgets/forms/app_text_field.dart';
@@ -8,6 +9,7 @@ import '../controllers/auth_controller.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/logout_flow.dart';
 
+/// Locks the app until the user signs in again or logs out.
 class SessionExpiredScreen extends StatefulWidget {
   const SessionExpiredScreen({super.key});
 
@@ -31,13 +33,13 @@ class _SessionExpiredScreenState extends State<SessionExpiredScreen> {
       _busy = true;
       _error = null;
     });
-    final error = await context
+    final result = await context
         .read<AuthController>()
         .reauthenticate(password: _password.text);
     if (!mounted) return;
     setState(() {
       _busy = false;
-      _error = error == null ? null : context.l10n.reauthFailed;
+      _error = result.fold((f) => f.message(context.l10n), (_) => null);
     });
   }
 

@@ -76,7 +76,7 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                       onPressed: () => Navigator.of(context).pop(),
                       child: AppText.bodyMedium(
                         context.l10n.cancel,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.slate500,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -134,7 +134,7 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                 child: Text(
                   '*',
                   style: TextStyle(
-                    color: Color(0xFFEF4444), // Red asterisk
+                    color: AppColors.red500,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -150,7 +150,7 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)), // Slate 200
+              border: Border.all(color: AppColors.slate200),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,12 +160,12 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                       ? _formatDate(_selectedDate!)
                       : (widget.hintText ?? ''),
                   color: _selectedDate != null
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFF94A3B8),
+                      ? AppColors.slate800
+                      : AppColors.slate400,
                 ),
                 const Icon(
                   Icons.calendar_today_outlined,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.slate400,
                   size: 20,
                 ),
               ],

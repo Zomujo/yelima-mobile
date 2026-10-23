@@ -141,4 +141,45 @@ void main() {
     final allMutations = await memoryDb.select(memoryDb.pendingMutations).get();
     expect(allMutations.isEmpty, true);
   });
+
+  test('flush sends what it can, then counts what is still unsent', () async {
+    for (final id in ['sent', 'rejected']) {
+      await memoryDb.pendingMutationsDao.queueMutation(
+          entityId: id,
+          entityType: 'test_entity',
+          action: 'update',
+          payload: {});
+    }
+    when(() => mockRemoteSource.syncMutation(
+          entityId: any(named: 'entityId'),
+          action: any(named: 'action'),
+          payloadJson: any(named: 'payloadJson'),
+          createdAt: any(named: 'createdAt'),
+        )).thenAnswer((i) async {
+      if (i.namedArguments[#entityId] == 'rejected') {
+        throw const ApiException('Bad request', code: '400');
+      }
+      return null;
+    });
+    await syncManager.onSessionStarted('user_1');
+
+    final left = await syncManager.flush();
+
+    expect((left.waiting, left.failed), (0, 1));
+  });
+
+  test('flush offline only counts', () async {
+    await memoryDb.pendingMutationsDao.queueMutation(
+        entityId: 'a',
+        entityType: 'test_entity',
+        action: 'update',
+        payload: {});
+    when(() => mockConnectivityService.isConnected)
+        .thenAnswer((_) async => false);
+    await syncManager.onSessionStarted('user_1');
+
+    final left = await syncManager.flush();
+
+    expect((left.waiting, left.failed), (1, 0));
+  });
 }

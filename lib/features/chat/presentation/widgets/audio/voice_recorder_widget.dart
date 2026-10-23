@@ -101,7 +101,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.slate200),
               ),
               child: Row(
                 children: [

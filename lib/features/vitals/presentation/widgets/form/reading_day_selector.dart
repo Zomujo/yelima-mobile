@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
@@ -37,7 +38,7 @@ class ReadingDaySelector extends StatelessWidget {
           context.l10n.day,
           fontWeight: FontWeight.w600,
           variant: AppTextVariant.titleLarge,
-          color: const Color(0xFF1E293B),
+          color: AppColors.slate800,
         ),
         const SizedBox(height: 12),
         GestureDetector(
@@ -47,21 +48,19 @@ class ReadingDaySelector extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.slate200),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.calendar_today_outlined,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.slate400,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
                 AppText.bodyLarge(
                   _formatDate(context, selectedDate),
-                  color: isToday
-                      ? const Color(0xFF94A3B8)
-                      : const Color(0xFF1E293B),
+                  color: isToday ? AppColors.slate400 : AppColors.slate800,
                 ),
               ],
             ),

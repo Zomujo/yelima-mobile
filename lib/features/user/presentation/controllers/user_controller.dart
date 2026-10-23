@@ -7,6 +7,7 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../../../../core/utils/custom_types.dart';
 import '../../../../core/exceptions/exceptions.dart';
+import '../../../auth/domain/entities/auth_user.dart';
 import 'user_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import 'package:clock/clock.dart';
@@ -45,7 +46,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
   int _userEventStamp = 0;
 
   /// Loads the signed-in user's profile, or clears it on sign-out. Called by AuthController.
-  Future<void> onUserChanged(User? user) async {
+  Future<void> onUserChanged(AuthUser? user) async {
     final stamp = ++_userEventStamp;
 
     if (user == null) {
@@ -78,19 +79,14 @@ class UserController extends ChangeNotifier with SafeNotifier {
           userEntity: resolvedProfile,
           isInitialized: true,
           profileUnavailable: unavailable);
-      if (!unavailable) refreshProfile(user);
+      if (!unavailable) refreshProfile(user.uid);
     }
   }
 
-  /// Refreshes the user profile from the network and subscribes to offline changes.
-
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                    |
-  // --------------------------------------------------------------------------
-
-  Future<void> refreshProfile(User user) async {
+  /// Refreshes the profile from the network and watches it for local changes.
+  Future<void> refreshProfile(String uid) async {
     final stamp = _userEventStamp;
-    final profileResult = await _repository.getUserProfile(user.uid);
+    final profileResult = await _repository.getUserProfile(uid);
     if (stamp != _userEventStamp) return;
     profileResult.fold(
       (error) {},
@@ -103,7 +99,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
     _userProfileSubscription?.cancel();
     _userProfileSubscription =
-        _repository.watchUserProfile(user.uid).listen((entity) {
+        _repository.watchUserProfile(uid).listen((entity) {
       if (entity != null || state.userEntity == null) {
         state = state.copyWith(userEntity: entity);
       }
@@ -123,7 +119,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
       (profile) {
         state = state.copyWith(
             userEntity: profile, profileUnavailable: false, isLoading: false);
-        refreshProfile(user);
+        refreshProfile(user.uid);
       },
     );
   }

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/legal_links.dart';
 import '../../../../core/extensions/l10n_extension.dart';
 
+/// Links to the terms and privacy policy.
 class TermsAndPrivacyText extends StatelessWidget {
   const TermsAndPrivacyText({super.key});
 
@@ -14,7 +15,7 @@ class TermsAndPrivacyText extends StatelessWidget {
       child: Text.rich(
         TextSpan(
           text: context.l10n.byContinuing,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          style: const TextStyle(color: AppColors.slate500, fontSize: 12),
           children: [
             TextSpan(
               text: context.l10n.termsOfService,

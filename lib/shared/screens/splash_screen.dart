@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      
+
       // FocusManager doesn't work here on hot restart because the focus tree is rebuilt
       SystemChannels.textInput.invokeMethod('TextInput.hide');
 
@@ -99,11 +99,11 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: const Color(0xFFFAF9F6),
-        systemNavigationBarColor: const Color(0xFFFAF9F6),
+        statusBarColor: AppColors.offWhite,
+        systemNavigationBarColor: AppColors.offWhite,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFFAF9F6),
+        backgroundColor: AppColors.offWhite,
         body: Stack(
           children: [
             Center(

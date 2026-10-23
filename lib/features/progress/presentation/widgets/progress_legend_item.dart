@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ProgressLegendItem extends StatelessWidget {
@@ -25,7 +26,7 @@ class ProgressLegendItem extends StatelessWidget {
           label,
           style: const TextStyle(
             fontSize: 12,
-            color: Color(0xFF64748B),
+            color: AppColors.slate500,
           ),
         ),
       ],

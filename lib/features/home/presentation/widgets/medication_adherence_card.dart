@@ -35,7 +35,7 @@ class MedicationAdherenceCard extends StatelessWidget {
               AppText.bodyMedium(
                 context.l10n.medicationAdherence,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
               if (isLoading)
                 AppShimmer.box(width: 48, height: 24)
@@ -43,7 +43,7 @@ class MedicationAdherenceCard extends StatelessWidget {
                 AppText.titleMedium(
                   '${(percentage * 100).toInt()}%',
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF10B981),
+                  color: AppColors.emerald500,
                 ),
             ],
           ),
@@ -56,8 +56,8 @@ class MedicationAdherenceCard extends StatelessWidget {
                     value: percentage,
                     minHeight: 8,
                     backgroundColor: Colors.grey.shade200,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.emerald500),
                   ),
           ),
           const SizedBox(height: 6),

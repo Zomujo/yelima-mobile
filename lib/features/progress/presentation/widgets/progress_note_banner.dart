@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
@@ -20,7 +21,7 @@ class _ProgressNoteBannerState extends State<ProgressNoteBanner> {
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF3B82F6), // Blue side stripe color
+        color: AppColors.blue500,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -35,7 +36,7 @@ class _ProgressNoteBannerState extends State<ProgressNoteBanner> {
             const EdgeInsets.only(left: 6), // 6px width for the side stripe
         child: Container(
           decoration: const BoxDecoration(
-            color: Color(0xFFF1F5F9), // Soft greyish-blue background
+            color: AppColors.slate100, // Soft greyish-blue background
             borderRadius: BorderRadius.only(
               topLeft:
                   Radius.circular(10), // 16 - 6 = 10 (perfect uniform curve)
@@ -61,7 +62,7 @@ class _ProgressNoteBannerState extends State<ProgressNoteBanner> {
                       children: [
                         const Icon(
                           Iconsax.health,
-                          color: Color(0xFF3B82F6),
+                          color: AppColors.blue500,
                           size: 24,
                         ),
                         const SizedBox(width: 14),
@@ -76,7 +77,7 @@ class _ProgressNoteBannerState extends State<ProgressNoteBanner> {
                           _isExpanded
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
-                          color: const Color(0xFF3B82F6),
+                          color: AppColors.blue500,
                           size: 28,
                         ),
                       ],

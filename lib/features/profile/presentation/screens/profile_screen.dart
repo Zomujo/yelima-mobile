@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
@@ -36,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF9F6), // Off-white
+      backgroundColor: AppColors.offWhite,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -47,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: AppText.headlineSmall(
                 context.l10n.myAccount,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF0F172A), // Slate 900
+                color: AppColors.slate900,
               ),
             ),
             Expanded(
@@ -122,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           })(),
                           icon: Iconsax.language_square,
                           trailing: const Icon(Icons.arrow_forward_ios,
-                              size: 16, color: Color(0xFF64748B)),
+                              size: 16, color: AppColors.slate500),
                           onTap: () {
                             LanguagePickerModal.show(context);
                           },

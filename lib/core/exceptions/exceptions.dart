@@ -53,16 +53,6 @@ class DuplicateAccountException extends ErrorException {
   const DuplicateAccountException([String? message]) : super(message: message);
 }
 
-class ReauthenticationCancelledException extends ErrorException {
-  const ReauthenticationCancelledException([String? message])
-      : super(message: message ?? "Re-authentication was cancelled.");
-}
-
-class UnauthenticatedException extends ErrorException {
-  const UnauthenticatedException([String? message])
-      : super(message: message ?? "User is unauthenticated.");
-}
-
 class ExceptionWrapper {
   ExceptionWrapper._();
 

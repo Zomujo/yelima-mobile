@@ -22,9 +22,7 @@ sealed class AppFailure extends Equatable implements Exception {
   /// Turns any thrown error into the failure it stands for.
   factory AppFailure.from(Object error) => switch (error) {
         AppFailure() => error,
-        UserCanceledException() ||
-        ReauthenticationCancelledException() =>
-          const CancelledFailure(),
+        UserCanceledException() => const CancelledFailure(),
         SignInWithAppleAuthorizationException(
           code: AuthorizationErrorCode.canceled
         ) =>
@@ -35,7 +33,6 @@ sealed class AppFailure extends Equatable implements Exception {
         TimeoutException() ||
         SocketException() =>
           const NetworkFailure(),
-        UnauthenticatedException() => const UnauthorizedFailure(),
         ApiException(:final code) =>
           _fromStatus(int.tryParse(code ?? ''), error.message),
         DioException() => _fromDio(error),

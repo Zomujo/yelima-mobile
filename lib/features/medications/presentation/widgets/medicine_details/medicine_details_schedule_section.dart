@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../controllers/medicine_details_form_controller.dart';
@@ -22,7 +23,7 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText.titleMedium(context.l10n.dosingSchedule,
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
             const SizedBox(height: 24),
             if (controller.state.isEditing) ...[
               _EditableDosageToggle(
@@ -93,7 +94,7 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
                   data.afternoon == null &&
                   data.evening == null)
                 AppText.bodyMedium(context.l10n.noScheduleConfigured,
-                    color: const Color(0xFF94A3B8)),
+                    color: AppColors.slate400),
             ],
           ],
         );
@@ -111,9 +112,9 @@ class MedicineDetailsScheduleSection extends StatelessWidget {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFFFDBA74),
+              primary: AppColors.orange300,
               onPrimary: Colors.white,
-              onSurface: Color(0xFF1E293B),
+              onSurface: AppColors.slate800,
             ),
           ),
           child: child!,
@@ -158,11 +159,11 @@ class _ReadOnlyDosageTime extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppText.bodyLarge(timeOfDay,
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
             const SizedBox(height: 8),
             AppText.bodyMedium(
                 '${_formatScheduleTime(schedule.time)} | ${schedule.quantity.value} ${schedule.quantity.unit}(s)',
-                color: const Color(0xFF475569)),
+                color: AppColors.slate600),
           ],
         ),
       ],
@@ -203,24 +204,23 @@ class _EditableDosageToggle extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color:
-                isEnabled ? const Color(0xFFFDBA74) : const Color(0xFFE2E8F0),
+            color: isEnabled ? AppColors.orange300 : AppColors.slate200,
             width: isEnabled ? 2 : 1),
       ),
       child: Column(
         children: [
           SwitchListTile(
             title: AppText.titleMedium(label,
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
             value: isEnabled,
             onChanged: onToggle,
-            activeColor: const Color(0xFFFDBA74),
-            inactiveThumbColor: const Color(0xFFFDBA74),
+            activeColor: AppColors.orange300,
+            inactiveThumbColor: AppColors.orange300,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           if (isEnabled) ...[
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            const Divider(height: 1, color: AppColors.slate200),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -233,18 +233,18 @@ class _EditableDosageToggle extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: AppColors.slate50,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.slate200),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.access_time,
-                                color: Color(0xFF94A3B8), size: 18),
+                                color: AppColors.slate400, size: 18),
                             const SizedBox(width: 8),
                             AppText.bodyMedium(_formatTime(time),
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1E293B)),
+                                color: AppColors.slate800),
                           ],
                         ),
                       ),
@@ -253,15 +253,15 @@ class _EditableDosageToggle extends StatelessWidget {
                   const SizedBox(width: 16),
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.slate50,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.slate200),
                     ),
                     child: Row(
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove,
-                              size: 18, color: Color(0xFF64748B)),
+                              size: 18, color: AppColors.slate500),
                           onPressed: quantity > 1
                               ? () => onQuantityChange(quantity - 1)
                               : null,
@@ -270,7 +270,7 @@ class _EditableDosageToggle extends StatelessWidget {
                             fontWeight: FontWeight.bold),
                         IconButton(
                           icon: const Icon(Icons.add,
-                              size: 18, color: Color(0xFF64748B)),
+                              size: 18, color: AppColors.slate500),
                           onPressed: () => onQuantityChange(quantity + 1),
                         ),
                       ],

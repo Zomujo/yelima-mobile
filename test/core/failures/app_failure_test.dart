@@ -69,10 +69,6 @@ void main() {
         PlatformException(code: 'sign_in_canceled'),
         const CancelledFailure()
       ),
-      'not signed in': (
-        const UnauthenticatedException(),
-        const UnauthorizedFailure()
-      ),
       'firebase auth code': (
         FirebaseAuthException(code: 'invalid-credential'),
         const AuthFailure(AuthError.wrongPassword)

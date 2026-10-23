@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -43,12 +44,12 @@ class ProfileAvatar extends StatelessWidget {
           AppText.titleLarge(
             fullName,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF1E293B),
+            color: AppColors.slate800,
           ),
           const SizedBox(height: 4),
           AppText.bodyMedium(
             context.l10n.patient,
-            color: const Color(0xFF64748B),
+            color: AppColors.slate500,
           ),
         ],
       ),

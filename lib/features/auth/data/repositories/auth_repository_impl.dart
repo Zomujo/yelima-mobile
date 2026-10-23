@@ -1,130 +1,89 @@
-import 'package:fpdart/fpdart.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../../core/db/app_database.dart';
-import '../../../../core/exceptions/exceptions.dart';
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/failures/guard.dart';
+import '../../../../core/managers/token_manager.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/services/notification_service.dart';
-import '../../../../core/utils/custom_types.dart';
-
+import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 
+/// Firebase-backed [AuthRepository].
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource remoteDataSource;
-  final ConnectivityService connectivityService;
-  final AppDatabase db;
-  final NotificationService notifications;
-
   AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivityService,
     required this.db,
     required this.notifications,
-  });
+    TokenManager? tokens,
+  }) : _tokens = tokens ?? TokenManager();
 
-  /// Authenticates a user using email and password credentials.
-  @override
-  AsyncResponse<void> signIn(String email, String password) {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
-      () async {
-        await remoteDataSource.signInWithEmail(email, password);
-        return right(null);
-      },
-      connectivityService: connectivityService,
-      operationName: 'AuthRepositoryImpl.signIn',
-    );
-  }
+  final AuthRemoteDataSource remoteDataSource;
+  final ConnectivityService connectivityService;
+  final AppDatabase db;
+  final NotificationService notifications;
+  final TokenManager _tokens;
 
-  /// Registers a new user account with the provided email and password.
-  @override
-  AsyncResponse<void> register(String email, String password) {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
-      () async {
-        await remoteDataSource.signUpWithEmail(email, password);
-        return right(null);
-      },
-      connectivityService: connectivityService,
-      operationName: 'AuthRepositoryImpl.register',
-    );
-  }
-
-  /// Authenticates a user using their Google account.
-  @override
-  AsyncResponse<void> signInWithGoogle() {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
-      () async {
-        await remoteDataSource.signInWithGoogle();
-        return right(null);
-      },
-      connectivityService: connectivityService,
-      operationName: 'AuthRepositoryImpl.signInWithGoogle',
-    );
-  }
-
-  /// Authenticates a user using their Apple ID.
-  @override
-  AsyncResponse<void> signInWithApple() {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
-      () async {
-        await remoteDataSource.signInWithApple();
-        return right(null);
-      },
-      connectivityService: connectivityService,
-      operationName: 'AuthRepositoryImpl.signInWithApple',
-    );
-  }
-
-  /// Sends a password reset link to the specified email address.
-  @override
-  AsyncResponse<void> sendPasswordResetEmail(String email) {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
-      () async {
-        await remoteDataSource.sendPasswordResetEmail(email);
-        return right(null);
-      },
-      connectivityService: connectivityService,
-      operationName: 'AuthRepositoryImpl.sendPasswordResetEmail',
-    );
-  }
-
-  /// Signs the current user out of the application.
-  @override
-  AsyncResponse<void> signOut() {
-    return ExceptionWrapper.runAsync<void>(
-      () async {
-        await notifications.cancelAllReminders();
-        await remoteDataSource.signOut();
-        return right(null);
-      },
-      operationName: 'AuthRepositoryImpl.signOut',
-    );
-  }
-
-  /// Permanently deletes the current user's account and associated data.
-  @override
-  AsyncResponse<void> deleteAccount({String? password}) {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
-      () async {
-        // Reminders are cancelled with the session wipe, only once the delete succeeded.
-        await remoteDataSource.deleteAccount(password: password);
-        return right(null);
-      },
-      connectivityService: connectivityService,
-      operationName: 'AuthRepositoryImpl.deleteAccount',
-    );
-  }
+  static AuthUser? _toAuthUser(User? user) =>
+      user == null ? null : AuthUser(uid: user.uid, email: user.email);
 
   @override
-  AsyncResponse<void> reauthenticate({String? password}) {
-    return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
-      () async {
-        await remoteDataSource.reauthenticate(password: password);
-        return right(null);
-      },
-      connectivityService: connectivityService,
-      operationName: 'AuthRepositoryImpl.reauthenticate',
-    );
-  }
+  Stream<AuthUser?> watchUser() =>
+      remoteDataSource.authStateChanges.map(_toAuthUser);
+
+  @override
+  AuthUser? get currentUser => _toAuthUser(remoteDataSource.currentUser);
 
   @override
   bool get usesPassword => remoteDataSource.usesPassword;
+
+  @override
+  AsyncResult<void> refreshLogin() => guard(remoteDataSource.reloadUser);
+
+  @override
+  AsyncResult<void> signIn(String email, String password) => guardOnline(
+      connectivityService,
+      () => remoteDataSource.signInWithEmail(email, password));
+
+  @override
+  AsyncResult<void> register(String email, String password) => guardOnline(
+      connectivityService,
+      () => remoteDataSource.signUpWithEmail(email, password));
+
+  @override
+  AsyncResult<void> signInWithGoogle() =>
+      guardOnline(connectivityService, remoteDataSource.signInWithGoogle);
+
+  @override
+  AsyncResult<void> signInWithApple() =>
+      guardOnline(connectivityService, remoteDataSource.signInWithApple);
+
+  @override
+  AsyncResult<void> sendPasswordResetEmail(String email) => guardOnline(
+      connectivityService,
+      () => remoteDataSource.sendPasswordResetEmail(email));
+
+  @override
+  AsyncResult<void> signOut() => guard(() async {
+        // The session wipe may have failed; a leftover row must not reach the next user.
+        if (await db.hasAnyRows()) await db.wipeAll();
+        if (await db.hasAnyRows()) throw const StorageFailure();
+        await notifications.cancelAllReminders();
+        await remoteDataSource.signOut();
+        await _tokens.clearTokens();
+      });
+
+  @override
+  AsyncResult<void> deleteAccount({String? password}) =>
+      guardOnline(connectivityService, () async {
+        await remoteDataSource.deleteAccount(password: password);
+        await _tokens.clearTokens();
+      });
+
+  @override
+  AsyncResult<void> reauthenticate({String? password}) => guardOnline(
+      connectivityService,
+      () => remoteDataSource.reauthenticate(password: password));
 }

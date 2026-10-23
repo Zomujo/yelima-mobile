@@ -10,10 +10,9 @@ import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/chat/presentation/screens/ai_chat_screen.dart';
 import 'package:yelima/features/vitals/presentation/screens/reading_logging_screen.dart';
 import '../../features/appointment/presentation/screens/appointments_screen.dart';
-import '../../features/auth/presentation/screens/sign_in_screen.dart';
-import '../../features/auth/presentation/screens/sign_up_screen.dart';
+import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
-import '../../features/auth/presentation/screens/registration_screen.dart';
+import 'package:yelima/features/user/presentation/screens/registration_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
@@ -81,11 +80,11 @@ class AppRouter {
         ),
         GoRoute(
           path: RoutePaths.signIn,
-          builder: (context, state) => const SignInScreen(),
+          builder: (context, state) => const AuthScreen(isSignUp: false),
         ),
         GoRoute(
           path: RoutePaths.signUp,
-          builder: (context, state) => const SignUpScreen(),
+          builder: (context, state) => const AuthScreen(isSignUp: true),
         ),
         GoRoute(
           path: RoutePaths.forgotPassword,

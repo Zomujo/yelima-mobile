@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../user/domain/entities/user_entity.dart';
@@ -12,7 +13,9 @@ class HealthProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final initial =
         user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U';
-    final ageStr = user.age != null ? '${user.age} ${context.l10n.yrs}' : context.l10n.notAvailable;
+    final ageStr = user.age != null
+        ? '${user.age} ${context.l10n.yrs}'
+        : context.l10n.notAvailable;
     String genderStr = context.l10n.notAvailable;
     if (user.gender != null && user.gender!.isNotEmpty) {
       final g = user.gender!.toLowerCase();
@@ -21,7 +24,8 @@ class HealthProfileCard extends StatelessWidget {
       } else if (g == 'female') {
         genderStr = context.l10n.female;
       } else {
-        genderStr = user.gender![0].toUpperCase() + user.gender!.substring(1).toLowerCase();
+        genderStr = user.gender![0].toUpperCase() +
+            user.gender!.substring(1).toLowerCase();
       }
     }
 
@@ -30,7 +34,7 @@ class HealthProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.slate200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -66,23 +70,27 @@ class HealthProfileCard extends StatelessWidget {
                     AppText.titleMedium(user.fullName,
                         fontWeight: FontWeight.w600),
                     const SizedBox(height: 4),
-                    AppText.bodySmall('${context.l10n.patientId}: ${user.patientId}',
-                        color: const Color(0xFF64748B)),
+                    AppText.bodySmall(
+                        '${context.l10n.patientId}: ${user.patientId}',
+                        color: AppColors.slate500),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          const Divider(color: Color(0xFFE2E8F0)),
+          const Divider(color: AppColors.slate200),
           const SizedBox(height: 20),
           IntrinsicHeight(
             child: Row(
               children: [
-                Expanded(child: _InfoStat(label: context.l10n.age, value: ageStr)),
+                Expanded(
+                    child: _InfoStat(label: context.l10n.age, value: ageStr)),
                 const VerticalDivider(
-                    color: Color(0xFFE2E8F0), thickness: 1, width: 32),
-                Expanded(child: _InfoStat(label: context.l10n.gender, value: genderStr)),
+                    color: AppColors.slate200, thickness: 1, width: 32),
+                Expanded(
+                    child: _InfoStat(
+                        label: context.l10n.gender, value: genderStr)),
               ],
             ),
           ),
@@ -103,7 +111,7 @@ class _InfoStat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        AppText.bodySmall(label, color: const Color(0xFF64748B)),
+        AppText.bodySmall(label, color: AppColors.slate500),
         const SizedBox(height: 4),
         AppText.titleMedium(value, fontWeight: FontWeight.w600),
       ],

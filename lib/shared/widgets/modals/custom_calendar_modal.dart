@@ -118,10 +118,10 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
               AppText.headlineSmall(
                 l10n.selectDate,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: Color(0xFF94A3B8)),
+                icon: const Icon(Icons.close, color: AppColors.slate400),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -141,13 +141,13 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
                     shape: BoxShape.circle,
                   ),
                   child:
-                      const Icon(Icons.chevron_left, color: Color(0xFF475569)),
+                      const Icon(Icons.chevron_left, color: AppColors.slate600),
                 ),
               ),
               AppText.bodyLarge(
                 '${_monthName(_currentMonth.month)} ${_currentMonth.year}',
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
               GestureDetector(
                 onTap: _nextMonth,
@@ -157,8 +157,8 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
                     color: Colors.grey.shade100,
                     shape: BoxShape.circle,
                   ),
-                  child:
-                      const Icon(Icons.chevron_right, color: Color(0xFF475569)),
+                  child: const Icon(Icons.chevron_right,
+                      color: AppColors.slate600),
                 ),
               ),
             ],
@@ -173,7 +173,7 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
                       child: Center(
                         child: AppText.labelMedium(
                           day,
-                          color: const Color(0xFF94A3B8),
+                          color: AppColors.slate400,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -227,7 +227,7 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
                           : isCurrentMonth
                               ? date.isAfter(clock.now())
                                   ? Colors.grey.shade300
-                                  : const Color(0xFF1E293B)
+                                  : AppColors.slate800
                               : Colors.grey.shade300,
                     ),
                   ),

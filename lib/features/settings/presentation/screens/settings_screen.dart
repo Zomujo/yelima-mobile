@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
@@ -13,7 +14,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF9F6),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -21,13 +22,13 @@ class SettingsScreen extends StatelessWidget {
         titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios,
-              color: Color(0xFF0F172A), size: 20),
+              color: AppColors.slate900, size: 20),
           onPressed: () => context.pop(),
         ),
         title: AppText.headlineSmall(
           context.l10n.settings,
           fontWeight: FontWeight.bold,
-          color: const Color(0xFF0F172A),
+          color: AppColors.slate900,
         ),
       ),
       body: SafeArea(

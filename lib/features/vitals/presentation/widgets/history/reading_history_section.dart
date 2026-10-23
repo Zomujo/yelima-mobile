@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
@@ -76,7 +77,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                       AppText.titleMedium(
                         context.l10n.readingHistory,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.slate800,
                       ),
                     ],
                   ),
@@ -164,12 +165,12 @@ class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
                 height: 40,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: const Color(0xFFFDBA74)),
+                  border: Border.all(color: AppColors.orange300),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: IconButton(
-                  icon:
-                      const Icon(Icons.chevron_left, color: Color(0xFFFDBA74)),
+                  icon: const Icon(Icons.chevron_left,
+                      color: AppColors.orange300),
                   onPressed: currentPage > 1 ? onPrev : null,
                 ),
               ),
@@ -179,12 +180,12 @@ class _PaginationHeaderDelegate extends SliverPersistentHeaderDelegate {
                 height: 40,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: const Color(0xFFFDBA74)),
+                  border: Border.all(color: AppColors.orange300),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: IconButton(
-                  icon:
-                      const Icon(Icons.chevron_right, color: Color(0xFFFDBA74)),
+                  icon: const Icon(Icons.chevron_right,
+                      color: AppColors.orange300),
                   onPressed: currentPage < totalPages ? onNext : null,
                 ),
               ),

@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yelima/core/utils/logger.dart';
@@ -28,7 +29,7 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,
-    systemNavigationBarColor: Color(0xFFFDFAF4),
+    systemNavigationBarColor: AppColors.globalBackground,
     systemNavigationBarIconBrightness: Brightness.dark,
     systemNavigationBarDividerColor: Colors.transparent,
   ));

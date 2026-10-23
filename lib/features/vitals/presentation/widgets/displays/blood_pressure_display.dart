@@ -28,7 +28,7 @@ class BloodPressureDisplay extends StatelessWidget {
               const SizedBox(height: 4),
               AppText.displaySmall(
                 systolic,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
                 fontWeight: FontWeight.w500,
               ),
             ],
@@ -57,7 +57,7 @@ class BloodPressureDisplay extends StatelessWidget {
               const SizedBox(height: 4),
               AppText.displaySmall(
                 diastolic,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
                 fontWeight: FontWeight.w500,
               ),
             ],

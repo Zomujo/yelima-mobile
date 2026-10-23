@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,7 +38,6 @@ Future<void> logOutWithSyncCheck(BuildContext context) async {
   if (signedOut) {
     AppSnackBar.showSuccess(null, message: l10n.signedOut);
   } else {
-    // The wipe didn't finish, so the user stays signed in and can try again.
     AppSnackBar.showError(null, message: l10n.logoutFailed);
   }
 }
@@ -91,7 +91,7 @@ class UnsyncedChangesDialog extends StatelessWidget {
           const SizedBox(height: 12),
           AppButton(
             text: l10n.logOutAnyway,
-            backgroundColor: const Color(0xFFEF4444), // Red 500
+            backgroundColor: AppColors.red500,
             onPressed: () => pick(UnsyncedChoice.logOutAnyway),
           ),
         ],

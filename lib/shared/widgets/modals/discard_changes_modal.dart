@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'app_modal.dart';
 import '../layout/app_button.dart';
@@ -30,8 +31,8 @@ class DiscardChangesModal {
                   Expanded(
                     child: AppButton(
                       text: context.l10n.keepEditing,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      foregroundColor: const Color(0xFF475569),
+                      backgroundColor: AppColors.slate100,
+                      foregroundColor: AppColors.slate600,
                       onPressed: () => Navigator.of(context).pop(false),
                     ),
                   ),
@@ -39,7 +40,7 @@ class DiscardChangesModal {
                   Expanded(
                     child: AppButton(
                       text: context.l10n.discard,
-                      backgroundColor: const Color(0xFFEF4444),
+                      backgroundColor: AppColors.red500,
                       onPressed: () => Navigator.of(context).pop(true),
                     ),
                   ),

@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
@@ -30,14 +31,14 @@ class HealthExpansionCard extends StatelessWidget {
       ),
       child: ExpansionTile(
         title: AppText.bodyLarge(title, fontWeight: FontWeight.w500),
-        leading: Icon(icon, color: const Color(0xFF64748B)),
-        iconColor: const Color(0xFF0F172A),
-        collapsedIconColor: const Color(0xFF64748B),
+        leading: Icon(icon, color: AppColors.slate500),
+        iconColor: AppColors.slate900,
+        collapsedIconColor: AppColors.slate500,
         shape: const RoundedRectangleBorder(side: BorderSide.none),
         children: [
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Divider(color: Color(0xFFE2E8F0)),
+            child: Divider(color: AppColors.slate200),
           ),
           Padding(
             padding: const EdgeInsets.all(16),

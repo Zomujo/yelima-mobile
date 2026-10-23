@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -34,7 +35,7 @@ class _EditProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF9F6),
+      backgroundColor: AppColors.offWhite,
       appBar: AppHeader(
         title: context.l10n.editProfile,
         onBackPressed: () => context.pop(),
@@ -77,7 +78,8 @@ class _EditProfileView extends StatelessWidget {
                               AppSnackBar.showError(context, message: failure),
                           (_) {
                             AppSnackBar.showSuccess(context,
-                                message: context.l10n.profileUpdatedSuccessfully);
+                                message:
+                                    context.l10n.profileUpdatedSuccessfully);
                             context.pop();
                           },
                         );

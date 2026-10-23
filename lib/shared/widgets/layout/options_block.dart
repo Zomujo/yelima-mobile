@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'app_text.dart';
 
@@ -41,7 +42,7 @@ class OptionsBlock extends StatelessWidget {
             child: AppText.labelMedium(
               title.toUpperCase(),
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF64748B), // Slate 500
+              color: AppColors.slate500,
               letterSpacing: 0.5,
             ),
           ),
@@ -85,22 +86,21 @@ class _OptionBlockTile extends StatelessWidget {
             children: [
               Icon(
                 option.icon,
-                color: option.iconColor ?? const Color(0xFF64748B), // Slate 500
+                color: option.iconColor ?? AppColors.slate500,
                 size: 24,
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: AppText.bodyLarge(
                   option.label,
-                  color:
-                      option.labelColor ?? const Color(0xFF1E293B), // Slate 800
+                  color: option.labelColor ?? AppColors.slate800,
                 ),
               ),
               const SizedBox(width: 16),
               option.trailing ??
                   Icon(
                     Icons.chevron_right_rounded,
-                    color: option.iconColor ?? const Color(0xFF0F172A), // Slate 900
+                    color: option.iconColor ?? AppColors.slate900,
                     size: 20,
                   ),
             ],

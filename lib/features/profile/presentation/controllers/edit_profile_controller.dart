@@ -119,7 +119,7 @@ class EditProfileController extends ChangeNotifier with SafeNotifier {
       },
       (_) async {
         // Fetch fresh user data to update global state
-        await _userController.refreshProfile(user);
+        await _userController.refreshProfile(user.uid);
 
         state = state.copyWith(
           isSaving: false,

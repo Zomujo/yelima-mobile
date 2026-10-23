@@ -1,3 +1,4 @@
+import '../failures/app_failure.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -205,8 +206,7 @@ class MonitoringService implements SessionLifecycleHandler {
     bool fatal = false,
     String? reason,
   }) async {
-    if (exception.toString().contains('UserCanceledException') ||
-        exception.toString().contains('Sign in cancelled')) {
+    if (exception is Object && AppFailure.from(exception) is CancelledFailure) {
       return;
     }
 

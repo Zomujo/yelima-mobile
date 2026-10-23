@@ -43,7 +43,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFDBA74),
+                    color: AppColors.orange300,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: AppText.bodyMedium(

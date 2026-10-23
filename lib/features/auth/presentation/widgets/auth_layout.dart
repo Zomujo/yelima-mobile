@@ -1,7 +1,8 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
-/// A highly reusable scaffold wrapper for authentication screens.
+/// The shared frame of the auth screens: title, subtitle and content.
 class AuthLayout extends StatelessWidget {
   const AuthLayout({
     super.key,
@@ -17,7 +18,7 @@ class AuthLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF9F6), // Off-white matching UI
+      backgroundColor: AppColors.offWhite,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -36,12 +37,12 @@ class AuthLayout extends StatelessWidget {
                   AppText.headlineLarge(
                     title,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.slate800,
                   ),
                   const SizedBox(height: 8),
                   AppText.bodyLarge(
                     subtitle,
-                    color: const Color(0xFF475569),
+                    color: AppColors.slate600,
                   ),
                 ],
               ),

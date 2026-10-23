@@ -48,7 +48,7 @@ class LogTypeCard extends StatelessWidget {
           AppText.titleSmall(
             title,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF1E293B),
+            color: AppColors.slate800,
           ),
           const SizedBox(height: 4),
           AppText.labelSmall(

@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -61,14 +62,14 @@ class PaginatedAppointmentList extends StatelessWidget {
                 width: 52,
                 height: 52,
                 colorFilter: const ColorFilter.mode(
-                  Color(0xFFCBD5E1),
+                  AppColors.slate300,
                   BlendMode.srcIn,
                 ),
               ),
               const SizedBox(height: 16),
               AppText.bodyMedium(
                 emptyMessage,
-                color: const Color(0xFF94A3B8),
+                color: AppColors.slate400,
               ),
             ],
           ),
@@ -155,11 +156,11 @@ class _PaginationControls extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0xFFFDBA74)),
+        border: Border.all(color: AppColors.orange300),
         borderRadius: BorderRadius.circular(8),
       ),
       child: IconButton(
-        icon: Icon(icon, color: const Color(0xFFFDBA74)),
+        icon: Icon(icon, color: AppColors.orange300),
         onPressed: onPressed,
       ),
     );

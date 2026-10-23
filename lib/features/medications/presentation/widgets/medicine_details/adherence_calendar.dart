@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../core/utils/app_date_formats.dart';
@@ -110,7 +111,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                         value: item,
                         child: AppText.bodyMedium(
                           AppDateFormats.monthYear.format(item),
-                          color: const Color(0xFF1E293B),
+                          color: AppColors.slate800,
                         ),
                       ))
                   .toList(),
@@ -122,12 +123,12 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                     AppText.titleMedium(
                       AppDateFormats.monthYear.format(_selectedMonth),
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF1E293B),
+                      color: AppColors.slate800,
                     ),
                     const SizedBox(width: 8),
                     const Icon(
                       Icons.keyboard_arrow_down,
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.slate400,
                     ),
                   ],
                 ),
@@ -192,12 +193,12 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
             final isFuture = dayDate.isAfter(now);
 
             if (isTaken == true) {
-              bgColor = const Color(0xFF10B981); // Emerald 500
+              bgColor = AppColors.emerald500; // Emerald 500
             } else if (isTaken == false && !isFuture) {
-              bgColor = const Color(0xFFCBD5E1); // Slate 300
+              bgColor = AppColors.slate300; // Slate 300
             } else {
               bgColor = Colors.transparent;
-              textColor = const Color(0xFF94A3B8); // Slate 400
+              textColor = AppColors.slate400; // Slate 400
             }
 
             return Container(
@@ -218,9 +219,9 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
         // Legend
         Row(
           children: [
-            _buildLegendItem(const Color(0xFF10B981), l10n.taken),
+            _buildLegendItem(AppColors.emerald500, l10n.taken),
             const SizedBox(width: 16),
-            _buildLegendItem(const Color(0xFFCBD5E1), l10n.missed),
+            _buildLegendItem(AppColors.slate300, l10n.missed),
           ],
         )
       ],
@@ -241,7 +242,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
         const SizedBox(width: 8),
         AppText.labelSmall(
           label,
-          color: const Color(0xFF64748B), // Slate 500
+          color: AppColors.slate500,
         ),
       ],
     );

@@ -191,13 +191,13 @@ class _ValueWheelPickerBottomSheetState
               AppText.titleLarge(
                 widget.title,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const Icon(
                   Icons.close,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.slate400,
                   size: 24,
                 ),
               ),
@@ -245,7 +245,7 @@ class _ValueWheelPickerBottomSheetState
         return Center(
           child: AppText.displaySmall(
             v.toStringAsFixed(1),
-            color: const Color(0xFF1E293B),
+            color: AppColors.slate800,
             fontWeight: FontWeight.w600,
           ),
         );
@@ -269,7 +269,7 @@ class _ValueWheelPickerBottomSheetState
               return Center(
                 child: AppText.displaySmall(
                   v.toString(),
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.slate800,
                   fontWeight: FontWeight.w600,
                 ),
               );
@@ -293,7 +293,7 @@ class _ValueWheelPickerBottomSheetState
               return Center(
                 child: AppText.displaySmall(
                   v.toString(),
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.slate800,
                   fontWeight: FontWeight.w600,
                 ),
               );

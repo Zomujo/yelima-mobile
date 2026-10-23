@@ -1,15 +1,16 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/router/route_paths.dart';
-import '../../../user/domain/entities/user_entity.dart';
-import '../../../user/presentation/controllers/user_controller.dart';
-import '../widgets/registration_app_bar.dart';
-import '../widgets/steps/registration_step_one.dart';
-import '../widgets/steps/registration_step_two.dart';
-import '../widgets/steps/registration_step_three.dart';
-import '../widgets/steps/registration_step_four.dart';
-import '../widgets/logout_flow.dart';
+import 'package:yelima/core/router/route_paths.dart';
+import 'package:yelima/features/user/domain/entities/user_entity.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/features/user/presentation/widgets/registration/registration_app_bar.dart';
+import 'package:yelima/features/user/presentation/widgets/registration/registration_step_one.dart';
+import 'package:yelima/features/user/presentation/widgets/registration/registration_step_two.dart';
+import 'package:yelima/features/user/presentation/widgets/registration/registration_step_three.dart';
+import 'package:yelima/features/user/presentation/widgets/registration/registration_step_four.dart';
+import 'package:yelima/features/auth/presentation/widgets/logout_flow.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -78,7 +79,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF9F6), // Off-white
+      backgroundColor: AppColors.offWhite,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

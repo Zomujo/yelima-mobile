@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -42,7 +43,7 @@ class MedicineDetailsActionButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             decoration: BoxDecoration(
               color: controller.state.isEditing
-                  ? const Color(0xFFFDBA74)
+                  ? AppColors.orange300
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
@@ -59,7 +60,7 @@ class MedicineDetailsActionButton extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: controller.state.isEditing
                         ? Colors.white
-                        : const Color(0xFFFDBA74),
+                        : AppColors.orange300,
                   ),
           ),
         ),

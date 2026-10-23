@@ -65,7 +65,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return ChangeNotifierProvider.value(
       value: _controller,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFAF9F6),
+        backgroundColor: AppColors.offWhite,
         appBar: AppHeader(
           title: context.l10n.yourProgress,
           onBackPressed: () => Navigator.of(context).pop(),

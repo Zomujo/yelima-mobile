@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/core/failures/app_failure.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:yelima/features/auth/presentation/screens/session_expired_screen.dart';
@@ -28,7 +30,7 @@ void main() {
   testWidgets('an email user signs in again with their password',
       (tester) async {
     when(() => auth.reauthenticate(password: 'secret1'))
-        .thenAnswer((_) async => null);
+        .thenAnswer((_) async => right(null));
     await pumpScreen(tester, password: true);
 
     expect(find.text('Your session expired'), findsOneWidget);
@@ -41,7 +43,8 @@ void main() {
   });
 
   testWidgets('a Google user gets no password field', (tester) async {
-    when(() => auth.reauthenticate(password: '')).thenAnswer((_) async => null);
+    when(() => auth.reauthenticate(password: ''))
+        .thenAnswer((_) async => right(null));
     await pumpScreen(tester, password: false);
 
     expect(find.byType(TextFormField), findsNothing);
@@ -51,18 +54,28 @@ void main() {
     verify(() => auth.reauthenticate(password: '')).called(1);
   });
 
-  testWidgets('a failed sign-in shows a plain message and stays locked',
-      (tester) async {
+  testWidgets('a wrong password says so and stays locked', (tester) async {
     when(() => auth.reauthenticate(password: any(named: 'password')))
-        .thenAnswer((_) async => 'wrong-password');
+        .thenAnswer(
+            (_) async => left(const AuthFailure(AuthError.wrongPassword)));
     await pumpScreen(tester, password: true);
 
     await tester.tap(find.text('Sign in again'));
     await tester.pump();
 
-    expect(
-        find.text("We couldn't sign you in. Check your details and try again."),
-        findsOneWidget);
+    expect(find.text('The email or password is wrong.'), findsOneWidget);
+  });
+
+  testWidgets('closing the Google sheet shows no error', (tester) async {
+    when(() => auth.reauthenticate(password: ''))
+        .thenAnswer((_) async => left(const CancelledFailure()));
+    await pumpScreen(tester, password: false);
+
+    await tester.tap(find.text('Sign in again'));
+    await tester.pump();
+
+    expect(find.textContaining('wrong'), findsNothing);
+    expect(find.textContaining('went wrong'), findsNothing);
   });
 
   testWidgets('log out goes through the normal logout flow', (tester) async {

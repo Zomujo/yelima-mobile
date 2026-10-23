@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/widgets/layout/app_text.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/core/theme/app_colors.dart';
 
 class ConditionSelectionCard extends StatelessWidget {
   final String title;
@@ -26,8 +26,7 @@ class ConditionSelectionCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color:
-                isSelected ? AppColors.primaryGreen : const Color(0xFFE2E8F0),
+            color: isSelected ? AppColors.primaryGreen : AppColors.slate200,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
@@ -48,12 +47,12 @@ class ConditionSelectionCard extends StatelessWidget {
                   AppText.bodyLarge(
                     title,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.slate800,
                   ),
                   const SizedBox(height: 4),
                   AppText.bodyMedium(
                     subtitle,
-                    color: const Color(0xFF94A3B8), // Light grey subtitle
+                    color: AppColors.slate400,
                   ),
                 ],
               ),
@@ -65,16 +64,16 @@ class ConditionSelectionCard extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected
-                      ? AppColors.primaryGreen
-                      : const Color(0xFFE2E8F0),
+                  color:
+                      isSelected ? AppColors.primaryGreen : AppColors.slate200,
                   width: 2,
                 ),
                 color: isSelected ? AppColors.primaryGreen : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : const Icon(Icons.check, size: 16, color: Color(0xFFE2E8F0)),
+                  : const Icon(Icons.check,
+                      size: 16, color: AppColors.slate200),
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'app_text.dart';
@@ -26,14 +27,14 @@ class AppEmptyState extends StatelessWidget {
             width: iconSize,
             height: iconSize,
             colorFilter: const ColorFilter.mode(
-              Color(0xFFCBD5E1),
+              AppColors.slate300,
               BlendMode.srcIn,
             ),
           ),
           const SizedBox(height: 16),
           AppText.bodyMedium(
             title,
-            color: const Color(0xFF94A3B8),
+            color: AppColors.slate400,
             textAlign: TextAlign.center,
           ),
         ],

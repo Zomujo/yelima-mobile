@@ -24,8 +24,7 @@ class AppointmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = isPast ? AppColors.textGrey : AppColors.primary;
-    final iconBgColor =
-        isPast ? const Color(0xFFF1F5F9) : const Color(0xFFFFEDD5);
+    final iconBgColor = isPast ? AppColors.slate100 : const Color(0xFFFFEDD5);
 
     final timeUntil = _relativeLabel(context, appointment.appointmentDate);
 
@@ -70,11 +69,11 @@ class AppointmentCard extends StatelessWidget {
                     AppText.bodyLarge(
                       dateTime,
                       fontWeight: FontWeight.w300,
-                      color: const Color(0xFF1E293B),
+                      color: AppColors.slate800,
                     ),
                     const SizedBox(height: 4),
                     AppText.bodyMedium(appointment.title,
-                        color: const Color(0xFF475569)),
+                        color: AppColors.slate600),
                     const SizedBox(height: 4),
                     AppText.labelSmall(
                       subtitle,
@@ -95,7 +94,7 @@ class AppointmentCard extends StatelessWidget {
           //           text: 'Message clinic',
           //           variant: AppButtonVariant.outlined,
           //           backgroundColor: Colors.grey.shade300,
-          //           foregroundColor: const Color(0xFF1E293B),
+          //           foregroundColor: AppColors.slate800,
           //           padding: const EdgeInsets.symmetric(horizontal: 4),
           //           onPressed: () {},
           //           outlineColor: const Color(0xFFE2E1E1),
@@ -111,7 +110,7 @@ class AppointmentCard extends StatelessWidget {
           //           text: 'Reschedule',
           //           variant: AppButtonVariant.outlined,
           //           backgroundColor: Colors.grey.shade300,
-          //           foregroundColor: const Color(0xFF1E293B),
+          //           foregroundColor: AppColors.slate800,
           //           padding: const EdgeInsets.symmetric(horizontal: 4),
           //           onPressed: () {},
           //           outlineColor: const Color(0xFFE2E1E1),

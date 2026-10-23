@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../user/presentation/controllers/user_controller.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../../shared/widgets/layout/step_layout.dart';
-import '../../../../../shared/widgets/forms/app_date_picker_field.dart';
-import '../../../../../shared/widgets/forms/app_form_field.dart';
-import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/layout/step_layout.dart';
+import 'package:yelima/shared/widgets/forms/app_date_picker_field.dart';
+import 'package:yelima/shared/widgets/forms/app_form_field.dart';
+import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:clock/clock.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 

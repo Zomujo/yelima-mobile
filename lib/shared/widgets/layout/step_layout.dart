@@ -40,7 +40,7 @@ class StepLayout extends StatelessWidget {
                 AppText.headlineMedium(
                   title,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.slate800,
                 ),
                 const SizedBox(height: 8),
                 AppText.bodyLarge(
@@ -89,17 +89,17 @@ class StepLayout extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppColors.slate200),
           borderRadius: BorderRadius.circular(28),
         ),
         child: Row(
           children: [
-            const Icon(Icons.chevron_left, color: Color(0xFF64748B), size: 20),
+            const Icon(Icons.chevron_left, color: AppColors.slate500, size: 20),
             const SizedBox(width: 8),
             AppText.bodyLarge(
               context.l10n.backText,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF475569),
+              color: AppColors.slate600,
             ),
           ],
         ),
@@ -113,7 +113,7 @@ class StepLayout extends StatelessWidget {
       onPressed: (isContinueEnabled && !isSubmitting) ? onContinue : null,
       backgroundColor: (isContinueEnabled && !isSubmitting)
           ? AppColors.primary
-          : const Color(0xFF94A3B8),
+          : AppColors.slate400,
       width: 160,
       height: 50,
       borderRadius: 24,

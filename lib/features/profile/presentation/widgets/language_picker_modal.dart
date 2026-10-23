@@ -48,7 +48,7 @@ class LanguagePickerModal extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
+                  color: AppColors.slate200,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -65,7 +65,7 @@ class LanguagePickerModal extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Color(0xFF64748B)),
+                    icon: const Icon(Icons.close, color: AppColors.slate500),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -76,22 +76,30 @@ class LanguagePickerModal extends StatelessWidget {
               final isSelected = currentLanguageCode == lang['code'];
               return InkWell(
                 onTap: () {
-                  context.read<LocaleController>().setLocale(Locale(lang['code']!));
+                  context
+                      .read<LocaleController>()
+                      .setLocale(Locale(lang['code']!));
                   Navigator.pop(context);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : Colors.transparent,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  color: isSelected
+                      ? AppColors.primary.withValues(alpha: 0.05)
+                      : Colors.transparent,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       AppText.bodyLarge(
                         lang['name']!,
-                        color: isSelected ? AppColors.primary : const Color(0xFF1E293B),
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color:
+                            isSelected ? AppColors.primary : AppColors.slate800,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
                       ),
                       if (isSelected)
-                        const Icon(Icons.check_circle, color: AppColors.primary),
+                        const Icon(Icons.check_circle,
+                            color: AppColors.primary),
                     ],
                   ),
                 ),

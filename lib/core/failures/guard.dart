@@ -1,5 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 
+import '../services/connectivity_service.dart';
 import '../utils/logger.dart';
 import 'app_failure.dart';
 
@@ -22,3 +23,11 @@ AsyncResult<T> guard<T>(Future<T> Function() action) async {
     return left(failure);
   }
 }
+
+/// Like [guard], but fails fast with [NetworkFailure] when offline.
+AsyncResult<T> guardOnline<T>(
+        ConnectivityService connectivity, Future<T> Function() action) =>
+    guard(() async {
+      if (!await connectivity.isConnected) throw const NetworkFailure();
+      return action();
+    });

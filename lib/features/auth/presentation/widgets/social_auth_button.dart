@@ -1,6 +1,8 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// A bordered button for signing in with a provider such as Google.
 class SocialAuthButton extends StatelessWidget {
   final ImageProvider icon;
   final String text;
@@ -21,8 +23,7 @@ class SocialAuthButton extends StatelessWidget {
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          border:
-              Border.all(color: const Color(0xFFE2E8F0)), // Light grey border
+          border: Border.all(color: AppColors.slate200),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -33,7 +34,7 @@ class SocialAuthButton extends StatelessWidget {
             AppText.bodyLarge(
               text,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF1E293B),
+              color: AppColors.slate800,
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class RegistrationAppBar extends StatelessWidget
@@ -29,13 +30,13 @@ class RegistrationAppBar extends StatelessWidget
                 height: 32,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.slate200),
                   color: Colors.white,
                 ),
                 child: const Icon(
                   Icons.close,
                   size: 16,
-                  color: Color(0xFF64748B),
+                  color: AppColors.slate500,
                 ),
               ),
             ),
@@ -53,8 +54,8 @@ class RegistrationAppBar extends StatelessWidget
                           right: index == totalSteps - 1 ? 0 : 8),
                       decoration: BoxDecoration(
                         color: isCompleted
-                            ? const Color(0xFFFDBA74)
-                            : const Color(0xFFE2E8F0), // Orange vs Light Grey
+                            ? AppColors.orange300
+                            : AppColors.slate200,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),

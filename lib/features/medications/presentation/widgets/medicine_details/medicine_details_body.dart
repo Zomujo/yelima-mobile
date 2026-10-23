@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -15,7 +16,7 @@ class MedicineDetailsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     if (controller.isLoadingData) {
       return const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFDBA74)));
+          child: CircularProgressIndicator(color: AppColors.orange300));
     }
 
     final data = controller.medicationData;
@@ -42,7 +43,7 @@ class MedicineDetailsBody extends StatelessWidget {
           MedicineDetailsHeaderCard(
               data: data, medicationId: controller.medicationId),
           const SizedBox(height: 32),
-          const Divider(color: Color(0xFFE2E8F0), height: 1),
+          const Divider(color: AppColors.slate200, height: 1),
           const SizedBox(height: 24),
           MedicineDetailsFormFields(data: data),
           const SizedBox(height: 32),

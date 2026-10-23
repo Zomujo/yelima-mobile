@@ -1,3 +1,4 @@
+import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -18,7 +19,7 @@ class MedicineHistoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.slate200),
       ),
       child: InkWell(
         onTap: () {
@@ -38,12 +39,12 @@ class MedicineHistoryCard extends StatelessWidget {
                   AppText.titleMedium(
                     medication.name,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.slate800,
                   ),
                   const SizedBox(width: 8),
                   AppText.bodyMedium(
                     medication.dosage,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.slate400,
                   ),
                 ],
               ),

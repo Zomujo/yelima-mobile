@@ -1,182 +1,130 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../../../core/api/api_client.dart';
 import '../../../../core/exceptions/exceptions.dart';
+import '../../../../core/failures/app_failure.dart';
 
+/// Talks to Firebase Auth, Google, Apple and the account API.
 class AuthRemoteDataSource {
-  final FirebaseAuth _firebaseAuth;
-  final APIClient _apiClient;
-
-  final GoogleSignIn _googleSignIn;
-  final FirebaseFirestore? _firestoreOverride;
-  FirebaseFirestore get _firestore =>
-      _firestoreOverride ?? FirebaseFirestore.instance;
-
   AuthRemoteDataSource({
     required FirebaseAuth firebaseAuth,
     required APIClient apiClient,
     GoogleSignIn? googleSignIn,
     FirebaseFirestore? firestore,
-  })  : _firebaseAuth = firebaseAuth,
-        _apiClient = apiClient,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: ['email']),
+  })  : _auth = firebaseAuth,
+        _api = apiClient,
+        _google = googleSignIn ?? GoogleSignIn(scopes: ['email']),
         _firestoreOverride = firestore;
 
-  Stream<User?> get authStateChanges => _firebaseAuth.userChanges();
-  User? get currentUser => _firebaseAuth.currentUser;
+  final FirebaseAuth _auth;
+  final APIClient _api;
+  final GoogleSignIn _google;
+  final FirebaseFirestore? _firestoreOverride;
 
-  Future<void> signInWithEmail(String email, String password) async {
-    await _firebaseAuth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-  }
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
-  Future<void> signUpWithEmail(String email, String password) async {
-    await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-  }
+  /// Emits on sign-in and sign-out only.
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  Future<void> signInWithGoogle() async {
+  /// The signed-in Firebase user, or null.
+  User? get currentUser => _auth.currentUser;
+
+  /// Whether the user logs in with email and password.
+  bool get usesPassword =>
+      _auth.currentUser?.providerData.any((p) => p.providerId == 'password') ??
+      false;
+
+  /// Reloads the user; throws [UnauthorizedFailure] if the login was revoked.
+  Future<void> reloadUser() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        throw const UserCanceledException();
-      }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await _firebaseAuth.signInWithCredential(credential);
-    } on PlatformException catch (e) {
-      if (e.code == 'sign_in_canceled' || e.code == 'CANCELED') {
-        throw const UserCanceledException();
-      }
+      await _auth.currentUser?.reload().timeout(const Duration(seconds: 5));
+    } on FirebaseAuthException catch (e) {
+      const revoked = {'user-not-found', 'user-disabled', 'user-token-expired'};
+      if (revoked.contains(e.code)) throw const UnauthorizedFailure();
       rethrow;
     }
+    if (_auth.currentUser == null) throw const UnauthorizedFailure();
   }
 
-  Future<void> signInWithApple() async {
-    try {
-      final AuthorizationCredentialAppleID appleCredential =
-          await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+  /// Signs in with email and password.
+  Future<void> signInWithEmail(String email, String password) =>
+      _auth.signInWithEmailAndPassword(email: email, password: password);
 
-      final OAuthCredential credential = OAuthProvider('apple.com').credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
+  /// Creates an email account.
+  Future<void> signUpWithEmail(String email, String password) =>
+      _auth.createUserWithEmailAndPassword(email: email, password: password);
 
-      await _firebaseAuth.signInWithCredential(credential);
-    } on SignInWithAppleAuthorizationException catch (e) {
-      if (e.code == AuthorizationErrorCode.canceled) {
-        throw const UserCanceledException();
-      }
-      rethrow;
-    }
-  }
+  /// Signs in with Google.
+  Future<void> signInWithGoogle() async =>
+      _auth.signInWithCredential(await _googleCredential());
 
-  Future<void> sendPasswordResetEmail(String email) async {
-    await _firebaseAuth.sendPasswordResetEmail(email: email);
-  }
+  /// Signs in with Apple.
+  Future<void> signInWithApple() async =>
+      _auth.signInWithCredential(await _appleCredential());
 
+  /// Sends a password reset link.
+  Future<void> sendPasswordResetEmail(String email) =>
+      _auth.sendPasswordResetEmail(email: email);
+
+  /// Signs out of Firebase and Google.
   Future<void> signOut() async {
     await Future.wait([
-      _firebaseAuth.signOut(),
-      if (await _googleSignIn.isSignedIn()) _googleSignIn.signOut(),
+      _auth.signOut(),
+      if (await _google.isSignedIn()) _google.signOut(),
     ]);
   }
 
-  /// Confirms the signed-in user's identity again with their own provider, returning the user.
+  /// Confirms the user's identity again with the provider they signed in with.
   Future<User> reauthenticate({String? password}) async {
-    final user = _firebaseAuth.currentUser;
-    if (user == null) throw const UnauthenticatedException();
+    final user = _auth.currentUser;
+    if (user == null) throw const UnauthorizedFailure();
+    final providers = user.providerData.map((p) => p.providerId).toSet();
 
-    /// Reauthenticate based on provider.
-    final isPassword = user.providerData.any((p) => p.providerId == 'password');
-    final isGoogle = user.providerData.any((p) => p.providerId == 'google.com');
-    final isApple = user.providerData.any((p) => p.providerId == 'apple.com');
-
-    if (isPassword) {
+    final AuthCredential credential;
+    if (providers.contains('password')) {
       if (password == null || password.isEmpty) {
-        throw const ErrorException(message: 'Password is required');
+        throw const AuthFailure(AuthError.wrongPassword);
       }
-      final credential = EmailAuthProvider.credential(
-        email: user.email!,
-        password: password,
-      );
-      await user.reauthenticateWithCredential(credential);
-    } else if (isGoogle) {
-      await _googleSignIn.signOut();
-      try {
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        if (googleUser == null) {
-          throw const ReauthenticationCancelledException();
-        }
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await user.reauthenticateWithCredential(credential);
-      } on PlatformException catch (e) {
-        if (e.code == 'sign_in_canceled' || e.code == 'CANCELED') {
-          throw const ReauthenticationCancelledException();
-        }
-        rethrow;
-      }
-    } else if (isApple) {
-      try {
-        final AuthorizationCredentialAppleID appleCredential =
-            await SignInWithApple.getAppleIDCredential(
-          scopes: [
-            AppleIDAuthorizationScopes.email,
-            AppleIDAuthorizationScopes.fullName,
-          ],
-        );
-        final credential = OAuthProvider('apple.com').credential(
-          idToken: appleCredential.identityToken,
-          accessToken: appleCredential.authorizationCode,
-        );
-        await user.reauthenticateWithCredential(credential);
-      } on SignInWithAppleAuthorizationException catch (e) {
-        if (e.code == AuthorizationErrorCode.canceled) {
-          throw const ReauthenticationCancelledException();
-        }
-        rethrow;
-      }
+      credential =
+          EmailAuthProvider.credential(email: user.email!, password: password);
+    } else if (providers.contains('google.com')) {
+      await _google.signOut(); // Forces the account picker.
+      credential = await _googleCredential();
+    } else {
+      credential = await _appleCredential();
     }
+    await user.reauthenticateWithCredential(credential);
     return user;
   }
 
-  /// Whether the signed-in user logs in with email and password (so re-auth needs one).
-  bool get usesPassword =>
-      _firebaseAuth.currentUser?.providerData
-          .any((p) => p.providerId == 'password') ??
-      false;
-
-  /// Deletes the account in an order where a failure leaves it usable and retryable:
-  /// confirm identity, delete server data, then the profile doc, then the login itself.
-  /// Each step stops on error; nothing signs the user out early.
+  /// Deletes in an order where any failure leaves the account usable and retryable:
+  /// identity, server data, profile doc, then the login itself.
   Future<void> deleteAccount({String? password}) async {
     final user = await reauthenticate(password: password);
-    await _apiClient.delete('api/v1/client/clean');
+    await _api.delete('api/v1/client/clean');
     await _firestore.collection('users').doc(user.uid).delete();
     await user.delete();
-    if (await _googleSignIn.isSignedIn()) await _googleSignIn.signOut();
+    if (await _google.isSignedIn()) await _google.signOut();
+  }
+
+  Future<OAuthCredential> _googleCredential() async {
+    final account = await _google.signIn();
+    if (account == null) throw const UserCanceledException();
+    final auth = await account.authentication;
+    return GoogleAuthProvider.credential(
+        accessToken: auth.accessToken, idToken: auth.idToken);
+  }
+
+  Future<OAuthCredential> _appleCredential() async {
+    final apple = await SignInWithApple.getAppleIDCredential(scopes: [
+      AppleIDAuthorizationScopes.email,
+      AppleIDAuthorizationScopes.fullName,
+    ]);
+    return OAuthProvider('apple.com').credential(
+        idToken: apple.identityToken, accessToken: apple.authorizationCode);
   }
 }
