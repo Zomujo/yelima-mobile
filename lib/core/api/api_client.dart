@@ -47,9 +47,14 @@ class APIClient {
     ]);
   }
 
-  Future<dynamic> get(String path, {JSON? queryParameters, Options? options}) async {
+  /// Wraps a ready-made Dio without the auth interceptors, e.g. one backed by a fake API in tests.
+  APIClient.withDio(Dio dio) : _dio = dio;
+
+  Future<dynamic> get(String path,
+      {JSON? queryParameters, Options? options}) async {
     try {
-      final response = await _dio.get(path, queryParameters: queryParameters, options: options);
+      final response = await _dio.get(path,
+          queryParameters: queryParameters, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);
@@ -59,8 +64,8 @@ class APIClient {
   Future<dynamic> post(String path,
       {dynamic data, JSON? queryParameters, Options? options}) async {
     try {
-      final response =
-          await _dio.post(path, data: data, queryParameters: queryParameters, options: options);
+      final response = await _dio.post(path,
+          data: data, queryParameters: queryParameters, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);
@@ -96,8 +101,8 @@ class APIClient {
   Future<dynamic> put(String path,
       {dynamic data, JSON? queryParameters, Options? options}) async {
     try {
-      final response =
-          await _dio.put(path, data: data, queryParameters: queryParameters, options: options);
+      final response = await _dio.put(path,
+          data: data, queryParameters: queryParameters, options: options);
       return response.data;
     } on DioException catch (e) {
       _handleDioError(e);

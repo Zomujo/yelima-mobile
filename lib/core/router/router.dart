@@ -27,6 +27,7 @@ import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../shared/screens/not_found_screen.dart';
 import '../../shared/screens/main_scaffold.dart';
 import 'route_paths.dart';
+import 'app_redirect.dart';
 import '../services/monitoring_service.dart';
 import '../services/shared_prefs_service.dart';
 import '../../injection_container.dart';
@@ -43,70 +44,17 @@ class AppRouter {
       refreshListenable: Listenable.merge(
           [authController, userController, sl<AppStartupService>()]),
       observers: [MonitoringService.instance.analyticsObserver],
-      redirect: (context, state) {
-        final isInitialized =
-            authController.isInitialized && userController.isInitialized;
-        final isAuthenticated = authController.isAuthenticated;
-        final isSyncInProgress = authController.isInitialSyncInProgress;
-
-        final isRegistrationComplete =
-            userController.userEntity?.registrationStatus ==
-                RegistrationStatus.complete;
-
-        final isAuthRoute = state.matchedLocation == RoutePaths.signIn ||
-            state.matchedLocation == RoutePaths.signUp ||
-            state.matchedLocation == RoutePaths.forgotPassword;
-        final isRegistrationRoute =
-            state.matchedLocation == RoutePaths.registration;
-        final isSplashRoute = state.matchedLocation == RoutePaths.splash;
-        final isWelcomeRoute = state.matchedLocation == RoutePaths.welcome;
-
-        final redirectParam = state.uri.queryParameters['redirect'];
-        final currentUri = state.uri.toString();
-        // Determine the original user intent.
-        final intendedPath = redirectParam ??
-            (isAuthRoute || isRegistrationRoute || isSplashRoute || isWelcomeRoute
-                ? null
-                : currentUri);
-
-        String withRedirect(String path) {
-          if (intendedPath == null || intendedPath == '/') return path;
-          return '$path?redirect=${Uri.encodeComponent(intendedPath)}';
-        }
-
-        final isSplashAnimationComplete =
-            sl<AppStartupService>().isAnimationComplete;
-
-        // ── Still initializing or syncing profile → hold navigation ──
-        if (!isInitialized || isSyncInProgress || !isSplashAnimationComplete) {
-          if (isAuthRoute || isSplashRoute || isWelcomeRoute) return null;
-          return withRedirect(RoutePaths.splash);
-        }
-
-        final hasCompletedOnboarding = sl<SharedPrefsService>().hasCompletedOnboarding();
-        if (!hasCompletedOnboarding) {
-          if (isWelcomeRoute) return null;
-          return RoutePaths.welcome;
-        }
-
-        if (!isAuthenticated) {
-          if (isAuthRoute) return null;
-          return withRedirect(RoutePaths.signIn);
-        }
-
-        // Authenticated users
-        if (!isRegistrationComplete) {
-          if (isRegistrationRoute) return null;
-          return withRedirect(RoutePaths.registration);
-        }
-
-        // Fully registered users shouldn't see auth or registration routes
-        if (isAuthRoute || isRegistrationRoute || isSplashRoute) {
-          return intendedPath ?? RoutePaths.home;
-        }
-
-        return null;
-      },
+      redirect: (context, state) =>
+          appRedirect(state.uri, state.matchedLocation, (
+        initialized:
+            authController.isInitialized && userController.isInitialized,
+        syncing: authController.isInitialSyncInProgress,
+        splashDone: sl<AppStartupService>().isAnimationComplete,
+        onboarded: sl<SharedPrefsService>().hasCompletedOnboarding(),
+        authenticated: authController.isAuthenticated,
+        registered: userController.userEntity?.registrationStatus ==
+            RegistrationStatus.complete,
+      )),
       routes: [
         GoRoute(
           path: '/',
