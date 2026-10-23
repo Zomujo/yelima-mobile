@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:clock/clock.dart';
 
 part 'user_entity.freezed.dart';
 part 'user_entity.g.dart';
@@ -44,7 +45,7 @@ abstract class UserEntity with _$UserEntity {
 
   int? get age {
     if (dateOfBirth == null) return null;
-    final today = DateTime.now();
+    final today = clock.now();
     int age = today.year - dateOfBirth!.year;
     if (today.month < dateOfBirth!.month ||
         (today.month == dateOfBirth!.month && today.day < dateOfBirth!.day)) {

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../layout/app_text.dart';
+import 'package:clock/clock.dart';
 
 class AppDatePickerField extends StatefulWidget {
   final String label;
@@ -114,9 +115,9 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.date,
                   initialDateTime: tempPickedDate,
-                  maximumDate: DateTime.now(),
+                  maximumDate: clock.now(),
                   minimumYear: 1900,
-                  maximumYear: DateTime.now().year,
+                  maximumYear: clock.now().year,
                   onDateTimeChanged: (DateTime newDate) {
                     tempPickedDate = newDate;
                   },

@@ -7,6 +7,7 @@ import '../../domain/repositories/ai_chat_repository.dart';
 import 'ai_chat_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
+import 'package:clock/clock.dart';
 
 class AiChatController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
@@ -247,7 +248,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
       sender: 'user',
       type: MessageType.text,
       value: text,
-      createdAt: DateTime.now(),
+      createdAt: clock.now(),
       status: MessageStatus.sending,
       localChatId: localId,
     );
@@ -290,7 +291,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
             sender: 'bot',
             type: MessageType.text,
             value: botData['text'] as String,
-            createdAt: DateTime.now(),
+            createdAt: clock.now(),
             status: MessageStatus.sent,
             suggestions: suggestions,
             localChatId: localId,
@@ -320,7 +321,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
       sender: 'user',
       type: MessageType.audio,
       value: durationStr,
-      createdAt: DateTime.now(),
+      createdAt: clock.now(),
       status: MessageStatus.sending,
       localChatId: localId,
       audioUrl: filePath,
@@ -365,7 +366,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
             sender: 'bot',
             type: MessageType.text,
             value: botData['text'] as String,
-            createdAt: DateTime.now(),
+            createdAt: clock.now(),
             status: MessageStatus.sent,
             suggestions: suggestions,
             localChatId: localId,

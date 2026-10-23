@@ -23,6 +23,10 @@ class AuthController extends ChangeNotifier with SafeNotifier {
 
   final AuthRepository _repository;
   final SessionLifecycleService _sessionLifecycleService;
+  final FirebaseAuth _firebaseAuth;
+  final ConnectivityService _connectivity;
+  final MutationSyncManager _syncManager;
+  final AppDatabase _db;
   StreamSubscription<User?>? _authStateSubscription;
 
   // --------------------------------------------------------------------------
@@ -32,8 +36,16 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   AuthController({
     required AuthRepository repository,
     required SessionLifecycleService sessionLifecycleService,
+    required FirebaseAuth firebaseAuth,
+    required ConnectivityService connectivity,
+    required MutationSyncManager syncManager,
+    required AppDatabase db,
   })  : _repository = repository,
-        _sessionLifecycleService = sessionLifecycleService {
+        _sessionLifecycleService = sessionLifecycleService,
+        _firebaseAuth = firebaseAuth,
+        _connectivity = connectivity,
+        _syncManager = syncManager,
+        _db = db {
     _initializeAuthStateListener();
   }
 
@@ -54,7 +66,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   void _initializeAuthStateListener() {
     _authStateSubscription?.cancel();
     _authStateSubscription =
-        FirebaseAuth.instance.authStateChanges().listen((user) async {
+        _firebaseAuth.authStateChanges().listen((user) async {
       if (user == null) {
         _updateState(_state.copyWith(
           currentUser: null,
@@ -96,11 +108,8 @@ class AuthController extends ChangeNotifier with SafeNotifier {
 
   Future<void> _flushPendingMutations() async {
     try {
-      if (!GetIt.instance.isRegistered<MutationSyncManager>()) return;
-      if (!await GetIt.instance<ConnectivityService>().isConnected) return;
-      await GetIt.instance<MutationSyncManager>()
-          .triggerSync()
-          .timeout(const Duration(seconds: 10));
+      if (!await _connectivity.isConnected) return;
+      await _syncManager.triggerSync().timeout(const Duration(seconds: 10));
     } catch (e) {
       debugPrint('Best-effort pre-session-end sync failed or timed out: $e');
     }
@@ -109,7 +118,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   Future<void> _refreshAuthAndProfile(User user) async {
     try {
       await user.reload().timeout(const Duration(seconds: 5));
-      if (FirebaseAuth.instance.currentUser == null) {
+      if (_firebaseAuth.currentUser == null) {
         _showSessionExpiredSnackbar();
         await _repository.signOut();
         return;
@@ -259,7 +268,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   Future<void> signOut(BuildContext context) async {
     GlobalAsyncLoader.show(context, message: "Signing out...");
 
-    final isConnected = await GetIt.instance<ConnectivityService>().hasNetworkInterface;
+    final isConnected = await _connectivity.hasNetworkInterface;
     if (!isConnected) {
       GlobalAsyncLoader.hide();
       AppSnackBar.showError(context.mounted ? context : null,
@@ -272,9 +281,7 @@ class AuthController extends ChangeNotifier with SafeNotifier {
       debugPrint('Error syncing before sign out: $e');
     }
 
-    final stillPending = await GetIt.instance<AppDatabase>()
-        .pendingMutationsDao
-        .getAllPendingMutations();
+    final stillPending = await _db.pendingMutationsDao.getAllPendingMutations();
     if (stillPending.isNotEmpty) {
       GlobalAsyncLoader.hide();
       AppSnackBar.showError(context.mounted ? context : null,

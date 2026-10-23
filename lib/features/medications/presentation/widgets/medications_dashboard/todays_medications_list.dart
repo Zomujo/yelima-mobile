@@ -8,6 +8,7 @@ import '../../../../../shared/utils/app_snackbar.dart';
 import '../../controllers/medication_controller.dart';
 import 'medication_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:clock/clock.dart';
 
 class TodaysMedicationsList extends StatelessWidget {
   final MedicationController controller;
@@ -66,7 +67,7 @@ class TodaysMedicationsList extends StatelessWidget {
         (context, index) {
           final med = meds[index];
           final timeString = AppDateFormats.timeShort.format(med.toBeTakenAt);
-          final now = DateTime.now();
+          final now = clock.now();
           final todayScheduledTime = DateTime(
               now.year, now.month, now.day, med.toBeTakenAt.hour, med.toBeTakenAt.minute);
               

@@ -25,6 +25,7 @@ import '../models/create_medication_model.dart';
 import '../models/update_medication_model.dart';
 import '../models/medication_detail_model.dart';
 import '../models/seeded_medication_list_response_model.dart';
+import 'package:clock/clock.dart';
 
 class MedicationRepositoryImpl implements MedicationRepository {
   final MedicationRemoteDataSource remoteDataSource;
@@ -209,7 +210,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   AsyncResponse<void> confirmMedication(String medicationId, String section,
       {String? date}) async {
     final effectiveDate =
-        date ?? DateTime.now().toIso8601String().split('T')[0];
+        date ?? clock.now().toIso8601String().split('T')[0];
 
     final meds = await localDataSource.getAllMedications();
     final target = meds
@@ -230,16 +231,16 @@ class MedicationRepositoryImpl implements MedicationRepository {
       entityId: medicationId,
       action: 'confirmMedication',
       payloadJson: jsonEncode(payload),
-      createdAt: DateTime.now(),
+      createdAt: clock.now(),
     );
 
     await localDataSource.addPendingMutation(pending);
 
-    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+    final todayStr = clock.now().toIso8601String().split('T')[0];
     await localDataSource.markMedicationLogAsTakenOffline(
       const Uuid().v4(),
       medicationId,
-      DateTime.now(),
+      clock.now(),
     );
     await localDataSource.markGlobalDayAsTakenOffline(todayStr);
 
@@ -382,7 +383,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       entityId: localId,
       action: 'createMedication',
       payloadJson: jsonEncode(data.toJson()),
-      createdAt: DateTime.now(),
+      createdAt: clock.now(),
     );
 
     await localDataSource.addPendingMutation(pending);
@@ -463,7 +464,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       entityId: id,
       action: 'updateMedication',
       payloadJson: jsonEncode(data.toJson()),
-      createdAt: DateTime.now(),
+      createdAt: clock.now(),
     );
 
     await localDataSource.addPendingMutation(pending);
@@ -483,7 +484,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       entityId: id,
       action: 'deleteMedication',
       payloadJson: '{}',
-      createdAt: DateTime.now(),
+      createdAt: clock.now(),
     );
 
     await localDataSource.addPendingMutation(pending);

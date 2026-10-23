@@ -14,6 +14,7 @@ import '../../../../core/services/session_lifecycle_service.dart';
 import '../models/ai_chat_response.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/file_service.dart';
+import 'package:clock/clock.dart';
 
 class AiChatRepositoryImpl
     implements AiChatRepository, SessionLifecycleHandler {
@@ -145,7 +146,7 @@ class AiChatRepositoryImpl
     if (!isConnected) {
       await _localDataSource.queueOfflineMessageMutation(
         entityId: localChatId ??
-            'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+            'offline_chat_${clock.now().millisecondsSinceEpoch}',
         action: action,
         payload: payload,
       );
@@ -162,7 +163,7 @@ class AiChatRepositoryImpl
 
       await _localDataSource.queueOfflineMessageMutation(
         entityId: localChatId ??
-            'offline_chat_${DateTime.now().millisecondsSinceEpoch}',
+            'offline_chat_${clock.now().millisecondsSinceEpoch}',
         action: action,
         payload: payload,
       );
@@ -233,7 +234,7 @@ class AiChatRepositoryImpl
           type: MessageType.text,
           value: messageData['text'] as String,
           createdAt: messageData['createdAt'] == null
-              ? DateTime.now()
+              ? clock.now()
               : DateTime.parse(messageData['createdAt'] as String),
           status: MessageStatus.sent,
           suggestions: suggestions,

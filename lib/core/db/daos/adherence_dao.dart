@@ -3,6 +3,7 @@ import '../app_database.dart';
 import '../tables/adherence_globals.dart';
 import '../tables/adherence_global_days.dart';
 import '../tables/medication_logs.dart';
+import 'package:clock/clock.dart';
 
 part 'adherence_dao.g.dart';
 
@@ -16,7 +17,7 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
       String id, double rate, List<AdherenceGlobalDay> days) async {
     await transaction(() async {
       await into(adherenceGlobals).insert(
-        AdherenceGlobal(id: id, rate: rate, updatedAt: DateTime.now()),
+        AdherenceGlobal(id: id, rate: rate, updatedAt: clock.now()),
         mode: InsertMode.insertOrReplace,
       );
       await (delete(adherenceGlobalDays)..where((t) => t.type.equals(id))).go();

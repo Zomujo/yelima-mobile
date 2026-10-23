@@ -16,6 +16,7 @@ class EditProfileController extends ChangeNotifier with SafeNotifier {
 
   final UserRepository _repository;
   final UserController _userController;
+  final FirebaseAuth _firebaseAuth;
 
   // --------------------------------------------------------------------------
   // |                               Initialization & Lifecycle   |
@@ -24,8 +25,10 @@ class EditProfileController extends ChangeNotifier with SafeNotifier {
   EditProfileController({
     required UserRepository repository,
     required UserController userController,
+    required FirebaseAuth firebaseAuth,
   })  : _repository = repository,
-        _userController = userController;
+        _userController = userController,
+        _firebaseAuth = firebaseAuth;
 
   EditProfileState _state = const EditProfileState();
   EditProfileState get state => _state;
@@ -86,7 +89,7 @@ class EditProfileController extends ChangeNotifier with SafeNotifier {
 
   /// Submits the updated profile data to the backend.
   AsyncResponse<void> saveProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null) {
       return left('User not authenticated.');
     }

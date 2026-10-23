@@ -11,6 +11,7 @@ import '../../../../core/utils/custom_types.dart';
 import '../../../../core/exceptions/exceptions.dart';
 import 'user_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import 'package:clock/clock.dart';
 
 class UserController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
@@ -18,6 +19,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   final UserRepository _repository;
+  final FirebaseAuth _firebaseAuth;
   StreamSubscription<User?>? _authStateSubscription;
   StreamSubscription<UserEntity?>? _userProfileSubscription;
 
@@ -27,7 +29,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
   UserController({
     required UserRepository repository,
-  }) : _repository = repository {
+    required FirebaseAuth firebaseAuth,
+  })  : _repository = repository,
+        _firebaseAuth = firebaseAuth {
     _initializeAuthStateListener();
   }
 
@@ -48,7 +52,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
   void _initializeAuthStateListener() {
     _authStateSubscription?.cancel();
     _authStateSubscription =
-        FirebaseAuth.instance.authStateChanges().listen((user) async {
+        _firebaseAuth.authStateChanges().listen((user) async {
       final stamp = ++_userEventStamp;
 
       if (user == null) {
@@ -118,7 +122,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
 
   /// Marks a tutorial as completed by the user
   Future<void> markTutorialCompleted(String tutorialId) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null || state.userEntity == null) return;
 
     final currentTutorials =
@@ -149,7 +153,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     required String gender,
     required String phoneNumber,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null) return left('User not authenticated');
 
     GlobalAsyncLoader.show(context, message: "Saving details...");
@@ -211,7 +215,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
   /// Updates the user's date of birth.
   AsyncResponse<void> updateDob(BuildContext context,
       {required DateTime dob}) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null) return left('User not authenticated');
 
     GlobalAsyncLoader.show(context, message: "Saving date of birth...");
@@ -270,7 +274,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     required HealthConditionCategory? category,
     required bool consented,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null || state.userEntity == null || category == null) {
       return left('Invalid user state or missing category');
     }
@@ -331,7 +335,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
     BuildContext context, {
     required String facilityId,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null || state.userEntity == null) {
       return left('Invalid user state');
     }
@@ -347,7 +351,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
               state.userEntity!.gender?.toLowerCase() ?? 'prefer_not_to_say',
           "dateOfBirth":
               state.userEntity!.dateOfBirth?.toUtc().toIso8601String() ??
-                  DateTime.now().toUtc().toIso8601String(),
+                  clock.now().toUtc().toIso8601String(),
           "age": state.userEntity!.age ?? 0,
           "chronicConditions":
               state.userEntity!.conditions.map((c) => c.toLowerCase()).toList(),
@@ -365,7 +369,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
               final data = {
                 'facilityId': facilityId,
                 'registrationStatus': RegistrationStatus.complete.name,
-                'createdAt': DateTime.now().toIso8601String(),
+                'createdAt': clock.now().toIso8601String(),
               };
               return await _repository.updateUserProfile(user.uid, data);
             }
@@ -375,7 +379,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
             final data = {
               'facilityId': facilityId,
               'registrationStatus': RegistrationStatus.complete.name,
-              'createdAt': DateTime.now().toIso8601String(),
+              'createdAt': clock.now().toIso8601String(),
             };
 
             return await _repository.updateUserProfile(user.uid, data);
@@ -397,7 +401,7 @@ class UserController extends ChangeNotifier with SafeNotifier {
           userEntity: state.userEntity!.copyWith(
             facilityId: facilityId,
             registrationStatus: RegistrationStatus.complete,
-            createdAt: DateTime.now(),
+            createdAt: clock.now(),
           ),
         );
         return right(null);

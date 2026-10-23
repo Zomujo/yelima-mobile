@@ -7,6 +7,7 @@ import '../../domain/usecases/save_vital_reading_usecase.dart';
 import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
 import '../states/reading_logging_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
+import 'package:clock/clock.dart';
 
 class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
@@ -27,7 +28,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
         _saveVitalReadingUseCase = saveVitalReadingUseCase;
 
   ReadingLoggingState _state =
-      ReadingLoggingState(selectedDate: DateTime.now());
+      ReadingLoggingState(selectedDate: clock.now());
   ReadingLoggingState get state => _state;
 
   set state(ReadingLoggingState value) {
@@ -101,7 +102,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
 
   /// Updates the selected date while preserving the current time.
   void setSelectedDate(DateTime date) {
-    final now = DateTime.now();
+    final now = clock.now();
     final newDate = DateTime(
         date.year, date.month, date.day, now.hour, now.minute, now.second);
 

@@ -6,6 +6,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 
 import '../../../../core/utils/app_date_formats.dart';
 import '../../domain/entities/appointment_entity.dart';
+import 'package:clock/clock.dart';
 
 class AppointmentCard extends StatelessWidget {
   const AppointmentCard({
@@ -129,7 +130,7 @@ class AppointmentCard extends StatelessWidget {
   }
 
   String _formatUpcoming(DateTime date) {
-    final now = DateTime.now();
+    final now = clock.now();
     final today = DateTime(now.year, now.month, now.day);
     final targetDate = DateTime(date.year, date.month, date.day);
     final difference = targetDate.difference(today);
@@ -143,7 +144,7 @@ class AppointmentCard extends StatelessWidget {
   }
 
   String _formatPast(DateTime date) {
-    final now = DateTime.now();
+    final now = clock.now();
     final today = DateTime(now.year, now.month, now.day);
     final targetDate = DateTime(date.year, date.month, date.day);
     final difference = today.difference(targetDate);

@@ -4,6 +4,11 @@ import '../../managers/token_manager.dart';
 import '../../utils/logger.dart';
 
 class ErrorInterceptor extends Interceptor {
+  ErrorInterceptor({FirebaseAuth? firebaseAuth}) : _authOverride = firebaseAuth;
+
+  final FirebaseAuth? _authOverride;
+  FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
+
   static bool _isLoggingOut = false;
 
   @override
@@ -15,7 +20,7 @@ class ErrorInterceptor extends Interceptor {
             '401 Unauthorized detected. Triggering silent global logout.');
         TokenManager().clearToken();
         // Silently sign out to drop back to login via AuthController's stream
-        FirebaseAuth.instance.signOut().catchError((e) {
+        _auth.signOut().catchError((e) {
           AppLogger.e('Failed to sign out silently from Firebase: $e');
         }).whenComplete(() {
           // Reset lock after a delay to allow UI to transition

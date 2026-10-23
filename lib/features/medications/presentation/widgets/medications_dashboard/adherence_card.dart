@@ -4,6 +4,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_adherence.dart';
 import '../../../../../core/utils/app_date_formats.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:clock/clock.dart';
 
 enum DayStatus { taken, missed, future }
 
@@ -29,7 +30,7 @@ class AdherenceCard extends StatelessWidget {
         status = DayStatus.taken;
       } else {
         // If it's a future date, we mark it future, else missed
-        final now = DateTime.now();
+        final now = clock.now();
         if (dayData.takenAt.isAfter(now)) {
           status = DayStatus.future;
         } else {

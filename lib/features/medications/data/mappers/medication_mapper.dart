@@ -9,6 +9,7 @@ import '../models/medication_detail_model.dart';
 import '../models/update_medication_model.dart';
 import '../models/seeded_medication_model.dart';
 import '../models/medication_model.dart';
+import 'package:clock/clock.dart';
 
 class MedicationMapper {
   /// Maps a Drift [Medication] model to a Domain [MedicationEntity].
@@ -18,7 +19,7 @@ class MedicationMapper {
       name: med.name,
       dosage: med.dosage,
       purpose: med.purpose ?? '',
-      toBeTakenAt: med.toBeTakenAt ?? DateTime.now(),
+      toBeTakenAt: med.toBeTakenAt ?? clock.now(),
       taken: med.taken,
     );
   }
@@ -33,8 +34,8 @@ class MedicationMapper {
       morning: decodeSchedule(med.morningJson),
       afternoon: decodeSchedule(med.afternoonJson),
       evening: decodeSchedule(med.eveningJson),
-      createdAt: med.toBeTakenAt ?? DateTime.now(),
-      updatedAt: med.toBeTakenAt ?? DateTime.now(),
+      createdAt: med.toBeTakenAt ?? clock.now(),
+      updatedAt: med.toBeTakenAt ?? clock.now(),
     );
   }
 
@@ -83,7 +84,7 @@ class MedicationMapper {
         name: data.name,
         dosage: data.dosage,
         notes: data.notes,
-        toBeTakenAt: DateTime.now(),
+        toBeTakenAt: clock.now(),
         taken: false,
         section: 'MORNING',
         morningJson: mJson,
@@ -183,8 +184,8 @@ class MedicationMapper {
       possibleDosages: c.possibleDosagesJson != null
           ? List<String>.from(jsonDecode(c.possibleDosagesJson!))
           : [],
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: clock.now(),
+      updatedAt: clock.now(),
     );
   }
 
@@ -198,8 +199,8 @@ class MedicationMapper {
     DateTime derivedTime = existing?.toBeTakenAt ?? remote.toBeTakenAt;
     
     // If existing is null and remote.toBeTakenAt is exactly now (defaulted), try to set a sensible fallback based on section
-    if (existing == null && DateTime.now().difference(remote.toBeTakenAt).inSeconds.abs() < 5) {
-      final now = DateTime.now();
+    if (existing == null && clock.now().difference(remote.toBeTakenAt).inSeconds.abs() < 5) {
+      final now = clock.now();
       if (section == 'MORNING') {
         derivedTime = DateTime(now.year, now.month, now.day, 8, 0);
       } else if (section == 'AFTERNOON') {

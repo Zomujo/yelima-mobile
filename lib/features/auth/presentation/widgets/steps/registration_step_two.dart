@@ -7,6 +7,7 @@ import '../../../../../shared/widgets/layout/step_layout.dart';
 import '../../../../../shared/widgets/forms/app_date_picker_field.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../core/extensions/l10n_extension.dart';
+import 'package:clock/clock.dart';
 
 class RegistrationStepTwo extends StatefulWidget {
   const RegistrationStepTwo({
@@ -60,7 +61,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
       if (_selectedDate == null) return false;
 
       // 18+ Age validation
-      final today = DateTime.now();
+      final today = clock.now();
       var age = today.year - _selectedDate!.year;
       if (today.month < _selectedDate!.month ||
           (today.month == _selectedDate!.month &&
@@ -99,7 +100,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
     DateTime finalDob;
     if (_isEnteringAge) {
       final age = int.parse(_ageController.text);
-      finalDob = DateTime(DateTime.now().year - age, 1, 1);
+      finalDob = DateTime(clock.now().year - age, 1, 1);
     } else {
       finalDob = _selectedDate!;
     }

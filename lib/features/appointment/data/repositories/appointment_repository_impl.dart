@@ -8,6 +8,7 @@ import '../../domain/repositories/appointment_repository.dart';
 import '../datasources/appointment_remote_datasource.dart';
 import '../../../../core/db/app_database.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:clock/clock.dart';
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
   final AppointmentRemoteDataSource remoteDataSource;
@@ -72,7 +73,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       required int page, required int pageSize, required String filter}) async {
     try {
       final localAppointments = await db.appointmentsDao.getAllAppointments();
-      final now = DateTime.now();
+      final now = clock.now();
       final filtered = localAppointments
           .where((a) => filter == 'upcoming'
               ? a.appointmentDate.isAfter(now)
@@ -152,7 +153,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       getLocalNearestAppointment() async {
     try {
       final localApts = await db.appointmentsDao.getAllAppointments();
-      final now = DateTime.now();
+      final now = clock.now();
 
       final upcoming = localApts
           .where((a) => a.appointmentDate.isAfter(now))

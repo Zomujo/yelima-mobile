@@ -7,10 +7,17 @@ import '../../utils/logger.dart';
 class AuthInterceptor extends Interceptor {
   final TokenManager _tokenManager;
   final Dio _dio;
+  final FirebaseAuth? _authOverride;
 
-  AuthInterceptor({TokenManager? tokenManager, required Dio dio})
+  AuthInterceptor(
+      {TokenManager? tokenManager,
+      required Dio dio,
+      FirebaseAuth? firebaseAuth})
       : _tokenManager = tokenManager ?? TokenManager(),
-        _dio = dio;
+        _dio = dio,
+        _authOverride = firebaseAuth;
+
+  FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
 
   // A Completer used to serialize concurrent token fetch operations.
   Completer<String?>? _tokenCompleter;
@@ -42,7 +49,7 @@ class AuthInterceptor extends Interceptor {
             'AuthInterceptor: 401 Unauthorized received on RETRY. Logging out user.');
         try {
           await _tokenManager.clearTokens();
-          await FirebaseAuth.instance.signOut();
+          await _auth.signOut();
         } catch (e) {
           AppLogger.e('AuthInterceptor: Error signing out on 401', e);
         }
@@ -79,7 +86,7 @@ class AuthInterceptor extends Interceptor {
       AppLogger.w(
           'AuthInterceptor: 401 Unauthorized received. Attempting to force refresh token...');
       try {
-        final user = FirebaseAuth.instance.currentUser;
+        final user = _auth.currentUser;
         if (user != null) {
           final newToken = await user.getIdToken(true);
           _refreshCompleter!.complete(true);
@@ -114,11 +121,12 @@ class AuthInterceptor extends Interceptor {
           });
         }
         if (e is FirebaseAuthException && e.code == 'network-request-failed') {
-          AppLogger.w('AuthInterceptor: Network error during token refresh. Keeping session alive.');
+          AppLogger.w(
+              'AuthInterceptor: Network error during token refresh. Keeping session alive.');
         } else {
           try {
             await _tokenManager.clearTokens();
-            await FirebaseAuth.instance.signOut();
+            await _auth.signOut();
           } catch (_) {}
         }
         return handler.next(err);

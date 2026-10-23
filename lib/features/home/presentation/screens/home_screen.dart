@@ -12,6 +12,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
+import 'package:clock/clock.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = context.watch<UserController>().userEntity;
     final String greetingName = user?.firstName ?? '';
     final String formattedDate =
-        AppDateFormats.dayDateMonth.format(DateTime.now());
+        AppDateFormats.dayDateMonth.format(clock.now());
 
     return Container(
       decoration: const BoxDecoration(

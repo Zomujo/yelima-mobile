@@ -1,5 +1,6 @@
 import '../../../../core/db/app_database.dart';
 import '../models/vital_history_model.dart';
+import 'package:clock/clock.dart';
 
 abstract class HomeMetricsLocalDataSource {
   Future<List<VitalHistoryModel>> getCachedVitalHistories();
@@ -58,7 +59,7 @@ class HomeMetricsLocalDataSourceImpl implements HomeMetricsLocalDataSource {
       value: adherence.toString(),
       unit: 'fraction',
       severity: 'normal',
-      recordedAt: DateTime.now(),
+      recordedAt: clock.now(),
     );
     await _database.vitalsDao.insertVitals([adherenceModel.toDrift()]);
   }

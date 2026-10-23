@@ -7,6 +7,7 @@ void initProfile(GetIt sl) {
     () => EditProfileController(
       repository: sl(),
       userController: sl(),
+      firebaseAuth: sl(),
     ),
   );
 }

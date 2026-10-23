@@ -1,4 +1,5 @@
 import '../../domain/entities/medication_history_entity.dart';
+import 'package:clock/clock.dart';
 
 class MedicationHistoryModel extends MedicationHistoryEntity {
   const MedicationHistoryModel({
@@ -38,7 +39,7 @@ class MedicationLogModel extends MedicationLogEntity {
       id: json['id'] ?? '',
       taken: isTaken,
       takenAt:
-          dateStr != null ? DateTime.parse(dateStr).toLocal() : DateTime.now(),
+          dateStr != null ? DateTime.parse(dateStr).toLocal() : clock.now(),
     );
   }
 }

@@ -6,6 +6,7 @@ import '../../../../core/db/app_database.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import 'ai_chat_remote_datasource.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:clock/clock.dart';
 
 class AiChatRemoteMutationSource implements IRemoteMutationSource {
   final AiChatRemoteDataSource _remoteDataSource;
@@ -28,7 +29,7 @@ class AiChatRemoteMutationSource implements IRemoteMutationSource {
       sender: 'bot',
       type: 'text',
       value: botData['text'] as String,
-      createdAt: DateTime.now(),
+      createdAt: clock.now(),
       status: MessageStatus.sent.name,
       suggestionsJson: drift.Value(jsonEncode(suggestions)),
       localChatId: drift.Value(localChatId),

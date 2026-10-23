@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import '../app_database.dart';
 import '../tables/appointments.dart';
+import 'package:clock/clock.dart';
 
 part 'appointments_dao.g.dart';
 
@@ -31,14 +32,14 @@ class AppointmentsDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> clearUpcomingAppointments() {
     return (delete(appointments)
-          ..where((t) => t.appointmentDate.isBiggerThanValue(DateTime.now())))
+          ..where((t) => t.appointmentDate.isBiggerThanValue(clock.now())))
         .go();
   }
 
   Future<void> clearPastAppointments() {
     return (delete(appointments)
           ..where(
-              (t) => t.appointmentDate.isSmallerOrEqualValue(DateTime.now())))
+              (t) => t.appointmentDate.isSmallerOrEqualValue(clock.now())))
         .go();
   }
 }

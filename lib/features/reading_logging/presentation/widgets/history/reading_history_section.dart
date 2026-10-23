@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:yelima/features/reading_logging/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:yelima/features/home/domain/entities/vital_history_entity.dart';
+import 'package:clock/clock.dart';
 
 class ReadingHistorySection extends StatefulWidget {
   const ReadingHistorySection({super.key});
@@ -98,7 +99,7 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final vital = displayVitals[index];
-                    final date = vital.recordedAt ?? DateTime.now();
+                    final date = vital.recordedAt ?? clock.now();
                     final dateStr = AppDateFormats.dayDateMonth.format(date);
                     final typeLower = vital.vitalType.toLowerCase();
                     final isBP = typeLower == 'bloodpressure';

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import '../app_database.dart';
 import '../tables/pending_mutations.dart';
 import 'dart:convert';
+import 'package:clock/clock.dart';
 
 part 'pending_mutations_dao.g.dart';
 
@@ -51,12 +52,12 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
     required Map<String, dynamic> payload,
   }) async {
     await addPendingMutation(PendingMutationsCompanion(
-      id: Value('mut_${DateTime.now().microsecondsSinceEpoch}'),
+      id: Value('mut_${clock.now().microsecondsSinceEpoch}'),
       entityId: Value(entityId),
       entityType: Value(entityType),
       action: Value(action),
       payloadJson: Value(jsonEncode(payload)),
-      createdAt: Value(DateTime.now()),
+      createdAt: Value(clock.now()),
     ));
   }
 }

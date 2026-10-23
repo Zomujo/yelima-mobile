@@ -5,6 +5,7 @@ import 'progress_state.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 import 'package:get_it/get_it.dart';
+import 'package:clock/clock.dart';
 
 class ProgressController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
   // --------------------------------------------------------------------------
@@ -97,7 +98,7 @@ class ProgressController extends ChangeNotifier with SafeNotifier implements Ses
             data: data,
             isLoading: false,
             isSyncFailed: false,
-            lastUpdated: DateTime.now(),
+            lastUpdated: clock.now(),
             error: null,
           );
         }
@@ -147,7 +148,7 @@ class ProgressController extends ChangeNotifier with SafeNotifier implements Ses
             data: data,
             isLoading: false,
             isSyncFailed: false,
-            lastUpdated: DateTime.now(),
+            lastUpdated: clock.now(),
             error: null,
           );
         }

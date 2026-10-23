@@ -1,4 +1,5 @@
 import '../../domain/entities/medication_entity.dart';
+import 'package:clock/clock.dart';
 
 class MedicationModel extends MedicationEntity {
   final Map<String, dynamic>? morning;
@@ -25,7 +26,7 @@ class MedicationModel extends MedicationEntity {
       purpose: json['purpose'] ?? '',
       toBeTakenAt: json['toBeTakenAt'] != null
           ? DateTime.parse(json['toBeTakenAt']).toLocal()
-          : DateTime.now(),
+          : clock.now(),
       taken: json['taken'] ?? false,
       morning: json['morning'],
       afternoon: json['afternoon'],

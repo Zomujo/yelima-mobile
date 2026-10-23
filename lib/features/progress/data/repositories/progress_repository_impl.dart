@@ -10,6 +10,7 @@ import '../../domain/entities/vital_trends.dart';
 import '../../domain/repositories/progress_repository.dart';
 import '../datasources/progress_remote_datasource.dart';
 import '../utils/progress_isolate_parsers.dart';
+import 'package:clock/clock.dart';
 
 class ProgressRepositoryImpl implements ProgressRepository {
   final ProgressRemoteDataSource _remoteDataSource;
@@ -56,7 +57,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
             value: drift.Value(trendJson),
             unit: const drift.Value('json'),
             severity: const drift.Value('normal'),
-            recordedAt: drift.Value(DateTime.now()),
+            recordedAt: drift.Value(clock.now()),
           );
           await db.vitalsDao.insertVitals([cacheModel]);
 
@@ -113,7 +114,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
             value: drift.Value(trendJson),
             unit: const drift.Value('json'),
             severity: const drift.Value('normal'),
-            recordedAt: drift.Value(DateTime.now()),
+            recordedAt: drift.Value(clock.now()),
           );
           await db.vitalsDao.insertVitals([cacheModel]);
 

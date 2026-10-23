@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_date_formats.dart';
+import 'package:clock/clock.dart';
 
 class DateSeparator extends StatelessWidget {
   final DateTime date;
@@ -10,7 +11,7 @@ class DateSeparator extends StatelessWidget {
   });
 
   String _getFormattedDate() {
-    final now = DateTime.now();
+    final now = clock.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final messageDate = DateTime(date.year, date.month, date.day);

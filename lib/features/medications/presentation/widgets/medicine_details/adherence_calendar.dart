@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_history_entity.dart';
 import '../../controllers/all_medicines_controller.dart';
+import 'package:clock/clock.dart';
 
 class AdherenceCalendar extends StatefulWidget {
   final String medicationId;
@@ -30,7 +31,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
   }
 
   void _initMonths() {
-    final now = DateTime.now();
+    final now = clock.now();
     _selectedMonth = DateTime(now.year, now.month, 1);
 
     // Generate last 6 months
@@ -180,7 +181,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
             // Only shade past and current days. Future days are unshaded if no data exists.
             final dayDate =
                 DateTime(_selectedMonth.year, _selectedMonth.month, day);
-            final now = DateTime.now();
+            final now = clock.now();
             final isFuture = dayDate.isAfter(now);
 
             if (isTaken == true) {

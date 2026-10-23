@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../utils/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/safe_notifier.dart';
+import 'package:clock/clock.dart';
 
 class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
   late RecorderController _recorderController;
@@ -68,7 +69,7 @@ class VoiceRecordingService extends ChangeNotifier with SafeNotifier {
       }
 
       final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final timestamp = clock.now().millisecondsSinceEpoch;
       final draftPath = '${directory.path}/draft_audio_$timestamp.m4a';
       await _recorderController.record(path: draftPath);
     } catch (e) {

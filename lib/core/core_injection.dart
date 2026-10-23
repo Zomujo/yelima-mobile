@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
@@ -28,6 +30,8 @@ import '../features/symptoms/data/datasources/symptoms_remote_mutation_source.da
 
 void initCore(GetIt sl) {
   // --- Core Infrastructure ---
+  sl.registerLazySingleton(() => FirebaseAuth.instance);
+  sl.registerLazySingleton(() => FirebaseMessaging.instance);
   sl.registerLazySingleton(() => InternetConnection());
   sl.registerLazySingleton<INetworkInfo>(() => NetworkInfoImpl(sl()));
   sl.registerLazySingleton(
@@ -51,8 +55,12 @@ void initCore(GetIt sl) {
   sl.registerLazySingleton(() => DatabaseLifecycleHandler(sl())
     ..also((h) => sl<SessionLifecycleService>().register(h, priority: 10)));
 
-  sl.registerLazySingleton(() => FCMLifecycleHandler()
-    ..also((h) => sl<SessionLifecycleService>().register(h, priority: 60)));
+  sl.registerLazySingleton(() => FCMLifecycleHandler(
+        connectivity: sl(),
+        tokenService: () => sl(),
+        notifications: sl(),
+        messaging: sl(),
+      )..also((h) => sl<SessionLifecycleService>().register(h, priority: 60)));
 
   // Force instantiation so they register themselves
   sl<DatabaseLifecycleHandler>();

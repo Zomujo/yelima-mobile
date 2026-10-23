@@ -1,4 +1,5 @@
 import '../../domain/entities/symptom_entity.dart';
+import 'package:clock/clock.dart';
 
 class SymptomModel extends SymptomEntity {
   const SymptomModel({
@@ -13,7 +14,7 @@ class SymptomModel extends SymptomEntity {
       description: json['description'] ?? '',
       onsetDate: json['onsetDate'] != null
           ? DateTime.parse(json['onsetDate']).toLocal()
-          : DateTime.now(),
+          : clock.now(),
     );
   }
 

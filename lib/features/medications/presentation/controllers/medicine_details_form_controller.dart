@@ -6,6 +6,7 @@ import '../../domain/entities/medicine_form_data.dart';
 import '../../domain/usecases/update_medication_usecase.dart';
 import 'all_medicines_controller.dart';
 import '../states/medicine_details_form_state.dart';
+import 'package:clock/clock.dart';
 
 class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
@@ -75,8 +76,8 @@ class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
         name: fallback.name,
         dosage: fallback.dosage,
         notes: '',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        createdAt: clock.now(),
+        updatedAt: clock.now(),
       );
     }
     return null;

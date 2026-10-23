@@ -14,6 +14,7 @@ import '../../../../core/utils/safe_notifier.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 import 'package:get_it/get_it.dart';
 import '../states/medication_state.dart';
+import 'package:clock/clock.dart';
 
 class AllMedicinesController extends ChangeNotifier with SafeNotifier implements SessionLifecycleHandler {
   // --------------------------------------------------------------------------
@@ -104,7 +105,7 @@ class AllMedicinesController extends ChangeNotifier with SafeNotifier implements
 
   Future<void> fetchMedicationHistory(String id, {DateTime? targetMonth}) async {
     final targetId = remappedIds[id] ?? id;
-    final month = targetMonth ?? DateTime.now();
+    final month = targetMonth ?? clock.now();
     // Format as yyyy-MM-15
     final date = AppDateFormats.yyyyMM15.format(month);
 

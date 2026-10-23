@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../../shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:clock/clock.dart';
 
 class ReadingDaySelector extends StatelessWidget {
   final DateTime selectedDate;
@@ -13,7 +14,7 @@ class ReadingDaySelector extends StatelessWidget {
   });
 
   String _formatDate(BuildContext context, DateTime date) {
-    final now = DateTime.now();
+    final now = clock.now();
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
@@ -24,7 +25,7 @@ class ReadingDaySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final now = clock.now();
     final isToday = selectedDate.year == now.year &&
         selectedDate.month == now.month &&
         selectedDate.day == now.day;

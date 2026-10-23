@@ -1,5 +1,6 @@
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/appointment_list_response.dart';
+import 'package:clock/clock.dart';
 
 class AppointmentModel extends AppointmentEntity {
   const AppointmentModel({
@@ -15,7 +16,7 @@ class AppointmentModel extends AppointmentEntity {
       title: json['title'] as String? ?? '',
       appointmentDate: json['appointmentDate'] != null
           ? DateTime.parse(json['appointmentDate'])
-          : DateTime.now(),
+          : clock.now(),
       hostPersonnel: HostPersonnelModel.fromJson(json['hostPersonnel'] ?? {}),
     );
   }

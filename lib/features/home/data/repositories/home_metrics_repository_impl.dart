@@ -11,6 +11,7 @@ import '../models/home_metrics_model.dart';
 import '../models/vital_history_model.dart';
 import '../../../../core/db/app_database.dart';
 import 'package:get_it/get_it.dart';
+import 'package:clock/clock.dart';
 
 class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
   final HomeMetricsRemoteDataSource remoteDataSource;
@@ -104,11 +105,11 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           "severity": entity.severity,
           if (entity.vitalSubType != null) "vitalSubType": entity.vitalSubType,
           "recordedAt": entity.recordedAt?.toUtc().toIso8601String() ??
-              DateTime.now().toUtc().toIso8601String(),
+              clock.now().toUtc().toIso8601String(),
         };
 
         final localId = entity.id.isEmpty
-            ? 'offline_vital_${DateTime.now().millisecondsSinceEpoch}'
+            ? 'offline_vital_${clock.now().millisecondsSinceEpoch}'
             : entity.id;
 
         final model = VitalHistoryModel(
@@ -119,7 +120,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           severity: entity.severity,
           vitalName: entity.vitalName,
           vitalSubType: entity.vitalSubType,
-          recordedAt: entity.recordedAt ?? DateTime.now(),
+          recordedAt: entity.recordedAt ?? clock.now(),
         );
 
         if (!isConnected) {
@@ -175,7 +176,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           severity: v.severity,
           vitalName: v.vitalName,
           vitalSubType: v.vitalSubType,
-          recordedAt: v.recordedAt ?? DateTime.now(),
+          recordedAt: v.recordedAt ?? clock.now(),
         );
       }).toList();
     });

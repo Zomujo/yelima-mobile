@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../layout/app_text.dart';
 import '../layout/app_button.dart';
+import 'package:clock/clock.dart';
 
 class CustomCalendarModal extends StatefulWidget {
   final DateTime initialDate;
@@ -202,11 +203,11 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
               final date = days[index];
               final isCurrentMonth = date.month == _currentMonth.month;
               final isSelected = _isSameDay(date, _selectedDate);
-              final isToday = _isSameDay(date, DateTime.now());
+              final isToday = _isSameDay(date, clock.now());
 
               return GestureDetector(
                 onTap: () {
-                  if (date.isAfter(DateTime.now())) {
+                  if (date.isAfter(clock.now())) {
                     return;
                   }
                   setState(() {
@@ -231,7 +232,7 @@ class _CustomCalendarModalState extends State<CustomCalendarModal> {
                       color: isSelected
                           ? Colors.white
                           : isCurrentMonth
-                              ? date.isAfter(DateTime.now())
+                              ? date.isAfter(clock.now())
                                   ? Colors.grey.shade300
                                   : const Color(0xFF1E293B)
                               : Colors.grey.shade300,

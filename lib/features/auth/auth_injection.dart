@@ -5,12 +5,10 @@ import 'data/repositories/auth_repository_impl.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'presentation/controllers/auth_controller.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
-
 void initAuth(GetIt sl) {
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSource(
-        firebaseAuth: FirebaseAuth.instance,
+        firebaseAuth: sl(),
       ));
 
   // Repositories
@@ -19,9 +17,16 @@ void initAuth(GetIt sl) {
         connectivityService:
             sl(), // Using the singleton from injection_container instead of creating a new one
         db: sl(),
+        notifications: sl(),
       ));
 
   // State Management
-  sl.registerLazySingleton<AuthController>(
-      () => AuthController(repository: sl(), sessionLifecycleService: sl()));
+  sl.registerLazySingleton<AuthController>(() => AuthController(
+        repository: sl(),
+        sessionLifecycleService: sl(),
+        firebaseAuth: sl(),
+        connectivity: sl(),
+        syncManager: sl(),
+        db: sl(),
+      ));
 }

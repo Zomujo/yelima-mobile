@@ -8,6 +8,7 @@ import '../../domain/entities/medication_count.dart';
 import '../../../../core/utils/safe_notifier.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
 import 'package:get_it/get_it.dart';
+import 'package:clock/clock.dart';
 
 enum MedicationSection { morning, afternoon, evening }
 
@@ -96,7 +97,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier implements S
   }
 
   void _autoSelectTabBasedOnTime() {
-    final hour = DateTime.now().hour;
+    final hour = clock.now().hour;
     int index = 0; // Morning default
     if (hour >= 12 && hour < 17) {
       index = 1; // Afternoon
@@ -231,7 +232,7 @@ class MedicationController extends ChangeNotifier with SafeNotifier implements S
     final med = currentList[index];
     if (med.taken) return null;
 
-    final now = DateTime.now();
+    final now = clock.now();
     final todayScheduledTime = DateTime(now.year, now.month, now.day, med.toBeTakenAt.hour, med.toBeTakenAt.minute);
 
     if (now.isBefore(todayScheduledTime)) {

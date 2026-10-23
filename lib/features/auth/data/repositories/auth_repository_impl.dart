@@ -12,11 +12,13 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final ConnectivityService connectivityService;
   final AppDatabase db;
+  final NotificationService notifications;
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivityService,
     required this.db,
+    required this.notifications,
   });
 
   /// Authenticates a user using email and password credentials.
@@ -89,7 +91,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AsyncResponse<void> signOut() {
     return ExceptionWrapper.runAsync<void>(
       () async {
-        await NotificationService.instance.cancelAllReminders();
+        await notifications.cancelAllReminders();
         await remoteDataSource.signOut();
         return right(null);
       },
@@ -102,7 +104,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AsyncResponse<void> deleteAccount({String? password}) {
     return ExceptionWrapper.runAsyncWithNetworkCheck<void>(
       () async {
-        await NotificationService.instance.cancelAllReminders();
+        await notifications.cancelAllReminders();
         await remoteDataSource.deleteAccount(password: password);
         return right(null);
       },

@@ -7,6 +7,7 @@ import '../../../../core/db/app_database.dart';
 import '../../domain/entities/symptom_entity.dart';
 import '../../domain/repositories/symptoms_repository.dart';
 import '../datasources/symptoms_remote_data_source.dart';
+import 'package:clock/clock.dart';
 
 class SymptomsRepositoryImpl implements SymptomsRepository {
   final SymptomsRemoteDataSource remoteDataSource;
@@ -24,8 +25,8 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
 
   @override
   Future<Either<String, String>> createSymptom(String description) async {
-    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-    final now = DateTime.now();
+    final tempId = 'temp_${clock.now().millisecondsSinceEpoch}';
+    final now = clock.now();
 
     // 1. Instantly save to local DB for fast UI
     await db.symptomsDao.insertOrUpdateSymptom(
@@ -75,7 +76,7 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
   Future<Either<String, List<SymptomEntity>>> getSymptoms({int page = 1, int pageSize = 10}) async {
     // Basic caching logic
     if (_lastFetchTime != null) {
-      final now = DateTime.now();
+      final now = clock.now();
       if (now.difference(_lastFetchTime!) < _cacheDuration) {
         debugPrint("Skipping remote fetch for Symptoms. Cache is fresh.");
         return _fetchLocalSymptoms();
@@ -102,7 +103,7 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
           }
         });
 
-        _lastFetchTime = DateTime.now();
+        _lastFetchTime = clock.now();
         // Fallback to local DB read so we include locally pending offline creations
         return _fetchLocalSymptoms();
       } catch (e) {

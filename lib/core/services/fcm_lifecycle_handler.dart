@@ -1,12 +1,26 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:get_it/get_it.dart';
 import 'session_lifecycle_service.dart';
 import 'fcm_token_service.dart';
 import 'notification_service.dart';
 import 'connectivity_service.dart';
 
 class FCMLifecycleHandler implements SessionLifecycleHandler {
+  FCMLifecycleHandler({
+    required ConnectivityService connectivity,
+    required FCMTokenService Function() tokenService,
+    required NotificationService notifications,
+    required FirebaseMessaging messaging,
+  })  : _connectivity = connectivity,
+        _tokenService = tokenService,
+        _notifications = notifications,
+        _messaging = messaging;
+
+  final ConnectivityService _connectivity;
+  // Resolved on first use, so the token service starts with the first session.
+  final FCMTokenService Function() _tokenService;
+  final NotificationService _notifications;
+  final FirebaseMessaging _messaging;
   StreamSubscription? _connectivitySub;
   bool _registrationSucceeded = false;
   bool _isSessionActive = false;
@@ -21,9 +35,8 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     _attemptRegistration();
 
     _connectivitySub?.cancel();
-    _connectivitySub = GetIt.instance<ConnectivityService>()
-        .onConnectivityChanged
-        .listen((isConnected) {
+    _connectivitySub =
+        _connectivity.onConnectivityChanged.listen((isConnected) {
       if (isConnected && !_registrationSucceeded && _isSessionActive) {
         _attemptRegistration();
       }
@@ -33,9 +46,9 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
   Future<void> _attemptRegistration() async {
     if (!_isSessionActive) return;
     try {
-      await GetIt.instance<FCMTokenService>().registerFCMToken();
+      await _tokenService().registerFCMToken();
       if (!_isSessionActive) return;
-      await NotificationService.instance.subscribeToTopic('yelima');
+      await _notifications.subscribeToTopic('yelima');
       if (!_isSessionActive) return;
       _registrationSucceeded = true;
     } catch (e) {
@@ -51,7 +64,7 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     _registrationSucceeded = false;
 
     try {
-      await GetIt.instance<FCMTokenService>()
+      await _tokenService()
           .deleteFCMToken()
           .timeout(const Duration(seconds: 3));
     } catch (e) {
@@ -59,7 +72,7 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     }
 
     try {
-      await NotificationService.instance
+      await _notifications
           .unSubscribeFromTopic('yelima')
           .timeout(const Duration(seconds: 3));
     } catch (e) {
@@ -67,7 +80,7 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     }
 
     try {
-      await FirebaseMessaging.instance.deleteToken();
+      await _messaging.deleteToken();
     } catch (e) {
       // Ignored
     }
