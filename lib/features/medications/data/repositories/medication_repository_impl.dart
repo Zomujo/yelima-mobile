@@ -1,6 +1,7 @@
 import 'package:clock/clock.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart' show TimeOfDay;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/db/app_database.dart';
@@ -37,6 +38,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     required this.mutationSyncManager,
     required this.notificationService,
     required this.session,
+    required this.l10n,
   });
 
   final MedicationRemoteDataSource remoteDataSource;
@@ -45,6 +47,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
   final MutationSyncManager mutationSyncManager;
   final NotificationService notificationService;
   final SessionEpoch session;
+
+  /// The app's current translations, read each time reminders are scheduled.
+  final AppLocalizations Function() l10n;
 
   static const _type = 'medication';
   static const _weekly = 'global_weekly';
@@ -388,11 +393,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
           entityId: id, entityType: _type, action: action, payload: payload);
 
   Future<void> _scheduleAlarms(List<Medication> rows) async {
+    final text = l10n();
     for (final m in rows.where((m) => m.toBeTakenAt != null)) {
       await notificationService.scheduleDailyReminder(
         id: medicationReminderId(m.id, m.section),
-        title: 'Time for your medication!',
-        body: 'It is time to take ${m.dosage} of ${m.name}.',
+        title: text.medicationReminderTitle,
+        body: text.medicationReminderBody(m.dosage, m.name),
         time: TimeOfDay.fromDateTime(m.toBeTakenAt!),
       );
     }

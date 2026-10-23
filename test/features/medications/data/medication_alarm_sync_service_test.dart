@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/services/notification_service.dart';
@@ -15,13 +16,15 @@ void main() {
   late MockNotifications notifications;
   late MedicationAlarmSyncService service;
   late StreamController<(String, String)> remaps;
+  late ValueNotifier<String> language;
 
   setUp(() {
     repo = MockRepo();
     notifications = MockNotifications();
     remaps = StreamController<(String, String)>.broadcast();
     when(() => repo.onIdChanged).thenAnswer((_) => remaps.stream);
-    service = MedicationAlarmSyncService(repo, notifications);
+    language = ValueNotifier('en');
+    service = MedicationAlarmSyncService(repo, notifications, language);
   });
 
   test('a session start reschedules the local reminders', () async {
@@ -30,6 +33,19 @@ void main() {
     await service.onSessionStarted('uid');
 
     verify(() => repo.syncLocalAlarms()).called(1);
+  });
+
+  test('a language change rewrites the reminders, until the session ends',
+      () async {
+    when(() => repo.syncLocalAlarms()).thenAnswer((_) async {});
+    when(() => notifications.cancelAllReminders()).thenAnswer((_) async {});
+    await service.onSessionStarted('uid');
+
+    language.value = 'tw';
+    await service.onSessionEnded();
+    language.value = 'ee';
+
+    verify(() => repo.syncLocalAlarms()).called(2);
   });
 
   test('CORE-EC-08: any session end cancels every reminder', () async {

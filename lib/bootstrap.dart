@@ -16,6 +16,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'core/failures/guard.dart';
 import 'core/services/monitoring_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/screen_privacy.dart';
 import 'core/utils/time_zone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 
@@ -69,6 +70,11 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
       '🚀 Bootstrapping ${AppConfig.instance.appName} [${AppConfig.instance.flavor.name}]...');
 
   runApp(const MyApp());
+
+  // Prod only, so dev builds can still be screenshotted for testing.
+  if (AppConfig.instance.isProd) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => protectScreens());
+  }
 
   // Request push notification permissions non-blockingly after runApp.
   unawaited(NotificationService.instance.requestPermissions());

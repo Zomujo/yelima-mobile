@@ -36,8 +36,11 @@ class _EmailAuthFormState extends State<EmailAuthForm> {
   }
 
   void _validate() {
+    final password = _password.text;
     final valid = Validators.isValidEmail(_email.text.trim()) &&
-        Validators.isValidPassword(_password.text);
+        (widget.isSignUp
+            ? Validators.isValidNewPassword(password)
+            : password.isNotEmpty);
     if (valid != _isValid) setState(() => _isValid = valid);
   }
 
@@ -74,17 +77,20 @@ class _EmailAuthFormState extends State<EmailAuthForm> {
           prefixIcon: Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          validator: Validators.emailValidator,
+          validator: (v) => Validators.email(v, l10n),
         ),
         const SizedBox(height: 24),
         AppFormField(
           controller: _password,
           label: l10n.passwordLabel,
-          hintText: l10n.passwordHint,
+          // Older accounts may have 6-character passwords, so sign-in only checks it's filled.
+          hintText: widget.isSignUp ? l10n.passwordHint : null,
           prefixIcon: Icons.lock_outline,
           isPassword: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          validator: Validators.passwordValidator,
+          validator: widget.isSignUp
+              ? (v) => Validators.newPassword(v, l10n)
+              : null,
         ),
         if (!widget.isSignUp)
           Align(

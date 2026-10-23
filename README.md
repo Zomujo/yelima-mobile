@@ -165,4 +165,14 @@ Yelima is designed to offer a frictionless, highly engaging journey tailored to 
    flutter run -t lib/main_dev.dart
    ```
 
+6. **Release build:**
+   Android release builds are shrunk with R8. Obfuscate the Dart code and keep its symbols for Crashlytics:
+
+   ```bash
+   flutter build appbundle --flavor prod -t lib/main_prod.dart --obfuscate --split-debug-info=build/symbols
+   firebase crashlytics:symbols:upload --app=<android-app-id> build/symbols
+   ```
+
+   Prod blanks screenshots and screen recordings and hides the app in the app switcher (`screen_protector`, Android and iOS); dev allows them for testing.
+
 ---

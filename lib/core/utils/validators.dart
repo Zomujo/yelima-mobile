@@ -1,30 +1,27 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 /// Form field checks for email and password.
 class Validators {
-  /// Validates an email address format
-  static bool isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
+  /// New passwords need at least this many characters.
+  static const minPasswordLength = 8;
 
-  /// Returns an error string if the email is invalid, otherwise null
-  static String? emailValidator(String? value) {
-    if (value == null || value.isEmpty) return null;
-    if (!isValidEmail(value)) {
-      return 'Enter a valid email address';
-    }
-    return null;
-  }
+  /// Whether [email] looks like an email address.
+  static bool isValidEmail(String email) =>
+      RegExp(r'^[\w\-.+]+@([\w-]+\.)+[\w-]{2,}$').hasMatch(email);
 
-  /// Checks if a password meets minimum requirements
-  static bool isValidPassword(String password) {
-    return password.length >= 6;
-  }
+  /// Whether [password] is long enough for a new account.
+  static bool isValidNewPassword(String password) =>
+      password.length >= minPasswordLength;
 
-  /// Returns an error string if the password is invalid, otherwise null
-  static String? passwordValidator(String? value) {
-    if (value == null || value.isEmpty) return null;
-    if (!isValidPassword(value)) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
-  }
+  /// The error for a badly formed email, or null while empty or valid.
+  static String? email(String? value, AppLocalizations l10n) =>
+      value == null || value.isEmpty || isValidEmail(value.trim())
+          ? null
+          : l10n.authErrorInvalidEmail;
+
+  /// The error for a new password that is too short, or null while empty or valid.
+  static String? newPassword(String? value, AppLocalizations l10n) =>
+      value == null || value.isEmpty || isValidNewPassword(value)
+          ? null
+          : l10n.passwordHint;
 }

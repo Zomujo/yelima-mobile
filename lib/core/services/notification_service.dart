@@ -211,6 +211,7 @@ class NotificationService {
             'Medication Reminders',
             importance: Importance.max,
             priority: Priority.high,
+            visibility: NotificationVisibility.private,
             styleInformation: BigTextStyleInformation(body),
           ),
           iOS: const DarwinNotificationDetails(

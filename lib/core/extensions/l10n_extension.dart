@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -11,6 +13,13 @@ extension LocalizationExtension on BuildContext {
 final languageCodes = [
   for (final l in AppLocalizations.supportedLocales) l.languageCode
 ];
+
+/// Translations for [locale], or for the phone's language when none was picked.
+AppLocalizations l10nFor(Locale? locale) {
+  final code = (locale ?? PlatformDispatcher.instance.locale).languageCode;
+  return lookupAppLocalizations(
+      Locale(languageCodes.contains(code) ? code : 'en'));
+}
 
 /// Translated words built from app data: months, dates, languages, gender, conditions.
 extension MonthNames on AppLocalizations {

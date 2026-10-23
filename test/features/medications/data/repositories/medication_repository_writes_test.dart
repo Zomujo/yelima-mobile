@@ -1,5 +1,6 @@
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -67,6 +68,7 @@ void main() {
       mutationSyncManager: sync,
       notificationService: notifications,
       session: SessionEpoch(),
+      l10n: () => lookupAppLocalizations(const Locale('en')),
     );
   }
 
@@ -107,6 +109,17 @@ void main() {
       expect(meds.single.id, id);
       expect((queued.entityId, queued.action, queued.ownerUid),
           (id, 'createMedication', 'user_1'));
+    });
+
+    test('schedules a reminder in the app language', () async {
+      await repoWith(db).createMedication(form);
+
+      verify(() => notifications.scheduleDailyReminder(
+            id: any(named: 'id'),
+            title: 'Time for your medication',
+            body: 'Take 5mg of Amlodipine.',
+            time: const TimeOfDay(hour: 8, minute: 0),
+          )).called(1);
     });
 
     test('saves the name and dosage trimmed', () async {

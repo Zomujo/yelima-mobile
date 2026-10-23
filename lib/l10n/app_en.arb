@@ -16,7 +16,7 @@
   "emailLabel": "Email",
   "emailHint": "you@example.com",
   "passwordLabel": "Password",
-  "passwordHint": "At least 6 characters",
+  "passwordHint": "At least 8 characters",
   "forgotPassword": "Forgot Password?",
   "dontHaveAccount": "Don't have an account? ",
   "createAccount": "Create an account",
@@ -118,7 +118,7 @@
   "myMedications": "My Medications",
   "allMedicines": "All Medicines",
   "thisWeeksAdherence": "This week's adherence",
-  "doingWellKeepItUp": "You're doing well — keep it up! \ud83d\udcaa",
+  "doingWellKeepItUp": "You're doing well — keep it up! 💪",
   "todaysMedications": "Today's medications",
   "morning": "MORNING",
   "afternoon": "AFTERNOON",
@@ -541,5 +541,23 @@
   "medicationScheduleRequired": "Choose at least one time to take it.",
   "medicationDuplicate": "You already have this medication with the same dosage.",
   "medicationDeleted": "{name} deleted",
-  "@medicationDeleted": {"placeholders": {"name": {"type": "String"}}}
+  "@medicationDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "medicationReminderTitle": "Time for your medication",
+  "medicationReminderBody": "Take {dosage} of {name}.",
+  "@medicationReminderBody": {
+    "placeholders": {
+      "dosage": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

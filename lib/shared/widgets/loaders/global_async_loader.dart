@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/extensions/l10n_extension.dart';
+
 /// A full-screen loader with a message, shown over everything.
 class GlobalAsyncLoader extends StatelessWidget {
   final String? message;
@@ -9,14 +11,14 @@ class GlobalAsyncLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Prevent dismissing by back button
+      canPop: false,
       child: Stack(
         children: [
           Positioned.fill(
             child: Material(
               color: Colors.transparent,
               child: ColoredBox(
-                color: const Color(0xB0000000), // Semi-transparent black
+                color: const Color(0xB0000000),
                 child: Center(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -31,7 +33,7 @@ class GlobalAsyncLoader extends StatelessWidget {
                         const CircularProgressIndicator(),
                         const SizedBox(width: 20),
                         Text(
-                          message ?? 'Please wait...',
+                          message ?? context.l10n.loading,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -46,9 +48,9 @@ class GlobalAsyncLoader extends StatelessWidget {
     );
   }
 
-  /// Helper to show loader as an overlay via an OverlayEntry
   static OverlayEntry? _overlayEntry;
 
+  /// Shows the loader over the whole app, once.
   static void show(BuildContext context, {String? message}) {
     if (_overlayEntry != null) return;
 
@@ -59,6 +61,7 @@ class GlobalAsyncLoader extends StatelessWidget {
     Overlay.of(context).insert(_overlayEntry!);
   }
 
+  /// Removes the loader if it is showing.
   static void hide() {
     _overlayEntry?.remove();
     _overlayEntry = null;

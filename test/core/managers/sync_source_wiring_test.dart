@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/api/api_client.dart';
+import 'package:yelima/core/controllers/locale_controller.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/core/managers/deletion_sync_manager.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
@@ -13,6 +14,7 @@ import 'package:yelima/core/services/file_service.dart';
 import 'package:yelima/core/services/notification_service.dart';
 import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/core/services/session_lifecycle_service.dart';
+import 'package:yelima/core/services/shared_prefs_service.dart';
 import 'package:yelima/features/chat/chat_injection.dart';
 import 'package:yelima/features/vitals/vitals_injection.dart';
 import 'package:yelima/features/medications/medications_injection.dart';
@@ -27,6 +29,8 @@ class MockNotifications extends Mock implements NotificationService {}
 class MockFileService extends Mock implements FileService {}
 
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class MockPrefs extends Mock implements SharedPrefsService {}
 
 /// Entity types the app queues for offline sync, read from the source code.
 Set<String> queuedEntityTypes() => {
@@ -54,6 +58,7 @@ void main() {
       ..registerSingleton<NotificationService>(MockNotifications())
       ..registerSingleton<FileService>(MockFileService())
       ..registerSingleton<FirebaseAuth>(MockFirebaseAuth())
+      ..registerSingleton(LocaleController(MockPrefs()))
       ..registerSingleton(
           MutationSyncManager(connectivityService: connectivity, db: db))
       ..registerSingleton(

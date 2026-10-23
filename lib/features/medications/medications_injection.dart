@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/controllers/locale_controller.dart';
+import '../../core/extensions/l10n_extension.dart';
 import '../../core/managers/mutation_sync_manager.dart';
 import '../../core/services/session_lifecycle_service.dart';
 import 'data/datasources/medication_remote_datasource.dart';
@@ -22,13 +24,14 @@ void initMedications(GetIt sl) {
         mutationSyncManager: sl(),
         notificationService: sl(),
         session: sl(),
+        l10n: () => l10nFor(sl<LocaleController>().locale),
       ));
 
   final session = sl<SessionLifecycleService>();
   final seeded = SeededMedicationsSyncService(sl(), sl(), sl());
   session.register(seeded, priority: 90);
   sl.registerSingleton<SeededMedicationsSyncService>(seeded);
-  session.register(MedicationAlarmSyncService(sl(), sl()), priority: 80);
+  session.register(MedicationAlarmSyncService(sl(), sl(), sl<LocaleController>()), priority: 80);
 
   sl.registerFactory(() => MedicationController(repository: sl()));
   sl.registerFactory(() => AllMedicinesController(repository: sl()));
