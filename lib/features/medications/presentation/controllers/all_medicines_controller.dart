@@ -1,38 +1,26 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 
-import '../../../../core/managers/mutation_sync_manager.dart';
-import '../../../../core/utils/app_date_formats.dart';
-import '../../domain/entities/medication_entity.dart';
-import '../../domain/entities/medication_history_entity.dart';
-import '../../domain/repositories/medication_repository.dart';
-import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
-import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
-import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
-import 'package:yelima/features/medications/domain/models/seeded_medication_list_response_model.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/failures/app_failure.dart';
 import '../../../../core/utils/safe_notifier.dart';
-import '../states/medication_state.dart';
-import 'package:clock/clock.dart';
-import 'package:yelima/core/utils/session_scoped.dart';
+import '../../../../core/utils/session_scoped.dart';
+import '../../domain/entities/medication_entity.dart';
+import '../../domain/repositories/medication_repository.dart';
 
+/// The all-medicines list, kept live from the phone's database.
 class AllMedicinesController extends ChangeNotifier
     with SafeNotifier, SessionScoped {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies                  |
-  // --------------------------------------------------------------------------
-
-  final MedicationRepository repository;
-  final MutationSyncManager? syncManager;
-  StreamSubscription? _mutationSyncSub;
-
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle               |
-  // --------------------------------------------------------------------------
-
-  AllMedicinesController({required this.repository, this.syncManager}) {
+  AllMedicinesController({required MedicationRepository repository})
+      : _repository = repository {
     joinSession();
-    _init();
   }
+
+  final MedicationRepository _repository;
+  StreamSubscription<List<MedicationEntity>>? _sub;
+
+  /// Null until the list has loaded.
+  List<MedicationEntity>? medicines;
 
   @override
   String get serviceName => 'AllMedicinesController';
@@ -42,215 +30,27 @@ class AllMedicinesController extends ChangeNotifier
 
   @override
   Future<void> onSessionEnded() async {
-    listState = const MedicationState();
-    historyStates.clear();
-    preloadedState = const MedicationState();
-    detailState = const MedicationState();
-    formSubmitState = const MedicationState();
+    await _sub?.cancel();
+    _sub = null;
+    medicines = null;
     notifyListeners();
   }
 
-  final Map<String, String> remappedIds = {};
-
-  void _init() {
-    if (syncManager != null) {
-      _mutationSyncSub = syncManager!.onMutationSynced.listen((event) {
-        if (event.startsWith('remap:medication:')) {
-          final parts = event.split(':');
-          if (parts.length >= 4) {
-            remappedIds[parts[2]] = parts[3];
-          }
-          fetchAllMedicines(forceRefresh: true);
-        } else if (event.contains('medication')) {
-          fetchAllMedicines(forceRefresh: true);
-        }
-      });
-    }
-  }
-
-  MedicationState<MedicationListResponse> listState = const MedicationState();
-
-  // Cache for histories keyed by medication ID
-  final Map<String, MedicationState<MedicationHistoryEntity>> historyStates =
-      {};
-
-  // States for the UI
-  MedicationState<SeededMedicationListResponseModel> preloadedState =
-      const MedicationState();
-  MedicationState<MedicationDetailModel> detailState = const MedicationState();
-  MedicationState<String> formSubmitState = const MedicationState();
-
-  void fetchAllMedicines({bool forceRefresh = false}) async {
-    if (listState.data == null) {
-      listState = listState.copyWith(isLoading: true, error: null);
-      notifyListeners();
-    }
-
-    final refreshResult = await repository.getAllMedications(
-        page: 1, pageSize: 50, forceRefresh: forceRefresh);
-    refreshResult.fold((failure) {
-      if (listState.data == null || listState.data!.rows.isEmpty) {
-        listState = listState.copyWith(error: failure, isLoading: false);
-        notifyListeners();
-      }
-    }, (data) {
-      listState = listState.copyWith(data: data, isLoading: false, error: null);
+  /// Follows the list and refreshes it from the server.
+  void init() {
+    _sub ??= _repository.watchAll().listen((list) {
+      medicines = list;
       notifyListeners();
     });
+    _repository.refreshAll();
   }
 
-  Future<void> fetchMedicationHistory(String id,
-      {DateTime? targetMonth}) async {
-    final targetId = remappedIds[id] ?? id;
-    final month = targetMonth ?? clock.now();
-    // Format as yyyy-MM-15
-    final date = AppDateFormats.yyyyMM15.format(month);
-
-    final existing = historyStates[targetId]?.data;
-    historyStates[targetId] = MedicationState(isLoading: true, data: existing);
-    notifyListeners();
-
-    final result = await repository.getMedicationHistory(targetId, date: date);
-    result.fold(
-      (failure) {
-        historyStates[targetId] =
-            MedicationState(error: failure, isLoading: false, data: existing);
-        notifyListeners();
-      },
-      (data) {
-        historyStates[targetId] =
-            MedicationState(data: data, isLoading: false, error: null);
-        notifyListeners();
-      },
-    );
-  }
-
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                    |
-  // --------------------------------------------------------------------------
-
-  Future<void> fetchPreloadedMedications(
-      {String? search, int page = 1, int limit = 10}) async {
-    preloadedState = preloadedState.copyWith(isLoading: true, error: null);
-    notifyListeners();
-
-    final result = await repository.getPreloadedMedications(
-        page: page, limit: limit, search: search);
-    result.fold(
-      (failure) {
-        preloadedState =
-            preloadedState.copyWith(error: failure, isLoading: false);
-        notifyListeners();
-      },
-      (data) {
-        preloadedState =
-            preloadedState.copyWith(data: data, isLoading: false, error: null);
-        notifyListeners();
-      },
-    );
-  }
-
-  Future<void> fetchMedicationDetails(String id) async {
-    final targetId = remappedIds[id] ?? id;
-    detailState = const MedicationState(isLoading: true);
-    notifyListeners();
-
-    final result = await repository.getMedicationById(targetId);
-    result.fold(
-      (failure) {
-        detailState = MedicationState(error: failure, isLoading: false);
-        notifyListeners();
-      },
-      (data) {
-        detailState =
-            MedicationState(data: data, isLoading: false, error: null);
-        notifyListeners();
-      },
-    );
-  }
-
-  Future<bool> createMedication(CreateMedicationModel data) async {
-    formSubmitState = const MedicationState(isLoading: true);
-    notifyListeners();
-
-    final result = await repository.createMedication(data);
-    return result.fold(
-      (failure) {
-        formSubmitState = MedicationState(error: failure, isLoading: false);
-        notifyListeners();
-        return false;
-      },
-      (successMsg) {
-        formSubmitState =
-            MedicationState(data: successMsg, isLoading: false, error: null);
-        notifyListeners();
-        fetchAllMedicines(forceRefresh: true); // Refresh list after creation
-        return true;
-      },
-    );
-  }
-
-  Future<bool> updateMedication(String id, UpdateMedicationModel data) async {
-    formSubmitState = const MedicationState(isLoading: true);
-    notifyListeners();
-
-    final result = await repository.updateMedication(id, data);
-    return result.fold(
-      (failure) {
-        formSubmitState = MedicationState(error: failure, isLoading: false);
-        notifyListeners();
-        return false;
-      },
-      (successMsg) {
-        formSubmitState =
-            MedicationState(data: successMsg, isLoading: false, error: null);
-        notifyListeners();
-        fetchAllMedicines(forceRefresh: true);
-        fetchMedicationDetails(id);
-        return true;
-      },
-    );
-  }
-
-  Future<bool> deleteMedication(String id) async {
-    final targetId = remappedIds[id] ?? id;
-    if (listState.data != null) {
-      final updatedRows =
-          listState.data!.rows.where((m) => m.id != targetId).toList();
-      final updatedData = MedicationListResponse(
-        rows: updatedRows,
-        total: updatedRows.length,
-        pageSize: listState.data!.pageSize,
-        page: listState.data!.page,
-        totalPages: listState.data!.totalPages,
-      );
-      listState = listState.copyWith(data: updatedData);
-      notifyListeners();
-    }
-
-    formSubmitState = const MedicationState(isLoading: true);
-    notifyListeners();
-
-    final result = await repository.deleteMedication(targetId);
-    return result.fold(
-      (failure) {
-        formSubmitState = MedicationState(error: failure, isLoading: false);
-        notifyListeners();
-        return false;
-      },
-      (_) {
-        formSubmitState = const MedicationState(
-            data: "Deleted", isLoading: false, error: null);
-        notifyListeners();
-        fetchAllMedicines(forceRefresh: true);
-        return true;
-      },
-    );
-  }
+  /// Deletes a medication; the list updates itself.
+  AsyncResult<void> delete(String id) => _repository.deleteMedication(id);
 
   @override
   void dispose() {
-    _mutationSyncSub?.cancel();
+    _sub?.cancel();
     super.dispose();
   }
 }

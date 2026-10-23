@@ -1,287 +1,47 @@
-import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../../core/extensions/l10n_extension.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
+import '../../../domain/entities/medication_section.dart';
 import '../../controllers/medicine_details_form_controller.dart';
-import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
-import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
-import 'package:provider/provider.dart';
-import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../../medication_section_label.dart';
+import '../medication_form/dose_schedule_editor.dart';
 
+/// The dose times: a summary, or the editor in edit mode.
 class MedicineDetailsScheduleSection extends StatelessWidget {
-  final MedicationDetailModel data;
+  const MedicineDetailsScheduleSection({super.key, required this.controller});
 
-  const MedicineDetailsScheduleSection({
-    super.key,
-    required this.data,
-  });
+  final MedicineDetailsFormController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<MedicineDetailsFormController>(
-      builder: (context, controller, child) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppText.titleMedium(context.l10n.dosingSchedule,
-                fontWeight: FontWeight.bold, color: AppColors.slate800),
-            const SizedBox(height: 24),
-            if (controller.state.isEditing) ...[
-              _EditableDosageToggle(
-                label: context.l10n.morningLabel,
-                isEnabled: controller.state.hasMorning,
-                time: controller.state.morningTime,
-                quantity: controller.state.morningQuantity,
-                onToggle: (v) => controller.updateMorning(v),
-                onTimeSelect: () => _selectTime(
-                    context,
-                    controller.state.morningTime,
-                    (t) => controller.updateMorning(
-                        controller.state.hasMorning, t),
-                    isAM: true),
-                onQuantityChange: (q) => controller.updateMorning(
-                    controller.state.hasMorning, null, q),
-              ),
-              const SizedBox(height: 16),
-              _EditableDosageToggle(
-                label: context.l10n.afternoonLabel,
-                isEnabled: controller.state.hasAfternoon,
-                time: controller.state.afternoonTime,
-                quantity: controller.state.afternoonQuantity,
-                onToggle: (v) => controller.updateAfternoon(v),
-                onTimeSelect: () => _selectTime(
-                    context,
-                    controller.state.afternoonTime,
-                    (t) => controller.updateAfternoon(
-                        controller.state.hasAfternoon, t),
-                    isAM: false),
-                onQuantityChange: (q) => controller.updateAfternoon(
-                    controller.state.hasAfternoon, null, q),
-              ),
-              const SizedBox(height: 16),
-              _EditableDosageToggle(
-                label: context.l10n.eveningLabel,
-                isEnabled: controller.state.hasEvening,
-                time: controller.state.eveningTime,
-                quantity: controller.state.eveningQuantity,
-                onToggle: (v) => controller.updateEvening(v),
-                onTimeSelect: () => _selectTime(
-                    context,
-                    controller.state.eveningTime,
-                    (t) => controller.updateEvening(
-                        controller.state.hasEvening, t),
-                    isAM: false),
-                onQuantityChange: (q) => controller.updateEvening(
-                    controller.state.hasEvening, null, q),
-              ),
-            ] else ...[
-              if (data.morning != null)
-                _ReadOnlyDosageTime(
-                    timeOfDay: context.l10n.morningLabel,
-                    schedule: data.morning!),
-              if (data.afternoon != null) ...[
-                const SizedBox(height: 24),
-                _ReadOnlyDosageTime(
-                    timeOfDay: context.l10n.afternoonLabel,
-                    schedule: data.afternoon!),
-              ],
-              if (data.evening != null) ...[
-                const SizedBox(height: 24),
-                _ReadOnlyDosageTime(
-                    timeOfDay: context.l10n.eveningLabel,
-                    schedule: data.evening!),
-              ],
-              if (data.morning == null &&
-                  data.afternoon == null &&
-                  data.evening == null)
-                AppText.bodyMedium(context.l10n.noScheduleConfigured,
-                    color: AppColors.slate400),
-            ],
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _selectTime(BuildContext context, TimeOfDay initialTime,
-      Function(TimeOfDay) onSelected,
-      {bool? isAM}) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.orange300,
-              onPrimary: Colors.white,
-              onSurface: AppColors.slate800,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      TimeOfDay finalTime = picked;
-      if (isAM == true && picked.period == DayPeriod.pm) {
-        finalTime = TimeOfDay(hour: picked.hour - 12, minute: picked.minute);
-      } else if (isAM == false && picked.period == DayPeriod.am) {
-        finalTime = TimeOfDay(hour: picked.hour + 12, minute: picked.minute);
-      }
-      onSelected(finalTime);
-    }
-  }
-}
-
-class _ReadOnlyDosageTime extends StatelessWidget {
-  final String timeOfDay;
-  final DosingScheduleModel schedule;
-
-  const _ReadOnlyDosageTime({
-    required this.timeOfDay,
-    required this.schedule,
-  });
-
-  String _formatScheduleTime(ScheduleTimeModel time) {
-    final hour = time.hour.toString();
-    final minute = time.minutes.toString().padLeft(2, '0');
-    final period = time.timeDesignators.toUpperCase();
-    return '$hour:$minute $period';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final l10n = context.l10n;
+    final scheduled =
+        MedicationSection.values.where((s) => controller.slots[s]!.enabled);
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppText.bodyLarge(timeOfDay,
+        AppText.titleMedium(l10n.dosingSchedule,
+            fontWeight: FontWeight.bold, color: AppColors.slate800),
+        const SizedBox(height: 24),
+        if (controller.isEditing)
+          DoseScheduleEditor(controller: controller)
+        else if (scheduled.isEmpty)
+          AppText.bodyMedium(l10n.noScheduleConfigured,
+              color: AppColors.slate400)
+        else
+          for (final section in scheduled) ...[
+            AppText.bodyLarge(section.label(l10n),
                 fontWeight: FontWeight.bold, color: AppColors.slate800),
             const SizedBox(height: 8),
             AppText.bodyMedium(
-                '${_formatScheduleTime(schedule.time)} | ${schedule.quantity.value} ${schedule.quantity.unit}(s)',
+                '${controller.slots[section]!.time.format(context)} | '
+                '${controller.slots[section]!.quantity} ${controller.unit}(s)',
                 color: AppColors.slate600),
+            const SizedBox(height: 24),
           ],
-        ),
       ],
-    );
-  }
-}
-
-class _EditableDosageToggle extends StatelessWidget {
-  final String label;
-  final bool isEnabled;
-  final TimeOfDay time;
-  final int quantity;
-  final ValueChanged<bool> onToggle;
-  final VoidCallback onTimeSelect;
-  final ValueChanged<int> onQuantityChange;
-
-  const _EditableDosageToggle({
-    required this.label,
-    required this.isEnabled,
-    required this.time,
-    required this.quantity,
-    required this.onToggle,
-    required this.onTimeSelect,
-    required this.onQuantityChange,
-  });
-
-  String _formatTime(TimeOfDay time) {
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: isEnabled ? AppColors.orange300 : AppColors.slate200,
-            width: isEnabled ? 2 : 1),
-      ),
-      child: Column(
-        children: [
-          SwitchListTile(
-            title: AppText.titleMedium(label,
-                fontWeight: FontWeight.bold, color: AppColors.slate800),
-            value: isEnabled,
-            onChanged: onToggle,
-            activeColor: AppColors.orange300,
-            inactiveThumbColor: AppColors.orange300,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-          if (isEnabled) ...[
-            const Divider(height: 1, color: AppColors.slate200),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: onTimeSelect,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.slate50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.slate200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.access_time,
-                                color: AppColors.slate400, size: 18),
-                            const SizedBox(width: 8),
-                            AppText.bodyMedium(_formatTime(time),
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.slate800),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.slate50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.slate200),
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove,
-                              size: 18, color: AppColors.slate500),
-                          onPressed: quantity > 1
-                              ? () => onQuantityChange(quantity - 1)
-                              : null,
-                        ),
-                        AppText.bodyLarge(quantity.toString(),
-                            fontWeight: FontWeight.bold),
-                        IconButton(
-                          icon: const Icon(Icons.add,
-                              size: 18, color: AppColors.slate500),
-                          onPressed: () => onQuantityChange(quantity + 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]
-        ],
-      ),
     );
   }
 }

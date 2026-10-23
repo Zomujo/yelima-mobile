@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:yelima/features/medications/domain/models/seeded_medication_model.dart';
 
-part 'package:yelima/features/medications/domain/models/seeded_medication_list_response_model.freezed.dart';
-part 'package:yelima/features/medications/domain/models/seeded_medication_list_response_model.g.dart';
+part 'seeded_medication_list_response_model.freezed.dart';
+part 'seeded_medication_list_response_model.g.dart';
 
 @freezed
 abstract class SeededMedicationListResponseModel

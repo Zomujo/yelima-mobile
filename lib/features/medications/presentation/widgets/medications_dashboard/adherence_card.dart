@@ -8,6 +8,7 @@ import 'package:clock/clock.dart';
 
 enum DayStatus { taken, missed, future }
 
+/// The weekly adherence rate and a dot per day.
 class AdherenceCard extends StatelessWidget {
   final MedicationAdherence? adherence;
 
@@ -19,17 +20,14 @@ class AdherenceCard extends StatelessWidget {
 
     final rate = adherence!.rate.toInt();
 
-    // We map the backend days to our DayStatus UI
     final List<Widget> dayWidgets = adherence!.days.map((dayData) {
       final label =
           AppDateFormats.dayOfWeekShort.format(dayData.takenAt).substring(0, 1);
 
-      // Determine status based on taken boolean and date
       DayStatus status;
       if (dayData.taken) {
         status = DayStatus.taken;
       } else {
-        // If it's a future date, we mark it future, else missed
         final now = clock.now();
         if (dayData.takenAt.isAfter(now)) {
           status = DayStatus.future;

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// How many medications each section has.
 class MedicationCount extends Equatable {
   final int morning;
   final int afternoon;

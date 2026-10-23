@@ -1,6 +1,7 @@
 import '../../domain/entities/medication_entity.dart';
 import 'package:clock/clock.dart';
 
+/// A medication in today's list as the server sends it.
 class MedicationModel extends MedicationEntity {
   final Map<String, dynamic>? morning;
   final Map<String, dynamic>? afternoon;

@@ -6,6 +6,7 @@ import '../../../../../shared/widgets/modals/app_modal.dart';
 import '../../../domain/entities/medication_entity.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Asks before deleting a medication; returns true to delete.
 class DeleteMedicationModal extends StatelessWidget {
   final MedicationEntity medication;
 

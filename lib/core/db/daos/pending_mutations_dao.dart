@@ -34,6 +34,26 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Whether changes for [entityId] or of [entityType] are still waiting to sync.
+  Future<bool> hasWaiting({String? entityId, String? entityType}) async {
+    final query = select(pendingMutations)
+      ..where((t) =>
+          t.retryCount.isSmallerThanValue(maxTries) &
+          (entityId == null ? const Constant(true) : t.entityId.equals(entityId)) &
+          (entityType == null
+              ? const Constant(true)
+              : t.entityType.equals(entityType)))
+      ..limit(1);
+    return (await query.get()).isNotEmpty;
+  }
+
+  /// Ids of entities of [entityType] with changes still waiting to sync.
+  Future<Set<String>> waitingIds(String entityType) async =>
+      (await getAllPendingMutations())
+          .where((m) => m.entityType == entityType)
+          .map((m) => m.entityId)
+          .toSet();
+
   /// Deletes items another user left behind and returns how many.
   Future<int> removeOtherOwners(String uid) => (delete(pendingMutations)
         ..where((t) => t.ownerUid.isNotNull() & t.ownerUid.equals(uid).not()))
@@ -120,6 +140,7 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
+  /// Adds a change to the sync queue.
   Future<void> queueMutation({
     required String entityId,
     required String entityType,

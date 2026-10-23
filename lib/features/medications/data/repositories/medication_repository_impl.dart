@@ -1,587 +1,406 @@
-import 'dart:convert';
-import 'package:fpdart/fpdart.dart';
+import 'package:clock/clock.dart';
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:uuid/uuid.dart';
 
-import 'package:drift/drift.dart' as drift;
 import '../../../../core/db/app_database.dart';
-import '../datasources/medication_local_datasource.dart';
-import '../../../../core/exceptions/exceptions.dart';
+import '../../../../core/db/daos/adherence_dao.dart';
+import '../../../../core/db/daos/medications_dao.dart';
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/failures/guard.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/connectivity_service.dart';
-
-import '../../../../core/utils/custom_types.dart';
-import '../../../../core/utils/logger.dart';
 import '../../../../core/services/notification_service.dart';
-import 'package:flutter/material.dart' show TimeOfDay;
-
+import '../../../../core/services/session_epoch.dart';
+import '../../../../core/utils/app_date_formats.dart';
+import '../../../../core/utils/logger.dart';
 import '../../domain/entities/medication_adherence.dart';
 import '../../domain/entities/medication_count.dart';
 import '../../domain/entities/medication_entity.dart';
+import '../../domain/entities/medication_form.dart';
 import '../../domain/entities/medication_history_entity.dart';
+import '../../domain/entities/medication_section.dart';
+import '../../domain/medication_failures.dart';
+import '../../domain/models/medication_detail_model.dart';
+import '../../domain/models/seeded_medication_model.dart';
 import '../../domain/repositories/medication_repository.dart';
+import '../../utils/medication_reminder_id.dart';
 import '../datasources/medication_remote_datasource.dart';
 import '../mappers/medication_mapper.dart';
-import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
-import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
-import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
-import 'package:yelima/features/medications/domain/models/seeded_medication_list_response_model.dart';
-import 'package:clock/clock.dart';
-import '../../utils/medication_reminder_id.dart';
-import '../../../../core/services/session_epoch.dart';
 
+/// Offline-first [MedicationRepository] backed by the local database and the API.
 class MedicationRepositoryImpl implements MedicationRepository {
-  final MedicationRemoteDataSource remoteDataSource;
-  final ConnectivityService connectivityService;
-  final MedicationLocalDataSource localDataSource;
-  final MutationSyncManager mutationSyncManager;
-  final NotificationService notificationService;
-
   MedicationRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivityService,
-    required this.localDataSource,
+    required this.db,
     required this.mutationSyncManager,
     required this.notificationService,
     required this.session,
   });
 
+  final MedicationRemoteDataSource remoteDataSource;
+  final ConnectivityService connectivityService;
+  final AppDatabase db;
+  final MutationSyncManager mutationSyncManager;
+  final NotificationService notificationService;
   final SessionEpoch session;
 
-  /// Retrieves adherence rates directly from the local cache.
+  static const _type = 'medication';
+  static const _weekly = 'global_weekly';
+
+  MedicationsDao get _meds => db.medicationsDao;
+  AdherenceDao get _adherence => db.adherenceDao;
+
+  /// Ids made on this phone are UUIDs; server ids have no dashes.
+  static bool _isLocalId(String id) => id.contains('-');
+
   @override
-  AsyncResponse<MedicationAdherence> getCachedAdherence(
-      {required bool showWeekdays}) async {
-    final typeId = showWeekdays ? 'global_weekly' : 'global_monthly';
-
-    final rateObj = await localDataSource.getGlobalAdherenceRate(typeId);
-    if (rateObj == null) {
-      return right(const MedicationAdherence(rate: 0, days: []));
-    }
-
-    final days = await localDataSource.getGlobalAdherenceDays();
-    final filteredDays = days.where((d) => d.type == typeId).toList();
-
-    return right(MedicationAdherence(
-      rate: rateObj.rate,
-      days: filteredDays
-          .map((d) => AdherenceDay(
-                taken: d.taken ?? false,
-                takenAt: DateTime.parse(d.dateTakenStr).toLocal(),
-                id: d.label, // use id parameter for label mapping
-              ))
-          .toList(),
-    ));
+  Future<MedicationAdherence> getCachedAdherence() async {
+    final rate = await _adherence.getGlobalAdherenceRate(_weekly);
+    if (rate == null) return const MedicationAdherence(rate: 0, days: []);
+    final days = await _adherence.getGlobalAdherenceDays();
+    return MedicationAdherence(rate: rate.rate, days: [
+      for (final d in days.where((d) => d.type == _weekly))
+        AdherenceDay(
+            id: d.label,
+            taken: d.taken ?? false,
+            takenAt: DateTime.parse(d.dateTakenStr).toLocal()),
+    ]);
   }
 
-  /// Subscribes to real-time updates for medication counts.
   @override
-  Stream<MedicationCount> watchMedicationCounts() {
-    return localDataSource.watchAllMedications().map((meds) {
-      final m = meds.where((med) => med.section == 'MORNING').length;
-      final a = meds.where((med) => med.section == 'AFTERNOON').length;
-      final e = meds.where((med) => med.section == 'EVENING').length;
-      return MedicationCount(morning: m, afternoon: a, evening: e);
-    });
-  }
-
-  /// Subscribes to local medication updates for a specific section and triggers a silent background sync.
-  @override
-  Stream<List<MedicationEntity>> watchMedicationsBySection(String section) {
-    _fetchAndCacheMedicationsBySection(section);
-    return localDataSource.watchMedicationsBySection(section).map(
-          (list) => list.map(MedicationMapper.toEntity).toList(),
-        );
-  }
-
-  /// Subscribes to real-time updates for all local medications.
-  @override
-  Stream<List<MedicationEntity>> watchAllMedications() {
-    return localDataSource.watchAllMedications().map(
-          (list) => list.map(MedicationMapper.toEntity).toList(),
-        );
-  }
-
-  /// Silently fetches and synchronizes medications for a section from the remote source.
-  Future<void> _fetchAndCacheMedicationsBySection(String section) async {
-    if (await connectivityService.isConnected) {
-      try {
-        final epoch = session.current;
-        final remoteMeds =
-            await remoteDataSource.getMedicationsBySection(section);
-        session.ensure(epoch);
-
-        final existingMeds = await localDataSource.getAllMedications();
-        final existingMap = {
-          for (var m in existingMeds) '${m.id}_${m.section}': m
-        };
-
-        final localMeds = remoteMeds.map((m) {
-          final existing = existingMap['${m.id}_$section'];
-          return MedicationMapper.mergeRemoteWithLocal(m, existing, section);
-        }).toList();
-
-        final pendingMutations = await localDataSource.getAllPendingMutations();
-        final activeMutationEntityIds = pendingMutations
-            .where((m) => m.entityType == 'medication')
-            .map((m) => m.entityId)
-            .toSet();
-
-        final localMedsToInsert = localMeds
-            .where((m) => !activeMutationEntityIds.contains(m.id))
-            .toList();
-
-        final remoteIds = remoteMeds.map((m) => m.id).toSet();
-        final localMedsToDelete = existingMeds
-            .where((m) =>
-                m.section == section &&
-                !remoteIds.contains(m.id) &&
-                !activeMutationEntityIds.contains(m.id))
-            .map((m) => m.id)
-            .toList();
-
-        // Gone from this section only: the medication's other sections stay.
-        for (var id in localMedsToDelete) {
-          await notificationService
-              .cancelReminder(medicationReminderId(id, section));
-          await localDataSource.deleteMedicationSection(id, section);
+  AsyncResult<MedicationAdherence> getAdherence() => guard(() async {
+        // Unsent doses would be missing from the server's numbers.
+        if (!await connectivityService.isConnected ||
+            await db.pendingMutationsDao.hasWaiting(entityType: _type)) {
+          return getCachedAdherence();
         }
+        try {
+          final epoch = session.current;
+          final result =
+              await remoteDataSource.getAdherence(showWeekdays: true);
+          session.ensure(epoch);
+          await _adherence.saveGlobalAdherence(_weekly, result.rate, [
+            for (final d in result.days)
+              AdherenceGlobalDay(
+                  dateTakenStr: d.takenAt.toIso8601String(),
+                  taken: d.taken,
+                  label: d.id ?? '',
+                  type: _weekly),
+          ]);
+          return result;
+        } catch (e) {
+          AppLogger.w('Adherence from cache: $e');
+          return getCachedAdherence();
+        }
+      });
 
-        await localDataSource.insertMedications(localMedsToInsert);
-        await _scheduleAlarmsForMeds(localMedsToInsert);
-      } catch (_) {}
-    }
+  @override
+  Stream<MedicationCount> watchCounts() =>
+      _meds.watchAllMedications().map((rows) {
+        int count(MedicationSection s) =>
+            rows.where((m) => m.section == s.key).length;
+        return MedicationCount(
+            morning: count(MedicationSection.morning),
+            afternoon: count(MedicationSection.afternoon),
+            evening: count(MedicationSection.evening));
+      });
+
+  @override
+  Stream<List<MedicationEntity>> watchSection(MedicationSection section) =>
+      _meds
+          .watchMedicationsBySection(section.key)
+          .map((rows) => rows.map(MedicationMapper.toEntity).toList());
+
+  @override
+  Future<void> refreshAll() async {
+    if (!await connectivityService.isConnected) return;
+    await Future.wait([
+      for (final s in MedicationSection.values) _refreshSection(s),
+      _refreshList(),
+    ]);
   }
 
-  /// Fetches adherence data from the remote source, falling back to cache on failure.
-  @override
-  AsyncResponse<MedicationAdherence> getAdherence(
-      {required bool showWeekdays}) async {
-    final hasPending =
-        await localDataSource.hasPendingMutationsForType('medication');
-
-    if (await connectivityService.isConnected && !hasPending) {
-      try {
-        final epoch = session.current;
-        final result =
-            await remoteDataSource.getAdherence(showWeekdays: showWeekdays);
-        session.ensure(epoch);
-
-        final typeId = showWeekdays ? 'global_weekly' : 'global_monthly';
-
-        final driftDays = result.days.map((d) {
-          return AdherenceGlobalDay(
-            dateTakenStr: d.takenAt.toIso8601String(),
-            taken: d.taken,
-            label: d.id ?? '',
-            type: typeId,
-          );
-        }).toList();
-
-        await localDataSource.saveGlobalAdherence(
-            typeId, result.rate.toDouble(), driftDays);
-
-        return right(result);
-      } catch (e) {
-        final cached = await getCachedAdherence(showWeekdays: showWeekdays);
-        return cached.fold((l) => left('Server error and no cache available'),
-            (r) => right(r));
-      }
-    } else {
-      return getCachedAdherence(showWeekdays: showWeekdays);
-    }
-  }
-
-  /// Subscribes to real-time updates for medication adherence.
-  @override
-  Stream<MedicationAdherence> watchAdherence() => const Stream.empty();
-
-  /// Calculates medication counts based on current local records.
-  @override
-  AsyncResponse<MedicationCount> getMedicationCounts() async {
-    final meds = await localDataSource.getAllMedications();
-
-    final m = meds.where((m) => m.section == 'MORNING').length;
-    final a = meds.where((m) => m.section == 'AFTERNOON').length;
-    final e = meds.where((m) => m.section == 'EVENING').length;
-
-    return right(MedicationCount(morning: m, afternoon: a, evening: e));
-  }
-
-  /// Retrieves a static list of local medications for a section and triggers a background sync.
-  @override
-  AsyncResponse<List<MedicationEntity>> getMedicationsBySection(
-      String section) async {
-    final meds = await localDataSource.watchMedicationsBySection(section).first;
-    _fetchAndCacheMedicationsBySection(section);
-    return right(meds.map(MedicationMapper.toEntity).toList());
-  }
-
-  /// Marks a medication as taken, updating local records optimistically and enqueueing a sync mutation.
-  @override
-  AsyncResponse<void> confirmMedication(String medicationId, String section,
-      {String? date}) async {
-    final effectiveDate = date ?? clock.now().toIso8601String().split('T')[0];
-
-    final meds = await localDataSource.getAllMedications();
-    final target = meds
-        .where((m) => m.id == medicationId && m.section == section)
-        .firstOrNull;
-
-    final payload = {
-      'section': section,
-      'date': effectiveDate,
-    };
-
-    final pending = PendingMutationsCompanion.insert(
-      id: const Uuid().v4(),
-      entityType: 'medication',
-      entityId: medicationId,
-      action: 'confirmMedication',
-      payloadJson: jsonEncode(payload),
-      createdAt: clock.now(),
-    );
-
-    final todayStr = clock.now().toIso8601String().split('T')[0];
-    // The local "taken" state and its queued sync are saved together or not at all.
-    await localDataSource.transaction(() async {
-      if (target != null) {
-        await localDataSource.updateMedication(
-            target.copyWith(taken: true, takenOn: drift.Value(clock.now())));
-      }
-      await localDataSource.addPendingMutation(pending);
-      await localDataSource.markMedicationLogAsTakenOffline(
-        const Uuid().v4(),
-        medicationId,
-        clock.now(),
-      );
-      await localDataSource.markGlobalDayAsTakenOffline(todayStr);
-    });
-
-    mutationSyncManager.triggerSync();
-
-    return right(null);
-  }
-
-  /// Retrieves all unique medications and triggers a background pagination sync.
-  @override
-  AsyncResponse<MedicationListResponse> getAllMedications(
-      {int page = 1, int pageSize = 10, bool forceRefresh = false}) async {
-    final meds = await localDataSource.watchAllMedications().first;
-
-    if (await connectivityService.isConnected) {
-      _syncAllMedicationsBackground(page, pageSize);
-    }
-
-    final Map<String, MedicationEntity> uniqueMeds = {};
-    for (var med in meds) {
-      if (!uniqueMeds.containsKey(med.id)) {
-        uniqueMeds[med.id] = MedicationMapper.toEntity(med);
-      }
-    }
-
-    return right(MedicationListResponse(
-      rows: uniqueMeds.values.toList(),
-      total: uniqueMeds.length,
-      pageSize: pageSize,
-      page: page,
-      totalPages: 1,
-    ));
-  }
-
-  /// Silently synchronizes paginated remote medications into the local database.
-  Future<void> _syncAllMedicationsBackground(int page, int pageSize) async {
+  /// Replaces [section]'s rows with the server's, except rows with unsent changes.
+  Future<void> _refreshSection(MedicationSection section) async {
     try {
       final epoch = session.current;
-      final remoteRes = await remoteDataSource.getAllMedications(
-          page: page, pageSize: pageSize);
+      final remote = await remoteDataSource.getMedicationsBySection(section.key);
       session.ensure(epoch);
-      final pendingMutations = await localDataSource.getAllPendingMutations();
-      final activeMutationEntityIds = pendingMutations
-          .where((m) => m.entityType == 'medication')
-          .map((m) => m.entityId)
-          .toSet();
 
-      await _removeUnknownSectionRows();
+      final local = (await _meds.getAllMedications())
+          .where((m) => m.section == section.key);
+      final byId = {for (final m in local) m.id: m};
+      final waiting = await db.pendingMutationsDao.waitingIds(_type);
+      final remoteIds = remote.map((m) => m.id).toSet();
 
-      // The list has no schedules, so it only refreshes name, dosage and purpose
-      // on rows the section fetches created. Unknown ids get their sections fetched.
+      // Gone from this section only: the medication's other sections stay.
+      for (final m in local) {
+        if (remoteIds.contains(m.id) || waiting.contains(m.id)) continue;
+        await notificationService
+            .cancelReminder(medicationReminderId(m.id, section.key));
+        await _meds.deleteMedicationSection(m.id, section.key);
+      }
+
+      final rows = [
+        for (final m in remote)
+          if (!waiting.contains(m.id))
+            MedicationMapper.mergeRemoteWithLocal(m, byId[m.id], section),
+      ];
+      await _meds.insertMedications(rows);
+      await _scheduleAlarms(rows);
+    } catch (e) {
+      AppLogger.w('Refreshing ${section.key} failed: $e');
+    }
+  }
+
+  /// Refreshes name, dosage and purpose from the list (it has no schedules);
+  /// a medication not seen before gets its sections fetched.
+  Future<void> _refreshList() async {
+    try {
+      final epoch = session.current;
+      final remote = await remoteDataSource.getAllMedications(pageSize: 100);
+      session.ensure(epoch);
+      final waiting = await db.pendingMutationsDao.waitingIds(_type);
+
+      for (final id in await _meds.deleteUnknownSectionRows()) {
+        await notificationService
+            .cancelReminder(medicationReminderId(id, 'UNKNOWN'));
+      }
+
       final updated = <Medication>[];
-      var hasNewIds = false;
-      for (final m in remoteRes.rows) {
-        if (activeMutationEntityIds.contains(m.id)) continue;
-        final existing = await localDataSource.getMedicationById(m.id);
-        if (existing.isEmpty) hasNewIds = true;
-        updated.addAll(existing.map((row) => row.copyWith(
-            name: m.name, dosage: m.dosage, purpose: drift.Value(m.purpose))));
+      var hasNew = false;
+      for (final m in remote.rows.where((m) => !waiting.contains(m.id))) {
+        final rows = await _meds.getMedicationById(m.id);
+        hasNew |= rows.isEmpty;
+        updated.addAll(rows.map((row) => row.copyWith(
+            name: m.name, dosage: m.dosage, purpose: Value(m.purpose))));
       }
-      await localDataSource.insertMedications(updated);
-      if (hasNewIds) {
-        for (final section in const ['MORNING', 'AFTERNOON', 'EVENING']) {
-          await _fetchAndCacheMedicationsBySection(section);
+      await _meds.insertMedications(updated);
+      if (hasNew) {
+        await Future.wait(MedicationSection.values.map(_refreshSection));
+      }
+    } catch (e) {
+      AppLogger.w('Refreshing the medication list failed: $e');
+    }
+  }
+
+  @override
+  AsyncResult<void> confirmDose(String medicationId, MedicationSection section) =>
+      guard(() async {
+        final now = clock.now();
+        final day = AppDateFormats.yyyyMMdd.format(now);
+        final row = (await _meds.getMedicationById(medicationId))
+            .where((m) => m.section == section.key)
+            .firstOrNull;
+        // The local "taken" state and its queued sync are saved together or not at all.
+        await db.transaction(() async {
+          if (row != null) {
+            await _meds
+                .updateMedication(row.copyWith(taken: true, takenOn: Value(now)));
+          }
+          await _queue(medicationId, 'confirmMedication',
+              {'section': section.key, 'date': day});
+          await _adherence.markMedicationLogAsTakenOffline(
+              const Uuid().v4(), medicationId, now);
+          await _adherence.markGlobalDayAsTakenOffline(day);
+        });
+        mutationSyncManager.triggerSync();
+      });
+
+  @override
+  Stream<List<MedicationEntity>> watchAll() =>
+      _meds.watchAllMedications().map((rows) {
+        final unique = <String, MedicationEntity>{};
+        for (final row in rows) {
+          unique.putIfAbsent(row.id, () => MedicationMapper.toEntity(row));
         }
-      }
-    } catch (e, stack) {
-      AppLogger.e('Failed to sync medications in background', e, stack);
-    }
-  }
+        return unique.values.toList();
+      });
 
-  /// Deletes rows older versions stored without a section, with their alarms.
-  Future<void> _removeUnknownSectionRows() async {
-    for (final id in await localDataSource.deleteUnknownSectionRows()) {
-      await notificationService
-          .cancelReminder(medicationReminderId(id, 'UNKNOWN'));
-    }
-  }
-
-  /// Fetches medication history logs from remote, falling back to local records.
   @override
-  AsyncResponse<MedicationHistoryEntity> getMedicationHistory(
-      String medicationId,
-      {required String date}) async {
-    final hasPending =
-        await localDataSource.hasPendingMutationsForEntity(medicationId);
-
-    if (await connectivityService.isConnected &&
-        !hasPending &&
-        !medicationId.contains('-')) {
-      try {
-        final epoch = session.current;
-        final result = await remoteDataSource.getMedicationHistory(medicationId,
-            date: date);
-        session.ensure(epoch);
-
-        final driftLogs = result.logs
-            .map((l) => MedicationLog(
-                  id: l.id,
-                  medicationId: medicationId,
-                  takenAt: l.takenAt,
-                  taken: l.taken,
-                ))
-            .toList();
-
-        await localDataSource.saveMedicationLogs(driftLogs);
-
-        return right(result);
-      } catch (e, stack) {
-        AppLogger.e('Failed to get remote medication history', e, stack);
-      }
-    }
-
-    // Offline: only the requested month, like the server returns.
-    final month = DateTime.tryParse(date) ?? clock.now();
-    final localLogs = (await localDataSource.getLogsForMedication(medicationId))
-        .where((l) =>
-            l.takenAt.year == month.year && l.takenAt.month == month.month)
-        .toList();
-
-    final medList = await localDataSource.getMedicationById(medicationId);
-    final med = medList.firstOrNull;
-    final medName = med?.name ?? 'Unknown Medication';
-
-    final total = localLogs.length;
-    final taken = localLogs.where((l) => l.taken).length;
-    final rate = total > 0 ? ((taken / total) * 100).round() : 0;
-
-    return right(MedicationHistoryEntity(
-      medicationName: medName,
-      adherenceRate: rate,
-      logs: localLogs
-          .map((l) => MedicationLogEntity(
-                id: l.id,
-                taken: l.taken,
-                takenAt: l.takenAt,
-              ))
-          .toList(),
-    ));
-  }
-
-  /// Persists a new medication locally and enqueues a creation mutation.
-  @override
-  AsyncResponse<String> createMedication(CreateMedicationModel data) async {
-    final localId = const Uuid().v4();
-
-    final medsToInsert = MedicationMapper.fromCreateModel(data, localId);
-
-    final pending = PendingMutationsCompanion.insert(
-      id: const Uuid().v4(),
-      entityType: 'medication',
-      entityId: localId,
-      action: 'createMedication',
-      payloadJson: jsonEncode(data.toJson()),
-      createdAt: clock.now(),
-    );
-
-    await localDataSource.transaction(() async {
-      await localDataSource.insertMedications(medsToInsert);
-      await localDataSource.addPendingMutation(pending);
-    });
-    await _scheduleAlarmsForMeds(medsToInsert);
-    mutationSyncManager.triggerSync();
-
-    return right(localId);
-  }
-
-  /// Fetches detailed medication info from the remote source and synchronizes local schedule JSON.
-  @override
-  AsyncResponse<MedicationDetailModel> getMedicationById(String id) async {
-    final localMeds = await localDataSource.getMedicationById(id);
-    MedicationDetailModel? localDetail;
-
-    if (localMeds.isNotEmpty) {
-      localDetail = MedicationMapper.toDetailModel(localMeds.first);
-    }
-
-    final hasPending = await localDataSource.hasPendingMutationsForEntity(id);
-
-    if (await connectivityService.isConnected &&
-        !id.contains('-') &&
-        !hasPending) {
-      try {
-        final epoch = session.current;
-        final result = await remoteDataSource.getMedicationById(id);
-        session.ensure(epoch);
-
-        if (localMeds.isNotEmpty) {
-          final mJson = MedicationMapper.encodeSchedule(result.morning);
-          final aJson = MedicationMapper.encodeSchedule(result.afternoon);
-          final eJson = MedicationMapper.encodeSchedule(result.evening);
-
-          for (final med in localMeds) {
-            await localDataSource.updateMedication(med.copyWith(
-              morningJson: drift.Value(mJson),
-              afternoonJson: drift.Value(aJson),
-              eveningJson: drift.Value(eJson),
+  AsyncResult<MedicationDetailModel> getMedicationById(String id) =>
+      guard(() async {
+        final rows = await _meds.getMedicationById(id);
+        final local =
+            rows.isEmpty ? null : MedicationMapper.toDetailModel(rows.first);
+        if (_isLocalId(id) ||
+            await db.pendingMutationsDao.hasWaiting(entityId: id) ||
+            !await connectivityService.isConnected) {
+          if (local != null) return local;
+          throw _isLocalId(id) ? const NotFoundFailure() : const NetworkFailure();
+        }
+        try {
+          final epoch = session.current;
+          final remote = await remoteDataSource.getMedicationById(id);
+          session.ensure(epoch);
+          for (final row in rows) {
+            await _meds.updateMedication(row.copyWith(
+              morningJson: Value(MedicationMapper.encodeSchedule(remote.morning)),
+              afternoonJson:
+                  Value(MedicationMapper.encodeSchedule(remote.afternoon)),
+              eveningJson: Value(MedicationMapper.encodeSchedule(remote.evening)),
             ));
           }
+          return remote;
+        } catch (_) {
+          if (local != null) return local;
+          rethrow;
         }
-        return right(result);
-      } on ApiException catch (e) {
-        if (localDetail != null) return right(localDetail);
-        return left(e.message ?? 'Server error');
-      } catch (e, stack) {
-        AppLogger.e('Failed to get remote medication detail', e, stack);
-        if (localDetail != null) return right(localDetail);
-        return left('Unexpected error');
-      }
-    }
-
-    if (localDetail != null) {
-      return right(localDetail);
-    }
-
-    if (id.contains('-')) {
-      return left('Medication is currently syncing to the server.');
-    }
-    return left('No internet');
-  }
-
-  /// Updates existing local medications and enqueues an update mutation.
-  @override
-  AsyncResponse<String> updateMedication(
-      String id, UpdateMedicationModel data) async {
-    final meds = await localDataSource.getAllMedications();
-    final targetMeds = meds.where((m) => m.id == id).toList();
-
-    final newMeds = MedicationMapper.fromUpdateModel(data, id, targetMeds);
-    final pending = PendingMutationsCompanion.insert(
-      id: const Uuid().v4(),
-      entityType: 'medication',
-      entityId: id,
-      action: 'updateMedication',
-      payloadJson: jsonEncode(data.toJson()),
-      createdAt: clock.now(),
-    );
-
-    await localDataSource.transaction(() async {
-      if (targetMeds.isNotEmpty) {
-        await localDataSource.deleteMedication(id);
-        await localDataSource.insertMedications(newMeds);
-      }
-      await localDataSource.addPendingMutation(pending);
-    });
-    if (targetMeds.isNotEmpty) {
-      await _cancelAlarmsForMed(id);
-      await _scheduleAlarmsForMeds(newMeds);
-    }
-    mutationSyncManager.triggerSync();
-
-    return right(id);
-  }
+      });
 
   @override
-  AsyncResponse<void> deleteMedication(String id) async {
-    final pending = PendingMutationsCompanion.insert(
-      id: const Uuid().v4(),
-      entityType: 'medication',
-      entityId: id,
-      action: 'deleteMedication',
-      payloadJson: '{}',
-      createdAt: clock.now(),
-    );
-
-    await localDataSource.transaction(() async {
-      await localDataSource.deleteMedication(id);
-      await localDataSource.addPendingMutation(pending);
-    });
-    await _cancelAlarmsForMed(id);
-    mutationSyncManager.triggerSync();
-
-    return right(null);
-  }
-
-  /// Retrieves preloaded seed medications exclusively from the local cache.
-  @override
-  AsyncResponse<SeededMedicationListResponseModel> getPreloadedMedications(
-      {int page = 1, int limit = 10, String? search}) async {
-    final cached =
-        await localDataSource.searchPreloadedMedications(search ?? '');
-
-    return right(SeededMedicationListResponseModel(
-      rows: cached.map(MedicationMapper.toSeededMedication).toList(),
-      total: cached.length,
-      page: page,
-      pageSize: limit,
-    ));
-  }
-
-  /// Helper to safely schedule alarms for a list of newly constructed medication records.
-  Future<void> _scheduleAlarmsForMeds(List<Medication> meds) async {
-    for (final med in meds) {
-      if (med.toBeTakenAt != null) {
-        final notifId = medicationReminderId(med.id, med.section);
-        await notificationService.scheduleDailyReminder(
-          id: notifId,
-          title: 'Time for your medication!',
-          body: 'It is time to take ${med.dosage} of ${med.name}.',
-          time: TimeOfDay.fromDateTime(med.toBeTakenAt!),
+  AsyncResult<MedicationHistoryEntity> getMedicationHistory(
+          String medicationId, DateTime month) =>
+      guard(() async {
+        if (!_isLocalId(medicationId) &&
+            await connectivityService.isConnected &&
+            !await db.pendingMutationsDao.hasWaiting(entityId: medicationId)) {
+          try {
+            final epoch = session.current;
+            final result = await remoteDataSource.getMedicationHistory(
+                medicationId,
+                date: AppDateFormats.yyyyMM15.format(month));
+            session.ensure(epoch);
+            await _adherence.saveMedicationLogs([
+              for (final l in result.logs)
+                MedicationLog(
+                    id: l.id,
+                    medicationId: medicationId,
+                    takenAt: l.takenAt,
+                    taken: l.taken),
+            ]);
+            return result;
+          } catch (e) {
+            AppLogger.w('History from the phone: $e');
+          }
+        }
+        // Offline: only the requested month, like the server returns.
+        final logs = (await _adherence.getLogsForMedication(medicationId))
+            .where((l) =>
+                l.takenAt.year == month.year && l.takenAt.month == month.month)
+            .toList();
+        final taken = logs.where((l) => l.taken).length;
+        return MedicationHistoryEntity(
+          medicationName:
+              (await _meds.getMedicationById(medicationId)).firstOrNull?.name ??
+                  '',
+          adherenceRate: logs.isEmpty ? 0 : (taken / logs.length * 100).round(),
+          logs: [
+            for (final l in logs)
+              MedicationLogEntity(id: l.id, taken: l.taken, takenAt: l.takenAt),
+          ],
         );
-      }
-    }
-  }
+      });
 
-  /// Helper to completely wipe all section alarms for a given medication ID.
-  Future<void> _cancelAlarmsForMed(String medicationId) async {
-    // UNKNOWN rows come from the background list sync and get alarms too.
-    final sections = ['MORNING', 'AFTERNOON', 'EVENING', 'UNKNOWN'];
-    for (final sec in sections) {
-      final notifId = medicationReminderId(medicationId, sec);
-      await notificationService.cancelReminder(notifId);
-    }
+  @override
+  AsyncResult<String> createMedication(MedicationForm form) => guard(() async {
+        if (form.problem case final problem?) throw problem;
+        String norm(String s) => s.trim().toLowerCase();
+        final existing = await _meds.getAllMedications();
+        if (existing.any((m) =>
+            norm(m.name) == norm(form.name) &&
+            norm(m.dosage) == norm(form.dosage))) {
+          throw const DuplicateMedicationFailure();
+        }
+        final id = const Uuid().v4();
+        final rows = MedicationMapper.rowsFor(id, form);
+        await db.transaction(() async {
+          await _meds.insertMedications(rows);
+          await _queue(id, 'createMedication',
+              MedicationMapper.toCreateModel(form).toJson());
+        });
+        await _scheduleAlarms(rows);
+        mutationSyncManager.triggerSync();
+        return id;
+      });
+
+  @override
+  AsyncResult<void> updateMedication(String id, MedicationForm form) =>
+      guard(() async {
+        if (form.problem case final problem?) throw problem;
+        final previous = await _meds.getMedicationById(id);
+        final rows = MedicationMapper.rowsFor(id, form, previous: previous);
+        await db.transaction(() async {
+          if (previous.isNotEmpty) {
+            await _meds.deleteMedication(id);
+            await _meds.insertMedications(rows);
+          }
+          await _queue(id, 'updateMedication',
+              MedicationMapper.toUpdateModel(form).toJson());
+        });
+        if (previous.isNotEmpty) {
+          await _cancelAlarms(id);
+          await _scheduleAlarms(rows);
+        }
+        mutationSyncManager.triggerSync();
+      });
+
+  @override
+  AsyncResult<void> deleteMedication(String id) => guard(() async {
+        await db.transaction(() async {
+          await _meds.deleteMedication(id);
+          await _queue(id, 'deleteMedication', const {});
+        });
+        await _cancelAlarms(id);
+        mutationSyncManager.triggerSync();
+      });
+
+  @override
+  Future<List<SeededMedicationModel>> searchPreloaded(String search) async =>
+      (await _meds.searchPreloadedMedications(search))
+          .map(MedicationMapper.toSeededMedication)
+          .toList();
+
+  @override
+  Stream<void> get onSynced =>
+      mutationSyncManager.onMutationSynced.where((e) => e.contains(_type));
+
+  /// The sync manager reports id changes as `remap:medication:<old>:<new>`.
+  @override
+  Stream<(String, String)> get onIdChanged =>
+      mutationSyncManager.onMutationSynced
+          .map((e) => e.split(':'))
+          .where((p) => p.length == 4 && p[0] == 'remap' && p[1] == _type)
+          .map((p) => (p[2], p[3]));
+
+  @override
+  Future<void> syncLocalAlarms() async {
+    await notificationService.cancelAllReminders();
+    await _scheduleAlarms(await _meds.getAllMedications());
   }
 
   @override
   Future<void> moveReminders(String oldId, String newId) async {
-    await _cancelAlarmsForMed(oldId);
-    await _cancelAlarmsForMed(newId);
-    await _scheduleAlarmsForMeds(
-        await localDataSource.getMedicationById(newId));
+    await _cancelAlarms(oldId);
+    await _cancelAlarms(newId);
+    await _scheduleAlarms(await _meds.getMedicationById(newId));
   }
 
-  /// Syncs alarms for all existing local medications on startup.
-  @override
-  Future<void> syncLocalAlarms() async {
-    final allMeds = await localDataSource.getAllMedications();
-    await notificationService.cancelAllReminders();
-    await _scheduleAlarmsForMeds(allMeds);
+  Future<void> _queue(
+          String id, String action, Map<String, dynamic> payload) =>
+      db.pendingMutationsDao.queueMutation(
+          entityId: id, entityType: _type, action: action, payload: payload);
+
+  Future<void> _scheduleAlarms(List<Medication> rows) async {
+    for (final m in rows.where((m) => m.toBeTakenAt != null)) {
+      await notificationService.scheduleDailyReminder(
+        id: medicationReminderId(m.id, m.section),
+        title: 'Time for your medication!',
+        body: 'It is time to take ${m.dosage} of ${m.name}.',
+        time: TimeOfDay.fromDateTime(m.toBeTakenAt!),
+      );
+    }
+  }
+
+  /// Cancels every section's reminder; UNKNOWN rows came from an older list sync.
+  Future<void> _cancelAlarms(String id) async {
+    for (final section in [
+      ...MedicationSection.values.map((s) => s.key),
+      'UNKNOWN'
+    ]) {
+      await notificationService.cancelReminder(medicationReminderId(id, section));
+    }
   }
 }

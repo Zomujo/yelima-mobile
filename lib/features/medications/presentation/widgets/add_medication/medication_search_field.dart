@@ -5,9 +5,9 @@ import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import 'package:yelima/features/medications/domain/models/seeded_medication_model.dart';
 import '../../controllers/add_medication_form_controller.dart';
-import '../../controllers/all_medicines_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
+/// Medication name field that suggests known medications as the user types.
 class MedicationSearchField extends StatefulWidget {
   const MedicationSearchField({super.key});
 
@@ -18,13 +18,14 @@ class MedicationSearchField extends StatefulWidget {
 class _MedicationSearchFieldState extends State<MedicationSearchField> {
   int _searchToken = 0;
 
+  /// Autocomplete owns its text field; its text is copied into the form's name.
+  TextEditingController? _bound;
+
   @override
   Widget build(BuildContext context) {
     final formController = context.read<AddMedicationFormController>();
 
-    return Consumer<AllMedicinesController>(
-        builder: (context, controller, child) {
-      return Autocomplete<SeededMedicationModel>(
+    return Autocomplete<SeededMedicationModel>(
         optionsBuilder: (TextEditingValue textEditingValue) async {
           final query = textEditingValue.text.trim();
           if (query.isEmpty) {
@@ -37,15 +38,11 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
             return const Iterable<SeededMedicationModel>.empty();
           }
 
-          await controller.fetchPreloadedMedications(search: query, limit: 20);
-
-          final results = controller.preloadedState.data?.rows ?? [];
-          return results
-              .where((m) => m.name.toLowerCase().contains(query.toLowerCase()));
+          return formController.search(query);
         },
         displayStringForOption: (SeededMedicationModel option) => option.name,
         onSelected: (SeededMedicationModel selection) {
-          formController.updateSelectedPreloadedMedication(selection);
+          formController.pick(selection);
         },
         optionsViewBuilder: (context, onSelected, options) {
           return Align(
@@ -93,16 +90,13 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
         },
         fieldViewBuilder:
             (context, textEditingController, focusNode, onFieldSubmitted) {
-          formController.nameController.text = textEditingController.text;
-
-          if (formController.boundSearchController != textEditingController) {
-            formController.boundSearchController = textEditingController;
+          if (_bound != textEditingController) {
+            _bound = textEditingController;
             textEditingController.addListener(() {
               formController.nameController.text = textEditingController.text;
-              if (formController.state.selectedPreloadedMedication != null &&
-                  textEditingController.text !=
-                      formController.state.selectedPreloadedMedication!.name) {
-                formController.updateSelectedPreloadedMedication(null);
+              final picked = formController.picked;
+              if (picked != null && textEditingController.text != picked.name) {
+                formController.pick(null);
               }
             });
           }
@@ -122,6 +116,5 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
           );
         },
       );
-    });
   }
 }

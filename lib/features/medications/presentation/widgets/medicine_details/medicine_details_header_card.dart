@@ -1,25 +1,22 @@
-import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:yelima/core/extensions/l10n_extension.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
+
+import '../../../../../core/extensions/l10n_extension.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../shared/utils/failure_message.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
-import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
+import '../../../../../shared/widgets/layout/app_text.dart';
+import '../../controllers/medicine_details_form_controller.dart';
 import 'adherence_calendar.dart';
-import '../../controllers/all_medicines_controller.dart';
-import 'package:provider/provider.dart';
 
+/// Name, dosage and the month's dose calendar.
 class MedicineDetailsHeaderCard extends StatelessWidget {
-  final MedicationDetailModel data;
-  final String medicationId;
+  const MedicineDetailsHeaderCard({super.key, required this.controller});
 
-  const MedicineDetailsHeaderCard({
-    super.key,
-    required this.data,
-    required this.medicationId,
-  });
+  final MedicineDetailsFormController controller;
 
   @override
   Widget build(BuildContext context) {
+    final history = controller.history;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -32,33 +29,23 @@ class MedicineDetailsHeaderCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              AppText.bodyLarge(
-                data.name,
-                fontWeight: FontWeight.bold,
-                color: AppColors.slate800,
-              ),
+              AppText.bodyLarge(controller.name,
+                  fontWeight: FontWeight.bold, color: AppColors.slate800),
               const SizedBox(width: 8),
-              AppText.titleMedium(data.dosage, color: AppColors.slate400),
+              AppText.titleMedium(controller.detail?.dosage ?? '',
+                  color: AppColors.slate400),
             ],
           ),
           const SizedBox(height: 24),
-          Consumer<AllMedicinesController>(
-            builder: (context, controller, child) {
-              final historyState = controller.historyStates[medicationId];
-              if (historyState == null || historyState.isLoading) {
-                return AppShimmer.box(
-                    height: 200, width: double.infinity, borderRadius: 16);
-              } else if (historyState.error != null) {
-                return Center(
-                    child: AppText.bodyMedium(context.l10n
-                        .errorWithMessage('${historyState.error}')));
-              } else if (historyState.data != null) {
-                return AdherenceCalendar(
-                    medicationId: medicationId, history: historyState.data!);
-              }
-              return const SizedBox();
-            },
-          ),
+          if (history == null && controller.historyError != null)
+            Center(
+                child: AppText.bodyMedium(
+                    controller.historyError!.message(context.l10n) ?? ''))
+          else if (history == null)
+            AppShimmer.box(height: 200, width: double.infinity, borderRadius: 16)
+          else
+            AdherenceCalendar(
+                history: history, onMonthChanged: controller.loadHistory),
         ],
       ),
     );

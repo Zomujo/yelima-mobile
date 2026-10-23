@@ -1,6 +1,7 @@
 import '../../domain/entities/medication_adherence.dart';
 import 'package:clock/clock.dart';
 
+/// Weekly adherence as the server sends it.
 class MedicationAdherenceModel extends MedicationAdherence {
   const MedicationAdherenceModel({
     required super.rate,
@@ -34,6 +35,7 @@ class MedicationAdherenceModel extends MedicationAdherence {
   }
 }
 
+/// One day of adherence as the server sends it.
 class AdherenceDayModel extends AdherenceDay {
   const AdherenceDayModel({
     super.id,

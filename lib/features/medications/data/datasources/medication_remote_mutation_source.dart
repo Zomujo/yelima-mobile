@@ -5,6 +5,7 @@ import 'package:yelima/features/medications/domain/models/create_medication_mode
 import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
 import '../../../../core/db/app_database.dart';
 
+/// Replays queued medication changes to the server.
 class MedicationRemoteMutationSource implements IRemoteMutationSource {
   final MedicationRemoteDataSource _remoteDataSource;
   final AppDatabase _db;
@@ -22,21 +23,19 @@ class MedicationRemoteMutationSource implements IRemoteMutationSource {
 
     switch (action) {
       case 'createMedication':
-        final model = CreateMedicationModel.fromJson(payload);
-        final res = await _remoteDataSource.createMedication(model);
-        return res; // Returning the server ID so it can be remapped
+        // The server id replaces the local one.
+        return _remoteDataSource
+            .createMedication(CreateMedicationModel.fromJson(payload));
 
       case 'updateMedication':
-        final model = UpdateMedicationModel.fromJson(payload);
-        // We do not remap on update, so returning null is fine.
-        await _remoteDataSource.updateMedication(entityId, model);
+        await _remoteDataSource.updateMedication(
+            entityId, UpdateMedicationModel.fromJson(payload));
         return null;
 
       case 'confirmMedication':
-        final section = payload['section'] as String;
-        final date = payload['date'] as String?;
-        await _remoteDataSource.confirmMedication(entityId, section,
-            date: date);
+        await _remoteDataSource.confirmMedication(
+            entityId, payload['section'] as String,
+            date: payload['date'] as String?);
         return null;
 
       case 'deleteMedication':

@@ -1,33 +1,38 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import '../../../../core/managers/mutation_sync_manager.dart';
-import '../states/medications_state.dart';
-import '../../domain/repositories/medication_repository.dart';
-import '../../domain/entities/medication_entity.dart';
-import '../../domain/entities/medication_count.dart';
-import '../../../../core/utils/safe_notifier.dart';
+
 import 'package:clock/clock.dart';
-import 'package:yelima/core/utils/session_scoped.dart';
+import 'package:flutter/foundation.dart';
+import 'package:fpdart/fpdart.dart';
+
+import '../../../../core/failures/app_failure.dart';
+import '../../../../core/utils/safe_notifier.dart';
+import '../../../../core/utils/session_scoped.dart';
 import '../../domain/dose_window.dart';
+import '../../domain/entities/medication_entity.dart';
+import '../../domain/entities/medication_section.dart';
+import '../../domain/medication_failures.dart';
+import '../../domain/repositories/medication_repository.dart';
+import '../states/medications_state.dart';
 
-enum MedicationSection { morning, afternoon, evening }
-
-extension MedicationSectionExt on MedicationSection {
-  String get nameUpperCase => name.toUpperCase();
-}
-
+/// The medications tab: today's doses by section, counts and weekly adherence.
 class MedicationController extends ChangeNotifier
     with SafeNotifier, SessionScoped {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies                  |
-  // --------------------------------------------------------------------------
-
-  final MedicationRepository repository;
-  final MutationSyncManager? syncManager;
-  StreamSubscription? _mutationSyncSub;
-
-  MedicationController({required this.repository, this.syncManager}) {
+  MedicationController({required MedicationRepository repository})
+      : _repository = repository {
     joinSession();
+  }
+
+  final MedicationRepository _repository;
+  StreamSubscription<void>? _syncSub;
+  StreamSubscription<Object?>? _countsSub;
+  StreamSubscription<List<MedicationEntity>>? _dosesSub;
+
+  MedicationsState _state = const MedicationsState();
+  MedicationsState get state => _state;
+  set state(MedicationsState value) {
+    if (_state == value) return;
+    _state = value;
+    notifyListeners();
   }
 
   @override
@@ -38,235 +43,74 @@ class MedicationController extends ChangeNotifier
 
   @override
   Future<void> onSessionEnded() async {
-    _state = const MedicationsState();
-    _medicationsSubscription?.cancel();
-    _countsSubscription?.cancel();
-    notifyListeners();
+    await _syncSub?.cancel();
+    await _countsSub?.cancel();
+    await _dosesSub?.cancel();
+    _syncSub = _countsSub = _dosesSub = null;
+    state = const MedicationsState();
   }
 
-  MedicationsState _state = const MedicationsState();
-  MedicationsState get state => _state;
-
-  StreamSubscription<List<MedicationEntity>>? _medicationsSubscription;
-  StreamSubscription<MedicationCount>? _countsSubscription;
-
-  set state(MedicationsState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
-  }
-
-  String get _currentSection {
-    switch (state.selectedTabIndex) {
-      case 0:
-        return MedicationSection.morning.nameUpperCase;
-      case 1:
-        return MedicationSection.afternoon.nameUpperCase;
-      case 2:
-        return MedicationSection.evening.nameUpperCase;
-      default:
-        return MedicationSection.morning.nameUpperCase;
-    }
-  }
-
-  /// Initializes the controller by fetching adherence, counts, and medications.
+  /// Opens on the section for the time of day and refreshes everything.
   void init() {
-    if (syncManager != null) {
-      _mutationSyncSub?.cancel();
-      _mutationSyncSub = syncManager!.onMutationSynced.listen((event) {
-        if (event.contains('medication') ||
-            event.contains('confirmMedication') ||
-            event.contains('deleteMedication')) {
-          fetchAdherence();
-        }
-      });
-    }
-
-    _autoSelectTabBasedOnTime();
+    _syncSub ??= _repository.onSynced.listen((_) => fetchAdherence());
+    _countsSub ??= _repository
+        .watchCounts()
+        .listen((counts) => state = state.copyWith(counts: counts));
+    _state = _state.copyWith(section: MedicationSection.at(clock.now().hour));
+    _watchSection();
     fetchAdherence();
-    _initCountsStream();
-
-    // Trigger background sync for all sections so the tab counts populate immediately
-    repository.getMedicationsBySection(MedicationSection.morning.nameUpperCase);
-    repository
-        .getMedicationsBySection(MedicationSection.afternoon.nameUpperCase);
-    repository.getMedicationsBySection(MedicationSection.evening.nameUpperCase);
-
-    fetchMedications();
-    repository.getAllMedications(forceRefresh: true);
+    _repository.refreshAll();
   }
 
-  void _autoSelectTabBasedOnTime() {
-    final hour = clock.now().hour;
-    int index = 0; // Morning default
-    if (hour >= 12 && hour < 17) {
-      index = 1; // Afternoon
-    } else if (hour >= 17) {
-      index = 2; // Evening
-    }
-    _state = _state.copyWith(selectedTabIndex: index);
+  /// Shows another section's doses.
+  void selectSection(MedicationSection section) {
+    if (state.section == section) return;
+    state = state.copyWith(section: section);
+    _watchSection();
   }
 
-  /// Updates the selected tab index and refreshes the medication list for that time of day.
-  void setTabIndex(int index) {
-    if (state.selectedTabIndex != index) {
-      state = state.copyWith(selectedTabIndex: index);
-      fetchMedications();
-    }
-  }
-
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                    |
-  // --------------------------------------------------------------------------
-
-  /// Fetches the user's overall medication adherence rate from the backend.
-
+  /// Shows the phone's adherence at once, then the server's.
   Future<void> fetchAdherence() async {
     if (state.adherence == null) {
-      state = state.copyWith(isAdherenceLoading: true, adherenceError: null);
-      final cacheResult =
-          await repository.getCachedAdherence(showWeekdays: true);
-      cacheResult.fold(
-        (_) {}, // Ignore cache miss
-        (data) => state = state.copyWith(
-            isAdherenceLoading: false, adherence: data, adherenceError: null),
-      );
+      final cached = await _repository.getCachedAdherence();
+      state = state.copyWith(adherence: cached);
     }
+    (await _repository.getAdherence())
+        .fold((_) {}, (a) => state = state.copyWith(adherence: a));
+  }
 
-    if (state.adherence == null) {
-      state = state.copyWith(isAdherenceLoading: true, adherenceError: null);
+  /// Marks today's dose taken; fails with [DoseNotDueFailure] before its time.
+  AsyncResult<void> confirm(MedicationEntity med) async {
+    if (med.taken || state.confirmingMedicationIds.contains(med.id)) {
+      return right(null);
     }
-
-    final result = await repository.getAdherence(showWeekdays: true);
-
-    state = result.fold(
-      (error) {
-        if (state.adherence == null) {
-          return state.copyWith(
-              isAdherenceLoading: false, adherenceError: error);
-        }
-        return state.copyWith(isAdherenceLoading: false);
-      },
-      (data) => state.copyWith(
-          isAdherenceLoading: false, adherence: data, adherenceError: null),
-    );
-  }
-
-  void _initCountsStream() {
-    if (state.counts == null) {
-      state = state.copyWith(isCountsLoading: true, countsError: null);
-    }
-
-    _countsSubscription?.cancel();
-    _countsSubscription = repository.watchMedicationCounts().listen(
-      (data) {
-        state = state.copyWith(
-            isCountsLoading: false, counts: data, countsError: null);
-      },
-      onError: (error) {
-        state = state.copyWith(
-            isCountsLoading: false, countsError: error.toString());
-      },
-    );
-  }
-
-  /// Fetches the medication list for the currently selected time section via stream.
-  void fetchMedications() {
-    final section = _currentSection;
-    _setSectionLoading(section, true);
-
-    _medicationsSubscription?.cancel();
-    _medicationsSubscription =
-        repository.watchMedicationsBySection(section).listen(
-      (data) {
-        state = _buildStateWithData(section, data, false);
-      },
-      onError: (error) {
-        state = _buildStateWithError(section, error.toString(), false);
-      },
-    );
-  }
-
-  MedicationsState _buildStateWithError(
-      String section, String error, bool isLoading) {
-    final newErrors = Map<String, String>.from(state.sectionErrors)
-      ..[section] = error;
-    final newLoading = Map<String, bool>.from(state.sectionLoadingStatus)
-      ..[section] = isLoading;
-    return state.copyWith(
-        sectionErrors: newErrors, sectionLoadingStatus: newLoading);
-  }
-
-  MedicationsState _buildStateWithData(
-      String section, List<MedicationEntity> data, bool isLoading) {
-    final newErrors = Map<String, String>.from(state.sectionErrors)
-      ..remove(section);
-    final newLoading = Map<String, bool>.from(state.sectionLoadingStatus)
-      ..[section] = isLoading;
-    final newMeds =
-        Map<String, List<MedicationEntity>>.from(state.medicationsBySection)
-          ..[section] = data;
-    return state.copyWith(
-      sectionErrors: newErrors,
-      sectionLoadingStatus: newLoading,
-      medicationsBySection: newMeds,
-    );
-  }
-
-  void _setSectionLoading(String section, bool isLoading) {
-    final newLoading = Map<String, bool>.from(state.sectionLoadingStatus)
-      ..[section] = isLoading;
-    state = state.copyWith(sectionLoadingStatus: newLoading);
-  }
-
-  /// Confirms a medication dose and relies on the DB stream for instant UI updates.
-  Future<String?> toggleMedicationStatus(String id) async {
-    final section = _currentSection;
-    final currentList = state.medicationsBySection[section];
-    if (currentList == null) return null;
-
-    final index = currentList.indexWhere((m) => m.id == id);
-    if (index == -1) return null;
-
-    final med = currentList[index];
-    if (med.taken) return null;
-
     if (!DoseWindow.canConfirm(med.toBeTakenAt, clock.now())) {
-      return 'Cannot confirm dose — it\'s not yet time.';
+      return left(const DoseNotDueFailure());
     }
-
-    if (state.confirmingMedicationIds.contains(id)) return null;
-
-    _setConfirming(id, true);
-
-    final result = await repository.confirmMedication(id, section);
-
-    _setConfirming(id, false);
-
-    return result.fold(
-      (error) => error,
-      (_) {
-        fetchAdherence();
-        return null;
-      },
-    );
+    _setConfirming(med.id, true);
+    final result = await _repository.confirmDose(med.id, state.section);
+    _setConfirming(med.id, false);
+    if (result.isRight()) fetchAdherence();
+    return result;
   }
 
-  void _setConfirming(String id, bool isConfirming) {
-    final newConfirming = Set<String>.from(state.confirmingMedicationIds);
-    if (isConfirming) {
-      newConfirming.add(id);
-    } else {
-      newConfirming.remove(id);
-    }
-    state = state.copyWith(confirmingMedicationIds: newConfirming);
+  void _watchSection() {
+    final section = state.section;
+    _dosesSub?.cancel();
+    _dosesSub = _repository.watchSection(section).listen((doses) =>
+        state = state.copyWith(doses: {...state.doses, section: doses}));
   }
+
+  void _setConfirming(String id, bool confirming) => state = state.copyWith(
+      confirmingMedicationIds: confirming
+          ? {...state.confirmingMedicationIds, id}
+          : ({...state.confirmingMedicationIds}..remove(id)));
 
   @override
   void dispose() {
-    _medicationsSubscription?.cancel();
-    _countsSubscription?.cancel();
-    _mutationSyncSub?.cancel();
+    _syncSub?.cancel();
+    _countsSub?.cancel();
+    _dosesSub?.cancel();
     super.dispose();
   }
 }

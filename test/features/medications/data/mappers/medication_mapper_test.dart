@@ -2,10 +2,10 @@ import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/features/medications/data/mappers/medication_mapper.dart';
-import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
+import 'package:yelima/features/medications/domain/entities/medication_form.dart';
+import 'package:yelima/features/medications/domain/entities/medication_section.dart';
 import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 import 'package:yelima/features/medications/data/models/medication_model.dart';
-import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
 
 void main() {
   final today = DateTime(2026, 10, 23, 9, 0);
@@ -51,17 +51,21 @@ void main() {
     });
   });
 
-  group('fromCreateModel', () {
+  MedicationForm form(Map<MedicationSection, DoseSchedule> doses,
+          {String dosage = '5mg', String notes = ''}) =>
+      MedicationForm(
+          name: 'Amlodipine', dosage: dosage, notes: notes, doses: doses);
+  DoseSchedule at(int hour, [int minute = 0]) =>
+      DoseSchedule(hour: hour, minute: minute, quantity: 1);
+
+  group('rowsFor a new medication', () {
     test('creates one row per scheduled section with its local time', () {
-      final rows = atToday(() => MedicationMapper.fromCreateModel(
-            CreateMedicationModel(
-              name: 'Amlodipine',
-              dosage: '5mg',
-              morning: dose(8, 'AM'),
-              evening: dose(9, 'PM', minutes: 15),
-            ),
-            'local-1',
-          ));
+      final rows = atToday(() => MedicationMapper.rowsFor(
+          'local-1',
+          form({
+            MedicationSection.morning: at(8),
+            MedicationSection.evening: at(21, 15),
+          })));
 
       expect(rows.map((r) => (r.id, r.section, r.toBeTakenAt, r.taken)), [
         ('local-1', 'MORNING', DateTime(2026, 10, 23, 8), false),
@@ -73,34 +77,20 @@ void main() {
       expect(rows.every((r) => r.afternoonJson == null), isTrue);
     });
 
-    test('12 AM is midnight and 12 PM is noon', () {
-      final rows = atToday(() => MedicationMapper.fromCreateModel(
-            CreateMedicationModel(
-                name: 'X',
-                dosage: '1',
-                morning: dose(12, 'AM'),
-                afternoon: dose(12, 'PM')),
-            'l',
-          ));
-
-      expect(rows.map((r) => r.toBeTakenAt!.hour), [0, 12]);
-    });
-
     test('MED-EC-38: no schedule produces no rows', () {
-      final rows = atToday(() => MedicationMapper.fromCreateModel(
-          const CreateMedicationModel(name: 'X', dosage: '1'), 'l'));
-
-      expect(rows, isEmpty);
+      expect(MedicationMapper.rowsFor('l', form({})), isEmpty);
     });
   });
 
-  group('fromUpdateModel', () {
+  group('rowsFor an edit', () {
     test('keeps each section\'s taken state and the original name', () {
-      final rows = atToday(() => MedicationMapper.fromUpdateModel(
-            UpdateMedicationModel(
-                dosage: '10mg', morning: dose(7, 'AM'), evening: dose(8, 'PM')),
+      final rows = atToday(() => MedicationMapper.rowsFor(
             'm1',
-            [row('MORNING', taken: true), row('EVENING')],
+            form({
+              MedicationSection.morning: at(7),
+              MedicationSection.evening: at(20)
+            }, dosage: '10mg', notes: 'after food'),
+            previous: [row('MORNING', taken: true), row('EVENING')],
           ));
 
       expect(rows.map((r) => (r.section, r.taken, r.dosage, r.name)), [
@@ -111,22 +101,25 @@ void main() {
     });
 
     test('a newly added section starts untaken', () {
-      final rows = atToday(() => MedicationMapper.fromUpdateModel(
-            UpdateMedicationModel(afternoon: dose(1, 'PM')),
+      final rows = atToday(() => MedicationMapper.rowsFor(
             'm1',
-            [row('MORNING', taken: true)],
+            form({MedicationSection.afternoon: at(13)}),
+            previous: [row('MORNING', taken: true)],
           ));
 
       expect(rows.single.section, 'AFTERNOON');
       expect(rows.single.taken, isFalse);
     });
+  });
 
-    test('returns nothing when there is no existing row', () {
-      expect(
-          MedicationMapper.fromUpdateModel(
-              UpdateMedicationModel(morning: dose(8, 'AM')), 'm1', []),
-          isEmpty);
+  test('the server request sends every slot in its 12-hour format', () {
+    final json = MedicationMapper.toCreateModel(
+        form({MedicationSection.evening: at(21, 15)})).toJson();
+    expect(json['evening'], {
+      'time': {'hour': 9, 'minutes': 15, 'timeDesignators': 'PM'},
+      'quantity': {'value': 1, 'unit': 'tablet'},
     });
+    expect(json.containsKey('morning'), isFalse);
   });
 
   group('mergeRemoteWithLocal', () {
@@ -144,7 +137,7 @@ void main() {
       final merged = atToday(() => MedicationMapper.mergeRemoteWithLocal(
           remote(DateTime(2026, 10, 23, 8), taken: true),
           row('MORNING'),
-          'MORNING'));
+          MedicationSection.morning));
 
       expect((merged.id, merged.taken, merged.notes),
           ('srv-1', true, 'after food'));
@@ -152,14 +145,16 @@ void main() {
 
     test('MED-EC-25: a time changed on the server replaces the local time', () {
       final merged = atToday(() => MedicationMapper.mergeRemoteWithLocal(
-          remote(DateTime(2026, 10, 23, 9)), row('MORNING'), 'MORNING'));
+          remote(DateTime(2026, 10, 23, 9)),
+          row('MORNING'),
+          MedicationSection.morning));
 
       expect(merged.toBeTakenAt, DateTime(2026, 10, 23, 9));
     });
 
     test('MED-EC-40: a dose due right now keeps its real time', () {
       final merged = atToday(() => MedicationMapper.mergeRemoteWithLocal(
-          remote(today), null, 'AFTERNOON'));
+          remote(today), null, MedicationSection.afternoon));
 
       expect(merged.toBeTakenAt, today);
     });
@@ -170,9 +165,9 @@ void main() {
           const {'id': 'srv-1', 'name': 'A', 'dosage': '5mg', 'taken': false});
 
       final keptLocal = atToday(() => MedicationMapper.mergeRemoteWithLocal(
-          noTime, row('EVENING'), 'EVENING'));
-      final fallback = atToday(
-          () => MedicationMapper.mergeRemoteWithLocal(noTime, null, 'EVENING'));
+          noTime, row('EVENING'), MedicationSection.evening));
+      final fallback = atToday(() => MedicationMapper.mergeRemoteWithLocal(
+          noTime, null, MedicationSection.evening));
 
       expect(keptLocal.toBeTakenAt, DateTime(2026, 10, 23, 8));
       expect(fallback.toBeTakenAt, DateTime(2026, 10, 23, 20));
@@ -212,7 +207,7 @@ void main() {
               toBeTakenAt: DateTime(2026, 10, 23, 8),
               taken: true),
           null,
-          'MORNING'));
+          MedicationSection.morning));
       expect(merged.takenOn, today);
     });
   });

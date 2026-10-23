@@ -21,6 +21,9 @@ class AppDateFormats {
   // e.g. "2023-10-15" (forced to 15th of month)
   static final DateFormat yyyyMM15 = DateFormat('yyyy-MM-15');
 
+  /// "2026-10-23", the server's day format.
+  static final DateFormat yyyyMMdd = DateFormat('yyyy-MM-dd');
+
   // e.g. "09:41" (24-hour)
   static final DateFormat time24h = DateFormat('HH:mm');
 

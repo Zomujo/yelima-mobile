@@ -1,252 +1,86 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
-import '../../domain/entities/medicine_form_data.dart';
-import '../../domain/usecases/update_medication_usecase.dart';
-import 'all_medicines_controller.dart';
-import '../states/medicine_details_form_state.dart';
+
 import 'package:clock/clock.dart';
 
-class MedicineDetailsFormController extends ChangeNotifier with SafeNotifier {
-  // --------------------------------------------------------------------------
-  // |                                  State & Dependencies      |
-  // --------------------------------------------------------------------------
+import '../../../../core/failures/app_failure.dart';
+import '../../domain/entities/medication_history_entity.dart';
+import '../../domain/models/medication_detail_model.dart';
+import '../../domain/repositories/medication_repository.dart';
+import 'medication_form_controller.dart';
 
-  final AllMedicinesController allMedicinesController;
-  final UpdateMedicationUseCase updateMedicationUseCase;
-  String medicationId;
-
-  // --------------------------------------------------------------------------
-  // |                               Initialization & Lifecycle   |
-  // --------------------------------------------------------------------------
-
-  MedicineDetailsFormController({
-    required this.allMedicinesController,
-    required this.updateMedicationUseCase,
-    required this.medicationId,
-  }) {
-    nameController.addListener(_markChanged);
-    dosageController.addListener(_markChanged);
-    notesController.addListener(_markChanged);
-
-    if (allMedicinesController.syncManager != null) {
-      _syncSub =
-          allMedicinesController.syncManager!.onMutationSynced.listen((event) {
-        if (event.startsWith('remap:medication:$medicationId:')) {
-          final parts = event.split(':');
-          if (parts.length >= 4) {
-            medicationId = parts[3];
-            init(); // Re-fetch using the new server ID
-          }
-        }
-      });
-    }
-  }
-
-  StreamSubscription? _syncSub;
-
-  MedicineDetailsFormState state = const MedicineDetailsFormState();
-
-  final nameController = TextEditingController();
-  final dosageController = TextEditingController();
-  final notesController = TextEditingController();
-
-  // ─── Derived data getters ──────────────────────
-
-  String get titleName {
-    final detailName = allMedicinesController.detailState.data?.name;
-    final fallback = _fallbackMedication;
-    return detailName ?? fallback?.name ?? 'Loading...';
-  }
-
-  String get titleDosage {
-    final detailDosage = allMedicinesController.detailState.data?.dosage;
-    final fallback = _fallbackMedication;
-    return detailDosage ?? fallback?.dosage ?? '';
-  }
-
-  MedicationDetailModel? get medicationData {
-    final detail = allMedicinesController.detailState.data;
-    if (detail != null) return detail;
-
-    final fallback = _fallbackMedication;
-    if (fallback != null) {
-      return MedicationDetailModel(
-        id: fallback.id,
-        name: fallback.name,
-        dosage: fallback.dosage,
-        notes: '',
-        createdAt: clock.now(),
-        updatedAt: clock.now(),
-      );
-    }
-    return null;
-  }
-
-  bool get isLoadingData {
-    return allMedicinesController.detailState.isLoading &&
-        _fallbackMedication == null;
-  }
-
-  String? get dataError => allMedicinesController.detailState.error;
-
-  dynamic get _fallbackMedication => allMedicinesController.listState.data?.rows
-      .where((m) => m.id == medicationId)
-      .firstOrNull;
-
-  // ─── State mutations ──────────────────────────────────────────────────────
-
-  void _markChanged() {
-    state = state.copyWith(hasUnsavedChanges: true);
-    notifyListeners();
-  }
-
-  void toggleEditing(bool value) {
-    state = state.copyWith(
-      isEditing: value,
-      hasUnsavedChanges: value ? state.hasUnsavedChanges : false,
-    );
-    notifyListeners();
-  }
-
-  void setUnit(String unit) {
-    state = state.copyWith(selectedUnit: unit, hasUnsavedChanges: true);
-    notifyListeners();
-  }
-
-  void updateMorning(bool has, [TimeOfDay? time, int? quantity]) {
-    state = state.copyWith(
-      hasMorning: has,
-      morningTime: time ?? state.morningTime,
-      morningQuantity: quantity ?? state.morningQuantity,
-      hasUnsavedChanges: true,
-    );
-    notifyListeners();
-  }
-
-  void updateAfternoon(bool has, [TimeOfDay? time, int? quantity]) {
-    state = state.copyWith(
-      hasAfternoon: has,
-      afternoonTime: time ?? state.afternoonTime,
-      afternoonQuantity: quantity ?? state.afternoonQuantity,
-      hasUnsavedChanges: true,
-    );
-    notifyListeners();
-  }
-
-  void updateEvening(bool has, [TimeOfDay? time, int? quantity]) {
-    state = state.copyWith(
-      hasEvening: has,
-      eveningTime: time ?? state.eveningTime,
-      eveningQuantity: quantity ?? state.eveningQuantity,
-      hasUnsavedChanges: true,
-    );
-    notifyListeners();
-  }
-
-  void init() {
-    Future.microtask(() {
-      allMedicinesController.fetchMedicationHistory(medicationId);
-      allMedicinesController.fetchMedicationDetails(medicationId).then((_) {
-        final data = allMedicinesController.detailState.data;
-        if (data == null) return;
-
-        nameController.text = data.name;
-        dosageController.text = data.dosage;
-        notesController.text = data.notes ?? '';
-
-        state = MedicineDetailsFormState(
-          selectedUnit: data.morning?.quantity.unit ?? 'tablet',
-          hasMorning: data.morning != null,
-          morningTime: data.morning != null
-              ? TimeOfDay(
-                  hour: _to24Hour(data.morning!.time.hour,
-                      data.morning!.time.timeDesignators),
-                  minute: data.morning!.time.minutes)
-              : const TimeOfDay(hour: 8, minute: 0),
-          morningQuantity: data.morning?.quantity.value ?? 1,
-          hasAfternoon: data.afternoon != null,
-          afternoonTime: data.afternoon != null
-              ? TimeOfDay(
-                  hour: _to24Hour(data.afternoon!.time.hour,
-                      data.afternoon!.time.timeDesignators),
-                  minute: data.afternoon!.time.minutes)
-              : const TimeOfDay(hour: 13, minute: 0),
-          afternoonQuantity: data.afternoon?.quantity.value ?? 1,
-          hasEvening: data.evening != null,
-          eveningTime: data.evening != null
-              ? TimeOfDay(
-                  hour: _to24Hour(data.evening!.time.hour,
-                      data.evening!.time.timeDesignators),
-                  minute: data.evening!.time.minutes)
-              : const TimeOfDay(hour: 20, minute: 0),
-          eveningQuantity: data.evening?.quantity.value ?? 1,
-        );
-        notifyListeners();
-      });
+/// One medication's details screen: its data, dose history and edit form.
+class MedicineDetailsFormController extends MedicationFormController {
+  MedicineDetailsFormController(
+      {required MedicationRepository repository, required this.medicationId})
+      : _repository = repository {
+    // A medication added offline gets its server id once it syncs.
+    _idSub = _repository.onIdChanged.listen((ids) {
+      if (ids.$1 != medicationId) return;
+      medicationId = ids.$2;
+      init();
     });
   }
 
-  int _to24Hour(int hour, String designator) {
-    if (designator.toUpperCase() == 'PM' && hour < 12) return hour + 12;
-    if (designator.toUpperCase() == 'AM' && hour == 12) return 0;
-    return hour;
+  final MedicationRepository _repository;
+  late final StreamSubscription<(String, String)> _idSub;
+  String medicationId;
+
+  MedicationDetailModel? detail;
+  AppFailure? error;
+  bool isLoading = true;
+  bool isEditing = false;
+  MedicationHistoryEntity? history;
+  bool isHistoryLoading = true;
+  AppFailure? historyError;
+
+  @override
+  String get name => detail?.name ?? '';
+
+  /// Loads the details and this month's history.
+  Future<void> init() async {
+    loadHistory(clock.now());
+    final result = await _repository.getMedicationById(medicationId);
+    isLoading = false;
+    result.fold((f) => error = f, (data) {
+      detail = data;
+      error = null;
+      load(data);
+    });
+    notifyListeners();
   }
 
-  // --------------------------------------------------------------------------
-  // |                                   Actions & Methods                    |
-  // --------------------------------------------------------------------------
+  /// Loads the dose history for [month].
+  Future<void> loadHistory(DateTime month) async {
+    isHistoryLoading = true;
+    notifyListeners();
+    final result = await _repository.getMedicationHistory(medicationId, month);
+    isHistoryLoading = false;
+    result.fold((f) => historyError = f, (h) {
+      history = h;
+      historyError = null;
+    });
+    notifyListeners();
+  }
 
-  Future<String?> save() async {
-    final formData = MedicineFormData(
-      dosage: dosageController.text.trim(),
-      notes: notesController.text.trim(),
-      unit: state.selectedUnit,
-      morning: state.hasMorning
-          ? DoseSchedule(
-              hour: state.morningTime.hourOfPeriod,
-              minute: state.morningTime.minute,
-              period: state.morningTime.period == DayPeriod.am ? 'AM' : 'PM',
-              quantity: state.morningQuantity,
-            )
-          : null,
-      afternoon: state.hasAfternoon
-          ? DoseSchedule(
-              hour: state.afternoonTime.hourOfPeriod,
-              minute: state.afternoonTime.minute,
-              period: state.afternoonTime.period == DayPeriod.am ? 'AM' : 'PM',
-              quantity: state.afternoonQuantity,
-            )
-          : null,
-      evening: state.hasEvening
-          ? DoseSchedule(
-              hour: state.eveningTime.hourOfPeriod,
-              minute: state.eveningTime.minute,
-              period: state.eveningTime.period == DayPeriod.am ? 'AM' : 'PM',
-              quantity: state.eveningQuantity,
-            )
-          : null,
-    );
+  /// Starts or stops editing; stopping drops unsaved changes.
+  void setEditing(bool value) {
+    isEditing = value;
+    if (!value && detail != null) load(detail!);
+    notifyListeners();
+  }
 
-    final result = await updateMedicationUseCase(medicationId, formData);
-    return result.fold(
-      (error) => error,
-      (_) {
-        toggleEditing(false);
-        allMedicinesController.fetchAllMedicines(forceRefresh: true);
-        allMedicinesController.fetchMedicationDetails(medicationId);
-        return null;
-      },
-    );
+  @override
+  Future<AppFailure?> persist() async {
+    final result = await _repository.updateMedication(medicationId, form);
+    if (result.isLeft()) return result.fold((f) => f, (_) => null);
+    isEditing = false;
+    await init();
+    return null;
   }
 
   @override
   void dispose() {
-    _syncSub?.cancel();
-    nameController.dispose();
-    dosageController.dispose();
-    notesController.dispose();
+    _idSub.cancel();
     super.dispose();
   }
 }

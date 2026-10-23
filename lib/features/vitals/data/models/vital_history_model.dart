@@ -3,7 +3,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:yelima/core/db/app_database.dart';
 
-part 'package:yelima/features/vitals/data/models/vital_history_model.g.dart';
+part 'vital_history_model.g.dart';
 
 @JsonSerializable()
 class VitalHistoryModel extends VitalHistoryEntity {

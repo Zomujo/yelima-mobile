@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_entity.dart';
 
+/// A medication in the all-medicines list; opens its details.
 class MedicineHistoryCard extends StatelessWidget {
   final MedicationEntity medication;
 

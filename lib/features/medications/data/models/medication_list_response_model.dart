@@ -1,6 +1,7 @@
 import '../../domain/entities/medication_entity.dart';
 import 'medication_model.dart';
 
+/// A page of medications as the server sends it.
 class MedicationListResponseModel extends MedicationListResponse {
   const MedicationListResponseModel({
     required super.rows,

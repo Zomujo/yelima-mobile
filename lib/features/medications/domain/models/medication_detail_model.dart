@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 
-part 'package:yelima/features/medications/domain/models/medication_detail_model.freezed.dart';
-part 'package:yelima/features/medications/domain/models/medication_detail_model.g.dart';
+part 'medication_detail_model.freezed.dart';
+part 'medication_detail_model.g.dart';
 
 Object? _readId(Map json, String key) => json['_id'] ?? json['id'];
 

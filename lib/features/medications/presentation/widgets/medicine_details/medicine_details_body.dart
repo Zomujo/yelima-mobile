@@ -2,11 +2,13 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
+import '../../../../../shared/utils/failure_message.dart';
 import '../../controllers/medicine_details_form_controller.dart';
 import 'medicine_details_header_card.dart';
 import 'medicine_details_form_fields.dart';
 import 'medicine_details_schedule_section.dart';
 
+/// The details screen content: history card, fields and schedule.
 class MedicineDetailsBody extends StatelessWidget {
   final MedicineDetailsFormController controller;
 
@@ -14,20 +16,16 @@ class MedicineDetailsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (controller.isLoadingData) {
+    if (controller.isLoading) {
       return const Center(
           child: CircularProgressIndicator(color: AppColors.orange300));
     }
-
-    final data = controller.medicationData;
-
+    final data = controller.detail;
     if (data == null) {
-      if (controller.dataError != null) {
-        return Center(
-            child: AppText.bodyMedium(
-                context.l10n.errorWithMessage('${controller.dataError}')));
-      }
-      return Center(child: AppText.bodyMedium(context.l10n.medicationNotFound));
+      return Center(
+          child: AppText.bodyMedium(
+              controller.error?.message(context.l10n) ??
+                  context.l10n.medicationNotFound));
     }
 
     return SingleChildScrollView(
@@ -40,14 +38,13 @@ class MedicineDetailsBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MedicineDetailsHeaderCard(
-              data: data, medicationId: controller.medicationId),
+          MedicineDetailsHeaderCard(controller: controller),
           const SizedBox(height: 32),
           const Divider(color: AppColors.slate200, height: 1),
           const SizedBox(height: 24),
-          MedicineDetailsFormFields(data: data),
+          MedicineDetailsFormFields(controller: controller),
           const SizedBox(height: 32),
-          MedicineDetailsScheduleSection(data: data),
+          MedicineDetailsScheduleSection(controller: controller),
         ],
       ),
     );

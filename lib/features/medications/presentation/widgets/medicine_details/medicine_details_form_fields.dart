@@ -1,132 +1,66 @@
-import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
+
+import '../../../../../core/extensions/l10n_extension.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
+import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../controllers/medicine_details_form_controller.dart';
-import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
-import 'package:provider/provider.dart';
-import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../medication_form/unit_picker.dart';
 
+/// Dosage, unit and notes: read-only, or editable in edit mode.
 class MedicineDetailsFormFields extends StatelessWidget {
-  final MedicationDetailModel data;
+  const MedicineDetailsFormFields({super.key, required this.controller});
 
-  const MedicineDetailsFormFields({
-    super.key,
-    required this.data,
-  });
+  final MedicineDetailsFormController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<MedicineDetailsFormController>(
-      builder: (context, controller, child) {
-        if (!controller.state.isEditing) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText.titleMedium(context.l10n.generalDosageAmount,
-                  fontWeight: FontWeight.bold, color: AppColors.slate800),
-              const SizedBox(height: 12),
-              AppText.bodyMedium(data.dosage, color: AppColors.slate600),
-              const SizedBox(height: 32),
-              AppText.titleMedium(context.l10n.notesLabel,
-                  fontWeight: FontWeight.bold, color: AppColors.slate800),
-              const SizedBox(height: 12),
-              AppText.bodyMedium(
-                  (data.notes?.isEmpty ?? true)
-                      ? context.l10n.noNotesProvided
-                      : data.notes!,
-                  color: AppColors.slate600,
-                  height: 1.5),
-            ],
-          );
-        }
+    final l10n = context.l10n;
+    final data = controller.detail!;
+    Widget heading(String text) => AppText.titleMedium(text,
+        fontWeight: FontWeight.bold, color: AppColors.slate800);
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppFormField(
-              controller: controller.dosageController,
-              label: context.l10n.dosageStrength,
-              hintText: context.l10n.dosageStrengthHint,
-              isRequired: true,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              validator: (v) =>
-                  v == null || v.isEmpty ? context.l10n.requiredField : null,
-            ),
-            const SizedBox(height: 24),
-            AppText.titleMedium(context.l10n.medicationFormUnit,
-                fontWeight: FontWeight.bold, color: AppColors.slate800),
-            const SizedBox(height: 12),
-            PopupMenuButton<String>(
-              initialValue: controller.state.selectedUnit,
-              onSelected: controller.setUnit,
-              position: PopupMenuPosition.under,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.slate200),
-              ),
-              color: Colors.white,
-              elevation: 4.0,
-              constraints: BoxConstraints(
-                minWidth: MediaQuery.of(context).size.width - 48,
-                maxWidth: MediaQuery.of(context).size.width - 48,
-              ),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.slate200),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    AppText.bodyMedium(controller.state.selectedUnit,
-                        color: AppColors.slate800),
-                    const Icon(Icons.keyboard_arrow_down,
-                        color: AppColors.slate400),
-                  ],
-                ),
-              ),
-              itemBuilder: (BuildContext context) {
-                final units = [
-                  'tablet',
-                  'capsule',
-                  'ml',
-                  'drops',
-                  'mg',
-                  'application'
-                ];
-                return [
-                  for (var i = 0; i < units.length; i++) ...[
-                    PopupMenuItem<String>(
-                      value: units[i],
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: AppText.bodyMedium(units[i],
-                          color: AppColors.slate800),
-                    ),
-                    if (i < units.length - 1)
-                      const PopupMenuItem<String>(
-                        enabled: false,
-                        height: 1,
-                        padding: EdgeInsets.zero,
-                        child: Divider(height: 1, color: AppColors.slate200),
-                      ),
-                  ]
-                ];
-              },
-            ),
-            const SizedBox(height: 32),
-            AppFormField(
-              controller: controller.notesController,
-              label: context.l10n.notesLabel,
-              hintText: context.l10n.notesAfterMealsHint,
-              maxLines: 4,
-            ),
-          ],
-        );
-      },
+    if (!controller.isEditing) {
+      final notes = data.notes ?? '';
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          heading(l10n.generalDosageAmount),
+          const SizedBox(height: 12),
+          AppText.bodyMedium(data.dosage, color: AppColors.slate600),
+          const SizedBox(height: 32),
+          heading(l10n.notesLabel),
+          const SizedBox(height: 12),
+          AppText.bodyMedium(notes.isEmpty ? l10n.noNotesProvided : notes,
+              color: AppColors.slate600, height: 1.5),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppFormField(
+          controller: controller.dosageController,
+          label: l10n.dosageStrength,
+          hintText: l10n.dosageStrengthHint,
+          isRequired: true,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? l10n.requiredField : null,
+        ),
+        const SizedBox(height: 24),
+        heading(l10n.medicationFormUnit),
+        const SizedBox(height: 12),
+        UnitPicker(value: controller.unit, onSelected: controller.setUnit),
+        const SizedBox(height: 32),
+        AppFormField(
+          controller: controller.notesController,
+          label: l10n.notesLabel,
+          hintText: l10n.notesAfterMealsHint,
+          maxLines: 4,
+        ),
+      ],
     );
   }
 }

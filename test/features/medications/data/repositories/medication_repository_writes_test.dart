@@ -1,19 +1,22 @@
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/db/app_database.dart';
+import 'package:yelima/core/db/daos/pending_mutations_dao.dart';
+import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/core/services/notification_service.dart';
 import 'package:yelima/core/services/session_epoch.dart';
-import 'package:yelima/features/medications/data/datasources/medication_local_datasource.dart';
 import 'package:yelima/features/medications/data/datasources/medication_remote_datasource.dart';
-import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
-import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 import 'package:yelima/features/medications/data/models/medication_list_response_model.dart';
 import 'package:yelima/features/medications/data/models/medication_model.dart';
-import 'package:yelima/features/medications/utils/medication_reminder_id.dart';
 import 'package:yelima/features/medications/data/repositories/medication_repository_impl.dart';
+import 'package:yelima/features/medications/domain/entities/medication_form.dart';
+import 'package:yelima/features/medications/domain/entities/medication_section.dart';
+import 'package:yelima/features/medications/domain/medication_failures.dart';
+import 'package:yelima/features/medications/utils/medication_reminder_id.dart';
 
 import '../../../../helpers/fakes.dart';
 
@@ -23,43 +26,57 @@ class MockNotifications extends Mock implements NotificationService {}
 
 class MockSync extends Mock implements MutationSyncManager {}
 
-/// Local source whose queue write fails, to check the medication rows roll back.
-class FailingQueueLocal extends MedicationLocalDataSourceImpl {
-  FailingQueueLocal({required super.db});
+class _FailingQueueDao extends PendingMutationsDao {
+  _FailingQueueDao(super.db);
 
   @override
   Future<void> addPendingMutation(PendingMutationsCompanion mutation) =>
       throw Exception('disk full');
 }
 
+/// A database whose sync-queue writes fail, to check the medication rows roll back.
+class FailingQueueDb extends AppDatabase {
+  FailingQueueDb() : super(executor: testDb().executor);
+
+  late final _failing = _FailingQueueDao(this);
+
+  @override
+  PendingMutationsDao get pendingMutationsDao => _failing;
+}
+
 void main() {
   late AppDatabase db;
   late MockNotifications notifications;
-
-  const data = CreateMedicationModel(
-    name: 'Amlodipine',
-    dosage: '5mg',
-    morning: DosingScheduleModel(
-      time: ScheduleTimeModel(hour: 8, minutes: 0, timeDesignators: 'AM'),
-      quantity: ScheduleQuantityModel(value: 1, unit: 'tablet'),
-    ),
-  );
-
   late MockRemote remote;
 
-  MedicationRepositoryImpl repoWith(MedicationLocalDataSource local,
-      {bool online = false}) {
+  const form = MedicationForm(
+    name: 'Amlodipine',
+    dosage: '5mg',
+    doses: {
+      MedicationSection.morning: DoseSchedule(hour: 8, minute: 0, quantity: 1)
+    },
+  );
+
+  MedicationRepositoryImpl repoWith(AppDatabase db, {bool online = false}) {
     final sync = MockSync();
     when(() => sync.triggerSync()).thenAnswer((_) async {});
     return MedicationRepositoryImpl(
       remoteDataSource: remote,
       connectivityService: FakeConnectivity(online: online),
-      localDataSource: local,
+      db: db,
       mutationSyncManager: sync,
       notificationService: notifications,
       session: SessionEpoch(),
     );
   }
+
+  void expectNoReminderScheduled() =>
+      verifyNever(() => notifications.scheduleDailyReminder(
+            id: any(named: 'id'),
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+            time: any(named: 'time'),
+          ));
 
   setUpAll(() => registerFallbackValue(const TimeOfDay(hour: 0, minute: 0)));
 
@@ -78,40 +95,75 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('create saves the medication and its queued sync, tagged with the user',
-      () async {
-    final repo = repoWith(MedicationLocalDataSourceImpl(db: db));
+  group('create', () {
+    test('saves the medication and its queued sync, tagged with the user',
+        () async {
+      final id = (await withClock(Clock.fixed(DateTime(2026, 10, 23, 7)),
+              () => repoWith(db).createMedication(form)))
+          .getOrElse((_) => '');
 
-    final id = (await withClock(Clock.fixed(DateTime(2026, 10, 23, 7)),
-            () => repo.createMedication(data)))
-        .getOrElse((_) => '');
+      final meds = await db.select(db.medications).get();
+      final queued = (await db.select(db.pendingMutations).get()).single;
+      expect(meds.single.id, id);
+      expect((queued.entityId, queued.action, queued.ownerUid),
+          (id, 'createMedication', 'user_1'));
+    });
 
-    final meds = await db.select(db.medications).get();
-    final queued = (await db.select(db.pendingMutations).get()).single;
-    expect(meds.single.id, id);
-    expect((queued.entityId, queued.action, queued.ownerUid),
-        (id, 'createMedication', 'user_1'));
-  });
+    test('saves the name and dosage trimmed', () async {
+      await repoWith(db).createMedication(
+          const MedicationForm(name: '  Amlodipine ', dosage: ' 5mg ', doses: {
+        MedicationSection.morning: DoseSchedule(hour: 8, minute: 0, quantity: 1)
+      }));
 
-  test('if queueing the sync fails, the medication is not saved either',
-      () async {
-    final repo = repoWith(FailingQueueLocal(db: db));
+      final row = (await db.select(db.medications).get()).single;
+      expect((row.name, row.dosage), ('Amlodipine', '5mg'));
+    });
 
-    await expectLater(repo.createMedication(data), throwsException);
+    test('MED-EC-44: a name or dosage of only spaces is refused', () async {
+      final result = await repoWith(db).createMedication(
+          MedicationForm(name: '   ', dosage: '5mg', doses: form.doses));
 
-    expect(await db.select(db.medications).get(), isEmpty);
-    expect(await db.select(db.pendingMutations).get(), isEmpty);
-    verifyNever(() => notifications.scheduleDailyReminder(
-          id: any(named: 'id'),
-          title: any(named: 'title'),
-          body: any(named: 'body'),
-          time: any(named: 'time'),
-        ));
+      expect(
+          result, left<AppFailure, String>(const MissingNameOrDosageFailure()));
+      expect(await db.select(db.medications).get(), isEmpty);
+    });
+
+    test('a schedule is required', () async {
+      final result = await repoWith(db).createMedication(
+          const MedicationForm(name: 'Amlodipine', dosage: '5mg'));
+
+      expect(result, left<AppFailure, String>(const MissingScheduleFailure()));
+    });
+
+    test('the same name and dosage, ignoring case and spaces, is a duplicate',
+        () async {
+      final repo = repoWith(db);
+      await repo.createMedication(form);
+
+      final result = await repo.createMedication(MedicationForm(
+          name: ' amlodipine', dosage: '5MG ', doses: form.doses));
+
+      expect(
+          result, left<AppFailure, String>(const DuplicateMedicationFailure()));
+      expect((await db.select(db.medications).get()).length, 1);
+    });
+
+    test('if queueing the sync fails, the medication is not saved either',
+        () async {
+      final failing = FailingQueueDb();
+      addTearDown(failing.close);
+
+      final result = await repoWith(failing).createMedication(form);
+
+      expect(result.isLeft(), isTrue);
+      expect(await failing.select(failing.medications).get(), isEmpty);
+      expectNoReminderScheduled();
+    });
   });
 
   test('delete removes the rows and queues the delete together', () async {
-    final repo = repoWith(MedicationLocalDataSourceImpl(db: db));
-    final id = (await repo.createMedication(data)).getOrElse((_) => '');
+    final repo = repoWith(db);
+    final id = (await repo.createMedication(form)).getOrElse((_) => '');
     await db.delete(db.pendingMutations).go();
 
     await repo.deleteMedication(id);
@@ -121,7 +173,21 @@ void main() {
         'deleteMedication');
   });
 
-  group('background sync', () {
+  test('confirming a dose stamps it with today', () async {
+    final repo = repoWith(db);
+    final id = (await repo.createMedication(form)).getOrElse((_) => '');
+
+    await withClock(Clock.fixed(DateTime(2026, 10, 23, 8, 30)),
+        () => repo.confirmDose(id, MedicationSection.morning));
+
+    final row = (await db.select(db.medications).get()).single;
+    expect((row.taken, row.takenOn), (true, DateTime(2026, 10, 23, 8, 30)));
+    final confirm = (await db.select(db.pendingMutations).get())
+        .singleWhere((m) => m.action == 'confirmMedication');
+    expect(confirm.payloadJson, '{"section":"MORNING","date":"2026-10-23"}');
+  });
+
+  group('refresh from the server', () {
     Medication row(String id, String section) => Medication(
           id: id,
           name: 'Old name',
@@ -132,24 +198,35 @@ void main() {
           morningJson: '{"m":1}',
         );
 
-    MedicationModel remoteMed(String id, {String name = 'Amlodipine'}) =>
-        MedicationModel(
+    MedicationModel remoteMed(String id) => MedicationModel(
           id: id,
-          name: name,
+          name: 'Amlodipine',
           dosage: '10mg',
           purpose: 'BP',
           toBeTakenAt: DateTime(2026, 10, 23, 8),
           taken: false,
         );
 
-    /// Background work runs unawaited; wait until it has finished.
-    Future<void> settle() =>
-        Future<void>.delayed(const Duration(milliseconds: 50));
+    MedicationListResponseModel page(List<MedicationModel> rows) =>
+        MedicationListResponseModel(
+            rows: rows,
+            total: rows.length,
+            pageSize: 100,
+            page: 1,
+            totalPages: 1);
 
     Future<Set<(String, String)>> rows() async =>
         (await db.select(db.medications).get())
             .map((m) => (m.id, m.section))
             .toSet();
+
+    setUp(() {
+      // Each test opens just one source; the others fail and change nothing.
+      when(() => remote.getMedicationsBySection(any()))
+          .thenThrow(Exception('offline'));
+      when(() => remote.getAllMedications(pageSize: any(named: 'pageSize')))
+          .thenThrow(Exception('offline'));
+    });
 
     test('MED-EC-05: a med gone from one section keeps its other sections',
         () async {
@@ -157,11 +234,8 @@ void main() {
           [row('srv-1', 'MORNING'), row('srv-1', 'EVENING')]);
       when(() => remote.getMedicationsBySection('MORNING'))
           .thenAnswer((_) async => <MedicationModel>[]);
-      final repo =
-          repoWith(MedicationLocalDataSourceImpl(db: db), online: true);
 
-      await repo.getMedicationsBySection('MORNING');
-      await settle();
+      await repoWith(db, online: true).refreshAll();
 
       expect(await rows(), {('srv-1', 'EVENING')});
       verify(() => notifications
@@ -170,26 +244,16 @@ void main() {
           .cancelReminder(medicationReminderId('srv-1', 'EVENING')));
     });
 
-    test('MED-EC-04: the list sync updates details and never adds UNKNOWN rows',
+    test('MED-EC-04: the list updates details and never adds UNKNOWN rows',
         () async {
       await db.medicationsDao.insertMedications([
         row('srv-1', 'MORNING'),
         row('srv-1', 'UNKNOWN'), // left by an older version
       ]);
-      when(() => remote.getAllMedications(
-              page: any(named: 'page'), pageSize: any(named: 'pageSize')))
-          .thenAnswer((_) async => MedicationListResponseModel(
-                rows: [remoteMed('srv-1')],
-                total: 1,
-                pageSize: 10,
-                page: 1,
-                totalPages: 1,
-              ));
-      final repo =
-          repoWith(MedicationLocalDataSourceImpl(db: db), online: true);
+      when(() => remote.getAllMedications(pageSize: 100))
+          .thenAnswer((_) async => page([remoteMed('srv-1')]));
 
-      await repo.getAllMedications();
-      await settle();
+      await repoWith(db, online: true).refreshAll();
 
       final meds = await db.select(db.medications).get();
       expect(
@@ -197,23 +261,28 @@ void main() {
           [('srv-1', 'MORNING', 'Amlodipine', '10mg', '{"m":1}')]);
       verify(() => notifications
           .cancelReminder(medicationReminderId('srv-1', 'UNKNOWN'))).called(1);
-      verifyNever(() => notifications.scheduleDailyReminder(
-            id: any(named: 'id'),
-            title: any(named: 'title'),
-            body: any(named: 'body'),
-            time: any(named: 'time'),
-          ));
+      expectNoReminderScheduled();
     });
-  });
 
-  test('confirming a dose stamps it with today', () async {
-    final repo = repoWith(MedicationLocalDataSourceImpl(db: db));
-    final id = (await repo.createMedication(data)).getOrElse((_) => '');
+    test('rows with unsent changes are never overwritten', () async {
+      await db.medicationsDao.insertMedications([row('srv-1', 'MORNING')]);
+      await db.pendingMutationsDao.queueMutation(
+          entityId: 'srv-1',
+          entityType: 'medication',
+          action: 'updateMedication',
+          payload: {});
+      when(() => remote.getMedicationsBySection('MORNING'))
+          .thenAnswer((_) async => <MedicationModel>[]);
 
-    await withClock(Clock.fixed(DateTime(2026, 10, 23, 8, 30)),
-        () => repo.confirmMedication(id, 'MORNING'));
+      await repoWith(db, online: true).refreshAll();
 
-    final row = (await db.select(db.medications).get()).single;
-    expect((row.taken, row.takenOn), (true, DateTime(2026, 10, 23, 8, 30)));
+      expect(await rows(), {('srv-1', 'MORNING')});
+    });
+
+    test('offline, nothing is fetched', () async {
+      await repoWith(db).refreshAll();
+
+      verifyNever(() => remote.getMedicationsBySection(any()));
+    });
   });
 }

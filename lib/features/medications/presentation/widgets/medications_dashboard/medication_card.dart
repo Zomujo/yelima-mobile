@@ -6,6 +6,7 @@ import '../../../../../core/constants/app_images.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
 
+/// One dose in today's list, with its confirm button.
 class MedicationCard extends StatelessWidget {
   final String name;
   final String dosage;

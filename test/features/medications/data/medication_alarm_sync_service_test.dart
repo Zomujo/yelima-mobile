@@ -14,13 +14,14 @@ void main() {
   late MockRepo repo;
   late MockNotifications notifications;
   late MedicationAlarmSyncService service;
-  late StreamController<String> events;
+  late StreamController<(String, String)> remaps;
 
   setUp(() {
     repo = MockRepo();
     notifications = MockNotifications();
-    events = StreamController<String>.broadcast();
-    service = MedicationAlarmSyncService(repo, notifications, events.stream);
+    remaps = StreamController<(String, String)>.broadcast();
+    when(() => repo.onIdChanged).thenAnswer((_) => remaps.stream);
+    service = MedicationAlarmSyncService(repo, notifications);
   });
 
   test('a session start reschedules the local reminders', () async {
@@ -51,10 +52,7 @@ void main() {
     when(() => repo.moveReminders(any(), any())).thenAnswer((_) async {});
     await service.onSessionStarted('uid');
 
-    events
-      ..add('remap:chat:a:b')
-      ..add('medication')
-      ..add('remap:medication:local-1:srv-1');
+    remaps.add(('local-1', 'srv-1'));
     await pumpEventQueue();
 
     verify(() => repo.moveReminders('local-1', 'srv-1')).called(1);
@@ -66,7 +64,7 @@ void main() {
     await service.onSessionStarted('uid');
     await service.onSessionEnded();
 
-    events.add('remap:medication:local-1:srv-1');
+    remaps.add(('local-1', 'srv-1'));
     await pumpEventQueue();
 
     verifyNever(() => repo.moveReminders(any(), any()));

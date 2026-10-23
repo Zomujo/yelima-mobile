@@ -13,6 +13,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
+/// The medications tab: adherence, section tabs and today's doses.
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key});
 
@@ -49,18 +50,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       GestureDetector(
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const AllMedicinesScreen(),
-                            ),
-                          );
-                          if (context.mounted) {
-                            final medController =
-                                context.read<MedicationController>();
-                            medController.init();
-                          }
-                        },
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const AllMedicinesScreen()),
+                        ),
                         child: Container(
                           padding: const EdgeInsets.only(bottom: 2),
                           decoration: const BoxDecoration(
@@ -87,7 +80,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       key: AppTutorialKeys.medicationsAdherenceKey,
                       width: double.infinity,
                       child: ShimmerLoading(
-                        isLoading: controller.state.isAdherenceLoading,
+                        isLoading: controller.state.adherence == null,
                         shimmer:
                             AppShimmer.box(width: double.infinity, height: 150),
                         child: AdherenceCard(
@@ -106,13 +99,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                   Consumer<MedicationController>(
                       builder: (context, controller, child) {
                     return TimeOfDayTabs(
-                      selectedIndex: controller.state.selectedTabIndex,
-                      onTabSelected: controller.setTabIndex,
-                      counts: {
-                        'MORNING': controller.state.counts?.morning ?? 0,
-                        'AFTERNOON': controller.state.counts?.afternoon ?? 0,
-                        'EVENING': controller.state.counts?.evening ?? 0,
-                      },
+                      selected: controller.state.section,
+                      onSelected: controller.selectSection,
+                      counts: controller.state.counts,
                     );
                   }),
                   const SizedBox(height: 24),

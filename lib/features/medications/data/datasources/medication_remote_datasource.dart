@@ -1,155 +1,88 @@
 import '../../../../core/api/api_client.dart';
+import '../../domain/models/create_medication_model.dart';
+import '../../domain/models/medication_detail_model.dart';
+import '../../domain/models/seeded_medication_list_response_model.dart';
+import '../../domain/models/update_medication_model.dart';
 import '../models/medication_adherence_model.dart';
-import '../models/medication_count_model.dart';
-import '../models/medication_model.dart';
-import '../models/medication_list_response_model.dart';
 import '../models/medication_history_model.dart';
-import 'package:yelima/features/medications/domain/models/create_medication_model.dart';
-import 'package:yelima/features/medications/domain/models/update_medication_model.dart';
-import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
-import 'package:yelima/features/medications/domain/models/seeded_medication_list_response_model.dart';
+import '../models/medication_list_response_model.dart';
+import '../models/medication_model.dart';
 
-abstract class MedicationRemoteDataSource {
-  Future<MedicationAdherenceModel> getAdherence({required bool showWeekdays});
-  Future<MedicationCountModel> getMedicationCounts();
-  Future<List<MedicationModel>> getMedicationsBySection(String section);
-  Future<String> confirmMedication(String medicationId, String section,
-      {String? date});
-  Future<MedicationListResponseModel> getAllMedications(
-      {int page = 1, int pageSize = 10});
-  Future<MedicationHistoryModel> getMedicationHistory(String medicationId,
-      {required String date});
-  Future<String> createMedication(CreateMedicationModel data);
-  Future<MedicationDetailModel> getMedicationById(String id);
-  Future<String> updateMedication(String id, UpdateMedicationModel data);
-  Future<SeededMedicationListResponseModel> getPreloadedMedications(
-      {int page = 1, int limit = 10, String? search});
-  Future<void> deleteMedication(String id);
-}
+/// The medication endpoints of the API.
+class MedicationRemoteDataSource {
+  MedicationRemoteDataSource({required this.apiClient});
 
-class MedicationRemoteDataSourceImpl implements MedicationRemoteDataSource {
   final APIClient apiClient;
+  static const _base = '/api/v1/client/medications';
 
-  MedicationRemoteDataSourceImpl({required this.apiClient});
-
-  @override
+  /// This week's (or month's) adherence.
   Future<MedicationAdherenceModel> getAdherence(
-      {required bool showWeekdays}) async {
-    final response = await apiClient.get(
-      '/api/v1/client/medication-adherence',
-      queryParameters: {'showWeekdays': showWeekdays.toString()},
-    );
-    return MedicationAdherenceModel.fromJson(response['data']);
-  }
+          {required bool showWeekdays}) async =>
+      MedicationAdherenceModel.fromJson((await apiClient.get(
+          '/api/v1/client/medication-adherence',
+          queryParameters: {'showWeekdays': '$showWeekdays'}))['data']);
 
-  @override
-  Future<MedicationCountModel> getMedicationCounts() async {
-    final response =
-        await apiClient.get('/api/v1/client/medications/today/count');
-    return MedicationCountModel.fromJson(response['data']);
-  }
-
-  @override
+  /// Today's doses in [section].
   Future<List<MedicationModel>> getMedicationsBySection(String section) async {
-    final response = await apiClient.get(
-      '/api/v1/client/medications/today',
-      queryParameters: {'section': section},
-    );
-
-    final List<dynamic> data = response['data'];
-    return data.map((json) => MedicationModel.fromJson(json)).toList();
+    final response = await apiClient
+        .get('$_base/today', queryParameters: {'section': section});
+    return [
+      for (final json in response['data'] as List) MedicationModel.fromJson(json)
+    ];
   }
 
-  @override
-  Future<String> confirmMedication(String medicationId, String section,
-      {String? date}) async {
-    final payload = {'section': section};
-    if (date != null) payload['date'] = date;
+  /// Confirms a dose for [section] on [date] (yyyy-MM-dd).
+  Future<void> confirmMedication(String medicationId, String section,
+          {String? date}) =>
+      apiClient.put('$_base/$medicationId/confirm',
+          queryParameters: {'section': section, if (date != null) 'date': date});
 
-    final response = await apiClient.put(
-      '/api/v1/client/medications/$medicationId/confirm',
-      queryParameters: payload,
-    );
-    return response['message'] as String? ?? 'Confirmed';
-  }
-
-  @override
+  /// One page of all medications.
   Future<MedicationListResponseModel> getAllMedications(
-      {int page = 1, int pageSize = 10}) async {
-    final response = await apiClient.get(
-      '/api/v1/client/medications',
-      queryParameters: {'page': page, 'pageSize': pageSize},
-    );
-    return MedicationListResponseModel.fromJson(response['data']);
-  }
+          {int page = 1, int pageSize = 10}) async =>
+      MedicationListResponseModel.fromJson((await apiClient.get(_base,
+          queryParameters: {'page': page, 'pageSize': pageSize}))['data']);
 
-  @override
+  /// Doses of [medicationId] in the month of [date] (yyyy-MM-15).
   Future<MedicationHistoryModel> getMedicationHistory(String medicationId,
-      {required String date}) async {
-    final response = await apiClient.get(
-      '/api/v1/client/medications/$medicationId/adherence',
-      queryParameters: {'date': date},
-    );
-    return MedicationHistoryModel.fromJson(response['data']);
-  }
+          {required String date}) async =>
+      MedicationHistoryModel.fromJson((await apiClient.get(
+          '$_base/$medicationId/adherence',
+          queryParameters: {'date': date}))['data']);
 
-  @override
+  /// Creates a medication and returns its server id.
   Future<String> createMedication(CreateMedicationModel data) async {
-    final payload = data.toJson();
-    if (!payload.containsKey('morning')) payload['morning'] = null;
-    if (!payload.containsKey('afternoon')) payload['afternoon'] = null;
-    if (!payload.containsKey('evening')) payload['evening'] = null;
-    if (!payload.containsKey('notes')) payload['notes'] = "";
-
-    final response = await apiClient.post(
-      '/api/v1/client/medications',
-      data: payload,
-    );
-
-    final responseData = response['data'];
-    if (responseData is Map) {
-      return (responseData['id'] ?? responseData['_id']).toString();
-    }
-    return responseData.toString();
+    final created =
+        (await apiClient.post(_base, data: _withEmptySlots(data.toJson())))['data'];
+    return created is Map
+        ? (created['id'] ?? created['_id']).toString()
+        : created.toString();
   }
 
-  @override
-  Future<MedicationDetailModel> getMedicationById(String id) async {
-    final response = await apiClient.get('/api/v1/client/medications/$id');
-    return MedicationDetailModel.fromJson(response['data']);
-  }
+  /// Full details of one medication.
+  Future<MedicationDetailModel> getMedicationById(String id) async =>
+      MedicationDetailModel.fromJson((await apiClient.get('$_base/$id'))['data']);
 
-  @override
-  Future<String> updateMedication(String id, UpdateMedicationModel data) async {
-    final payload = data.toJson();
-    if (!payload.containsKey('morning')) payload['morning'] = null;
-    if (!payload.containsKey('afternoon')) payload['afternoon'] = null;
-    if (!payload.containsKey('evening')) payload['evening'] = null;
-    if (!payload.containsKey('notes')) payload['notes'] = "";
+  /// Updates a medication.
+  Future<void> updateMedication(String id, UpdateMedicationModel data) =>
+      apiClient.patch('$_base/$id', data: _withEmptySlots(data.toJson()));
 
-    final response = await apiClient.patch(
-      '/api/v1/client/medications/$id',
-      data: payload,
-    );
-    return response['message'] as String? ?? 'Updated successfully';
-  }
+  /// Deletes a medication.
+  Future<void> deleteMedication(String id) => apiClient.delete('$_base/$id');
 
-  @override
-  Future<void> deleteMedication(String id) async {
-    await apiClient.delete('/api/v1/client/medications/$id');
-  }
-
-  @override
+  /// One page of the preloaded medication list.
   Future<SeededMedicationListResponseModel> getPreloadedMedications(
-      {int page = 1, int limit = 10, String? search}) async {
-    final Map<String, dynamic> query = {'page': page, 'limit': limit};
-    if (search != null && search.isNotEmpty) {
-      query['search'] = search;
-    }
-    final response = await apiClient.get(
-      '/api/v1/client/medications/preloaded',
-      queryParameters: query,
-    );
-    return SeededMedicationListResponseModel.fromJson(response['data']);
-  }
+          {int page = 1, int limit = 10}) async =>
+      SeededMedicationListResponseModel.fromJson((await apiClient.get(
+          '$_base/preloaded',
+          queryParameters: {'page': page, 'limit': limit}))['data']);
+
+  /// The server wants every slot present: a removed slot is sent as null.
+  static Map<String, dynamic> _withEmptySlots(Map<String, dynamic> json) => {
+        'morning': null,
+        'afternoon': null,
+        'evening': null,
+        'notes': '',
+        ...json,
+      };
 }

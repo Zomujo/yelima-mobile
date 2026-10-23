@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// A dose in today's list.
 class MedicationEntity extends Equatable {
   final String id;
   final String name;
@@ -17,28 +18,11 @@ class MedicationEntity extends Equatable {
     required this.taken,
   });
 
-  MedicationEntity copyWith({
-    String? id,
-    String? name,
-    String? dosage,
-    String? purpose,
-    DateTime? toBeTakenAt,
-    bool? taken,
-  }) {
-    return MedicationEntity(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      dosage: dosage ?? this.dosage,
-      purpose: purpose ?? this.purpose,
-      toBeTakenAt: toBeTakenAt ?? this.toBeTakenAt,
-      taken: taken ?? this.taken,
-    );
-  }
-
   @override
   List<Object?> get props => [id, name, dosage, purpose, toBeTakenAt, taken];
 }
 
+/// A page of medications.
 class MedicationListResponse extends Equatable {
   final List<MedicationEntity> rows;
   final int total;

@@ -5,24 +5,6 @@ import 'package:yelima/core/utils/date_time_utils.dart';
 void main() {
   final fixed = Clock.fixed(DateTime(2026, 10, 23, 9, 30));
 
-  group('deriveTime converts 12-hour times onto today', () {
-    const cases = <(int, String, int)>[
-      (12, 'AM', 0),
-      (1, 'AM', 1),
-      (11, 'AM', 11),
-      (12, 'PM', 12),
-      (1, 'pm', 13),
-      (11, 'PM', 23),
-    ];
-    for (final (hour, period, expected) in cases) {
-      test('$hour $period -> $expected:15', () {
-        final result =
-            withClock(fixed, () => DateTimeUtils.deriveTime(hour, 15, period));
-        expect(result, DateTime(2026, 10, 23, expected, 15));
-      });
-    }
-  });
-
   group('formatDate', () {
     test('labels today and yesterday', () {
       withClock(fixed, () {

@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 
-part 'package:yelima/features/medications/domain/models/create_medication_model.freezed.dart';
-part 'package:yelima/features/medications/domain/models/create_medication_model.g.dart';
+part 'create_medication_model.freezed.dart';
+part 'create_medication_model.g.dart';
 
 @freezed
 abstract class CreateMedicationModel with _$CreateMedicationModel {

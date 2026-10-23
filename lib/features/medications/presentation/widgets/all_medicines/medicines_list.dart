@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../core/constants/app_images.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../../../shared/widgets/layout/app_empty_state.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
@@ -9,7 +8,9 @@ import '../../controllers/all_medicines_controller.dart';
 import 'medicine_history_card.dart';
 import 'delete_medication_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import '../../../../../shared/utils/failure_message.dart';
 
+/// The medication list with swipe-to-delete.
 class MedicinesList extends StatelessWidget {
   const MedicinesList({super.key});
 
@@ -17,9 +18,8 @@ class MedicinesList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AllMedicinesController>(
       builder: (context, controller, child) {
-        final state = controller.listState;
-
-        if (state.isLoading) {
+        final medications = controller.medicines;
+        if (medications == null) {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             itemCount: 5,
@@ -33,14 +33,6 @@ class MedicinesList extends StatelessWidget {
             },
           );
         }
-
-        if (state.error != null) {
-          return Center(
-              child: AppText.bodyMedium(
-                  context.l10n.errorWithMessage('${state.error}')));
-        }
-
-        final medications = state.data?.rows ?? [];
 
         if (medications.isEmpty) {
           return AppEmptyState(
@@ -73,10 +65,16 @@ class MedicinesList extends StatelessWidget {
                       await DeleteMedicationModal.show(context, medication);
                   return result ?? false;
                 },
-                onDismissed: (direction) {
-                  controller.deleteMedication(medication.id);
-                  AppSnackBar.showSuccess(context,
-                      message: '${medication.name} deleted');
+                onDismissed: (_) async {
+                  final l10n = context.l10n;
+                  final result = await controller.delete(medication.id);
+                  if (!context.mounted) return;
+                  result.fold(
+                    (f) => AppSnackBar.showError(context,
+                        message: f.message(l10n) ?? ''),
+                    (_) => AppSnackBar.showSuccess(context,
+                        message: l10n.medicationDeleted(medication.name)),
+                  );
                 },
                 child: MedicineHistoryCard(
                   medication: medication,

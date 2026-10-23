@@ -1,6 +1,7 @@
 import '../../domain/entities/medication_history_entity.dart';
 import 'package:clock/clock.dart';
 
+/// A medication's monthly history as the server sends it.
 class MedicationHistoryModel extends MedicationHistoryEntity {
   const MedicationHistoryModel({
     required super.medicationName,
@@ -23,6 +24,7 @@ class MedicationHistoryModel extends MedicationHistoryEntity {
   }
 }
 
+/// One logged dose as the server sends it.
 class MedicationLogModel extends MedicationLogEntity {
   const MedicationLogModel({
     required super.id,

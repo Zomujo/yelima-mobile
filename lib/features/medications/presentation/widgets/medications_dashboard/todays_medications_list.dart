@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import '../../../../../core/constants/app_images.dart';
-import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../../../shared/widgets/layout/app_empty_state.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
@@ -10,20 +9,33 @@ import 'medication_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:clock/clock.dart';
 import '../../../domain/dose_window.dart';
+import '../../../domain/entities/medication_entity.dart';
+import '../../../domain/medication_failures.dart';
+import '../../medication_failure_message.dart';
 
+/// Today's doses for the selected section, tappable to confirm.
 class TodaysMedicationsList extends StatelessWidget {
   final MedicationController controller;
 
   const TodaysMedicationsList({super.key, required this.controller});
 
+  /// Confirms [med]; an early tap gets a gentle note rather than an error.
+  Future<void> _confirm(BuildContext context, MedicationEntity med) async {
+    final l10n = context.l10n;
+    final result = await controller.confirm(med);
+    if (!context.mounted) return;
+    result.fold((failure) {
+      final text = failure.medicationMessage(l10n) ?? '';
+      failure is DoseNotDueFailure
+          ? AppSnackBar.showInfo(context, message: text)
+          : AppSnackBar.showError(context, message: text);
+    }, (_) {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    final section = controller.state.selectedTabIndex == 0
-        ? 'MORNING'
-        : controller.state.selectedTabIndex == 1
-            ? 'AFTERNOON'
-            : 'EVENING';
-    if (controller.state.sectionLoadingStatus[section] == true) {
+    final meds = controller.state.doses[controller.state.section];
+    if (meds == null) {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) => Padding(
@@ -34,22 +46,6 @@ class TodaysMedicationsList extends StatelessWidget {
         ),
       );
     }
-
-    if (controller.state.sectionErrors[section] != null) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32),
-          child: Center(
-            child: AppText.bodyMedium(
-              controller.state.sectionErrors[section]!,
-              color: Colors.red,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final meds = controller.state.medicationsBySection[section] ?? [];
 
     if (meds.isEmpty) {
       return SliverToBoxAdapter(
@@ -74,16 +70,7 @@ class TodaysMedicationsList extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: GestureDetector(
-              onTap: () async {
-                final error = await controller.toggleMedicationStatus(med.id);
-                if (error != null && context.mounted) {
-                  if (error.contains('not yet time')) {
-                    AppSnackBar.showInfo(context, message: error);
-                  } else {
-                    AppSnackBar.showError(context, message: error);
-                  }
-                }
-              },
+              onTap: () => _confirm(context, med),
               child: MedicationCard(
                 name: med.name,
                 dosage: med.dosage,
@@ -94,16 +81,7 @@ class TodaysMedicationsList extends StatelessWidget {
                 isEarly: !med.taken && !canConfirm,
                 isConfirming:
                     controller.state.confirmingMedicationIds.contains(med.id),
-                onConfirm: () async {
-                  final error = await controller.toggleMedicationStatus(med.id);
-                  if (error != null && context.mounted) {
-                    if (error.contains('not yet time')) {
-                      AppSnackBar.showInfo(context, message: error);
-                    } else {
-                      AppSnackBar.showError(context, message: error);
-                    }
-                  }
-                },
+                onConfirm: () => _confirm(context, med),
               ),
             ),
           );

@@ -2,20 +2,21 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../core/utils/app_date_formats.dart';
-import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_history_entity.dart';
-import '../../controllers/all_medicines_controller.dart';
 import 'package:clock/clock.dart';
 
+/// A month of taken and missed doses, with a month picker.
 class AdherenceCalendar extends StatefulWidget {
-  final String medicationId;
   final MedicationHistoryEntity history;
+
+  /// Called with the first day of the month the user picks.
+  final ValueChanged<DateTime> onMonthChanged;
 
   const AdherenceCalendar({
     super.key,
-    required this.medicationId,
     required this.history,
+    required this.onMonthChanged,
   });
 
   @override
@@ -36,7 +37,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
     final now = clock.now();
     _selectedMonth = DateTime(now.year, now.month, 1);
 
-    // Generate last 6 months
     _recentMonths = List.generate(6, (index) {
       int month = now.month - index;
       int year = now.year;
@@ -47,7 +47,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
       return DateTime(year, month, 1);
     });
 
-    // Try to match the history reference date if possible
     if (widget.history.logs.isNotEmpty) {
       final firstLog = widget.history.logs.first.takenAt;
       final historyMonth = DateTime(firstLog.year, firstLog.month, 1);
@@ -84,7 +83,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -100,10 +98,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                   setState(() {
                     _selectedMonth = newValue;
                   });
-                  context.read<AllMedicinesController>().fetchMedicationHistory(
-                        widget.medicationId,
-                        targetMonth: newValue,
-                      );
+                  widget.onMonthChanged(newValue);
                 }
               },
               itemBuilder: (context) => _recentMonths
@@ -152,7 +147,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
         ),
         const SizedBox(height: 16),
 
-        // Days of week
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: weekdays
@@ -164,7 +158,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
         ),
         const SizedBox(height: 10),
 
-        // Grid
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -176,7 +169,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
           itemCount: daysInMonth + firstWeekday,
           itemBuilder: (context, index) {
             if (index < firstWeekday) {
-              // Empty space for offset
               return const SizedBox.shrink();
             }
 
@@ -216,7 +208,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
             );
           },
         ),
-        // Legend
         Row(
           children: [
             _buildLegendItem(AppColors.emerald500, l10n.taken),

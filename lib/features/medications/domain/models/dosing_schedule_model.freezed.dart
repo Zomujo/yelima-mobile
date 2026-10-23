@@ -96,11 +96,12 @@ class _$ScheduleTimeModelCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _ScheduleTimeModel implements ScheduleTimeModel {
+class _ScheduleTimeModel extends ScheduleTimeModel {
   const _ScheduleTimeModel(
       {required this.hour,
       required this.minutes,
-      required this.timeDesignators});
+      required this.timeDesignators})
+      : super._();
   factory _ScheduleTimeModel.fromJson(Map<String, dynamic> json) =>
       _$ScheduleTimeModelFromJson(json);
 
@@ -451,8 +452,9 @@ class _$DosingScheduleModelCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _DosingScheduleModel implements DosingScheduleModel {
-  const _DosingScheduleModel({required this.time, required this.quantity});
+class _DosingScheduleModel extends DosingScheduleModel {
+  const _DosingScheduleModel({required this.time, required this.quantity})
+      : super._();
   factory _DosingScheduleModel.fromJson(Map<String, dynamic> json) =>
       _$DosingScheduleModelFromJson(json);
 

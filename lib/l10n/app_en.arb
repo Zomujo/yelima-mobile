@@ -556,5 +556,11 @@
   "authErrorInvalidEmail": "Enter a valid email address.",
   "authErrorUserDisabled": "This account has been disabled.",
   "authErrorTooManyRequests": "Too many attempts. Wait a moment and try again.",
-  "authErrorRequiresRecentLogin": "For your security, sign in again and retry."
+  "authErrorRequiresRecentLogin": "For your security, sign in again and retry.",
+  "doseNotDue": "It's not time for this dose yet.",
+  "medicationNameDosageRequired": "Enter the medication name and dosage.",
+  "medicationScheduleRequired": "Choose at least one time to take it.",
+  "medicationDuplicate": "You already have this medication with the same dosage.",
+  "medicationDeleted": "{name} deleted",
+  "@medicationDeleted": {"placeholders": {"name": {"type": "String"}}}
 }

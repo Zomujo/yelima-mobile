@@ -2,18 +2,6 @@ import 'package:intl/intl.dart';
 import 'package:clock/clock.dart';
 
 class DateTimeUtils {
-  /// Derives a DateTime object for today given a 12-hour format time.
-  static DateTime deriveTime(int hour, int minute, String period) {
-    int h24 = hour;
-    if (period.toUpperCase() == 'PM' && h24 < 12) {
-      h24 += 12;
-    } else if (period.toUpperCase() == 'AM' && h24 == 12) {
-      h24 = 0;
-    }
-    final now = clock.now();
-    return DateTime(now.year, now.month, now.day, h24, minute);
-  }
-
   /// Formats a date to strings like "Today", "Yesterday", "10th July 2026"
   static String formatDate(DateTime date) {
     final now = clock.now();

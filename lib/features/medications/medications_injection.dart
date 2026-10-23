@@ -1,64 +1,37 @@
 import 'package:get_it/get_it.dart';
 
-import 'data/datasources/medication_local_datasource.dart';
-import 'data/datasources/medication_remote_datasource.dart';
-import 'domain/repositories/medication_repository.dart';
-import 'data/repositories/medication_repository_impl.dart';
-import 'data/services/seeded_medications_sync_service.dart';
-import 'data/services/medication_alarm_sync_service.dart';
-import '../../core/services/session_lifecycle_service.dart';
 import '../../core/managers/mutation_sync_manager.dart';
-import 'domain/usecases/create_medication_usecase.dart';
-import 'domain/usecases/update_medication_usecase.dart';
+import '../../core/services/session_lifecycle_service.dart';
+import 'data/datasources/medication_remote_datasource.dart';
+import 'data/datasources/medication_remote_mutation_source.dart';
+import 'data/repositories/medication_repository_impl.dart';
+import 'data/services/medication_alarm_sync_service.dart';
+import 'data/services/seeded_medications_sync_service.dart';
+import 'domain/repositories/medication_repository.dart';
 import 'presentation/controllers/all_medicines_controller.dart';
 import 'presentation/controllers/medication_controller.dart';
-import 'data/datasources/medication_remote_mutation_source.dart';
 
+/// Registers the medications feature.
 void initMedications(GetIt sl) {
-  // Data sources
-  sl.registerLazySingleton<MedicationLocalDataSource>(
-      () => MedicationLocalDataSourceImpl(db: sl()));
   sl.registerLazySingleton<MedicationRemoteDataSource>(
-      () => MedicationRemoteDataSourceImpl(apiClient: sl()));
-
-  // Repository
+      () => MedicationRemoteDataSource(apiClient: sl()));
   sl.registerLazySingleton<MedicationRepository>(() => MedicationRepositoryImpl(
         remoteDataSource: sl(),
-        localDataSource: sl(),
         connectivityService: sl(),
+        db: sl(),
         mutationSyncManager: sl(),
         notificationService: sl(),
         session: sl(),
       ));
 
-  // Background Sync Services
-  final seededSyncService = SeededMedicationsSyncService(sl(), sl(), sl());
-  sl<SessionLifecycleService>().register(seededSyncService, priority: 90);
-  sl.registerSingleton<SeededMedicationsSyncService>(seededSyncService);
+  final session = sl<SessionLifecycleService>();
+  final seeded = SeededMedicationsSyncService(sl(), sl(), sl());
+  session.register(seeded, priority: 90);
+  sl.registerSingleton<SeededMedicationsSyncService>(seeded);
+  session.register(MedicationAlarmSyncService(sl(), sl()), priority: 80);
 
-  final alarmSyncService = MedicationAlarmSyncService(
-      sl(), sl(), sl<MutationSyncManager>().onMutationSynced);
-  sl<SessionLifecycleService>().register(alarmSyncService, priority: 80);
-
-  // Use cases
-  sl.registerLazySingleton<UpdateMedicationUseCase>(
-      () => UpdateMedicationUseCase(sl()));
-  sl.registerLazySingleton<CreateMedicationUseCase>(
-      () => CreateMedicationUseCase(sl()));
-
-  // Controllers
-  sl.registerFactory(() => MedicationController(
-        repository: sl(),
-        syncManager: sl.isRegistered<MutationSyncManager>()
-            ? sl<MutationSyncManager>()
-            : null,
-      ));
-  sl.registerFactory(() => AllMedicinesController(
-        repository: sl(),
-        syncManager: sl.isRegistered<MutationSyncManager>()
-            ? sl<MutationSyncManager>()
-            : null,
-      ));
+  sl.registerFactory(() => MedicationController(repository: sl()));
+  sl.registerFactory(() => AllMedicinesController(repository: sl()));
 
   // Registered last: the source needs this feature's datasources above.
   sl<MutationSyncManager>()

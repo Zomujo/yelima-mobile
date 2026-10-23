@@ -13,8 +13,7 @@ import 'features/user/presentation/controllers/user_controller.dart';
 import 'features/home/presentation/controllers/home_metrics_controller.dart';
 import 'features/medications/presentation/controllers/medication_controller.dart';
 import 'features/medications/presentation/controllers/all_medicines_controller.dart';
-import 'features/medications/domain/usecases/create_medication_usecase.dart';
-import 'features/medications/domain/usecases/update_medication_usecase.dart';
+import 'features/medications/domain/repositories/medication_repository.dart';
 import 'features/appointment/presentation/controllers/appointment_controller.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'features/symptoms/presentation/controllers/symptoms_controller.dart';
@@ -68,8 +67,7 @@ class _MyAppState extends State<MyApp> {
                 create: (_) => sl<HomeMetricsController>()..fetchMetrics()),
             ChangeNotifierProvider(create: (_) => sl<MedicationController>()),
             ChangeNotifierProvider(create: (_) => sl<AllMedicinesController>()),
-            Provider<CreateMedicationUseCase>(create: (_) => sl()),
-            Provider<UpdateMedicationUseCase>(create: (_) => sl()),
+            Provider<MedicationRepository>(create: (_) => sl()),
             ChangeNotifierProvider(
                 create: (_) => sl<AppointmentController>()..initialize()),
             ChangeNotifierProvider(
