@@ -41,16 +41,45 @@ class MedicationsDao extends DatabaseAccessor<AppDatabase>
   Future<void> deleteMedication(String id) =>
       (delete(medications)..where((tbl) => tbl.id.equals(id))).go();
 
-  Future<void> updateMedicationId(String oldId, String newId) async {
-    final existing = await getMedicationById(newId);
-    if (existing.isNotEmpty) {
-      await deleteMedication(oldId);
-    } else {
-      await (update(medications)..where((tbl) => tbl.id.equals(oldId))).write(
-        MedicationsCompanion(id: Value(newId)),
-      );
-    }
-  }
+  /// Deletes one section row of a medication, leaving its other sections.
+  Future<void> deleteMedicationSection(String id, String section) =>
+      (delete(medications)
+            ..where((tbl) => tbl.id.equals(id) & tbl.section.equals(section)))
+          .go();
+
+  /// Deletes rows the old background list sync stored without a section; returns their ids.
+  Future<List<String>> deleteUnknownSectionRows() => transaction(() async {
+        final unknown = await (select(medications)
+              ..where((tbl) => tbl.section.equals('UNKNOWN')))
+            .get();
+        await (delete(medications)
+              ..where((tbl) => tbl.section.equals('UNKNOWN')))
+            .go();
+        return unknown.map((m) => m.id).toList();
+      });
+
+  /// Moves a medication from its local id to the server id.
+  ///
+  /// If a background fetch already stored server rows, those keep the server's
+  /// state but take the local schedule and notes, which only the device has.
+  Future<void> updateMedicationId(String oldId, String newId) =>
+      transaction(() async {
+        final server = {
+          for (final m in await getMedicationById(newId)) m.section: m
+        };
+        for (final local in await getMedicationById(oldId)) {
+          final existing = server[local.section];
+          await insertMedication(existing == null
+              ? local.copyWith(id: newId)
+              : existing.copyWith(
+                  morningJson: Value(local.morningJson),
+                  afternoonJson: Value(local.afternoonJson),
+                  eveningJson: Value(local.eveningJson),
+                  notes: Value(local.notes),
+                ));
+        }
+        await deleteMedication(oldId);
+      });
 
   Future<void> clearMedications() => delete(medications).go();
 

@@ -10,19 +10,36 @@ import '../datasources/home_metrics_local_datasource.dart';
 import '../models/home_metrics_model.dart';
 import '../models/vital_history_model.dart';
 import '../../../../core/db/app_database.dart';
-import 'package:get_it/get_it.dart';
 import 'package:clock/clock.dart';
+import '../../../../core/services/session_epoch.dart';
 
 class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
   final HomeMetricsRemoteDataSource remoteDataSource;
   final HomeMetricsLocalDataSource localDataSource;
   final ConnectivityService connectivityService;
+  final SessionEpoch session;
+  final AppDatabase db;
 
   HomeMetricsRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.connectivityService,
+    required this.session,
+    required this.db,
   });
+
+  /// Saves the reading locally and queues it in one step, so a crash can't keep one without the other.
+  Future<void> _saveAndQueue(
+          VitalHistoryModel model, Map<String, dynamic> body) =>
+      db.transaction(() async {
+        await localDataSource.appendVitalHistory(model);
+        await db.pendingMutationsDao.queueMutation(
+          entityId: model.id,
+          entityType: 'vital_history',
+          action: 'saveVitalReading',
+          payload: body,
+        );
+      });
 
   @override
   AsyncResponse<HomeMetricsEntity> getCachedHomeMetrics() async {
@@ -46,6 +63,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
         bool vitalsFetchFailed = false;
         bool adherenceFetchFailed = false;
 
+        final epoch = session.current;
         final futures = await Future.wait([
           remoteDataSource.fetchVitalHistories().catchError((_) {
             vitalsFetchFailed = true;
@@ -57,6 +75,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           })
         ]);
 
+        session.ensure(epoch);
         final remoteVitals = futures[0] as List;
         final adherenceResponse = futures[1] as Map<String, dynamic>;
 
@@ -124,15 +143,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
         );
 
         if (!isConnected) {
-          await localDataSource.appendVitalHistory(model);
-          final db = GetIt.instance<AppDatabase>();
-          await db.pendingMutationsDao.queueMutation(
-            entityId: localId,
-            entityType: 'vital_history',
-            action: 'saveVitalReading',
-            payload: body,
-          );
-          try {} catch (_) {}
+          await _saveAndQueue(model, body);
           return const Right(null);
         }
 
@@ -141,14 +152,7 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
           // Only append to local cache if successful to avoid duplicating when remote fetch happens next
           await localDataSource.appendVitalHistory(model);
         } catch (e) {
-          await localDataSource.appendVitalHistory(model);
-          final db = GetIt.instance<AppDatabase>();
-          await db.pendingMutationsDao.queueMutation(
-            entityId: localId,
-            entityType: 'vital_history',
-            action: 'saveVitalReading',
-            payload: body,
-          );
+          await _saveAndQueue(model, body);
           if (e is ApiException && (e.code == '401' || e.code == '403')) {
             rethrow;
           }
@@ -162,7 +166,6 @@ class HomeMetricsRepositoryImpl implements HomeMetricsRepository {
 
   @override
   Stream<List<VitalHistoryEntity>> watchVitalHistories() {
-    final db = GetIt.instance<AppDatabase>();
     return db.vitalsDao.watchAllVitals().map((vitals) {
       return vitals.where((v) {
         final type = v.vitalType.toUpperCase();

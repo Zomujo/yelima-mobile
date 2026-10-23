@@ -14,6 +14,8 @@ class PendingMutations extends Table {
       dateTime()(); // Crucial for Last-Write-Wins resolution
   IntColumn get retryCount => integer().withDefault(
       const Constant(0))(); // Track retries for "Poison Pill" edge case
+  TextColumn get ownerUid => text()
+      .nullable()(); // User who made the change; null for rows from before v20
 
   @override
   Set<Column> get primaryKey => {id};

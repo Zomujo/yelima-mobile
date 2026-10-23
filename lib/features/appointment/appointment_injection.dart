@@ -13,7 +13,10 @@ void initAppointment(GetIt sl) {
   // Repository
   sl.registerLazySingleton<AppointmentRepository>(() =>
       AppointmentRepositoryImpl(
-          remoteDataSource: sl(), connectivityService: sl(), db: sl()));
+          remoteDataSource: sl(),
+          connectivityService: sl(),
+          db: sl(),
+          session: sl()));
 
   // Controller
   sl.registerFactory(() => AppointmentController(repository: sl()));

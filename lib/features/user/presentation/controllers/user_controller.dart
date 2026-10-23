@@ -56,6 +56,8 @@ class UserController extends ChangeNotifier with SafeNotifier {
       final stamp = ++_userEventStamp;
 
       if (user == null) {
+        await _userProfileSubscription?.cancel();
+        _userProfileSubscription = null;
         state = state.copyWith(userEntity: null, isInitialized: true);
       } else {
         state = state.copyWith(isInitialized: false);
@@ -90,7 +92,9 @@ class UserController extends ChangeNotifier with SafeNotifier {
   // --------------------------------------------------------------------------
 
   Future<void> refreshProfile(User user) async {
+    final stamp = _userEventStamp;
     final profileResult = await _repository.getUserProfile(user.uid);
+    if (stamp != _userEventStamp) return;
     profileResult.fold(
       (error) {},
       (profile) {

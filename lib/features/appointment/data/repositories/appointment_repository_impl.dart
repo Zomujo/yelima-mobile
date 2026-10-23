@@ -9,16 +9,19 @@ import '../datasources/appointment_remote_datasource.dart';
 import '../../../../core/db/app_database.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:clock/clock.dart';
+import '../../../../core/services/session_epoch.dart';
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
   final AppointmentRemoteDataSource remoteDataSource;
   final ConnectivityService connectivityService;
   final AppDatabase db;
+  final SessionEpoch session;
 
   AppointmentRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivityService,
     required this.db,
+    required this.session,
   });
 
   @override
@@ -30,11 +33,13 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }) async {
     if (await connectivityService.isConnected) {
       try {
+        final epoch = session.current;
         final remoteData = await remoteDataSource.getAppointments(
           page: page,
           pageSize: pageSize,
           filter: filter,
         );
+        session.ensure(epoch);
 
         await db.transaction(() async {
           if (page == 1) {
@@ -61,16 +66,20 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
         return Right(remoteData);
       } catch (e) {
-        return getLocalAppointments(page: page, pageSize: pageSize, filter: filter);
+        return getLocalAppointments(
+            page: page, pageSize: pageSize, filter: filter);
       }
     } else {
-      return getLocalAppointments(page: page, pageSize: pageSize, filter: filter);
+      return getLocalAppointments(
+          page: page, pageSize: pageSize, filter: filter);
     }
   }
 
   @override
-  AsyncResponse<AppointmentListResponse> getLocalAppointments({
-      required int page, required int pageSize, required String filter}) async {
+  AsyncResponse<AppointmentListResponse> getLocalAppointments(
+      {required int page,
+      required int pageSize,
+      required String filter}) async {
     try {
       final localAppointments = await db.appointmentsDao.getAllAppointments();
       final now = clock.now();
@@ -122,7 +131,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   AsyncResponse<AppointmentEntity?> getNearestAppointment() async {
     if (await connectivityService.isConnected) {
       try {
+        final epoch = session.current;
         final remoteData = await remoteDataSource.getNearestAppointment();
+        session.ensure(epoch);
         if (remoteData != null) {
           await db.appointmentsDao
               .insertOrUpdateAppointment(AppointmentsCompanion(
@@ -149,8 +160,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  AsyncResponse<AppointmentEntity?>
-      getLocalNearestAppointment() async {
+  AsyncResponse<AppointmentEntity?> getLocalNearestAppointment() async {
     try {
       final localApts = await db.appointmentsDao.getAllAppointments();
       final now = clock.now();

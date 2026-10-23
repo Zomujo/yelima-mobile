@@ -15,6 +15,7 @@ import '../models/ai_chat_response.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/file_service.dart';
 import 'package:clock/clock.dart';
+import '../../../../core/services/session_epoch.dart';
 
 class AiChatRepositoryImpl
     implements AiChatRepository, SessionLifecycleHandler {
@@ -24,6 +25,7 @@ class AiChatRepositoryImpl
   final ConnectivityService _connectivityService;
   final MutationSyncManager _mutationSyncManager;
   final FileService _fileService;
+  final SessionEpoch _session;
 
   AiChatRepositoryImpl({
     required AiChatLocalDataSource localDataSource,
@@ -32,12 +34,14 @@ class AiChatRepositoryImpl
     required ConnectivityService connectivityService,
     required MutationSyncManager mutationSyncManager,
     required FileService fileService,
+    required SessionEpoch session,
   })  : _localDataSource = localDataSource,
         _remoteDataSource = remoteDataSource,
         _deletionSyncManager = deletionSyncManager,
         _connectivityService = connectivityService,
         _mutationSyncManager = mutationSyncManager,
-        _fileService = fileService;
+        _fileService = fileService,
+        _session = session;
 
   /// Returns the designated service name for this repository.
   @override
@@ -145,8 +149,8 @@ class AiChatRepositoryImpl
 
     if (!isConnected) {
       await _localDataSource.queueOfflineMessageMutation(
-        entityId: localChatId ??
-            'offline_chat_${clock.now().millisecondsSinceEpoch}',
+        entityId:
+            localChatId ?? 'offline_chat_${clock.now().millisecondsSinceEpoch}',
         action: action,
         payload: payload,
       );
@@ -162,8 +166,8 @@ class AiChatRepositoryImpl
       }
 
       await _localDataSource.queueOfflineMessageMutation(
-        entityId: localChatId ??
-            'offline_chat_${clock.now().millisecondsSinceEpoch}',
+        entityId:
+            localChatId ?? 'offline_chat_${clock.now().millisecondsSinceEpoch}',
         action: action,
         payload: payload,
       );
@@ -250,8 +254,10 @@ class AiChatRepositoryImpl
   AsyncResponse<void> syncRemoteConversations() async {
     return ExceptionWrapper.runAsyncWithNetworkCheck(
       () async {
+        final epoch = _session.current;
         final apiResponseJson =
             await _remoteDataSource.fetchChats(page: 1, limit: 20);
+        _session.ensure(epoch);
         final responseData = AiChatData.fromJson(apiResponseJson);
         var remoteMessages =
             responseData.rows.map((row) => row.toEntity()).toList();
@@ -323,9 +329,13 @@ class AiChatRepositoryImpl
 
       if (localMsg != null) {
         remoteMessages[i] = remoteMsg.copyWith(
-          type: localMsg.type == MessageType.audio ? MessageType.audio : remoteMsg.type,
+          type: localMsg.type == MessageType.audio
+              ? MessageType.audio
+              : remoteMsg.type,
           audioUrl: remoteMsg.audioUrl ?? localMsg.audioUrl,
-          suggestions: remoteMsg.suggestions.isEmpty ? localMsg.suggestions : remoteMsg.suggestions,
+          suggestions: remoteMsg.suggestions.isEmpty
+              ? localMsg.suggestions
+              : remoteMsg.suggestions,
         );
       }
     }

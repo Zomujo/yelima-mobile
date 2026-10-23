@@ -19,6 +19,8 @@ void initHome(GetIt sl) {
             remoteDataSource: sl(),
             localDataSource: sl(),
             connectivityService: sl(),
+            session: sl(),
+            db: sl(),
           ));
 
   // Controller

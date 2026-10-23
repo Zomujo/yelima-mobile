@@ -17,6 +17,7 @@ void initUser(GetIt sl) {
         remoteDataSource: sl(),
         connectivityService: sl(),
         db: sl(),
+        session: sl(),
       ));
 
   // State Management

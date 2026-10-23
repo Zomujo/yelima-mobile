@@ -27,6 +27,7 @@ import '../models/medication_detail_model.dart';
 import '../models/seeded_medication_list_response_model.dart';
 import 'package:clock/clock.dart';
 import '../../utils/medication_reminder_id.dart';
+import '../../../../core/services/session_epoch.dart';
 
 class MedicationRepositoryImpl implements MedicationRepository {
   final MedicationRemoteDataSource remoteDataSource;
@@ -41,7 +42,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
     required this.localDataSource,
     required this.mutationSyncManager,
     required this.notificationService,
+    required this.session,
   });
+
+  final SessionEpoch session;
 
   /// Retrieves adherence rates directly from the local cache.
   @override
@@ -101,8 +105,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
   Future<void> _fetchAndCacheMedicationsBySection(String section) async {
     if (await connectivityService.isConnected) {
       try {
+        final epoch = session.current;
         final remoteMeds =
             await remoteDataSource.getMedicationsBySection(section);
+        session.ensure(epoch);
 
         final existingMeds = await localDataSource.getAllMedications();
         final existingMap = {
@@ -133,9 +139,11 @@ class MedicationRepositoryImpl implements MedicationRepository {
             .map((m) => m.id)
             .toList();
 
+        // Gone from this section only: the medication's other sections stay.
         for (var id in localMedsToDelete) {
-          await _cancelAlarmsForMed(id);
-          await localDataSource.deleteMedication(id);
+          await notificationService
+              .cancelReminder(medicationReminderId(id, section));
+          await localDataSource.deleteMedicationSection(id, section);
         }
 
         await localDataSource.insertMedications(localMedsToInsert);
@@ -153,8 +161,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
     if (await connectivityService.isConnected && !hasPending) {
       try {
+        final epoch = session.current;
         final result =
             await remoteDataSource.getAdherence(showWeekdays: showWeekdays);
+        session.ensure(epoch);
 
         final typeId = showWeekdays ? 'global_weekly' : 'global_monthly';
 
@@ -216,9 +226,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final target = meds
         .where((m) => m.id == medicationId && m.section == section)
         .firstOrNull;
-    if (target != null) {
-      await localDataSource.updateMedication(target.copyWith(taken: true));
-    }
 
     final payload = {
       'section': section,
@@ -234,15 +241,20 @@ class MedicationRepositoryImpl implements MedicationRepository {
       createdAt: clock.now(),
     );
 
-    await localDataSource.addPendingMutation(pending);
-
     final todayStr = clock.now().toIso8601String().split('T')[0];
-    await localDataSource.markMedicationLogAsTakenOffline(
-      const Uuid().v4(),
-      medicationId,
-      clock.now(),
-    );
-    await localDataSource.markGlobalDayAsTakenOffline(todayStr);
+    // The local "taken" state and its queued sync are saved together or not at all.
+    await localDataSource.transaction(() async {
+      if (target != null) {
+        await localDataSource.updateMedication(target.copyWith(taken: true));
+      }
+      await localDataSource.addPendingMutation(pending);
+      await localDataSource.markMedicationLogAsTakenOffline(
+        const Uuid().v4(),
+        medicationId,
+        clock.now(),
+      );
+      await localDataSource.markGlobalDayAsTakenOffline(todayStr);
+    });
 
     mutationSyncManager.triggerSync();
 
@@ -278,37 +290,45 @@ class MedicationRepositoryImpl implements MedicationRepository {
   /// Silently synchronizes paginated remote medications into the local database.
   Future<void> _syncAllMedicationsBackground(int page, int pageSize) async {
     try {
+      final epoch = session.current;
       final remoteRes = await remoteDataSource.getAllMedications(
           page: page, pageSize: pageSize);
+      session.ensure(epoch);
       final pendingMutations = await localDataSource.getAllPendingMutations();
       final activeMutationEntityIds = pendingMutations
           .where((m) => m.entityType == 'medication')
           .map((m) => m.entityId)
           .toSet();
 
-      final localMedsToInsert = <Medication>[];
+      await _removeUnknownSectionRows();
+
+      // The list has no schedules, so it only refreshes name, dosage and purpose
+      // on rows the section fetches created. Unknown ids get their sections fetched.
+      final updated = <Medication>[];
+      var hasNewIds = false;
       for (final m in remoteRes.rows) {
         if (activeMutationEntityIds.contains(m.id)) continue;
         final existing = await localDataSource.getMedicationById(m.id);
-        final existingBase = existing.isNotEmpty ? existing.first : null;
-        localMedsToInsert.add(Medication(
-          id: m.id,
-          name: m.name,
-          dosage: m.dosage,
-          purpose: m.purpose,
-          toBeTakenAt: m.toBeTakenAt,
-          taken: m.taken,
-          section: 'UNKNOWN',
-          morningJson: existingBase?.morningJson,
-          afternoonJson: existingBase?.afternoonJson,
-          eveningJson: existingBase?.eveningJson,
-          notes: existingBase?.notes,
-        ));
+        if (existing.isEmpty) hasNewIds = true;
+        updated.addAll(existing.map((row) => row.copyWith(
+            name: m.name, dosage: m.dosage, purpose: drift.Value(m.purpose))));
       }
-      await localDataSource.insertMedications(localMedsToInsert);
-      await _scheduleAlarmsForMeds(localMedsToInsert);
+      await localDataSource.insertMedications(updated);
+      if (hasNewIds) {
+        for (final section in const ['MORNING', 'AFTERNOON', 'EVENING']) {
+          await _fetchAndCacheMedicationsBySection(section);
+        }
+      }
     } catch (e, stack) {
       AppLogger.e('Failed to sync medications in background', e, stack);
+    }
+  }
+
+  /// Deletes rows older versions stored without a section, with their alarms.
+  Future<void> _removeUnknownSectionRows() async {
+    for (final id in await localDataSource.deleteUnknownSectionRows()) {
+      await notificationService
+          .cancelReminder(medicationReminderId(id, 'UNKNOWN'));
     }
   }
 
@@ -324,8 +344,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
         !hasPending &&
         !medicationId.contains('-')) {
       try {
+        final epoch = session.current;
         final result = await remoteDataSource.getMedicationHistory(medicationId,
             date: date);
+        session.ensure(epoch);
 
         final driftLogs = result.logs
             .map((l) => MedicationLog(
@@ -374,9 +396,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
     final medsToInsert = MedicationMapper.fromCreateModel(data, localId);
 
-    await localDataSource.insertMedications(medsToInsert);
-    await _scheduleAlarmsForMeds(medsToInsert);
-
     final pending = PendingMutationsCompanion.insert(
       id: const Uuid().v4(),
       entityType: 'medication',
@@ -386,7 +405,11 @@ class MedicationRepositoryImpl implements MedicationRepository {
       createdAt: clock.now(),
     );
 
-    await localDataSource.addPendingMutation(pending);
+    await localDataSource.transaction(() async {
+      await localDataSource.insertMedications(medsToInsert);
+      await localDataSource.addPendingMutation(pending);
+    });
+    await _scheduleAlarmsForMeds(medsToInsert);
     mutationSyncManager.triggerSync();
 
     return right(localId);
@@ -408,7 +431,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
         !id.contains('-') &&
         !hasPending) {
       try {
+        final epoch = session.current;
         final result = await remoteDataSource.getMedicationById(id);
+        session.ensure(epoch);
 
         if (localMeds.isNotEmpty) {
           final mJson = MedicationMapper.encodeSchedule(result.morning);
@@ -451,15 +476,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final meds = await localDataSource.getAllMedications();
     final targetMeds = meds.where((m) => m.id == id).toList();
 
-    if (targetMeds.isNotEmpty) {
-      await _cancelAlarmsForMed(id);
-      await localDataSource.deleteMedication(id);
-      final newMeds = MedicationMapper.fromUpdateModel(data, id, targetMeds);
-
-      await localDataSource.insertMedications(newMeds);
-      await _scheduleAlarmsForMeds(newMeds);
-    }
-
+    final newMeds = MedicationMapper.fromUpdateModel(data, id, targetMeds);
     final pending = PendingMutationsCompanion.insert(
       id: const Uuid().v4(),
       entityType: 'medication',
@@ -469,7 +486,17 @@ class MedicationRepositoryImpl implements MedicationRepository {
       createdAt: clock.now(),
     );
 
-    await localDataSource.addPendingMutation(pending);
+    await localDataSource.transaction(() async {
+      if (targetMeds.isNotEmpty) {
+        await localDataSource.deleteMedication(id);
+        await localDataSource.insertMedications(newMeds);
+      }
+      await localDataSource.addPendingMutation(pending);
+    });
+    if (targetMeds.isNotEmpty) {
+      await _cancelAlarmsForMed(id);
+      await _scheduleAlarmsForMeds(newMeds);
+    }
     mutationSyncManager.triggerSync();
 
     return right(id);
@@ -477,9 +504,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
   @override
   AsyncResponse<void> deleteMedication(String id) async {
-    await _cancelAlarmsForMed(id);
-    await localDataSource.deleteMedication(id);
-
     final pending = PendingMutationsCompanion.insert(
       id: const Uuid().v4(),
       entityType: 'medication',
@@ -489,7 +513,11 @@ class MedicationRepositoryImpl implements MedicationRepository {
       createdAt: clock.now(),
     );
 
-    await localDataSource.addPendingMutation(pending);
+    await localDataSource.transaction(() async {
+      await localDataSource.deleteMedication(id);
+      await localDataSource.addPendingMutation(pending);
+    });
+    await _cancelAlarmsForMed(id);
     mutationSyncManager.triggerSync();
 
     return right(null);
@@ -533,6 +561,14 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final notifId = medicationReminderId(medicationId, sec);
       await notificationService.cancelReminder(notifId);
     }
+  }
+
+  @override
+  Future<void> moveReminders(String oldId, String newId) async {
+    await _cancelAlarmsForMed(oldId);
+    await _cancelAlarmsForMed(newId);
+    await _scheduleAlarmsForMeds(
+        await localDataSource.getMedicationById(newId));
   }
 
   /// Syncs alarms for all existing local medications on startup.

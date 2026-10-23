@@ -52,6 +52,11 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  /// Points dose logs at a medication's server id after an offline create syncs.
+  Future<void> updateLogsMedicationId(String oldId, String newId) =>
+      (update(medicationLogs)..where((t) => t.medicationId.equals(oldId)))
+          .write(MedicationLogsCompanion(medicationId: Value(newId)));
+
   Future<List<MedicationLog>> getLogsForMedication(String medicationId) {
     return (select(medicationLogs)
           ..where((t) => t.medicationId.equals(medicationId))

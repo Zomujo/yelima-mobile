@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/services/notification_service.dart';
@@ -12,11 +14,13 @@ void main() {
   late MockRepo repo;
   late MockNotifications notifications;
   late MedicationAlarmSyncService service;
+  late StreamController<String> events;
 
   setUp(() {
     repo = MockRepo();
     notifications = MockNotifications();
-    service = MedicationAlarmSyncService(repo, notifications);
+    events = StreamController<String>.broadcast();
+    service = MedicationAlarmSyncService(repo, notifications, events.stream);
   });
 
   test('a session start reschedules the local reminders', () async {
@@ -39,5 +43,32 @@ void main() {
     when(() => notifications.cancelAllReminders()).thenThrow(Exception('x'));
 
     await expectLater(service.onSessionEnded(), completes);
+  });
+
+  test('MED-EC-02: a medication remap moves its reminders to the server id',
+      () async {
+    when(() => repo.syncLocalAlarms()).thenAnswer((_) async {});
+    when(() => repo.moveReminders(any(), any())).thenAnswer((_) async {});
+    await service.onSessionStarted('uid');
+
+    events
+      ..add('remap:chat:a:b')
+      ..add('medication')
+      ..add('remap:medication:local-1:srv-1');
+    await pumpEventQueue();
+
+    verify(() => repo.moveReminders('local-1', 'srv-1')).called(1);
+  });
+
+  test('stops listening once the session ends', () async {
+    when(() => repo.syncLocalAlarms()).thenAnswer((_) async {});
+    when(() => notifications.cancelAllReminders()).thenAnswer((_) async {});
+    await service.onSessionStarted('uid');
+    await service.onSessionEnded();
+
+    events.add('remap:medication:local-1:srv-1');
+    await pumpEventQueue();
+
+    verifyNever(() => repo.moveReminders(any(), any()));
   });
 }

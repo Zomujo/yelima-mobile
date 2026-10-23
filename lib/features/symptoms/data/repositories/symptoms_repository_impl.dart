@@ -8,6 +8,7 @@ import '../../domain/entities/symptom_entity.dart';
 import '../../domain/repositories/symptoms_repository.dart';
 import '../datasources/symptoms_remote_data_source.dart';
 import 'package:clock/clock.dart';
+import '../../../../core/services/session_epoch.dart';
 
 class SymptomsRepositoryImpl implements SymptomsRepository {
   final SymptomsRemoteDataSource remoteDataSource;
@@ -15,49 +16,50 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
   final AppDatabase db;
 
   DateTime? _lastFetchTime;
+  int? _lastFetchEpoch;
   static const Duration _cacheDuration = Duration(minutes: 5);
 
   SymptomsRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivityService,
     required this.db,
+    required this.session,
   });
+
+  final SessionEpoch session;
 
   @override
   Future<Either<String, String>> createSymptom(String description) async {
     final tempId = 'temp_${clock.now().millisecondsSinceEpoch}';
     final now = clock.now();
 
-    // 1. Instantly save to local DB for fast UI
-    await db.symptomsDao.insertOrUpdateSymptom(
-      SymptomsCompanion(
-        id: drift.Value(tempId),
-        description: drift.Value(description),
-        onsetDate: drift.Value(now),
-      ),
+    final local = SymptomsCompanion(
+      id: drift.Value(tempId),
+      description: drift.Value(description),
+      onsetDate: drift.Value(now),
     );
 
-    if (await connectivityService.isConnected) {
-      try {
-        final realId = await remoteDataSource.createSymptom(description);
-        
-        // Replace temp ID with real ID
-        await db.symptomsDao.deleteSymptomById(tempId);
-        await db.symptomsDao.insertOrUpdateSymptom(
-          SymptomsCompanion(
-            id: drift.Value(realId),
-            description: drift.Value(description),
-            onsetDate: drift.Value(now),
-          ),
-        );
-        return Right(realId);
-      } catch (e) {
-        // Fallback to queue if remote fails despite connectivity
+    if (!await connectivityService.isConnected) {
+      // Saved and queued in one step, so a crash can't keep one without the other.
+      await db.transaction(() async {
+        await db.symptomsDao.insertOrUpdateSymptom(local);
         await _queueCreation(tempId, description);
-        return Right(tempId);
-      }
-    } else {
-      // Offline, queue for sync
+      });
+      return Right(tempId);
+    }
+
+    // Saved first so the UI updates instantly while the request runs.
+    await db.symptomsDao.insertOrUpdateSymptom(local);
+    try {
+      final realId = await remoteDataSource.createSymptom(description);
+      await db.transaction(() async {
+        await db.symptomsDao.deleteSymptomById(tempId);
+        await db.symptomsDao
+            .insertOrUpdateSymptom(local.copyWith(id: drift.Value(realId)));
+      });
+      return Right(realId);
+    } catch (e) {
+      // Reachable but the request failed: queue it to retry later.
       await _queueCreation(tempId, description);
       return Right(tempId);
     }
@@ -73,9 +75,11 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
   }
 
   @override
-  Future<Either<String, List<SymptomEntity>>> getSymptoms({int page = 1, int pageSize = 10}) async {
+  Future<Either<String, List<SymptomEntity>>> getSymptoms(
+      {int page = 1, int pageSize = 10}) async {
     // Basic caching logic
-    if (_lastFetchTime != null) {
+    // A fetch from an earlier session (another user) never counts as fresh.
+    if (_lastFetchTime != null && session.isCurrent(_lastFetchEpoch ?? -1)) {
       final now = clock.now();
       if (now.difference(_lastFetchTime!) < _cacheDuration) {
         debugPrint("Skipping remote fetch for Symptoms. Cache is fresh.");
@@ -85,11 +89,17 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
 
     if (await connectivityService.isConnected) {
       try {
-        final remoteData = await remoteDataSource.getSymptoms(page: page, pageSize: pageSize);
+        final epoch = session.current;
+        final remoteData =
+            await remoteDataSource.getSymptoms(page: page, pageSize: pageSize);
+        session.ensure(epoch);
 
         await db.transaction(() async {
           if (page == 1) {
-            await db.symptomsDao.clearSymptoms();
+            // Symptoms still waiting to sync aren't on the server yet, so keep them.
+            final pending =
+                await db.pendingMutationsDao.getEntityIdsOfType('symptom');
+            await db.symptomsDao.clearSymptoms(keepIds: pending);
           }
 
           for (var row in remoteData) {
@@ -104,6 +114,7 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
         });
 
         _lastFetchTime = clock.now();
+        _lastFetchEpoch = epoch;
         // Fallback to local DB read so we include locally pending offline creations
         return _fetchLocalSymptoms();
       } catch (e) {
@@ -117,11 +128,13 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
   Future<Either<String, List<SymptomEntity>>> _fetchLocalSymptoms() async {
     try {
       final localSymptoms = await db.symptomsDao.getAllSymptoms();
-      final entities = localSymptoms.map((s) => SymptomEntity(
-        id: s.id,
-        description: s.description,
-        onsetDate: s.onsetDate,
-      )).toList();
+      final entities = localSymptoms
+          .map((s) => SymptomEntity(
+                id: s.id,
+                description: s.description,
+                onsetDate: s.onsetDate,
+              ))
+          .toList();
 
       return Right(entities);
     } catch (e) {
@@ -143,7 +156,8 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
   }
 
   @override
-  Future<Either<String, void>> updateSymptom(String id, String description) async {
+  Future<Either<String, void>> updateSymptom(
+      String id, String description) async {
     try {
       await remoteDataSource.updateSymptom(id, description);
       return const Right(null);

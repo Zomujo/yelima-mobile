@@ -1870,9 +1870,23 @@ class $PendingMutationsTable extends PendingMutations
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
+  static const VerificationMeta _ownerUidMeta =
+      const VerificationMeta('ownerUid');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, entityType, entityId, action, payloadJson, createdAt, retryCount];
+  late final GeneratedColumn<String> ownerUid = GeneratedColumn<String>(
+      'owner_uid', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        entityType,
+        entityId,
+        action,
+        payloadJson,
+        createdAt,
+        retryCount,
+        ownerUid
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1928,6 +1942,10 @@ class $PendingMutationsTable extends PendingMutations
           retryCount.isAcceptableOrUnknown(
               data['retry_count']!, _retryCountMeta));
     }
+    if (data.containsKey('owner_uid')) {
+      context.handle(_ownerUidMeta,
+          ownerUid.isAcceptableOrUnknown(data['owner_uid']!, _ownerUidMeta));
+    }
     return context;
   }
 
@@ -1951,6 +1969,8 @@ class $PendingMutationsTable extends PendingMutations
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       retryCount: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}retry_count'])!,
+      ownerUid: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_uid']),
     );
   }
 
@@ -1968,6 +1988,7 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
   final String payloadJson;
   final DateTime createdAt;
   final int retryCount;
+  final String? ownerUid;
   const PendingMutation(
       {required this.id,
       required this.entityType,
@@ -1975,7 +1996,8 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
       required this.action,
       required this.payloadJson,
       required this.createdAt,
-      required this.retryCount});
+      required this.retryCount,
+      this.ownerUid});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1986,6 +2008,9 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
     map['payload_json'] = Variable<String>(payloadJson);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['retry_count'] = Variable<int>(retryCount);
+    if (!nullToAbsent || ownerUid != null) {
+      map['owner_uid'] = Variable<String>(ownerUid);
+    }
     return map;
   }
 
@@ -1998,6 +2023,9 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
       payloadJson: Value(payloadJson),
       createdAt: Value(createdAt),
       retryCount: Value(retryCount),
+      ownerUid: ownerUid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ownerUid),
     );
   }
 
@@ -2012,6 +2040,7 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
       payloadJson: serializer.fromJson<String>(json['payloadJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       retryCount: serializer.fromJson<int>(json['retryCount']),
+      ownerUid: serializer.fromJson<String?>(json['ownerUid']),
     );
   }
   @override
@@ -2025,6 +2054,7 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
       'payloadJson': serializer.toJson<String>(payloadJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'retryCount': serializer.toJson<int>(retryCount),
+      'ownerUid': serializer.toJson<String?>(ownerUid),
     };
   }
 
@@ -2035,7 +2065,8 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
           String? action,
           String? payloadJson,
           DateTime? createdAt,
-          int? retryCount}) =>
+          int? retryCount,
+          Value<String?> ownerUid = const Value.absent()}) =>
       PendingMutation(
         id: id ?? this.id,
         entityType: entityType ?? this.entityType,
@@ -2044,6 +2075,7 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
         payloadJson: payloadJson ?? this.payloadJson,
         createdAt: createdAt ?? this.createdAt,
         retryCount: retryCount ?? this.retryCount,
+        ownerUid: ownerUid.present ? ownerUid.value : this.ownerUid,
       );
   PendingMutation copyWithCompanion(PendingMutationsCompanion data) {
     return PendingMutation(
@@ -2057,6 +2089,7 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       retryCount:
           data.retryCount.present ? data.retryCount.value : this.retryCount,
+      ownerUid: data.ownerUid.present ? data.ownerUid.value : this.ownerUid,
     );
   }
 
@@ -2069,14 +2102,15 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
           ..write('action: $action, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
-          ..write('retryCount: $retryCount')
+          ..write('retryCount: $retryCount, ')
+          ..write('ownerUid: $ownerUid')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, entityType, entityId, action, payloadJson, createdAt, retryCount);
+  int get hashCode => Object.hash(id, entityType, entityId, action, payloadJson,
+      createdAt, retryCount, ownerUid);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2087,7 +2121,8 @@ class PendingMutation extends DataClass implements Insertable<PendingMutation> {
           other.action == this.action &&
           other.payloadJson == this.payloadJson &&
           other.createdAt == this.createdAt &&
-          other.retryCount == this.retryCount);
+          other.retryCount == this.retryCount &&
+          other.ownerUid == this.ownerUid);
 }
 
 class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
@@ -2098,6 +2133,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
   final Value<String> payloadJson;
   final Value<DateTime> createdAt;
   final Value<int> retryCount;
+  final Value<String?> ownerUid;
   final Value<int> rowid;
   const PendingMutationsCompanion({
     this.id = const Value.absent(),
@@ -2107,6 +2143,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
     this.payloadJson = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.retryCount = const Value.absent(),
+    this.ownerUid = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PendingMutationsCompanion.insert({
@@ -2117,6 +2154,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
     required String payloadJson,
     required DateTime createdAt,
     this.retryCount = const Value.absent(),
+    this.ownerUid = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         entityType = Value(entityType),
@@ -2132,6 +2170,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
     Expression<String>? payloadJson,
     Expression<DateTime>? createdAt,
     Expression<int>? retryCount,
+    Expression<String>? ownerUid,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2142,6 +2181,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
       if (payloadJson != null) 'payload_json': payloadJson,
       if (createdAt != null) 'created_at': createdAt,
       if (retryCount != null) 'retry_count': retryCount,
+      if (ownerUid != null) 'owner_uid': ownerUid,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2154,6 +2194,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
       Value<String>? payloadJson,
       Value<DateTime>? createdAt,
       Value<int>? retryCount,
+      Value<String?>? ownerUid,
       Value<int>? rowid}) {
     return PendingMutationsCompanion(
       id: id ?? this.id,
@@ -2163,6 +2204,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
       payloadJson: payloadJson ?? this.payloadJson,
       createdAt: createdAt ?? this.createdAt,
       retryCount: retryCount ?? this.retryCount,
+      ownerUid: ownerUid ?? this.ownerUid,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2191,6 +2233,9 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
     if (retryCount.present) {
       map['retry_count'] = Variable<int>(retryCount.value);
     }
+    if (ownerUid.present) {
+      map['owner_uid'] = Variable<String>(ownerUid.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2207,6 +2252,7 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('retryCount: $retryCount, ')
+          ..write('ownerUid: $ownerUid, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5589,6 +5635,7 @@ typedef $$PendingMutationsTableCreateCompanionBuilder
   required String payloadJson,
   required DateTime createdAt,
   Value<int> retryCount,
+  Value<String?> ownerUid,
   Value<int> rowid,
 });
 typedef $$PendingMutationsTableUpdateCompanionBuilder
@@ -5600,6 +5647,7 @@ typedef $$PendingMutationsTableUpdateCompanionBuilder
   Value<String> payloadJson,
   Value<DateTime> createdAt,
   Value<int> retryCount,
+  Value<String?> ownerUid,
   Value<int> rowid,
 });
 
@@ -5632,6 +5680,9 @@ class $$PendingMutationsTableFilterComposer
 
   ColumnFilters<int> get retryCount => $composableBuilder(
       column: $table.retryCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get ownerUid => $composableBuilder(
+      column: $table.ownerUid, builder: (column) => ColumnFilters(column));
 }
 
 class $$PendingMutationsTableOrderingComposer
@@ -5663,6 +5714,9 @@ class $$PendingMutationsTableOrderingComposer
 
   ColumnOrderings<int> get retryCount => $composableBuilder(
       column: $table.retryCount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get ownerUid => $composableBuilder(
+      column: $table.ownerUid, builder: (column) => ColumnOrderings(column));
 }
 
 class $$PendingMutationsTableAnnotationComposer
@@ -5694,6 +5748,9 @@ class $$PendingMutationsTableAnnotationComposer
 
   GeneratedColumn<int> get retryCount => $composableBuilder(
       column: $table.retryCount, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerUid =>
+      $composableBuilder(column: $table.ownerUid, builder: (column) => column);
 }
 
 class $$PendingMutationsTableTableManager extends RootTableManager<
@@ -5730,6 +5787,7 @@ class $$PendingMutationsTableTableManager extends RootTableManager<
             Value<String> payloadJson = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> retryCount = const Value.absent(),
+            Value<String?> ownerUid = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingMutationsCompanion(
@@ -5740,6 +5798,7 @@ class $$PendingMutationsTableTableManager extends RootTableManager<
             payloadJson: payloadJson,
             createdAt: createdAt,
             retryCount: retryCount,
+            ownerUid: ownerUid,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -5750,6 +5809,7 @@ class $$PendingMutationsTableTableManager extends RootTableManager<
             required String payloadJson,
             required DateTime createdAt,
             Value<int> retryCount = const Value.absent(),
+            Value<String?> ownerUid = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingMutationsCompanion.insert(
@@ -5760,6 +5820,7 @@ class $$PendingMutationsTableTableManager extends RootTableManager<
             payloadJson: payloadJson,
             createdAt: createdAt,
             retryCount: retryCount,
+            ownerUid: ownerUid,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

@@ -18,6 +18,7 @@ import 'managers/audio_player_manager.dart';
 import 'services/voice_recording_service.dart';
 import 'services/notification_service.dart';
 import 'services/monitoring_service.dart';
+import 'services/session_epoch.dart';
 import 'services/fcm_token_service.dart';
 import 'services/database_lifecycle_handler.dart';
 import 'services/fcm_lifecycle_handler.dart';
@@ -54,11 +55,16 @@ void initCore(GetIt sl) {
   sl.registerLazySingleton(() => LocaleController(sl()));
 
   // Register Lifecycle Handlers with SessionLifecycleService
-  sl.registerLazySingleton(() => DatabaseLifecycleHandler(sl())
+  sl.registerLazySingleton(() => DatabaseLifecycleHandler(sl(),
+      onDiscarded: (n) =>
+          MonitoringService.instance.logDiscardedChanges(n, reason: 'logout'))
     ..also((h) => sl<SessionLifecycleService>().register(h, priority: 10)));
 
   sl<SessionLifecycleService>()
       .register(MonitoringService.instance, priority: 5);
+  // Highest priority, so it runs first on session end and late results are dropped before the wipe.
+  sl.registerSingleton(SessionEpoch());
+  sl<SessionLifecycleService>().register(sl<SessionEpoch>(), priority: 100);
 
   sl.registerLazySingleton(() => FCMLifecycleHandler(
         connectivity: sl(),
@@ -102,6 +108,8 @@ void initCore(GetIt sl) {
           'user_profile': sl<UserRemoteMutationSource>(),
         },
       )
+        ..onDiscarded = ((n) => MonitoringService.instance
+            .logDiscardedChanges(n, reason: 'other_user'))
         ..init()
         ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));
 }

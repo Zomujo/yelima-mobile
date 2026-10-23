@@ -2,6 +2,9 @@ import '../../../../core/db/app_database.dart';
 import 'package:drift/drift.dart';
 
 abstract class MedicationLocalDataSource {
+  /// Runs [action] as one database transaction.
+  Future<T> transaction<T>(Future<T> Function() action);
+
   // Adherence
   Future<AdherenceGlobal?> getGlobalAdherenceRate(String typeId);
   Future<List<AdherenceGlobalDay>> getGlobalAdherenceDays();
@@ -19,6 +22,8 @@ abstract class MedicationLocalDataSource {
   Future<List<Medication>> getAllMedications();
   Future<List<Medication>> getMedicationById(String id);
   Future<void> deleteMedication(String id);
+  Future<void> deleteMedicationSection(String id, String section);
+  Future<List<String>> deleteUnknownSectionRows();
   Future<void> insertMedications(List<Medication> meds);
   Future<void> updateMedication(Medication med);
   Future<List<PreloadedMedication>> searchPreloadedMedications(String search);
@@ -34,6 +39,10 @@ class MedicationLocalDataSourceImpl implements MedicationLocalDataSource {
   final AppDatabase db;
 
   MedicationLocalDataSourceImpl({required this.db});
+
+  @override
+  Future<T> transaction<T>(Future<T> Function() action) =>
+      db.transaction(action);
 
   @override
   Future<AdherenceGlobal?> getGlobalAdherenceRate(String typeId) {
@@ -97,6 +106,14 @@ class MedicationLocalDataSourceImpl implements MedicationLocalDataSource {
   Future<void> deleteMedication(String id) {
     return db.medicationsDao.deleteMedication(id);
   }
+
+  @override
+  Future<void> deleteMedicationSection(String id, String section) =>
+      db.medicationsDao.deleteMedicationSection(id, section);
+
+  @override
+  Future<List<String>> deleteUnknownSectionRows() =>
+      db.medicationsDao.deleteUnknownSectionRows();
 
   @override
   Future<void> insertMedications(List<Medication> meds) {

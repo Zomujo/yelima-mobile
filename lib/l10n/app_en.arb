@@ -291,5 +291,23 @@
   "criticallyLowBloodSugarTitle": "Critically Low Blood Sugar",
   "criticallyLowBloodSugarMessage": "Clinically significant hypoglycemia. Please seek help immediately.",
   "lowBloodSugarTitle": "Low Blood Sugar",
-  "lowBloodSugarMessage": "Hypoglycemia detected. Consider consuming fast-acting carbs."
+  "lowBloodSugarMessage": "Hypoglycemia detected. Consider consuming fast-acting carbs.",
+  "changesWaiting": "{count, plural, =1{1 change waiting to sync} other{{count} changes waiting to sync}}",
+  "@changesWaiting": {
+    "description": "Badge when offline changes are queued",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "changesFailed": "{count, plural, =1{1 change couldn't sync} other{{count} changes couldn't sync}}",
+  "@changesFailed": {
+    "description": "Badge when queued changes were rejected or ran out of retries",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

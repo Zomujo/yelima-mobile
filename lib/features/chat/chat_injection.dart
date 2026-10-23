@@ -21,6 +21,7 @@ void initChat(GetIt sl) {
         connectivityService: sl(),
         mutationSyncManager: sl(),
         fileService: sl(),
+        session: sl(),
       )..also((r) => sl<SessionLifecycleService>().register(r, priority: 70)));
 
   // Controller

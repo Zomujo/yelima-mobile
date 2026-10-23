@@ -27,6 +27,7 @@ void initMedications(GetIt sl) {
         connectivityService: sl(),
         mutationSyncManager: sl(),
         notificationService: sl(),
+        session: sl(),
       ));
 
   // Background Sync Services
@@ -34,7 +35,8 @@ void initMedications(GetIt sl) {
   sl<SessionLifecycleService>().register(seededSyncService, priority: 90);
   sl.registerSingleton<SeededMedicationsSyncService>(seededSyncService);
 
-  final alarmSyncService = MedicationAlarmSyncService(sl(), sl());
+  final alarmSyncService = MedicationAlarmSyncService(
+      sl(), sl(), sl<MutationSyncManager>().onMutationSynced);
   sl<SessionLifecycleService>().register(alarmSyncService, priority: 80);
 
   // Use cases

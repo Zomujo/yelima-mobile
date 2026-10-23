@@ -89,6 +89,13 @@ class MonitoringService implements SessionLifecycleHandler {
     }
   }
 
+  /// Counts unsynced changes that were thrown away, so a sync bug shows up as a number above zero.
+  Future<void> logDiscardedChanges(int count, {required String reason}) =>
+      logEvent(
+        name: 'sync_changes_discarded',
+        parameters: {'count': count, 'reason': reason},
+      );
+
   /// Logs a login event.
   Future<void> logLogin({required String loginMethod}) async {
     try {

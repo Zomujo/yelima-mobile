@@ -8,6 +8,7 @@ import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/features/progress/data/datasources/progress_remote_datasource.dart';
 import 'package:yelima/features/progress/data/repositories/progress_repository_impl.dart';
 import 'package:yelima/features/progress/domain/entities/vital_trends.dart';
+import 'package:yelima/core/services/session_epoch.dart';
 
 class MockProgressRemoteDataSource extends Mock
     implements ProgressRemoteDataSource {}
@@ -30,6 +31,7 @@ void main() {
       remoteDataSource: mockRemoteDataSource,
       connectivityService: mockConnectivityService,
       db: testDb,
+      session: SessionEpoch(),
     );
   });
 
@@ -51,7 +53,8 @@ void main() {
       // Arrange
       when(() => mockConnectivityService.isConnected)
           .thenAnswer((_) async => true);
-      when(() => mockRemoteDataSource.getBPTrend(dateRange: tDateRange.backendString))
+      when(() => mockRemoteDataSource.getBPTrend(
+              dateRange: tDateRange.backendString))
           .thenAnswer((_) async => tBPTrend);
 
       // Act
@@ -61,13 +64,14 @@ void main() {
       expect(result.isRight(), true);
       expect(result.getRight().toNullable(), tBPTrend);
 
-      verify(() => mockRemoteDataSource.getBPTrend(dateRange: tDateRange.backendString))
-          .called(1);
+      verify(() => mockRemoteDataSource.getBPTrend(
+          dateRange: tDateRange.backendString)).called(1);
 
       // Verify it was cached in the local database
       final cachedVitals = await testDb.vitalsDao.getAllVitals();
       expect(cachedVitals.length, 1);
-      expect(cachedVitals.first.id, 'bp_trend_cache_${tDateRange.backendString}');
+      expect(
+          cachedVitals.first.id, 'bp_trend_cache_${tDateRange.backendString}');
 
       final cachedJson = jsonDecode(cachedVitals.first.value);
       expect(cachedJson['labels'], ['Mon', 'Tue']);

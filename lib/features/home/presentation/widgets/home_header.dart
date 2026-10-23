@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
+/// Date and greeting at the top of home, with an optional [status] line below.
 class HomeHeader extends StatelessWidget {
   final String date;
   final String greeting;
+
+  /// Shown under the greeting, e.g. the unsynced-changes badge.
+  final Widget? status;
 
   const HomeHeader({
     super.key,
     required this.date,
     required this.greeting,
+    this.status,
   });
 
   @override
@@ -30,6 +35,10 @@ class HomeHeader extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: const Color(0xFF1E293B), // Dark blueish gray
           ),
+          if (status != null) ...[
+            const SizedBox(height: 8),
+            status!,
+          ],
         ],
       ),
     );

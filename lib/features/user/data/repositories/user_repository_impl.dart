@@ -9,6 +9,7 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../models/facility_model.dart';
 import '../datasources/user_remote_data_source.dart';
+import '../../../../core/services/session_epoch.dart';
 
 class UserRepositoryImpl implements UserRepository {
   final UserRemoteDataSource remoteDataSource;
@@ -19,7 +20,10 @@ class UserRepositoryImpl implements UserRepository {
     required this.remoteDataSource,
     required this.connectivityService,
     required this.db,
+    required this.session,
   });
+
+  final SessionEpoch session;
 
   @override
   Stream<UserEntity?> watchUserProfile(String uid) {
@@ -48,7 +52,9 @@ class UserRepositoryImpl implements UserRepository {
           if (!await connectivityService.isConnected) {
             throw const NetworkException();
           }
+          final epoch = session.current;
           final model = await remoteDataSource.getUserProfile(uid);
+          session.ensure(epoch);
 
           if (model != null) {
             /// Save to local cache.

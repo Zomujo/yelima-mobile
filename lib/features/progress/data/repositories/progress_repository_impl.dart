@@ -11,6 +11,7 @@ import '../../domain/repositories/progress_repository.dart';
 import '../datasources/progress_remote_datasource.dart';
 import '../utils/progress_isolate_parsers.dart';
 import 'package:clock/clock.dart';
+import '../../../../core/services/session_epoch.dart';
 
 class ProgressRepositoryImpl implements ProgressRepository {
   final ProgressRemoteDataSource _remoteDataSource;
@@ -21,10 +22,14 @@ class ProgressRepositoryImpl implements ProgressRepository {
     required ProgressRemoteDataSource remoteDataSource,
     required this.connectivityService,
     required this.db,
+    required this.session,
   }) : _remoteDataSource = remoteDataSource;
 
+  final SessionEpoch session;
+
   @override
-  AsyncResponse<BPTrend> getCachedBPTrend({required ChartDateRange dateRange}) =>
+  AsyncResponse<BPTrend> getCachedBPTrend(
+          {required ChartDateRange dateRange}) =>
       _fetchLocalBPTrend(dateRange);
 
   @override
@@ -40,8 +45,10 @@ class ProgressRepositoryImpl implements ProgressRepository {
           if (!await connectivityService.isConnected) {
             throw const NetworkException();
           }
-          final result =
-              await _remoteDataSource.getBPTrend(dateRange: dateRange.backendString);
+          final epoch = session.current;
+          final result = await _remoteDataSource.getBPTrend(
+              dateRange: dateRange.backendString);
+          session.ensure(epoch);
 
           final trendJson = jsonEncode({
             'labels': result.labels,
@@ -97,8 +104,10 @@ class ProgressRepositoryImpl implements ProgressRepository {
           if (!await connectivityService.isConnected) {
             throw const NetworkException();
           }
+          final epoch = session.current;
           final result = await _remoteDataSource.getVitalTrend(
               vitalType: vitalType, dateRange: dateRange.backendString);
+          session.ensure(epoch);
 
           final trendJson = jsonEncode({
             'labels': result.labels,
@@ -108,9 +117,11 @@ class ProgressRepositoryImpl implements ProgressRepository {
           });
 
           final cacheModel = VitalHistoriesCompanion(
-            id: drift.Value('vital_trend_cache_${vitalType}_${dateRange.backendString}'),
+            id: drift.Value(
+                'vital_trend_cache_${vitalType}_${dateRange.backendString}'),
             vitalType: const drift.Value("PROGRESS_VITAL_TREND"),
-            vitalName: drift.Value('Vital Trend $vitalType ${dateRange.backendString}'),
+            vitalName: drift.Value(
+                'Vital Trend $vitalType ${dateRange.backendString}'),
             value: drift.Value(trendJson),
             unit: const drift.Value('json'),
             severity: const drift.Value('normal'),
@@ -132,7 +143,8 @@ class ProgressRepositoryImpl implements ProgressRepository {
       String vitalType, ChartDateRange dateRange) async {
     try {
       final vitals = await db.vitalsDao.getAllVitals();
-      final cacheKey = 'vital_trend_cache_${vitalType}_${dateRange.backendString}';
+      final cacheKey =
+          'vital_trend_cache_${vitalType}_${dateRange.backendString}';
       final cachedVital = vitals.where((v) => v.id == cacheKey).firstOrNull;
 
       if (cachedVital != null) {

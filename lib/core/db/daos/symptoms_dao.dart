@@ -5,7 +5,8 @@ import '../tables/symptoms.dart';
 part 'symptoms_dao.g.dart';
 
 @DriftAccessor(tables: [Symptoms])
-class SymptomsDao extends DatabaseAccessor<AppDatabase> with _$SymptomsDaoMixin {
+class SymptomsDao extends DatabaseAccessor<AppDatabase>
+    with _$SymptomsDaoMixin {
   SymptomsDao(super.db);
 
   Future<List<Symptom>> getAllSymptoms() {
@@ -24,7 +25,13 @@ class SymptomsDao extends DatabaseAccessor<AppDatabase> with _$SymptomsDaoMixin 
     return (delete(symptoms)..where((t) => t.id.equals(id))).go();
   }
 
-  Future<void> clearSymptoms() {
-    return delete(symptoms).go();
+  /// Deletes cached symptoms except [keepIds] (e.g. ones still waiting to sync).
+  Future<void> clearSymptoms({Set<String> keepIds = const {}}) {
+    return (delete(symptoms)..where((t) => t.id.isNotIn(keepIds))).go();
   }
+
+  /// Renames a symptom from its local id to the server's after sync.
+  Future<void> updateSymptomId(String oldId, String newId) =>
+      (update(symptoms)..where((t) => t.id.equals(oldId)))
+          .write(SymptomsCompanion(id: Value(newId)));
 }

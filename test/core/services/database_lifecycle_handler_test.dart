@@ -44,4 +44,28 @@ void main() {
     }
     expect(audioCleared, isTrue);
   });
+
+  test('reports how many unsynced changes the wipe discarded', () async {
+    final discarded = <int>[];
+    handler = DatabaseLifecycleHandler(db,
+        clearAudioFiles: () async {}, onDiscarded: discarded.add);
+    for (final id in ['a', 'b']) {
+      await db.pendingMutationsDao.queueMutation(
+          entityId: id, entityType: 'symptom', action: 'create', payload: {});
+    }
+
+    await handler.onSessionEnded();
+
+    expect(discarded, [2]);
+  });
+
+  test('says nothing when everything was synced', () async {
+    final discarded = <int>[];
+    handler = DatabaseLifecycleHandler(db,
+        clearAudioFiles: () async {}, onDiscarded: discarded.add);
+
+    await handler.onSessionEnded();
+
+    expect(discarded, isEmpty);
+  });
 }

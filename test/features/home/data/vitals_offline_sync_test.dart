@@ -5,6 +5,9 @@ import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/features/home/data/datasources/home_metrics_local_datasource.dart';
 import 'package:yelima/features/home/data/datasources/home_metrics_remote_mutation_source.dart';
 import 'package:yelima/features/home/data/models/vital_history_model.dart';
+import 'package:yelima/core/services/session_epoch.dart';
+import 'package:yelima/features/home/data/datasources/home_metrics_remote_datasource.dart';
+import 'package:yelima/features/home/data/repositories/home_metrics_repository_impl.dart';
 
 import '../../../helpers/fake_api.dart';
 import '../../../helpers/fakes.dart';
@@ -102,5 +105,25 @@ void main() {
     expect(await storedIds(), {'srv-9'});
     expect(await db.select(db.pendingMutations).get(), isEmpty);
     manager.dispose();
+  });
+
+  test('an offline save stores the reading and its queued sync together',
+      () async {
+    db.pendingMutationsDao.owner = 'user_1';
+    final api = FakeApi();
+    final repo = HomeMetricsRepositoryImpl(
+      remoteDataSource: HomeMetricsRemoteDataSourceImpl(apiClient: api.client),
+      localDataSource: local,
+      connectivityService: FakeConnectivity(online: false),
+      session: SessionEpoch(),
+      db: db,
+    );
+
+    await repo.saveVitalReading(reading('local-7', '150/95'));
+
+    expect(await storedIds(), {'local-7'});
+    final queued = (await db.select(db.pendingMutations).get()).single;
+    expect((queued.entityId, queued.ownerUid), ('local-7', 'user_1'));
+    expect(api.requests, isEmpty);
   });
 }

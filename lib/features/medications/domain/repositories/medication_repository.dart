@@ -33,6 +33,9 @@ abstract class MedicationRepository {
 
   Future<void> syncLocalAlarms();
 
+  /// Moves a medication's reminders from its local id to its server id after sync.
+  Future<void> moveReminders(String oldId, String newId);
+
   AsyncResponse<MedicationListResponse> getAllMedications(
       {int page = 1, int pageSize = 10, bool forceRefresh = false});
 

@@ -8,7 +8,11 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
   final AppDatabase _db;
   final Future<void> Function() _clearAudioFiles;
 
-  DatabaseLifecycleHandler(this._db, {Future<void> Function()? clearAudioFiles})
+  /// Reports how many unsynced changes the wipe threw away (a count, no content).
+  final void Function(int count)? onDiscarded;
+
+  DatabaseLifecycleHandler(this._db,
+      {Future<void> Function()? clearAudioFiles, this.onDiscarded})
       : _clearAudioFiles =
             clearAudioFiles ?? (() => AudioCacheManager().clearCache());
 
@@ -21,16 +25,15 @@ class DatabaseLifecycleHandler implements SessionLifecycleHandler {
   @override
   Future<void> onSessionEnded() async {
     try {
-      final stillPending =
-          await _db.pendingMutationsDao.getAllPendingMutations();
-      if (stillPending.isNotEmpty) {
+      final unsynced = (await _db.select(_db.pendingMutations).get()).length;
+      if (unsynced > 0) {
         AppLogger.e(
-            'DatabaseLifecycleHandler: Wiping SQLite with ${stillPending.length} unsynced mutation(s) still pending! '
-            'Entities: ${stillPending.map((m) => '${m.entityType}:${m.entityId}:${m.action}').join(', ')}');
+            'DatabaseLifecycleHandler: Wiping with $unsynced unsynced change(s).');
+        onDiscarded?.call(unsynced);
       }
     } catch (e) {
       AppLogger.e(
-          'DatabaseLifecycleHandler: Failed to check pending mutations before wipe: $e');
+          'DatabaseLifecycleHandler: Failed to count unsynced changes before wipe: $e');
     }
 
     AppLogger.w(

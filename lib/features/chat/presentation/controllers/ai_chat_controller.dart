@@ -138,6 +138,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
         }
 
         await _repository.syncRemoteConversations();
+        if (isDisposed) return;
         await _reloadAfterRemoteSync();
       },
     );
@@ -181,6 +182,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     final targetPage = state.currentPage + 1;
     final result =
         await _repository.fetchPaginatedConversations(page: targetPage);
+    if (isDisposed) return;
 
     await result.fold(
       (err) async {
@@ -277,6 +279,8 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     state = state.copyWith(messages: [draft(localId), ...state.messages]);
 
     final res = await call(localId);
+    // Closed (e.g. logout) while waiting: don't write into the next session.
+    if (isDisposed) return;
     final msgs = List<AiChatMessage>.from(state.messages);
     final index = msgs.indexWhere((m) => m.localChatId == localId);
 

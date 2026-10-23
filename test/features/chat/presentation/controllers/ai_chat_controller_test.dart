@@ -265,4 +265,22 @@ void main() {
       controller.dispose();
     });
   });
+
+  test('CHAT-EC-01: a reply that lands after the chat closes is not saved',
+      () async {
+    final controller = await createController();
+    clearInteractions(mockRepository);
+    final reply = Completer<Either<String, Map<String, dynamic>>>();
+    when(() => mockRepository.sendMessage(any(),
+            localChatId: any(named: 'localChatId')))
+        .thenAnswer((_) => reply.future);
+
+    final sending = controller.sendMessage('Hello');
+    await Future<void>.delayed(Duration.zero);
+    controller.dispose(); // e.g. logout pops the chat screen
+    reply.complete(right(chatResponse(userId: 'user-1', botId: 'bot-1')));
+    await sending;
+
+    verifyNever(() => mockRepository.saveConversations(any()));
+  });
 }

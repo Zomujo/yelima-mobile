@@ -55,6 +55,7 @@ void main() {
     broadcasts = [];
     manager.onMutationSynced.listen(broadcasts.add);
     await manager.onSessionStarted('user_1');
+    await manager.triggerSync(); // let the session-start sync settle
   });
 
   tearDown(() async {
@@ -148,5 +149,192 @@ void main() {
         .toSet();
 
     expect(queued.difference(registered), isEmpty);
+  });
+
+  group('failed list and retries', () {
+    Future<List<(String, int)>> queued() async =>
+        (await db.select(db.pendingMutations).get())
+            .map((m) => (m.entityId, m.retryCount))
+            .toList();
+
+    test('MED-EC-24: a 5xx on one item no longer stops the rest of the queue',
+        () async {
+      await queue('med-a', 'updateMedication');
+      await queue('med-b', 'updateMedication');
+      when(() => source.syncMutation(
+            entityId: 'med-a',
+            action: any(named: 'action'),
+            payloadJson: any(named: 'payloadJson'),
+            createdAt: any(named: 'createdAt'),
+          )).thenThrow(const ApiException('Server error', code: '500'));
+      when(() => source.syncMutation(
+            entityId: 'med-b',
+            action: any(named: 'action'),
+            payloadJson: any(named: 'payloadJson'),
+            createdAt: any(named: 'createdAt'),
+          )).thenAnswer((_) async => 'med-b');
+
+      await manager.triggerSync();
+
+      expect(await queued(), [('med-a', 1)],
+          reason: 'med-b synced, med-a counts one failed try');
+    });
+
+    test('a network error still stops the batch without counting a try',
+        () async {
+      await queue('med-a', 'updateMedication');
+      await queue('med-b', 'updateMedication');
+      when(() => source.syncMutation(
+            entityId: any(named: 'entityId'),
+            action: any(named: 'action'),
+            payloadJson: any(named: 'payloadJson'),
+            createdAt: any(named: 'createdAt'),
+          )).thenThrow(const NetworkException());
+
+      await manager.triggerSync();
+
+      expect(await queued(), [('med-a', 0), ('med-b', 0)]);
+    });
+
+    test('a rejected item shows in the failed list and can be retried',
+        () async {
+      await queue('med-a', 'updateMedication');
+      when(() => source.syncMutation(
+            entityId: any(named: 'entityId'),
+            action: any(named: 'action'),
+            payloadJson: any(named: 'payloadJson'),
+            createdAt: any(named: 'createdAt'),
+          )).thenThrow(const ApiException('Bad request', code: '400'));
+      await manager.triggerSync();
+
+      final failed = await db.pendingMutationsDao.getFailedMutations();
+      expect(failed.map((m) => m.entityId), ['med-a']);
+
+      stubSource((id, _) => id);
+      await manager.retryFailed(failed.single.id);
+
+      expect(await queued(), isEmpty);
+      expect(await db.pendingMutationsDao.getFailedMutations(), isEmpty);
+    });
+
+    test('a failed item can be discarded', () async {
+      await queue('med-a', 'updateMedication');
+      final id = (await db.select(db.pendingMutations).get()).single.id;
+      await db.pendingMutationsDao.markRejected(id);
+
+      await manager.discardFailed(id);
+
+      expect(await queued(), isEmpty);
+    });
+
+    test('counts waiting and failed changes for the badge', () async {
+      final waiting = db.pendingMutationsDao.watchWaitingCount();
+      final failedCount = db.pendingMutationsDao.watchFailedCount();
+
+      await queue('med-a', 'updateMedication');
+      await queue('med-b', 'updateMedication');
+      final id = (await db.select(db.pendingMutations).get()).first.id;
+      await db.pendingMutationsDao.markRejected(id);
+
+      expect(await waiting.first, 1);
+      expect(await failedCount.first, 1);
+    });
+
+    test('retries on its own after a server error, then stops', () async {
+      manager.dispose();
+      manager = MutationSyncManager(
+        connectivityService: FakeConnectivity(),
+        db: db,
+        remoteSources: {'medication': source},
+        retryDelays: const [Duration(milliseconds: 10)],
+      );
+      await manager.onSessionStarted('user_1');
+      await queue('med-a', 'updateMedication');
+      var calls = 0;
+      when(() => source.syncMutation(
+            entityId: any(named: 'entityId'),
+            action: any(named: 'action'),
+            payloadJson: any(named: 'payloadJson'),
+            createdAt: any(named: 'createdAt'),
+          )).thenAnswer((_) async {
+        if (++calls == 1) throw const ApiException('Server error', code: '503');
+        return 'med-a';
+      });
+
+      await manager.triggerSync();
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+
+      expect(calls, 2);
+      expect(await queued(), isEmpty);
+    });
+  });
+
+  group('CORE-EC-03: queued changes belong to the user who made them', () {
+    test('a change queued in a session is tagged with that user', () async {
+      await queue('med-a', 'updateMedication');
+
+      final row = (await db.select(db.pendingMutations).get()).single;
+      expect(row.ownerUid, 'user_1');
+    });
+
+    test(
+        'another user\'s leftover changes are dropped, never sent with this login',
+        () async {
+      stubSource((id, _) => id);
+      await queue('med-a', 'updateMedication'); // user_1
+      await manager.onSessionEnded();
+      final discarded = <int>[];
+      manager.onDiscarded = discarded.add;
+
+      await manager.onSessionStarted('user_2');
+      await manager.triggerSync();
+
+      verifyNever(() => source.syncMutation(
+            entityId: any(named: 'entityId'),
+            action: any(named: 'action'),
+            payloadJson: any(named: 'payloadJson'),
+            createdAt: any(named: 'createdAt'),
+          ));
+      expect(await db.select(db.pendingMutations).get(), isEmpty);
+      expect(discarded, [1]);
+    });
+
+    test(
+        'rows from before the upgrade (no owner) still sync for the signed-in user',
+        () async {
+      stubSource((id, _) => id);
+      await db
+          .into(db.pendingMutations)
+          .insert(PendingMutationsCompanion.insert(
+            id: 'legacy',
+            entityType: 'medication',
+            entityId: 'med-old',
+            action: 'updateMedication',
+            payloadJson: '{}',
+            createdAt: DateTime(2026, 10, 1),
+          ));
+
+      await manager.triggerSync();
+
+      expect(calls(), ['med-old', 'updateMedication']);
+    });
+  });
+
+  test('CORE-EC-16: a change queued during a sync is sent in the same run',
+      () async {
+    await queue('med-a', 'updateMedication');
+    var first = true;
+    stubSource((id, _) {
+      if (first) {
+        first = false;
+        queue('med-b', 'updateMedication'); // the user saves again mid-sync
+      }
+      return id;
+    });
+
+    await manager.triggerSync();
+
+    expect(calls(), ['med-a', 'updateMedication', 'med-b', 'updateMedication']);
+    expect(await db.select(db.pendingMutations).get(), isEmpty);
   });
 }

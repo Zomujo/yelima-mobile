@@ -19,6 +19,7 @@ void initSymptoms() {
       remoteDataSource: sl(),
       connectivityService: sl(),
       db: sl(),
+      session: sl(),
     ),
   );
 

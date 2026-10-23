@@ -13,6 +13,9 @@ import '../../../user/presentation/controllers/user_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/utils/app_tutorial_service.dart';
 import 'package:clock/clock.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
+import '../../../../injection_container.dart';
+import '../../../../shared/widgets/layout/pending_changes_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +25,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Created once so the badge doesn't resubscribe on every rebuild.
+  final _sync = sl<MutationSyncManager>();
+  late final _waiting = _sync.watchWaitingCount();
+  late final _failed = _sync.watchFailedCount();
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 greeting: greetingName.isNotEmpty
                     ? context.l10n.welcomeName(greetingName)
                     : context.l10n.welcome,
+                status: PendingChangesBadge(waiting: _waiting, failed: _failed),
               ),
               const HomeMetricsSection(),
               const SizedBox(height: 16),
