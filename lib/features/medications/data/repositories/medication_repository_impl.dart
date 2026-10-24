@@ -1,6 +1,5 @@
 import 'package:clock/clock.dart';
 import 'package:drift/drift.dart' show Value;
-import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
@@ -25,12 +24,17 @@ import '../../domain/medication_failures.dart';
 import '../../domain/models/medication_detail_model.dart';
 import '../../domain/models/seeded_medication_model.dart';
 import '../../domain/repositories/medication_repository.dart';
-import '../../utils/medication_reminder_id.dart';
 import '../datasources/medication_remote_datasource.dart';
 import '../mappers/medication_mapper.dart';
+import '../services/medication_reminders.dart';
+
+part 'medication_adherence.dart';
+part 'medication_refresh.dart';
 
 /// Offline-first [MedicationRepository] backed by the local database and the API.
-class MedicationRepositoryImpl implements MedicationRepository {
+class MedicationRepositoryImpl
+    with _MedicationAdherence, _MedicationRefresh
+    implements MedicationRepository {
   MedicationRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivityService,
@@ -41,73 +45,27 @@ class MedicationRepositoryImpl implements MedicationRepository {
     required this.l10n,
   });
 
+  @override
   final MedicationRemoteDataSource remoteDataSource;
+  @override
   final ConnectivityService connectivityService;
+  @override
   final AppDatabase db;
   final MutationSyncManager mutationSyncManager;
   final NotificationService notificationService;
+  @override
   final SessionEpoch session;
 
   /// The app's current translations, read each time reminders are scheduled.
   final AppLocalizations Function() l10n;
 
-  static const _type = 'medication';
-  static const _weekly = 'global_weekly';
+  @override
+  late final _reminders = MedicationReminders(notificationService, l10n);
 
-  MedicationsDao get _meds => db.medicationsDao;
-  AdherenceDao get _adherence => db.adherenceDao;
+  static const _type = 'medication';
 
   /// Ids made on this phone are UUIDs; server ids have no dashes.
   static bool _isLocalId(String id) => id.contains('-');
-
-  @override
-  Future<MedicationAdherence> getCachedAdherence() async {
-    final rate = await _adherence.getGlobalAdherenceRate(_weekly);
-    if (rate == null) return const MedicationAdherence(rate: 0, days: []);
-    final days = await _adherence.getGlobalAdherenceDays();
-    return MedicationAdherence(rate: rate.rate, days: [
-      for (final d in days.where((d) => d.type == _weekly))
-        AdherenceDay(
-            id: d.label,
-            taken: d.taken,
-            takenAt: DateTime.parse(d.dateTakenStr).toLocal(),
-            takenDoses: d.takenDoses,
-            scheduledDoses: d.scheduledDoses),
-    ]);
-  }
-
-  @override
-  Stream<double?> watchAdherenceRate() =>
-      _adherence.watchGlobalAdherenceRate(_weekly).map((a) => a?.rate);
-
-  @override
-  AsyncResult<MedicationAdherence> getAdherence() => guard(() async {
-        // Unsent doses would be missing from the server's numbers.
-        if (!await connectivityService.isConnected ||
-            await db.pendingMutationsDao.hasWaiting(entityType: _type)) {
-          return getCachedAdherence();
-        }
-        try {
-          final epoch = session.current;
-          final result =
-              await remoteDataSource.getAdherence(showWeekdays: true);
-          session.ensure(epoch);
-          await _adherence.saveGlobalAdherence(_weekly, result.rate, [
-            for (final d in result.days)
-              AdherenceGlobalDay(
-                  dateTakenStr: d.takenAt.toIso8601String(),
-                  taken: d.taken,
-                  label: d.id ?? '',
-                  type: _weekly,
-                  takenDoses: d.takenDoses,
-                  scheduledDoses: d.scheduledDoses),
-          ]);
-          return result;
-        } catch (e) {
-          AppLogger.w('Adherence from cache: $e');
-          return getCachedAdherence();
-        }
-      });
 
   @override
   Stream<MedicationCount> watchCounts() =>
@@ -127,80 +85,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
           .map((rows) => rows.map(MedicationMapper.toEntity).toList());
 
   @override
-  Future<void> refreshAll() async {
-    if (!await connectivityService.isConnected) return;
-    await Future.wait([
-      for (final s in MedicationSection.values) _refreshSection(s),
-      _refreshList(),
-    ]);
-  }
-
-  /// Replaces [section]'s rows with the server's, except rows with unsent changes.
-  Future<void> _refreshSection(MedicationSection section) async {
-    try {
-      final epoch = session.current;
-      final remote =
-          await remoteDataSource.getMedicationsBySection(section.key);
-      session.ensure(epoch);
-
-      final local = (await _meds.getAllMedications())
-          .where((m) => m.section == section.key);
-      final byId = {for (final m in local) m.id: m};
-      final waiting = await db.pendingMutationsDao.getEntityIdsOfType(_type);
-      final remoteIds = remote.map((m) => m.id).toSet();
-
-      // Gone from this section only: the medication's other sections stay.
-      for (final m in local) {
-        if (remoteIds.contains(m.id) || waiting.contains(m.id)) continue;
-        await notificationService
-            .cancelReminder(medicationReminderId(m.id, section.key));
-        await _meds.deleteMedicationSection(m.id, section.key);
-      }
-
-      final rows = [
-        for (final m in remote)
-          if (!waiting.contains(m.id))
-            MedicationMapper.mergeRemoteWithLocal(m, byId[m.id], section),
-      ];
-      await _meds.insertMedications(rows);
-      await _scheduleAlarms(rows);
-    } catch (e) {
-      AppLogger.w('Refreshing ${section.key} failed: $e');
-    }
-  }
-
-  /// Refreshes name, dosage and purpose from the list (it has no schedules);
-  /// a medication not seen before gets its sections fetched.
-  Future<void> _refreshList() async {
-    try {
-      final epoch = session.current;
-      final remote = await remoteDataSource.getAllMedications(pageSize: 100);
-      session.ensure(epoch);
-      final waiting = await db.pendingMutationsDao.getEntityIdsOfType(_type);
-
-      for (final id in await _meds.deleteUnknownSectionRows()) {
-        await notificationService
-            .cancelReminder(medicationReminderId(id, 'UNKNOWN'));
-      }
-
-      final updated = <Medication>[];
-      var hasNew = false;
-      for (final m in remote.rows.where((m) => !waiting.contains(m.id))) {
-        final rows = await _meds.getMedicationById(m.id);
-        hasNew |= rows.isEmpty;
-        updated.addAll(rows.map((row) => row.copyWith(
-            name: m.name, dosage: m.dosage, purpose: Value(m.purpose))));
-      }
-      await _meds.insertMedications(updated);
-      if (hasNew) {
-        await Future.wait(MedicationSection.values.map(_refreshSection));
-      }
-    } catch (e) {
-      AppLogger.w('Refreshing the medication list failed: $e');
-    }
-  }
-
-  @override
   AsyncResult<void> confirmDose(
           String medicationId, MedicationSection section) =>
       guard(() async {
@@ -217,9 +101,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
           }
           await _queue(medicationId, 'confirmMedication',
               {'section': section.key, 'date': day});
-          await _adherence.markMedicationLogAsTakenOffline(
+          await db.adherenceDao.markMedicationLogAsTakenOffline(
               const Uuid().v4(), medicationId, now);
-          await _adherence.markGlobalDayAsTakenOffline(day);
+          await db.adherenceDao.markGlobalDayAsTakenOffline(day);
         });
         mutationSyncManager.triggerSync();
       });
@@ -270,52 +154,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
       });
 
   @override
-  AsyncResult<MedicationHistoryEntity> getMedicationHistory(
-          String medicationId, DateTime month) =>
-      guard(() async {
-        if (!_isLocalId(medicationId) &&
-            await connectivityService.isConnected &&
-            !await db.pendingMutationsDao.hasWaiting(entityId: medicationId)) {
-          try {
-            final epoch = session.current;
-            final result = await remoteDataSource.getMedicationHistory(
-                medicationId,
-                date: AppDateFormats.yyyyMM15.format(month));
-            session.ensure(epoch);
-            // Only settled days: a pending one shows as no data offline.
-            await _adherence.saveMedicationLogs([
-              for (final l in result.logs)
-                if (l.taken case final taken?)
-                  MedicationLog(
-                      id: l.id,
-                      medicationId: medicationId,
-                      takenAt: l.takenAt,
-                      taken: taken),
-            ]);
-            return result;
-          } catch (e) {
-            AppLogger.w('History from the phone: $e');
-          }
-        }
-        // Offline: only the requested month, like the server returns.
-        final logs = (await _adherence.getLogsForMedication(medicationId))
-            .where((l) =>
-                l.takenAt.year == month.year && l.takenAt.month == month.month)
-            .toList();
-        final taken = logs.where((l) => l.taken).length;
-        return MedicationHistoryEntity(
-          medicationName:
-              (await _meds.getMedicationById(medicationId)).firstOrNull?.name ??
-                  '',
-          adherenceRate: logs.isEmpty ? 0 : (taken / logs.length * 100).round(),
-          logs: [
-            for (final l in logs)
-              MedicationLogEntity(id: l.id, taken: l.taken, takenAt: l.takenAt),
-          ],
-        );
-      });
-
-  @override
   AsyncResult<String> createMedication(MedicationForm form) => guard(() async {
         if (form.problem case final problem?) throw problem;
         String norm(String s) => s.trim().toLowerCase();
@@ -332,7 +170,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
           await _queue(id, 'createMedication',
               MedicationMapper.toCreateModel(form).toJson());
         });
-        await _scheduleAlarms(rows);
+        await _reminders.schedule(rows);
         mutationSyncManager.triggerSync();
         return id;
       });
@@ -352,8 +190,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
               MedicationMapper.toUpdateModel(form).toJson());
         });
         if (previous.isNotEmpty) {
-          await _cancelAlarms(id);
-          await _scheduleAlarms(rows);
+          await _reminders.cancel(id);
+          await _reminders.schedule(rows);
         }
         mutationSyncManager.triggerSync();
       });
@@ -364,7 +202,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
           await _meds.deleteMedication(id);
           await _queue(id, 'deleteMedication', const {});
         });
-        await _cancelAlarms(id);
+        await _reminders.cancel(id);
         mutationSyncManager.triggerSync();
       });
 
@@ -387,42 +225,17 @@ class MedicationRepositoryImpl implements MedicationRepository {
           .map((p) => (p[2], p[3]));
 
   @override
-  Future<void> syncLocalAlarms() async {
-    await notificationService.cancelAllReminders();
-    await _scheduleAlarms(await _meds.getAllMedications());
-  }
+  Future<void> syncLocalAlarms() async =>
+      _reminders.replaceAll(await _meds.getAllMedications());
 
   @override
   Future<void> moveReminders(String oldId, String newId) async {
-    await _cancelAlarms(oldId);
-    await _cancelAlarms(newId);
-    await _scheduleAlarms(await _meds.getMedicationById(newId));
+    await _reminders.cancel(oldId);
+    await _reminders.cancel(newId);
+    await _reminders.schedule(await _meds.getMedicationById(newId));
   }
 
   Future<void> _queue(String id, String action, Map<String, dynamic> payload) =>
       db.pendingMutationsDao.queueMutation(
           entityId: id, entityType: _type, action: action, payload: payload);
-
-  Future<void> _scheduleAlarms(List<Medication> rows) async {
-    final text = l10n();
-    for (final m in rows.where((m) => m.toBeTakenAt != null)) {
-      await notificationService.scheduleDailyReminder(
-        id: medicationReminderId(m.id, m.section),
-        title: text.medicationReminderTitle,
-        body: text.medicationReminderBody(m.dosage, m.name),
-        time: TimeOfDay.fromDateTime(m.toBeTakenAt!),
-      );
-    }
-  }
-
-  /// Cancels every section's reminder; UNKNOWN rows came from an older list sync.
-  Future<void> _cancelAlarms(String id) async {
-    for (final section in [
-      ...MedicationSection.values.map((s) => s.key),
-      'UNKNOWN'
-    ]) {
-      await notificationService
-          .cancelReminder(medicationReminderId(id, section));
-    }
-  }
 }

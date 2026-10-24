@@ -31,9 +31,7 @@
   "enterPhoneNumber": "e.g. 54*******",
   "whenWereYouBorn": "When were you born?",
   "dobSubtitle": "We need your date of birth to personalize your care plan. You must be 18 or older.",
-  "dateOfBirthTab": "Date of Birth",
   "dateOfBirthLabel": "Date of Birth",
-  "enterAgeTab": "Enter Age",
   "ageLabel": "Age",
   "enterDobInstead": "Enter date of birth instead",
   "enterAgeInstead": "Enter age instead",
@@ -159,7 +157,6 @@
   "reportSymptomHint": "e.g. I have had a headache since this morning...",
   "submit": "Submit",
   "submitting": "Submitting...",
-  "symptomReportedSuccess": "Symptom reported successfully!",
   "settings": "Settings",
   "legal": "Legal",
   "termsAndConditions": "Terms and Conditions",
@@ -198,8 +195,6 @@
   "continueText": "Continue",
   "tutorialHomeMetricsTitle": "Your Health Metrics",
   "tutorialHomeMetricsDesc": "View your current blood pressure and blood sugar readings.",
-  "tutorialHomeNextStepTitle": "Log Vitals",
-  "tutorialHomeNextStepDesc": "Quickly record your daily health readings from here.",
   "tutorialHomeDailyCheckInTitle": "Daily Check-in",
   "tutorialHomeDailyCheckInDesc": "Tell Yelima how you're feeling today in just 2 minutes.",
   "tutorialHomeActionCardsTitle": "Quick Actions",
@@ -464,7 +459,6 @@
   "signingIn": "Signing in...",
   "creatingAccount": "Creating account...",
   "continuingWithGoogle": "Continuing with Google...",
-  "continuingWithApple": "Continuing with Apple...",
   "sendingResetLink": "Sending reset link...",
   "resetLinkSent": "Password reset link sent! Check your inbox.",
   "deletingAccount": "Deleting account...",
@@ -549,16 +543,6 @@
     }
   },
   "medicationReminderTitle": "Time for your medication",
-  "medicationReminderBody": "Take {dosage} of {name}.",
-  "@medicationReminderBody": {
-    "placeholders": {
-      "dosage": {
-        "type": "String"
-      },
-      "name": {
-        "type": "String"
-      }
-    }
-  },
+  "medicationReminderBody": "Open Yelima to see which medicine to take.",
   "doseTooLate": "This dose is more than 2 days old, so it can no longer be logged."
 }

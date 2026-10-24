@@ -113,13 +113,14 @@ void main() {
           (id, 'createMedication', 'user_1'));
     });
 
-    test('schedules a reminder in the app language', () async {
+    test('schedules a reminder in the app language, without the drug name',
+      () async {
       await repoWith(db).createMedication(form);
 
       verify(() => notifications.scheduleDailyReminder(
             id: any(named: 'id'),
             title: 'Time for your medication',
-            body: 'Take 5mg of Amlodipine.',
+            body: 'Open Yelima to see which medicine to take.',
             time: const TimeOfDay(hour: 8, minute: 0),
           )).called(1);
     });

@@ -1,9 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
+
+import 'value_wheel.dart';
 
 /// A bottom sheet with one or two scroll wheels for picking a reading.
 class ValueWheelPickerBottomSheet extends StatefulWidget {
@@ -70,6 +71,8 @@ class ValueWheelPickerBottomSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       useRootNavigator: true,
+      // Sized to its content: the default 9/16-of-screen cap cut off the button.
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ValueWheelPickerBottomSheet.single(
         title: title,
@@ -96,6 +99,8 @@ class ValueWheelPickerBottomSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       useRootNavigator: true,
+      // Sized to its content: the default 9/16-of-screen cap cut off the button.
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ValueWheelPickerBottomSheet.dual(
         title: title,
@@ -117,60 +122,26 @@ class ValueWheelPickerBottomSheet extends StatefulWidget {
 
 class _ValueWheelPickerBottomSheetState
     extends State<ValueWheelPickerBottomSheet> {
-  late double _currentSingle;
-  late int _currentVal1;
-  late int _currentVal2;
+  late double _single = widget.initialValue;
+  late int _value1 = widget.initialValue1;
+  late int _value2 = widget.initialValue2;
 
-  late FixedExtentScrollController _singleController;
-  late FixedExtentScrollController _dualController1;
-  late FixedExtentScrollController _dualController2;
+  /// The single wheel's steps, rounded to one decimal so 0.1 steps don't drift.
+  late final List<double> _singleOptions = [
+    for (var v = widget.minValue; v <= widget.maxValue; v += widget.step)
+      double.parse(v.toStringAsFixed(1))
+  ];
 
-  final List<double> _singleOptions = [];
-  final List<int> _dualOptions1 = [];
-  final List<int> _dualOptions2 = [];
+  static List<int> _range(int min, int max) =>
+      [for (var i = min; i <= max; i++) i];
 
-  @override
-  void initState() {
-    super.initState();
+  void _confirm() {
     if (widget.isDualPicker) {
-      _currentVal1 = widget.initialValue1;
-      _currentVal2 = widget.initialValue2;
-      for (int i = widget.minValue1; i <= widget.maxValue1; i++) {
-        _dualOptions1.add(i);
-      }
-      for (int i = widget.minValue2; i <= widget.maxValue2; i++) {
-        _dualOptions2.add(i);
-      }
-      _dualController1 = FixedExtentScrollController(
-          initialItem: _dualOptions1.indexOf(_currentVal1));
-      _dualController2 = FixedExtentScrollController(
-          initialItem: _dualOptions2.indexOf(_currentVal2));
+      widget.onDualChanged?.call(_value1, _value2);
     } else {
-      _currentSingle = widget.initialValue;
-      for (double i = widget.minValue; i <= widget.maxValue; i += widget.step) {
-        // Fix floating point precision
-        _singleOptions.add(double.parse(i.toStringAsFixed(1)));
-      }
-
-      // Ensure current value is in list, or find closest
-      int initialIndex =
-          _singleOptions.indexWhere((v) => (v - _currentSingle).abs() < 0.05);
-      if (initialIndex == -1) initialIndex = 0;
-
-      _singleController =
-          FixedExtentScrollController(initialItem: initialIndex);
+      widget.onSingleChanged?.call(_single);
     }
-  }
-
-  @override
-  void dispose() {
-    if (widget.isDualPicker) {
-      _dualController1.dispose();
-      _dualController2.dispose();
-    } else {
-      _singleController.dispose();
-    }
-    super.dispose();
+    Navigator.pop(context);
   }
 
   @override
@@ -194,31 +165,20 @@ class _ValueWheelPickerBottomSheetState
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Icons.close,
-                  color: AppColors.slate400,
-                  size: 24,
-                ),
+                child: const Icon(Icons.close,
+                    color: AppColors.slate400, size: 24),
               ),
             ],
           ),
           const SizedBox(height: 32),
           SizedBox(
             height: 200,
-            child:
-                widget.isDualPicker ? _buildDualPicker() : _buildSinglePicker(),
+            child: widget.isDualPicker ? _dualWheels() : _singleWheel(),
           ),
           const SizedBox(height: 32),
           AppButton(
             text: context.l10n.confirm,
-            onPressed: () {
-              if (widget.isDualPicker) {
-                widget.onDualChanged?.call(_currentVal1, _currentVal2);
-              } else {
-                widget.onSingleChanged?.call(_currentSingle);
-              }
-              Navigator.pop(context);
-            },
+            onPressed: _confirm,
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             borderRadius: 24,
@@ -231,72 +191,34 @@ class _ValueWheelPickerBottomSheetState
     );
   }
 
-  Widget _buildSinglePicker() {
-    return CupertinoPicker(
-      scrollController: _singleController,
-      itemExtent: 48,
-      onSelectedItemChanged: (index) {
-        setState(() {
-          _currentSingle = _singleOptions[index];
-        });
-      },
-      children: _singleOptions.map((v) {
-        return Center(
-          child: AppText.displaySmall(
-            v.toStringAsFixed(1),
-            color: AppColors.slate800,
-            fontWeight: FontWeight.w600,
-          ),
-        );
-      }).toList(),
-    );
-  }
+  Widget _singleWheel() => ValueWheel<double>(
+        options: _singleOptions,
+        initialIndex: _singleOptions
+            .indexWhere((v) => (v - widget.initialValue).abs() < 0.05),
+        label: (v) => v.toStringAsFixed(1),
+        onChanged: (v) => _single = v,
+      );
 
-  Widget _buildDualPicker() {
+  Widget _dualWheels() {
+    final first = _range(widget.minValue1, widget.maxValue1);
+    final second = _range(widget.minValue2, widget.maxValue2);
     return Row(
       children: [
         Expanded(
-          child: CupertinoPicker(
-            scrollController: _dualController1,
-            itemExtent: 48,
-            onSelectedItemChanged: (index) {
-              setState(() {
-                _currentVal1 = _dualOptions1[index];
-              });
-            },
-            children: _dualOptions1.map((v) {
-              return Center(
-                child: AppText.displaySmall(
-                  v.toString(),
-                  color: AppColors.slate800,
-                  fontWeight: FontWeight.w600,
-                ),
-              );
-            }).toList(),
+          child: ValueWheel<int>(
+            options: first,
+            initialIndex: first.indexOf(widget.initialValue1),
+            label: (v) => '$v',
+            onChanged: (v) => _value1 = v,
           ),
         ),
-        const AppText.displaySmall(
-          '/',
-          color: Colors.grey,
-        ),
+        const AppText.displaySmall('/', color: Colors.grey),
         Expanded(
-          child: CupertinoPicker(
-            scrollController: _dualController2,
-            itemExtent: 48,
-            onSelectedItemChanged: (index) {
-              setState(() {
-                _currentVal2 = _dualOptions2[index];
-              });
-            },
-            children: _dualOptions2.map((v) {
-              return Center(
-                child: AppText.displaySmall(
-                  v.toString(),
-                  color: AppColors.slate800,
-                  fontWeight: FontWeight.w600,
-                ),
-              );
-            }).toList(),
+          child: ValueWheel<int>(
+            options: second,
+            initialIndex: second.indexOf(widget.initialValue2),
+            label: (v) => '$v',
+            onChanged: (v) => _value2 = v,
           ),
         ),
       ],

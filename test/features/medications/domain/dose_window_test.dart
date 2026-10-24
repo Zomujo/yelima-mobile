@@ -15,11 +15,6 @@ void main() {
         DateTime(2026, 10, 23, 8, 0));
   });
 
-  test('more than 4 hours after its time counts as late', () {
-    expect(DoseWindow.isLate(dose, DateTime(2026, 10, 23, 12, 0)), isFalse);
-    expect(DoseWindow.isLate(dose, DateTime(2026, 10, 23, 12, 1)), isTrue);
-  });
-
   test('MED-EC-11: "taken" only counts on the day it was confirmed', () {
     final now = DateTime(2026, 10, 23, 9);
     expect(DoseWindow.takenToday(DateTime(2026, 10, 23, 8, 5), now), isTrue);

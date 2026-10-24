@@ -250,61 +250,37 @@ class AppText extends StatelessWidget {
       this.letterSpacing})
       : variant = AppTextVariant.labelSmall;
 
-  TextStyle? _getStyle(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    switch (variant) {
-      case AppTextVariant.displayLarge:
-        return textTheme.displayLarge;
-      case AppTextVariant.displayMedium:
-        return textTheme.displayMedium;
-      case AppTextVariant.displaySmall:
-        return textTheme.displaySmall;
-      case AppTextVariant.headlineLarge:
-        return textTheme.headlineLarge;
-      case AppTextVariant.headlineMedium:
-        return textTheme.headlineMedium;
-      case AppTextVariant.headlineSmall:
-        return textTheme.headlineSmall;
-      case AppTextVariant.titleLarge:
-        return textTheme.titleLarge;
-      case AppTextVariant.titleMedium:
-        return textTheme.titleMedium;
-      case AppTextVariant.titleSmall:
-        return textTheme.titleSmall;
-      case AppTextVariant.bodyLarge:
-        return textTheme.bodyLarge;
-      case AppTextVariant.bodyMedium:
-        return textTheme.bodyMedium;
-      case AppTextVariant.bodySmall:
-        return textTheme.bodySmall;
-      case AppTextVariant.labelLarge:
-        return textTheme.labelLarge;
-      case AppTextVariant.labelMedium:
-        return textTheme.labelMedium;
-      case AppTextVariant.labelSmall:
-        return textTheme.labelSmall;
-    }
-  }
+  TextStyle? _style(TextTheme t) => switch (variant) {
+        AppTextVariant.displayLarge => t.displayLarge,
+        AppTextVariant.displayMedium => t.displayMedium,
+        AppTextVariant.displaySmall => t.displaySmall,
+        AppTextVariant.headlineLarge => t.headlineLarge,
+        AppTextVariant.headlineMedium => t.headlineMedium,
+        AppTextVariant.headlineSmall => t.headlineSmall,
+        AppTextVariant.titleLarge => t.titleLarge,
+        AppTextVariant.titleMedium => t.titleMedium,
+        AppTextVariant.titleSmall => t.titleSmall,
+        AppTextVariant.bodyLarge => t.bodyLarge,
+        AppTextVariant.bodyMedium => t.bodyMedium,
+        AppTextVariant.bodySmall => t.bodySmall,
+        AppTextVariant.labelLarge => t.labelLarge,
+        AppTextVariant.labelMedium => t.labelMedium,
+        AppTextVariant.labelSmall => t.labelSmall,
+      };
 
   @override
   Widget build(BuildContext context) {
-    TextStyle? baseStyle = _getStyle(context);
-
-    // Apply overrides
-    if (baseStyle != null) {
-      baseStyle = baseStyle.copyWith(
-        color: color,
-        height: height,
-        fontWeight: fontWeight,
-        decoration: decoration,
-        decorationColor: decorationColor,
-        letterSpacing: letterSpacing,
-      );
-    }
-
+    final style = _style(Theme.of(context).textTheme)?.copyWith(
+      color: color,
+      height: height,
+      fontWeight: fontWeight,
+      decoration: decoration,
+      decorationColor: decorationColor,
+      letterSpacing: letterSpacing,
+    );
     return Text(
       text,
-      style: baseStyle,
+      style: style,
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: overflow ?? (maxLines != null ? TextOverflow.ellipsis : null),
