@@ -14,6 +14,7 @@ import '../../domain/repositories/medication_repository.dart';
 import '../controllers/add_medication_form_controller.dart';
 import '../medication_failure_message.dart';
 import '../widgets/add_medication/medication_form_fields.dart';
+import '../widgets/exact_reminders_modal.dart';
 import '../widgets/add_medication/medication_search_field.dart';
 import '../widgets/medication_form/dose_schedule_editor.dart';
 
@@ -28,10 +29,20 @@ class AddMedicationScreen extends StatelessWidget {
     if (!context.mounted || failure is CancelledFailure) return;
     if (failure == null) {
       AppSnackBar.showSuccess(context, message: l10n.medicationAddedSuccess);
-      context.pop();
+      await _askForExactReminders(context);
+      if (context.mounted) context.pop();
     } else {
       AppSnackBar.showError(context,
           message: failure.medicationMessage(l10n) ?? '');
+    }
+  }
+
+  /// On newer Android, reminders are only on time once "Alarms & reminders" is allowed.
+  Future<void> _askForExactReminders(BuildContext context) async {
+    final medications = context.read<MedicationRepository>();
+    if (await medications.remindersAreExact() || !context.mounted) return;
+    if (await ExactRemindersModal.show(context) == true) {
+      await medications.allowExactReminders();
     }
   }
 

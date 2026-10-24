@@ -43,6 +43,12 @@ class MedicationReminders {
     }
   }
 
+  /// Whether reminders fire at the exact minute.
+  Future<bool> areExact() => _notifications.canRemindExactly();
+
+  /// Asks the user to allow exact reminders; true once allowed.
+  Future<bool> allowExact() => _notifications.allowExactReminders();
+
   /// Replaces every scheduled reminder with ones for [rows].
   Future<void> replaceAll(List<Medication> rows) async {
     await _notifications.cancelAllReminders();

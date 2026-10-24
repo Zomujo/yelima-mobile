@@ -229,6 +229,14 @@ class MedicationRepositoryImpl
       _reminders.replaceAll(await _meds.getAllMedications());
 
   @override
+  Future<bool> remindersAreExact() => _reminders.areExact();
+
+  @override
+  Future<void> allowExactReminders() async {
+    if (await _reminders.allowExact()) await syncLocalAlarms();
+  }
+
+  @override
   Future<void> moveReminders(String oldId, String newId) async {
     await _reminders.cancel(oldId);
     await _reminders.cancel(newId);

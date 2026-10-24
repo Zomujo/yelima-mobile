@@ -16,7 +16,7 @@
   "emailLabel": "Email",
   "emailHint": "you@example.com",
   "passwordLabel": "Password",
-  "passwordHint": "At least 8 characters",
+  "passwordHint": "At least 6 characters",
   "forgotPassword": "Forgot Password?",
   "dontHaveAccount": "Don't have an account? ",
   "createAccount": "Create an account",
@@ -544,5 +544,9 @@
   },
   "medicationReminderTitle": "Time for your medication",
   "medicationReminderBody": "Open Yelima to see which medicine to take.",
-  "doseTooLate": "This dose is more than 2 days old, so it can no longer be logged."
+  "doseTooLate": "This dose is more than 2 days old, so it can no longer be logged.",
+  "exactRemindersTitle": "Get reminders on time",
+  "exactRemindersBody": "Allow Yelima to set alarms so your medication reminders arrive at the exact time. Without it, Android may send them a few minutes late.",
+  "allow": "Allow",
+  "notNow": "Not now"
 }

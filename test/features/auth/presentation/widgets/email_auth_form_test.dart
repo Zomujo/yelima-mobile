@@ -15,17 +15,16 @@ void main() {
     return tester.widget<AppButton>(find.byType(AppButton)).onPressed != null;
   }
 
-  testWidgets('sign-up needs a password of 8 characters', (tester) async {
-    expect(await buttonEnabled(tester, isSignUp: true, password: '1234567'),
+  testWidgets('sign-up needs a password of 6 characters', (tester) async {
+    expect(await buttonEnabled(tester, isSignUp: true, password: '12345'),
         isFalse);
-    expect(find.text('At least 8 characters'), findsWidgets);
-    expect(await buttonEnabled(tester, isSignUp: true, password: '12345678'),
+    expect(find.text('At least 6 characters'), findsWidgets);
+    expect(await buttonEnabled(tester, isSignUp: true, password: '123456'),
         isTrue);
   });
 
-  testWidgets('sign-in still accepts an older 6-character password',
-      (tester) async {
-    expect(await buttonEnabled(tester, isSignUp: false, password: '123456'),
-        isTrue);
+  testWidgets('sign-in only needs the password filled in', (tester) async {
+    expect(
+        await buttonEnabled(tester, isSignUp: false, password: '1234'), isTrue);
   });
 }

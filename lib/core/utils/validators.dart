@@ -3,7 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 /// Form field checks for email and password.
 class Validators {
   /// New passwords need at least this many characters.
-  static const minPasswordLength = 8;
+  static const minPasswordLength = 6;
 
   /// Whether [email] looks like an email address.
   static bool isValidEmail(String email) =>

@@ -37,8 +37,9 @@ class AiChatRemoteDataSource implements IRemoteDeletionSource {
   /// Sends text; returns `{inResponse, outResponse}`, or `{}` when the server sent no reply.
   Future<Map<String, dynamic>> sendMessage(String message,
           {String? localChatId}) async =>
-      _reply(await _api.post('/api/v1/client/chat',
-          queryParameters: {'lang': _lang}, data: {
+      _reply(await _api.post('/api/v1/client/chat', queryParameters: {
+        'lang': _lang
+      }, data: {
         'message': message,
         if (localChatId != null) 'localChatId': localChatId,
       }));

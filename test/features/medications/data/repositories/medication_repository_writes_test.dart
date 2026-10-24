@@ -205,6 +205,40 @@ void main() {
         {'section': 'MORNING', 'date': '2026-10-23'});
   });
 
+  group('exact reminders', () {
+    setUp(() {
+      when(() => notifications.cancelAllReminders()).thenAnswer((_) async {});
+    });
+
+    test('once allowed, every reminder is scheduled again', () async {
+      final repo = repoWith(db);
+      await repo.createMedication(form);
+      clearInteractions(notifications);
+      when(() => notifications.allowExactReminders())
+          .thenAnswer((_) async => true);
+
+      await repo.allowExactReminders();
+
+      verify(() => notifications.cancelAllReminders()).called(1);
+      verify(() => notifications.scheduleDailyReminder(
+            id: any(named: 'id'),
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+            time: any(named: 'time'),
+          )).called(1);
+    });
+
+    test('if the user says no, the existing reminders are left alone',
+        () async {
+      when(() => notifications.allowExactReminders())
+          .thenAnswer((_) async => false);
+
+      await repoWith(db).allowExactReminders();
+
+      verifyNever(() => notifications.cancelAllReminders());
+    });
+  });
+
   group('refresh from the server', () {
     Medication row(String id, String section) => Medication(
           id: id,

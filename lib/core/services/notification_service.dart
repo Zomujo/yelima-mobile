@@ -188,6 +188,20 @@ class NotificationService {
     }
   }
 
+  AndroidFlutterLocalNotificationsPlugin? get _android =>
+      _localNotifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+  /// Whether Android lets reminders fire at the exact minute ("Alarms & reminders").
+  Future<bool> canRemindExactly() async =>
+      await _android?.canScheduleExactNotifications() ?? true;
+
+  /// Opens Android's "Alarms & reminders" setting; true once it is allowed.
+  Future<bool> allowExactReminders() async =>
+      await _android?.requestExactAlarmsPermission() ?? true;
+
+  /// Schedules a daily reminder at [time]: exact when allowed, otherwise
+  /// inexact (Android may shift it a few minutes), never dropped.
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
@@ -220,7 +234,9 @@ class NotificationService {
             presentBadge: true,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: await canRemindExactly()
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,

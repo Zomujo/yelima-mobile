@@ -11,7 +11,8 @@ class SymptomsRemoteDataSource {
   /// Reports a symptom that began at [onsetDate] and returns its server id;
   /// [idempotencyKey] is its local id.
   Future<String> createSymptom(String description,
-          {required DateTime onsetDate, required String idempotencyKey}) async =>
+          {required DateTime onsetDate,
+          required String idempotencyKey}) async =>
       (await apiClient.post(_path,
           data: {
             'description': description,

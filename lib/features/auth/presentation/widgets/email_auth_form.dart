@@ -83,14 +83,13 @@ class _EmailAuthFormState extends State<EmailAuthForm> {
         AppFormField(
           controller: _password,
           label: l10n.passwordLabel,
-          // Older accounts may have 6-character passwords, so sign-in only checks it's filled.
+          // Sign-in only checks it's filled: the rule is for new passwords.
           hintText: widget.isSignUp ? l10n.passwordHint : null,
           prefixIcon: Icons.lock_outline,
           isPassword: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          validator: widget.isSignUp
-              ? (v) => Validators.newPassword(v, l10n)
-              : null,
+          validator:
+              widget.isSignUp ? (v) => Validators.newPassword(v, l10n) : null,
         ),
         if (!widget.isSignUp)
           Align(

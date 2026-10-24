@@ -117,9 +117,8 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
       scheduledSum += d.scheduledDoses ?? 0;
     }
     if (scheduledSum == 0) return;
-    await (update(adherenceGlobals)..where((t) => t.id.equals(day.type)))
-        .write(AdherenceGlobalsCompanion(
-            rate: Value(takenSum / scheduledSum * 100)));
+    await (update(adherenceGlobals)..where((t) => t.id.equals(day.type))).write(
+        AdherenceGlobalsCompanion(rate: Value(takenSum / scheduledSum * 100)));
   }
 
   Future<void> clearAllAdherenceData() async {

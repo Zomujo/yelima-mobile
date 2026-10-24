@@ -6,9 +6,9 @@ import 'package:yelima/core/utils/validators.dart';
 void main() {
   final l10n = lookupAppLocalizations(const Locale('en'));
 
-  test('new passwords need 8 characters', () {
-    expect(Validators.isValidNewPassword('1234567'), isFalse);
-    expect(Validators.isValidNewPassword('12345678'), isTrue);
+  test('new passwords need 6 characters', () {
+    expect(Validators.isValidNewPassword('12345'), isFalse);
+    expect(Validators.isValidNewPassword('123456'), isTrue);
     expect(Validators.newPassword('short', l10n), l10n.passwordHint);
   });
 

@@ -62,6 +62,12 @@ abstract class MedicationRepository {
   /// Reschedules every reminder from the phone's medications.
   Future<void> syncLocalAlarms();
 
+  /// Whether reminders fire at the exact minute; newer Android asks the user first.
+  Future<bool> remindersAreExact();
+
+  /// Asks the user to allow exact reminders, then reschedules every reminder.
+  Future<void> allowExactReminders();
+
   /// Moves a medication's reminders from its local id to its server id after sync.
   Future<void> moveReminders(String oldId, String newId);
 }
