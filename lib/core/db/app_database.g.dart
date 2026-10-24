@@ -3741,8 +3741,21 @@ class $AdherenceGlobalDaysTable extends AdherenceGlobalDays
   late final GeneratedColumn<String> type = GeneratedColumn<String>(
       'type', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _takenDosesMeta =
+      const VerificationMeta('takenDoses');
   @override
-  List<GeneratedColumn> get $columns => [dateTakenStr, taken, label, type];
+  late final GeneratedColumn<int> takenDoses = GeneratedColumn<int>(
+      'taken_doses', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _scheduledDosesMeta =
+      const VerificationMeta('scheduledDoses');
+  @override
+  late final GeneratedColumn<int> scheduledDoses = GeneratedColumn<int>(
+      'scheduled_doses', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [dateTakenStr, taken, label, type, takenDoses, scheduledDoses];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3777,6 +3790,18 @@ class $AdherenceGlobalDaysTable extends AdherenceGlobalDays
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
+    if (data.containsKey('taken_doses')) {
+      context.handle(
+          _takenDosesMeta,
+          takenDoses.isAcceptableOrUnknown(
+              data['taken_doses']!, _takenDosesMeta));
+    }
+    if (data.containsKey('scheduled_doses')) {
+      context.handle(
+          _scheduledDosesMeta,
+          scheduledDoses.isAcceptableOrUnknown(
+              data['scheduled_doses']!, _scheduledDosesMeta));
+    }
     return context;
   }
 
@@ -3794,6 +3819,10 @@ class $AdherenceGlobalDaysTable extends AdherenceGlobalDays
           .read(DriftSqlType.string, data['${effectivePrefix}label'])!,
       type: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      takenDoses: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}taken_doses']),
+      scheduledDoses: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}scheduled_doses']),
     );
   }
 
@@ -3809,11 +3838,15 @@ class AdherenceGlobalDay extends DataClass
   final bool? taken;
   final String label;
   final String type;
+  final int? takenDoses;
+  final int? scheduledDoses;
   const AdherenceGlobalDay(
       {required this.dateTakenStr,
       this.taken,
       required this.label,
-      required this.type});
+      required this.type,
+      this.takenDoses,
+      this.scheduledDoses});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3823,6 +3856,12 @@ class AdherenceGlobalDay extends DataClass
     }
     map['label'] = Variable<String>(label);
     map['type'] = Variable<String>(type);
+    if (!nullToAbsent || takenDoses != null) {
+      map['taken_doses'] = Variable<int>(takenDoses);
+    }
+    if (!nullToAbsent || scheduledDoses != null) {
+      map['scheduled_doses'] = Variable<int>(scheduledDoses);
+    }
     return map;
   }
 
@@ -3833,6 +3872,12 @@ class AdherenceGlobalDay extends DataClass
           taken == null && nullToAbsent ? const Value.absent() : Value(taken),
       label: Value(label),
       type: Value(type),
+      takenDoses: takenDoses == null && nullToAbsent
+          ? const Value.absent()
+          : Value(takenDoses),
+      scheduledDoses: scheduledDoses == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledDoses),
     );
   }
 
@@ -3844,6 +3889,8 @@ class AdherenceGlobalDay extends DataClass
       taken: serializer.fromJson<bool?>(json['taken']),
       label: serializer.fromJson<String>(json['label']),
       type: serializer.fromJson<String>(json['type']),
+      takenDoses: serializer.fromJson<int?>(json['takenDoses']),
+      scheduledDoses: serializer.fromJson<int?>(json['scheduledDoses']),
     );
   }
   @override
@@ -3854,6 +3901,8 @@ class AdherenceGlobalDay extends DataClass
       'taken': serializer.toJson<bool?>(taken),
       'label': serializer.toJson<String>(label),
       'type': serializer.toJson<String>(type),
+      'takenDoses': serializer.toJson<int?>(takenDoses),
+      'scheduledDoses': serializer.toJson<int?>(scheduledDoses),
     };
   }
 
@@ -3861,12 +3910,17 @@ class AdherenceGlobalDay extends DataClass
           {String? dateTakenStr,
           Value<bool?> taken = const Value.absent(),
           String? label,
-          String? type}) =>
+          String? type,
+          Value<int?> takenDoses = const Value.absent(),
+          Value<int?> scheduledDoses = const Value.absent()}) =>
       AdherenceGlobalDay(
         dateTakenStr: dateTakenStr ?? this.dateTakenStr,
         taken: taken.present ? taken.value : this.taken,
         label: label ?? this.label,
         type: type ?? this.type,
+        takenDoses: takenDoses.present ? takenDoses.value : this.takenDoses,
+        scheduledDoses:
+            scheduledDoses.present ? scheduledDoses.value : this.scheduledDoses,
       );
   AdherenceGlobalDay copyWithCompanion(AdherenceGlobalDaysCompanion data) {
     return AdherenceGlobalDay(
@@ -3876,6 +3930,11 @@ class AdherenceGlobalDay extends DataClass
       taken: data.taken.present ? data.taken.value : this.taken,
       label: data.label.present ? data.label.value : this.label,
       type: data.type.present ? data.type.value : this.type,
+      takenDoses:
+          data.takenDoses.present ? data.takenDoses.value : this.takenDoses,
+      scheduledDoses: data.scheduledDoses.present
+          ? data.scheduledDoses.value
+          : this.scheduledDoses,
     );
   }
 
@@ -3885,13 +3944,16 @@ class AdherenceGlobalDay extends DataClass
           ..write('dateTakenStr: $dateTakenStr, ')
           ..write('taken: $taken, ')
           ..write('label: $label, ')
-          ..write('type: $type')
+          ..write('type: $type, ')
+          ..write('takenDoses: $takenDoses, ')
+          ..write('scheduledDoses: $scheduledDoses')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(dateTakenStr, taken, label, type);
+  int get hashCode =>
+      Object.hash(dateTakenStr, taken, label, type, takenDoses, scheduledDoses);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3899,7 +3961,9 @@ class AdherenceGlobalDay extends DataClass
           other.dateTakenStr == this.dateTakenStr &&
           other.taken == this.taken &&
           other.label == this.label &&
-          other.type == this.type);
+          other.type == this.type &&
+          other.takenDoses == this.takenDoses &&
+          other.scheduledDoses == this.scheduledDoses);
 }
 
 class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
@@ -3907,12 +3971,16 @@ class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
   final Value<bool?> taken;
   final Value<String> label;
   final Value<String> type;
+  final Value<int?> takenDoses;
+  final Value<int?> scheduledDoses;
   final Value<int> rowid;
   const AdherenceGlobalDaysCompanion({
     this.dateTakenStr = const Value.absent(),
     this.taken = const Value.absent(),
     this.label = const Value.absent(),
     this.type = const Value.absent(),
+    this.takenDoses = const Value.absent(),
+    this.scheduledDoses = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AdherenceGlobalDaysCompanion.insert({
@@ -3920,6 +3988,8 @@ class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
     this.taken = const Value.absent(),
     required String label,
     required String type,
+    this.takenDoses = const Value.absent(),
+    this.scheduledDoses = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : dateTakenStr = Value(dateTakenStr),
         label = Value(label),
@@ -3929,6 +3999,8 @@ class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
     Expression<bool>? taken,
     Expression<String>? label,
     Expression<String>? type,
+    Expression<int>? takenDoses,
+    Expression<int>? scheduledDoses,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3936,6 +4008,8 @@ class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
       if (taken != null) 'taken': taken,
       if (label != null) 'label': label,
       if (type != null) 'type': type,
+      if (takenDoses != null) 'taken_doses': takenDoses,
+      if (scheduledDoses != null) 'scheduled_doses': scheduledDoses,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3945,12 +4019,16 @@ class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
       Value<bool?>? taken,
       Value<String>? label,
       Value<String>? type,
+      Value<int?>? takenDoses,
+      Value<int?>? scheduledDoses,
       Value<int>? rowid}) {
     return AdherenceGlobalDaysCompanion(
       dateTakenStr: dateTakenStr ?? this.dateTakenStr,
       taken: taken ?? this.taken,
       label: label ?? this.label,
       type: type ?? this.type,
+      takenDoses: takenDoses ?? this.takenDoses,
+      scheduledDoses: scheduledDoses ?? this.scheduledDoses,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3970,6 +4048,12 @@ class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
+    if (takenDoses.present) {
+      map['taken_doses'] = Variable<int>(takenDoses.value);
+    }
+    if (scheduledDoses.present) {
+      map['scheduled_doses'] = Variable<int>(scheduledDoses.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3983,6 +4067,8 @@ class AdherenceGlobalDaysCompanion extends UpdateCompanion<AdherenceGlobalDay> {
           ..write('taken: $taken, ')
           ..write('label: $label, ')
           ..write('type: $type, ')
+          ..write('takenDoses: $takenDoses, ')
+          ..write('scheduledDoses: $scheduledDoses, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6654,6 +6740,8 @@ typedef $$AdherenceGlobalDaysTableCreateCompanionBuilder
   Value<bool?> taken,
   required String label,
   required String type,
+  Value<int?> takenDoses,
+  Value<int?> scheduledDoses,
   Value<int> rowid,
 });
 typedef $$AdherenceGlobalDaysTableUpdateCompanionBuilder
@@ -6662,6 +6750,8 @@ typedef $$AdherenceGlobalDaysTableUpdateCompanionBuilder
   Value<bool?> taken,
   Value<String> label,
   Value<String> type,
+  Value<int?> takenDoses,
+  Value<int?> scheduledDoses,
   Value<int> rowid,
 });
 
@@ -6685,6 +6775,13 @@ class $$AdherenceGlobalDaysTableFilterComposer
 
   ColumnFilters<String> get type => $composableBuilder(
       column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get takenDoses => $composableBuilder(
+      column: $table.takenDoses, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get scheduledDoses => $composableBuilder(
+      column: $table.scheduledDoses,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$AdherenceGlobalDaysTableOrderingComposer
@@ -6708,6 +6805,13 @@ class $$AdherenceGlobalDaysTableOrderingComposer
 
   ColumnOrderings<String> get type => $composableBuilder(
       column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get takenDoses => $composableBuilder(
+      column: $table.takenDoses, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get scheduledDoses => $composableBuilder(
+      column: $table.scheduledDoses,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$AdherenceGlobalDaysTableAnnotationComposer
@@ -6730,6 +6834,12 @@ class $$AdherenceGlobalDaysTableAnnotationComposer
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<int> get takenDoses => $composableBuilder(
+      column: $table.takenDoses, builder: (column) => column);
+
+  GeneratedColumn<int> get scheduledDoses => $composableBuilder(
+      column: $table.scheduledDoses, builder: (column) => column);
 }
 
 class $$AdherenceGlobalDaysTableTableManager extends RootTableManager<
@@ -6766,6 +6876,8 @@ class $$AdherenceGlobalDaysTableTableManager extends RootTableManager<
             Value<bool?> taken = const Value.absent(),
             Value<String> label = const Value.absent(),
             Value<String> type = const Value.absent(),
+            Value<int?> takenDoses = const Value.absent(),
+            Value<int?> scheduledDoses = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AdherenceGlobalDaysCompanion(
@@ -6773,6 +6885,8 @@ class $$AdherenceGlobalDaysTableTableManager extends RootTableManager<
             taken: taken,
             label: label,
             type: type,
+            takenDoses: takenDoses,
+            scheduledDoses: scheduledDoses,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -6780,6 +6894,8 @@ class $$AdherenceGlobalDaysTableTableManager extends RootTableManager<
             Value<bool?> taken = const Value.absent(),
             required String label,
             required String type,
+            Value<int?> takenDoses = const Value.absent(),
+            Value<int?> scheduledDoses = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AdherenceGlobalDaysCompanion.insert(
@@ -6787,6 +6903,8 @@ class $$AdherenceGlobalDaysTableTableManager extends RootTableManager<
             taken: taken,
             label: label,
             type: type,
+            takenDoses: takenDoses,
+            scheduledDoses: scheduledDoses,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

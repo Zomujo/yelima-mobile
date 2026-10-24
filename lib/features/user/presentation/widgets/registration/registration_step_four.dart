@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 import 'package:yelima/features/user/domain/models/facility_model.dart';
-import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/step_layout.dart';
 import 'package:yelima/shared/widgets/forms/app_form_field.dart';
+import 'package:yelima/shared/widgets/forms/search_suggestions.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 /// Registration step 4: pick the health facility.
@@ -29,7 +28,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
   bool _isDropdownVisible = false;
   List<FacilityModel> _options = [];
   FacilityModel? _selectedFacility;
-  int _searchToken = 0;
+  final _search = LatestSearch();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
@@ -79,23 +78,26 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
       return;
     }
 
-    final token = ++_searchToken;
     setState(() {
       _isLoadingFacilities = true;
       _isDropdownVisible = true;
     });
+    final users = context.read<UserController>();
+    final result = await _search.run(() => users.searchFacilities(query));
+    if (result == null || !mounted) return;
+    setState(() {
+      _isLoadingFacilities = false;
+      _options = result.getOrElse((_) => const []);
+    });
+  }
 
-    await Future.delayed(const Duration(milliseconds: 350));
-    if (token != _searchToken || !mounted) return;
-
-    final result = await context.read<UserController>().searchFacilities(query);
-
-    if (mounted && token == _searchToken) {
-      setState(() {
-        _isLoadingFacilities = false;
-        _options = result.getOrElse((_) => const []);
-      });
-    }
+  void _select(FacilityModel option) {
+    setState(() {
+      _selectedFacility = option;
+      _searchController.text = option.name;
+      _isDropdownVisible = false;
+    });
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -124,70 +126,14 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
           if (_isDropdownVisible)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: Material(
-                elevation: 4.0,
-                color: Colors.white,
-                shadowColor: Colors.black.withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: AppColors.slate200),
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 250),
-                  child: ListView.separated(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: _isLoadingFacilities
-                        ? 1
-                        : (_options.isEmpty ? 1 : _options.length),
-                    separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: AppColors.slate200),
-                    itemBuilder: (context, index) {
-                      if (_isLoadingFacilities) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 16.0),
-                          child: AppText.bodyMedium(
-                            context.l10n.loading,
-                            color: AppColors.textGrey,
-                          ),
-                        );
-                      }
-
-                      if (_options.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 16.0),
-                          child: AppText.bodyMedium(
-                            context.l10n.noFacilitiesFound,
-                            color: AppColors.textGrey,
-                          ),
-                        );
-                      }
-
-                      final option = _options[index];
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedFacility = option;
-                            _searchController.text = option.name;
-                            _isDropdownVisible = false;
-                          });
-                          FocusScope.of(context).unfocus();
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 16.0),
-                          child: AppText.bodyMedium(
-                            option.name,
-                            color: AppColors.slate800,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+              child: SuggestionList(
+                items: [for (final o in _options) o.name],
+                message: _isLoadingFacilities
+                    ? context.l10n.loading
+                    : _options.isEmpty
+                        ? context.l10n.noFacilitiesFound
+                        : null,
+                onTap: (i) => _select(_options[i]),
               ),
             ),
         ],

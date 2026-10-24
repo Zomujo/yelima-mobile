@@ -23,9 +23,8 @@ class MedicineDetailsBody extends StatelessWidget {
     final data = controller.detail;
     if (data == null) {
       return Center(
-          child: AppText.bodyMedium(
-              controller.error?.message(context.l10n) ??
-                  context.l10n.medicationNotFound));
+          child: AppText.bodyMedium(controller.error?.message(context.l10n) ??
+              context.l10n.medicationNotFound));
     }
 
     return SingleChildScrollView(

@@ -559,5 +559,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "doseTooLate": "This dose is more than 2 days old, so it can no longer be logged."
 }

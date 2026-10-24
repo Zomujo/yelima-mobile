@@ -25,6 +25,7 @@ import '../../features/progress/presentation/screens/progress_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 import '../../shared/screens/not_found_screen.dart';
 import 'package:yelima/features/home/presentation/screens/main_scaffold.dart';
+import '../config/features.dart';
 import 'route_paths.dart';
 import '../services/session_expiry.dart';
 import '../managers/mutation_sync_manager.dart';
@@ -37,6 +38,11 @@ import '../services/shared_prefs_service.dart';
 import '../../injection_container.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Sends links and pushes for the hidden AI chat to home.
+String? _whileChatHidden(BuildContext context, GoRouterState state) =>
+    Features.aiChat ? null : RoutePaths.home;
+
 final shellNavigatorKey = GlobalKey<NavigatorState>();
 
 /// The app's routes and redirect rules.
@@ -129,6 +135,7 @@ class AppRouter {
         ),
         GoRoute(
           path: RoutePaths.aiChat,
+          redirect: _whileChatHidden,
           builder: (context, state) => const AiChatScreen(),
         ),
         GoRoute(
@@ -161,6 +168,7 @@ class AppRouter {
             ),
             GoRoute(
               path: RoutePaths.chat,
+              redirect: _whileChatHidden,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ChatScreen(),
               ),

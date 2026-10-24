@@ -58,6 +58,7 @@ void main() {
       ..registerSingleton<NotificationService>(MockNotifications())
       ..registerSingleton<FileService>(MockFileService())
       ..registerSingleton<FirebaseAuth>(MockFirebaseAuth())
+      ..registerSingleton<SharedPrefsService>(MockPrefs())
       ..registerSingleton(LocaleController(MockPrefs()))
       ..registerSingleton(
           MutationSyncManager(connectivityService: connectivity, db: db))

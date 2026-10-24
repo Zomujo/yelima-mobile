@@ -19,7 +19,8 @@ class HomeUpcomingVisitsSection extends StatelessWidget {
         builder: (context, controller, child) {
           if (controller.state.nearestError != null) {
             return Center(
-              child: AppText.bodyMedium(controller.state.nearestError!.message(context.l10n) ?? ''),
+              child: AppText.bodyMedium(
+                  controller.state.nearestError!.message(context.l10n) ?? ''),
             );
           }
 

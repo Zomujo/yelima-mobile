@@ -30,25 +30,27 @@ class ReadingForm {
       ? ReadingLimits.bloodPressureError(systolic, diastolic)
       : ReadingLimits.bloodSugarError(sugarLevel);
 
-  /// The reading to save, graded with the backend's table.
-  VitalHistoryEntity toReading(String id) => kind == VitalKind.bloodPressure
-      ? VitalHistoryEntity(
-          id: id,
-          vitalType: 'bloodPressure',
-          vitalName: 'Blood Pressure',
-          value: '$systolic/$diastolic',
-          unit: 'mmHg',
-          severity: VitalSeverityThresholds.bloodPressure(systolic, diastolic),
-          recordedAt: recordedAt,
-        )
-      : VitalHistoryEntity(
-          id: id,
-          vitalType: 'bloodSugar',
-          vitalName: 'Blood Sugar',
-          vitalSubType: subType,
-          value: sugarLevel.toStringAsFixed(1),
-          unit: 'mmol/L',
-          severity: VitalSeverityThresholds.bloodSugar(sugarLevel),
-          recordedAt: recordedAt,
-        );
+  /// The reading to save, graded with the backend's [rules].
+  VitalHistoryEntity toReading(String id,
+          {SeverityRules rules = SeverityRules.bundled}) =>
+      kind == VitalKind.bloodPressure
+          ? VitalHistoryEntity(
+              id: id,
+              vitalType: 'bloodPressure',
+              vitalName: 'Blood Pressure',
+              value: '$systolic/$diastolic',
+              unit: 'mmHg',
+              severity: rules.bloodPressure(systolic, diastolic),
+              recordedAt: recordedAt,
+            )
+          : VitalHistoryEntity(
+              id: id,
+              vitalType: 'bloodSugar',
+              vitalName: 'Blood Sugar',
+              vitalSubType: subType,
+              value: sugarLevel.toStringAsFixed(1),
+              unit: 'mmol/L',
+              severity: rules.bloodSugar(sugarLevel),
+              recordedAt: recordedAt,
+            );
 }

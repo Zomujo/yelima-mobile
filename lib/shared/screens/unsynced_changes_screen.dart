@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/db/app_database.dart';
@@ -90,6 +91,11 @@ class _ChangeTile extends StatelessWidget {
     };
   }
 
+  /// The server only takes doses from the last 48 h, so retrying can't help.
+  bool get _tooLate =>
+      change.action == 'confirmMedication' &&
+      clock.now().difference(change.createdAt) > const Duration(hours: 48);
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -98,12 +104,16 @@ class _ChangeTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       title: AppText.titleMedium(
           '${_kind(context)} · ${AppDateFormats.appointmentCard.format(change.createdAt)}'),
-      subtitle: AppText.bodyMedium(
-          rejected ? l10n.changeRejected : l10n.changeGaveUp),
+      subtitle: AppText.bodyMedium(_tooLate
+          ? l10n.doseTooLate
+          : rejected
+              ? l10n.changeRejected
+              : l10n.changeGaveUp),
       trailing: Wrap(
         spacing: 4,
         children: [
-          TextButton(onPressed: onRetry, child: Text(l10n.retry)),
+          if (!_tooLate)
+            TextButton(onPressed: onRetry, child: Text(l10n.retry)),
           TextButton(onPressed: onDiscard, child: Text(l10n.discard)),
         ],
       ),

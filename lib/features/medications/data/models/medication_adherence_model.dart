@@ -20,19 +20,6 @@ class MedicationAdherenceModel extends MedicationAdherence {
       days: daysList,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'rate': rate,
-      'days': days
-          .map((e) => {
-                'id': e.id,
-                'taken': e.taken,
-                'takenAt': e.takenAt.toIso8601String(),
-              })
-          .toList(),
-    };
-  }
 }
 
 /// One day of adherence as the server sends it.
@@ -41,18 +28,28 @@ class AdherenceDayModel extends AdherenceDay {
     super.id,
     required super.taken,
     required super.takenAt,
+    super.takenDoses,
+    super.scheduledDoses,
   });
 
   factory AdherenceDayModel.fromJson(Map<String, dynamic> json) {
     final dateStr = json['dateTaken'] ?? json['date'] ?? json['takenAt'];
-    final bool isTaken = json['taken'] == true ||
-        json['status'] == 'taken' ||
-        json['status'] == 'completed';
     return AdherenceDayModel(
       id: json['id'],
-      taken: isTaken,
+      taken: takenFromJson(json),
       takenAt:
           dateStr != null ? DateTime.parse(dateStr).toLocal() : clock.now(),
+      takenDoses: json['takenDoses'] as int?,
+      scheduledDoses: json['scheduledDoses'] as int?,
     );
   }
 }
+
+/// The server's `taken` for a day: null while a dose can still be confirmed.
+/// Older responses sent a `status` instead.
+bool? takenFromJson(Map<String, dynamic> json) => switch (json['taken']) {
+      final bool taken => taken,
+      _ when json['status'] == 'taken' || json['status'] == 'completed' => true,
+      _ when json.containsKey('taken') => null,
+      _ => false,
+    };

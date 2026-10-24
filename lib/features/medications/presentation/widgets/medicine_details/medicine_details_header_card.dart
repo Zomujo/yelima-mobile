@@ -42,7 +42,8 @@ class MedicineDetailsHeaderCard extends StatelessWidget {
                 child: AppText.bodyMedium(
                     controller.historyError!.message(context.l10n) ?? ''))
           else if (history == null)
-            AppShimmer.box(height: 200, width: double.infinity, borderRadius: 16)
+            AppShimmer.box(
+                height: 200, width: double.infinity, borderRadius: 16)
           else
             AdherenceCalendar(
                 history: history, onMonthChanged: controller.loadHistory),

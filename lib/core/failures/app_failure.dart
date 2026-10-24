@@ -33,8 +33,8 @@ sealed class AppFailure extends Equatable implements Exception {
         TimeoutException() ||
         SocketException() =>
           const NetworkFailure(),
-        ApiException(:final code) =>
-          _fromStatus(int.tryParse(code ?? ''), error.message),
+        ApiException(:final code, :final retryAfter) =>
+          _fromStatus(int.tryParse(code ?? ''), error.message, retryAfter),
         DioException() => _fromDio(error),
         FirebaseAuthException(code: 'network-request-failed') =>
           const NetworkFailure(),
@@ -51,14 +51,20 @@ sealed class AppFailure extends Equatable implements Exception {
         DioExceptionType.receiveTimeout ||
         DioExceptionType.connectionError =>
           const NetworkFailure(),
-        _ => _fromStatus(e.response?.statusCode, e.message),
+        _ => _fromStatus(
+            e.response?.statusCode,
+            e.message,
+            ApiException.parseRetryAfter(
+                e.response?.headers.value('retry-after'))),
       };
 
-  static AppFailure _fromStatus(int? status, String? detail) =>
+  static AppFailure _fromStatus(
+          int? status, String? detail, Duration? retryAfter) =>
       switch (status) {
         401 || 403 => const UnauthorizedFailure(),
         404 => const NotFoundFailure(),
-        _ => ServerFailure(status: status, detail: detail),
+        _ =>
+          ServerFailure(status: status, detail: detail, retryAfter: retryAfter),
       };
 
   @override
@@ -85,16 +91,23 @@ final class NotFoundFailure extends AppFailure {
 
 /// The server answered with an error. [detail] is the server's text, for logs only.
 final class ServerFailure extends AppFailure {
-  const ServerFailure({this.status, this.detail});
+  const ServerFailure({this.status, this.detail, this.retryAfter});
 
   final int? status;
   final String? detail;
 
-  /// The server refused the request itself (4xx), so retrying won't help.
-  bool get isRejected => status != null && status! >= 400 && status! < 500;
+  /// How long the server asked us to wait before trying again (429).
+  final Duration? retryAfter;
+
+  /// Too many requests: wait, then try again.
+  bool get isRateLimited => status == 429;
+
+  /// The server refused the request itself (4xx but 429), so retrying won't help.
+  bool get isRejected =>
+      !isRateLimited && status != null && status! >= 400 && status! < 500;
 
   @override
-  List<Object?> get props => [status, detail];
+  List<Object?> get props => [status, detail, retryAfter];
 }
 
 /// Firebase sign-in or account errors.

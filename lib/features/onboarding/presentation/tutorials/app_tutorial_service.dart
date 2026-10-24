@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:yelima/core/config/features.dart';
 import 'package:yelima/core/services/shared_prefs_service.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
@@ -71,12 +72,13 @@ class AppTutorialService {
           title: context.l10n.tutorialMedicationsAdherenceTitle,
           description: context.l10n.tutorialMedicationsAdherenceDesc,
         ),
-        AppTutorialTarget.create(
-          identify: 'home_daily_check_in',
-          key: AppTutorialKeys.homeDailyCheckInKey,
-          title: context.l10n.tutorialHomeDailyCheckInTitle,
-          description: context.l10n.tutorialHomeDailyCheckInDesc,
-        ),
+        if (Features.aiChat)
+          AppTutorialTarget.create(
+            identify: 'home_daily_check_in',
+            key: AppTutorialKeys.homeDailyCheckInKey,
+            title: context.l10n.tutorialHomeDailyCheckInTitle,
+            description: context.l10n.tutorialHomeDailyCheckInDesc,
+          ),
         AppTutorialTarget.create(
           identify: 'home_action_cards',
           key: AppTutorialKeys.homeActionCardsKey,

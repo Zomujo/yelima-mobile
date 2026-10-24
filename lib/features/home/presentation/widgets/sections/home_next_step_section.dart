@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../../core/config/features.dart';
 import '../../../../../core/router/route_paths.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/constants/app_images.dart';
@@ -104,16 +105,16 @@ class HomeNextStepSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: DailyCheckInCard(
-            key: AppTutorialKeys.homeDailyCheckInKey,
-            onStart: () {
-              context.push(RoutePaths.aiChat);
-            },
+        if (Features.aiChat) ...[
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: DailyCheckInCard(
+              key: AppTutorialKeys.homeDailyCheckInKey,
+              onStart: () => context.push(RoutePaths.aiChat),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

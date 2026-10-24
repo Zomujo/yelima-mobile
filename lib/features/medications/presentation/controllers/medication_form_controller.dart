@@ -21,7 +21,14 @@ abstract class MedicationFormController extends ChangeNotifier
   final notesController = TextEditingController();
 
   /// Units a dose can be measured in.
-  static const units = ['tablet', 'capsule', 'ml', 'drops', 'mg', 'application'];
+  static const units = [
+    'tablet',
+    'capsule',
+    'ml',
+    'drops',
+    'mg',
+    'application'
+  ];
 
   String unit = 'tablet';
   bool hasChanges = false;

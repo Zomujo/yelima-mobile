@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -14,11 +15,15 @@ void main() {
   late MockSync sync;
   late StreamController<List<PendingMutation>> failed;
 
-  PendingMutation change({required int retryCount}) => PendingMutation(
+  PendingMutation change(
+          {required int retryCount,
+          String entityType = 'symptom',
+          String action = 'create'}) =>
+      PendingMutation(
         id: 'mut-1',
-        entityType: 'symptom',
+        entityType: entityType,
         entityId: 's1',
-        action: 'create',
+        action: action,
         payloadJson: '{}',
         createdAt: DateTime(2026, 10, 23, 14, 30),
         retryCount: retryCount,
@@ -53,6 +58,24 @@ void main() {
 
     expect(find.text('Symptom · Fri 23 Oct • 14:30'), findsOneWidget);
     expect(find.text('The server rejected this change.'), findsOneWidget);
+  });
+
+  testWidgets('a dose over 2 days old says it is too late, with no Retry',
+      (tester) async {
+    await withClock(Clock.fixed(DateTime(2026, 10, 26, 15)), () async {
+      await show(tester, [
+        change(
+            retryCount: 9999,
+            entityType: 'medication',
+            action: 'confirmMedication')
+      ]);
+
+      expect(
+          find.text(
+              'This dose is more than 2 days old, so it can no longer be logged.'),
+          findsOneWidget);
+      expect(find.text('Retry'), findsNothing);
+    });
   });
 
   testWidgets('tells apart a change that ran out of tries', (tester) async {

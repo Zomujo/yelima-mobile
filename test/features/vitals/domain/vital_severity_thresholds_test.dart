@@ -3,6 +3,8 @@ import 'package:yelima/features/vitals/domain/vital_severity_thresholds.dart';
 
 typedef T = VitalSeverityThresholds;
 
+const rules = SeverityRules.bundled;
+
 void main() {
   group('bloodPressure matches backend determineSeverity', () {
     const cases = <(int, int, String)>[
@@ -25,7 +27,7 @@ void main() {
     ];
     for (final (sys, dia, expected) in cases) {
       test('$sys/$dia -> $expected', () {
-        expect(T.bloodPressure(sys, dia), expected);
+        expect(rules.bloodPressure(sys, dia), expected);
       });
     }
   });
@@ -46,7 +48,7 @@ void main() {
     ];
     for (final (value, expected) in cases) {
       test('$value -> $expected', () {
-        expect(T.bloodSugar(value), expected);
+        expect(rules.bloodSugar(value), expected);
       });
     }
   });

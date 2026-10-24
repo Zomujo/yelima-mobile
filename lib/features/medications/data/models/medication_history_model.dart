@@ -1,6 +1,8 @@
 import '../../domain/entities/medication_history_entity.dart';
 import 'package:clock/clock.dart';
 
+import 'medication_adherence_model.dart' show takenFromJson;
+
 /// A medication's monthly history as the server sends it.
 class MedicationHistoryModel extends MedicationHistoryEntity {
   const MedicationHistoryModel({
@@ -24,7 +26,7 @@ class MedicationHistoryModel extends MedicationHistoryEntity {
   }
 }
 
-/// One logged dose as the server sends it.
+/// One day of a medication's history as the server sends it.
 class MedicationLogModel extends MedicationLogEntity {
   const MedicationLogModel({
     required super.id,
@@ -34,12 +36,9 @@ class MedicationLogModel extends MedicationLogEntity {
 
   factory MedicationLogModel.fromJson(Map<String, dynamic> json) {
     final dateStr = json['dateTaken'] ?? json['date'] ?? json['takenAt'];
-    final bool isTaken = json['taken'] == true ||
-        json['status'] == 'taken' ||
-        json['status'] == 'completed';
     return MedicationLogModel(
       id: json['id'] ?? '',
-      taken: isTaken,
+      taken: takenFromJson(json),
       takenAt:
           dateStr != null ? DateTime.parse(dateStr).toLocal() : clock.now(),
     );

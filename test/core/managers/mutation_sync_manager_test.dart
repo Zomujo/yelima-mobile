@@ -106,6 +106,44 @@ void main() {
     expect(await retryCountAfter('422'), 9999);
   });
 
+  test('429 pauses the queue for as long as Retry-After asks, without using a try',
+      () async {
+    final manager = MutationSyncManager(
+      connectivityService: mockConnectivityService,
+      db: memoryDb,
+      remoteSources: {'test_entity': mockRemoteSource},
+      retryDelays: const [Duration(milliseconds: 10)],
+    );
+    addTearDown(manager.dispose);
+    await memoryDb.pendingMutationsDao.queueMutation(
+        entityId: 'ent_1',
+        entityType: 'test_entity',
+        action: 'create',
+        payload: {'data': 'x'});
+    var calls = 0;
+    when(() => mockRemoteSource.syncMutation(
+          entityId: any(named: 'entityId'),
+          action: any(named: 'action'),
+          payloadJson: any(named: 'payloadJson'),
+          createdAt: any(named: 'createdAt'),
+        )).thenAnswer((_) async {
+      calls++;
+      throw const ApiException('slow down',
+          code: '429', retryAfter: Duration(seconds: 30));
+    });
+
+    await manager.onSessionStarted('user_1');
+    await manager.triggerSync();
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+
+    // The 10 ms backoff alone would have retried several times by now.
+    expect(calls, 1);
+    expect(
+        (await memoryDb.select(memoryDb.pendingMutations).getSingle())
+            .retryCount,
+        0);
+  });
+
   test('should gracefully handle 3 sequential failures by blocking', () async {
     // 1. Arrange: Insert a pending mutation
     await memoryDb.pendingMutationsDao.queueMutation(

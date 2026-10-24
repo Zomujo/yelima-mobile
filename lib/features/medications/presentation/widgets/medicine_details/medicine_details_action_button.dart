@@ -38,9 +38,7 @@ class MedicineDetailsActionButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             decoration: BoxDecoration(
-              color: isEditing
-                  ? AppColors.orange300
-                  : Colors.transparent,
+              color: isEditing ? AppColors.orange300 : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
             child: isSaving
@@ -50,13 +48,9 @@ class MedicineDetailsActionButton extends StatelessWidget {
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
                 : AppText.bodyMedium(
-                    isEditing
-                        ? context.l10n.save
-                        : context.l10n.edit,
+                    isEditing ? context.l10n.save : context.l10n.edit,
                     fontWeight: FontWeight.bold,
-                    color: isEditing
-                        ? Colors.white
-                        : AppColors.orange300,
+                    color: isEditing ? Colors.white : AppColors.orange300,
                   ),
           ),
         ),

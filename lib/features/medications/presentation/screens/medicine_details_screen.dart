@@ -25,7 +25,8 @@ class MedicineDetailsScreen extends StatelessWidget {
       )..init(),
       child: Consumer<MedicineDetailsFormController>(
         builder: (context, controller, _) => UnsavedChangesGuard(
-          hasUnsavedChanges: () => controller.isEditing && controller.hasChanges,
+          hasUnsavedChanges: () =>
+              controller.isEditing && controller.hasChanges,
           child: Scaffold(
             backgroundColor: AppColors.globalBackground,
             appBar: AppHeader(

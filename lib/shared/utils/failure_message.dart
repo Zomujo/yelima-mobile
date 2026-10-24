@@ -11,6 +11,7 @@ extension FailureMessage on AppFailure {
         NetworkFailure() => l10n.failureOffline,
         UnauthorizedFailure() => l10n.failureUnauthorized,
         NotFoundFailure() => l10n.failureNotFound,
+        ServerFailure(isRateLimited: true) => l10n.authErrorTooManyRequests,
         ServerFailure(isRejected: true) => l10n.failureRejected,
         ServerFailure() => l10n.failureServer,
         StorageFailure() => l10n.failureStorage,

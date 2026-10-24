@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -186,18 +188,20 @@ void main() {
         'deleteMedication');
   });
 
-  test('confirming a dose stamps it with today', () async {
+  test('confirming a dose stamps it with the moment it was taken', () async {
     final repo = repoWith(db);
     final id = (await repo.createMedication(form)).getOrElse((_) => '');
 
-    await withClock(Clock.fixed(DateTime(2026, 10, 23, 8, 30)),
+    final tappedAt = DateTime(2026, 10, 23, 8, 30);
+    await withClock(Clock.fixed(tappedAt),
         () => repo.confirmDose(id, MedicationSection.morning));
 
     final row = (await db.select(db.medications).get()).single;
-    expect((row.taken, row.takenOn), (true, DateTime(2026, 10, 23, 8, 30)));
+    expect((row.taken, row.takenOn), (true, tappedAt));
     final confirm = (await db.select(db.pendingMutations).get())
         .singleWhere((m) => m.action == 'confirmMedication');
-    expect(confirm.payloadJson, '{"section":"MORNING","date":"2026-10-23"}');
+    expect(jsonDecode(confirm.payloadJson),
+        {'section': 'MORNING', 'date': '2026-10-23'});
   });
 
   group('refresh from the server', () {

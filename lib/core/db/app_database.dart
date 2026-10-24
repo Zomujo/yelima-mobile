@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor}) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   /// Deletes every row in every table in one transaction, so tables added later can't leak.
   Future<void> wipeAll() => transaction(() async {
@@ -168,6 +168,12 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 21) {
           await m.addColumn(medications, medications.takenOn);
+        }
+        if (from < 22) {
+          await m.addColumn(
+              adherenceGlobalDays, adherenceGlobalDays.takenDoses);
+          await m.addColumn(
+              adherenceGlobalDays, adherenceGlobalDays.scheduledDoses);
         }
       },
     );

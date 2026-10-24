@@ -10,6 +10,7 @@ import '../../domain/entities/reading_form.dart';
 import '../../domain/entities/vital_history_entity.dart';
 import '../../domain/reading_limits.dart';
 import '../../domain/repositories/vitals_repository.dart';
+import '../../domain/vital_severity_thresholds.dart';
 import '../datasources/vitals_remote_datasource.dart';
 import '../models/vital_history_model.dart';
 
@@ -20,6 +21,7 @@ class VitalsRepositoryImpl implements VitalsRepository {
     required this.connectivityService,
     required this.session,
     required this.db,
+    this.severityRules = _bundled,
   });
 
   final VitalsRemoteDataSource remoteDataSource;
@@ -27,6 +29,10 @@ class VitalsRepositoryImpl implements VitalsRepository {
   final SessionEpoch session;
   final AppDatabase db;
 
+  /// The grading table in use; the server's copy once fetched.
+  final SeverityRules Function() severityRules;
+
+  static SeverityRules _bundled() => SeverityRules.bundled;
   static const _type = 'vital_history';
 
   /// Older versions kept cache and trend rows in the same table.
@@ -60,8 +66,8 @@ class VitalsRepositoryImpl implements VitalsRepository {
   @override
   AsyncResult<void> saveReading(ReadingForm form) => guard(() async {
         if (form.problem case final problem?) throw ReadingFailure(problem);
-        final model =
-            VitalHistoryModel.fromEntity(form.toReading(const Uuid().v4()));
+        final model = VitalHistoryModel.fromEntity(
+            form.toReading(const Uuid().v4(), rules: severityRules()));
         final body = {
           'vitalType': model.vitalType,
           'value': model.value,

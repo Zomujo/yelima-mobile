@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_images.dart';
+import '../../../../core/config/features.dart';
 import '../../../../core/constants/app_decoration.dart';
 import '../../../../core/router/route_paths.dart';
 import '../controllers/home_metrics_controller.dart';
@@ -27,10 +28,11 @@ final List<HomeBottomNavItem> _bottomNavs = [
     assetPath: AppImages.homeIcon.assetName,
     route: RoutePaths.home,
   ),
-  HomeBottomNavItem(
-    assetPath: AppImages.messageIcon.assetName,
-    route: RoutePaths.chat,
-  ),
+  if (Features.aiChat)
+    HomeBottomNavItem(
+      assetPath: AppImages.messageIcon.assetName,
+      route: RoutePaths.chat,
+    ),
   HomeBottomNavItem(
     assetPath: AppImages.logIcon.assetName,
     route: RoutePaths.readingLogging,

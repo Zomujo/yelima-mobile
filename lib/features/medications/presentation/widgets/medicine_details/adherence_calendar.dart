@@ -146,7 +146,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
           ],
         ),
         const SizedBox(height: 16),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: weekdays
@@ -157,7 +156,6 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
               .toList(),
         ),
         const SizedBox(height: 10),
-
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

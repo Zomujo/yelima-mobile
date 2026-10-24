@@ -31,7 +31,9 @@ void initMedications(GetIt sl) {
   final seeded = SeededMedicationsSyncService(sl(), sl(), sl());
   session.register(seeded, priority: 90);
   sl.registerSingleton<SeededMedicationsSyncService>(seeded);
-  session.register(MedicationAlarmSyncService(sl(), sl(), sl<LocaleController>()), priority: 80);
+  session.register(
+      MedicationAlarmSyncService(sl(), sl(), sl<LocaleController>()),
+      priority: 80);
 
   sl.registerFactory(() => MedicationController(repository: sl()));
   sl.registerFactory(() => AllMedicinesController(repository: sl()));

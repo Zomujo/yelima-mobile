@@ -27,7 +27,8 @@ class MedicationRemoteDataSource {
     final response = await apiClient
         .get('$_base/today', queryParameters: {'section': section});
     return [
-      for (final json in response['data'] as List) MedicationModel.fromJson(json)
+      for (final json in response['data'] as List)
+        MedicationModel.fromJson(json)
     ];
   }
 
@@ -65,7 +66,8 @@ class MedicationRemoteDataSource {
 
   /// Full details of one medication.
   Future<MedicationDetailModel> getMedicationById(String id) async =>
-      MedicationDetailModel.fromJson((await apiClient.get('$_base/$id'))['data']);
+      MedicationDetailModel.fromJson(
+          (await apiClient.get('$_base/$id'))['data']);
 
   /// Updates a medication.
   Future<void> updateMedication(String id, UpdateMedicationModel data) =>

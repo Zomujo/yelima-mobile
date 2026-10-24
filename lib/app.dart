@@ -37,17 +37,33 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _router =
         AppRouter.createRouter(sl<AuthController>(), sl<UserController>());
     // After the first frame, so a notification that launched the app can navigate.
     WidgetsBinding.instance.addPostFrameCallback(
         (_) => NotificationService.instance.attachNavigator(_router.go));
+  }
+
+  /// Sends queued changes as soon as the app is back on screen, so a dose taken
+  /// offline reaches the server well inside its 48 h window.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      sl<MutationSyncManager>().triggerSync();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override

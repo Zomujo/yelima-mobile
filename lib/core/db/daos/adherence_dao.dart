@@ -93,33 +93,33 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
     }
   }
 
+  /// Counts one more dose taken on [dateStr] (yyyy-MM-dd) until the server's
+  /// numbers arrive. The day is done once all its doses are; the rate is per dose.
   Future<void> markGlobalDayAsTakenOffline(String dateStr) async {
-    // Match by prefix since dateStr is 'YYYY-MM-DD' and DB has 'YYYY-MM-DDT...'
-    final existing = await (select(adherenceGlobalDays)
+    final day = await (select(adherenceGlobalDays)
           ..where((t) => t.dateTakenStr.like('$dateStr%')))
         .getSingleOrNull();
+    final scheduled = day?.scheduledDoses;
+    if (day == null || scheduled == null) return;
 
-    if (existing != null) {
-      await update(adherenceGlobalDays)
-          .replace(existing.copyWith(taken: const Value(true)));
+    final taken = ((day.takenDoses ?? 0) + 1).clamp(0, scheduled);
+    await update(adherenceGlobalDays).replace(day.copyWith(
+      takenDoses: Value(taken),
+      taken: taken >= scheduled ? const Value(true) : Value(day.taken),
+    ));
 
-      // Recalculate and update the rate optimistically
-      final allDays = await (select(adherenceGlobalDays)
-            ..where((t) => t.type.equals(existing.type)))
-          .get();
-
-      final total = allDays.length;
-      final taken = allDays.where((d) => d.taken == true).length;
-      final newRate = total > 0 ? ((taken / total) * 100).toDouble() : 0.0;
-
-      final globals = await (select(adherenceGlobals)
-            ..where((t) => t.id.equals(existing.type)))
-          .getSingleOrNull();
-
-      if (globals != null) {
-        await update(adherenceGlobals).replace(globals.copyWith(rate: newRate));
-      }
+    final week = await (select(adherenceGlobalDays)
+          ..where((t) => t.type.equals(day.type)))
+        .get();
+    var takenSum = 0, scheduledSum = 0;
+    for (final d in week) {
+      takenSum += d.takenDoses ?? 0;
+      scheduledSum += d.scheduledDoses ?? 0;
     }
+    if (scheduledSum == 0) return;
+    await (update(adherenceGlobals)..where((t) => t.id.equals(day.type)))
+        .write(AdherenceGlobalsCompanion(
+            rate: Value(takenSum / scheduledSum * 100)));
   }
 
   Future<void> clearAllAdherenceData() async {

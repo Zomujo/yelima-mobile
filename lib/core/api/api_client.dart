@@ -13,7 +13,6 @@ extension ResponseData on Response {
   String? get message => data is Map ? data['message'] : "Unknown error";
 }
 
-
 /// The HTTP client for the backend, with auth and logging interceptors.
 class APIClient {
   /// Lets the server replay, not repeat, a write sent again with the same [key] within 48 h.

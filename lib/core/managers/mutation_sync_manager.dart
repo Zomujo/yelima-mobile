@@ -155,10 +155,14 @@ class MutationSyncManager implements SessionLifecycleHandler {
   Future<void> discardFailed(String mutationId) =>
       _db.pendingMutationsDao.removePendingMutation(mutationId);
 
-  /// Schedules the next automatic retry, waiting longer each time.
-  void _scheduleRetry() {
+  /// Schedules the next automatic retry, waiting longer each time, and at least
+  /// as long as the server asked ([serverWait], from a 429's `Retry-After`).
+  void _scheduleRetry({Duration? serverWait}) {
     if (!_isSessionActive || _retryDelays.isEmpty) return;
-    final delay = _retryDelays[_retryAttempt.clamp(0, _retryDelays.length - 1)];
+    final backoff =
+        _retryDelays[_retryAttempt.clamp(0, _retryDelays.length - 1)];
+    final delay =
+        serverWait != null && serverWait > backoff ? serverWait : backoff;
     _retryAttempt++;
     _retryTimer?.cancel();
     _retryTimer = Timer(delay, triggerSync);
@@ -168,6 +172,7 @@ class MutationSyncManager implements SessionLifecycleHandler {
     if (_isSyncing) return;
     _isSyncing = true;
     var needsRetry = false;
+    Duration? serverWait;
 
     try {
       // Entities that failed in this run; skipped until the next run so one item can't burn its tries at once.
@@ -217,13 +222,15 @@ class MutationSyncManager implements SessionLifecycleHandler {
       }
     } catch (e) {
       debugPrint("Mutation sync stopped: $e");
+      final failure = AppFailure.from(e);
       // A lost login needs a new sign-in, not a timed retry.
-      needsRetry = AppFailure.from(e) is! UnauthorizedFailure;
+      needsRetry = failure is! UnauthorizedFailure;
+      if (failure is ServerFailure) serverWait = failure.retryAfter;
     } finally {
       _isSyncing = false;
     }
     if (needsRetry) {
-      _scheduleRetry();
+      _scheduleRetry(serverWait: serverWait);
     } else {
       _retryAttempt = 0;
     }
@@ -284,8 +291,10 @@ class MutationSyncManager implements SessionLifecycleHandler {
           debugPrint("Mutation ${mutation.id} rejected by the server.");
           await _db.pendingMutationsDao.markRejected(mutation.id);
           return _MutationOutcome.blocked;
-        case UnauthorizedFailure() || NetworkFailure():
-          // Stop the run: wait for a new login or a connection.
+        case UnauthorizedFailure() ||
+              NetworkFailure() ||
+              ServerFailure(isRateLimited: true):
+          // Stop the run: wait for a new login, a connection, or the rate limit.
           rethrow;
         default:
           // 5xx, 409 (the same write is still running) and anything else:

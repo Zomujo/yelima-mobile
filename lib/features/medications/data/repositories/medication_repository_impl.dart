@@ -69,8 +69,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
       for (final d in days.where((d) => d.type == _weekly))
         AdherenceDay(
             id: d.label,
-            taken: d.taken ?? false,
-            takenAt: DateTime.parse(d.dateTakenStr).toLocal()),
+            taken: d.taken,
+            takenAt: DateTime.parse(d.dateTakenStr).toLocal(),
+            takenDoses: d.takenDoses,
+            scheduledDoses: d.scheduledDoses),
     ]);
   }
 
@@ -96,7 +98,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
                   dateTakenStr: d.takenAt.toIso8601String(),
                   taken: d.taken,
                   label: d.id ?? '',
-                  type: _weekly),
+                  type: _weekly,
+                  takenDoses: d.takenDoses,
+                  scheduledDoses: d.scheduledDoses),
           ]);
           return result;
         } catch (e) {
@@ -135,7 +139,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
   Future<void> _refreshSection(MedicationSection section) async {
     try {
       final epoch = session.current;
-      final remote = await remoteDataSource.getMedicationsBySection(section.key);
+      final remote =
+          await remoteDataSource.getMedicationsBySection(section.key);
       session.ensure(epoch);
 
       final local = (await _meds.getAllMedications())
@@ -196,7 +201,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   @override
-  AsyncResult<void> confirmDose(String medicationId, MedicationSection section) =>
+  AsyncResult<void> confirmDose(
+          String medicationId, MedicationSection section) =>
       guard(() async {
         final now = clock.now();
         final day = AppDateFormats.yyyyMMdd.format(now);
@@ -206,8 +212,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
         // The local "taken" state and its queued sync are saved together or not at all.
         await db.transaction(() async {
           if (row != null) {
-            await _meds
-                .updateMedication(row.copyWith(taken: true, takenOn: Value(now)));
+            await _meds.updateMedication(
+                row.copyWith(taken: true, takenOn: Value(now)));
           }
           await _queue(medicationId, 'confirmMedication',
               {'section': section.key, 'date': day});
@@ -238,7 +244,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
             await db.pendingMutationsDao.hasWaiting(entityId: id) ||
             !await connectivityService.isConnected) {
           if (local != null) return local;
-          throw _isLocalId(id) ? const NotFoundFailure() : const NetworkFailure();
+          throw _isLocalId(id)
+              ? const NotFoundFailure()
+              : const NetworkFailure();
         }
         try {
           final epoch = session.current;
@@ -246,10 +254,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
           session.ensure(epoch);
           for (final row in rows) {
             await _meds.updateMedication(row.copyWith(
-              morningJson: Value(MedicationMapper.encodeSchedule(remote.morning)),
+              morningJson:
+                  Value(MedicationMapper.encodeSchedule(remote.morning)),
               afternoonJson:
                   Value(MedicationMapper.encodeSchedule(remote.afternoon)),
-              eveningJson: Value(MedicationMapper.encodeSchedule(remote.evening)),
+              eveningJson:
+                  Value(MedicationMapper.encodeSchedule(remote.evening)),
             ));
           }
           return remote;
@@ -272,13 +282,15 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 medicationId,
                 date: AppDateFormats.yyyyMM15.format(month));
             session.ensure(epoch);
+            // Only settled days: a pending one shows as no data offline.
             await _adherence.saveMedicationLogs([
               for (final l in result.logs)
-                MedicationLog(
-                    id: l.id,
-                    medicationId: medicationId,
-                    takenAt: l.takenAt,
-                    taken: l.taken),
+                if (l.taken case final taken?)
+                  MedicationLog(
+                      id: l.id,
+                      medicationId: medicationId,
+                      takenAt: l.takenAt,
+                      taken: taken),
             ]);
             return result;
           } catch (e) {
@@ -387,8 +399,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     await _scheduleAlarms(await _meds.getMedicationById(newId));
   }
 
-  Future<void> _queue(
-          String id, String action, Map<String, dynamic> payload) =>
+  Future<void> _queue(String id, String action, Map<String, dynamic> payload) =>
       db.pendingMutationsDao.queueMutation(
           entityId: id, entityType: _type, action: action, payload: payload);
 
@@ -410,7 +421,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
       ...MedicationSection.values.map((s) => s.key),
       'UNKNOWN'
     ]) {
-      await notificationService.cancelReminder(medicationReminderId(id, section));
+      await notificationService
+          .cancelReminder(medicationReminderId(id, section));
     }
   }
 }
