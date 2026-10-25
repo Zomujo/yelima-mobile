@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/services/recent_fetches.dart';
+
 import '../../core/controllers/locale_controller.dart';
 import '../../core/extensions/l10n_extension.dart';
 import '../../core/managers/mutation_sync_manager.dart';
@@ -25,6 +27,7 @@ void initMedications(GetIt sl) {
         notificationService: sl(),
         session: sl(),
         l10n: () => l10nFor(sl<LocaleController>().locale),
+        recent: sl<RecentFetches>(),
       ));
 
   final session = sl<SessionLifecycleService>();

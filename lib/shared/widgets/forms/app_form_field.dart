@@ -96,6 +96,7 @@ class _AppFormFieldState extends State<AppFormField> {
           onChanged: w.onChanged,
           enabled: w.enabled,
           obscureText: _hidden,
+          obscuringCharacter: '*',
           keyboardType: w.keyboardType,
           textInputAction: w.textInputAction,
           maxLines: w.isPassword ? 1 : w.maxLines,

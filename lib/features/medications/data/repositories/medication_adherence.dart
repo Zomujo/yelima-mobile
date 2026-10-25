@@ -7,6 +7,7 @@ mixin _MedicationAdherence {
   ConnectivityService get connectivityService;
   AppDatabase get db;
   SessionEpoch get session;
+  RecentFetches get recent;
 
   static const _weekly = 'global_weekly';
 
@@ -30,38 +31,45 @@ mixin _MedicationAdherence {
   Stream<double?> watchAdherenceRate() =>
       _adherence.watchGlobalAdherenceRate(_weekly).map((a) => a?.rate);
 
-  AsyncResult<MedicationAdherence> getAdherence() => guard(() async {
-        // Unsent doses would be missing from the server's numbers.
-        if (!await connectivityService.isConnected ||
-            await db.pendingMutationsDao
-                .hasWaiting(entityType: MedicationRepositoryImpl._type)) {
-          return getCachedAdherence();
-        }
-        try {
-          final epoch = session.current;
-          final result =
-              await remoteDataSource.getAdherence(showWeekdays: true);
-          session.ensure(epoch);
-          await _adherence.saveGlobalAdherence(_weekly, result.rate, [
-            for (final d in result.days)
-              AdherenceGlobalDay(
-                  dateTakenStr: d.takenAt.toIso8601String(),
-                  taken: d.taken,
-                  label: d.id ?? '',
-                  type: _weekly,
-                  takenDoses: d.takenDoses,
-                  scheduledDoses: d.scheduledDoses),
-          ]);
-          return result;
-        } catch (e) {
-          AppLogger.w('Adherence from cache: $e');
-          return getCachedAdherence();
-        }
-      });
+  AsyncResult<MedicationAdherence> getAdherence() =>
+      guard(() => recent.share(_weekly, () async {
+            // Unsent doses would be missing from the server's numbers.
+            if (recent.isFresh(_weekly) ||
+                !await connectivityService.isConnected ||
+                await db.pendingMutationsDao
+                    .hasWaiting(entityType: MedicationRepositoryImpl._type)) {
+              return getCachedAdherence();
+            }
+            try {
+              final epoch = session.current;
+              final result =
+                  await remoteDataSource.getAdherence(showWeekdays: true);
+              session.ensure(epoch);
+              await _adherence.saveGlobalAdherence(_weekly, result.rate, [
+                for (final d in result.days)
+                  AdherenceGlobalDay(
+                      dateTakenStr: d.takenAt.toIso8601String(),
+                      taken: d.taken,
+                      label: d.id ?? '',
+                      type: _weekly,
+                      takenDoses: d.takenDoses,
+                      scheduledDoses: d.scheduledDoses),
+              ]);
+              recent.markFetched(_weekly);
+              return result;
+            } catch (e) {
+              AppLogger.w('Adherence from cache: $e');
+              return getCachedAdherence();
+            }
+          }));
 
   AsyncResult<MedicationHistoryEntity> getMedicationHistory(
           String medicationId, DateTime month) =>
       guard(() async {
+        final key = 'history:$medicationId:${month.year}-${month.month}';
+        if (recent.valueOf<MedicationHistoryEntity>(key) case final fresh?) {
+          return fresh;
+        }
         if (!MedicationRepositoryImpl._isLocalId(medicationId) &&
             await connectivityService.isConnected &&
             !await db.pendingMutationsDao.hasWaiting(entityId: medicationId)) {
@@ -81,6 +89,7 @@ mixin _MedicationAdherence {
                       takenAt: l.takenAt,
                       taken: taken),
             ]);
+            recent.markFetched(key, result);
             return result;
           } catch (e) {
             AppLogger.w('History from the phone: $e');

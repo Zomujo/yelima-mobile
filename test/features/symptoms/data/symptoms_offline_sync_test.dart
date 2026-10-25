@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/core/api/i_remote_mutation.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
+import 'package:yelima/core/services/recent_fetches.dart';
 import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/features/symptoms/data/datasources/symptoms_remote_data_source.dart';
 import 'package:yelima/features/symptoms/data/datasources/symptoms_remote_mutation_source.dart';
@@ -120,15 +121,22 @@ void main() {
     expect(await storedIds(), ['b-1']);
   });
 
-  test('a second refresh within 5 minutes is skipped, unless forced', () async {
+  test('a second refresh within a minute is skipped, unless forced', () async {
     connectivity.online = true;
     api.on('GET', path, FakeReply.ok({'rows': []}));
+    final throttled = SymptomsRepositoryImpl(
+      remoteDataSource: SymptomsRemoteDataSource(apiClient: api.client),
+      connectivityService: connectivity,
+      db: db,
+      session: session,
+      recent: RecentFetches(),
+    );
 
-    await repo.refresh();
-    await repo.refresh();
+    await throttled.refresh();
+    await throttled.refresh();
     expect(api.sent('GET', path).length, 1);
 
-    await repo.refresh(force: true);
+    await throttled.refresh(force: true);
     expect(api.sent('GET', path).length, 2);
   });
 

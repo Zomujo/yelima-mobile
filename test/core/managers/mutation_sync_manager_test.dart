@@ -106,7 +106,8 @@ void main() {
     expect(await retryCountAfter('422'), 9999);
   });
 
-  test('429 pauses the queue for as long as Retry-After asks, without using a try',
+  test(
+      '429 pauses the queue for as long as Retry-After asks, without using a try',
       () async {
     final manager = MutationSyncManager(
       connectivityService: mockConnectivityService,

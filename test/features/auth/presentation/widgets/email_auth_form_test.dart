@@ -27,4 +27,12 @@ void main() {
     expect(
         await buttonEnabled(tester, isSignUp: false, password: '1234'), isTrue);
   });
+
+  testWidgets('sign-in shows asterisks where the password goes',
+      (tester) async {
+    await tester
+        .pumpApp(const EmailAuthForm(isSignUp: false, isLoading: false));
+
+    expect(find.text('********'), findsOneWidget);
+  });
 }

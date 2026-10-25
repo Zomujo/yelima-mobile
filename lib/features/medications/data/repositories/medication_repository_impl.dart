@@ -10,6 +10,7 @@ import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/recent_fetches.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/session_epoch.dart';
 import '../../../../core/utils/app_date_formats.dart';
@@ -43,7 +44,12 @@ class MedicationRepositoryImpl
     required this.notificationService,
     required this.session,
     required this.l10n,
-  });
+    RecentFetches? recent,
+  }) : recent = recent ?? RecentFetches(window: Duration.zero);
+
+  /// Skips a download made in the last minute.
+  @override
+  final RecentFetches recent;
 
   @override
   final MedicationRemoteDataSource remoteDataSource;
@@ -88,6 +94,7 @@ class MedicationRepositoryImpl
   AsyncResult<void> confirmDose(
           String medicationId, MedicationSection section) =>
       guard(() async {
+        recent.clear();
         final now = clock.now();
         final day = AppDateFormats.yyyyMMdd.format(now);
         final row = (await _meds.getMedicationById(medicationId))
@@ -120,41 +127,48 @@ class MedicationRepositoryImpl
 
   @override
   AsyncResult<MedicationDetailModel> getMedicationById(String id) =>
-      guard(() async {
-        final rows = await _meds.getMedicationById(id);
-        final local =
-            rows.isEmpty ? null : MedicationMapper.toDetailModel(rows.first);
-        if (_isLocalId(id) ||
-            await db.pendingMutationsDao.hasWaiting(entityId: id) ||
-            !await connectivityService.isConnected) {
-          if (local != null) return local;
-          throw _isLocalId(id)
-              ? const NotFoundFailure()
-              : const NetworkFailure();
-        }
-        try {
-          final epoch = session.current;
-          final remote = await remoteDataSource.getMedicationById(id);
-          session.ensure(epoch);
-          for (final row in rows) {
-            await _meds.updateMedication(row.copyWith(
-              morningJson:
-                  Value(MedicationMapper.encodeSchedule(remote.morning)),
-              afternoonJson:
-                  Value(MedicationMapper.encodeSchedule(remote.afternoon)),
-              eveningJson:
-                  Value(MedicationMapper.encodeSchedule(remote.evening)),
-            ));
-          }
-          return remote;
-        } catch (_) {
-          if (local != null) return local;
-          rethrow;
-        }
-      });
+      guard(() => recent.share('medication:$id', () async {
+            final key = 'medication:$id';
+            if (recent.valueOf<MedicationDetailModel>(key) case final fresh?) {
+              return fresh;
+            }
+            final rows = await _meds.getMedicationById(id);
+            final local = rows.isEmpty
+                ? null
+                : MedicationMapper.toDetailModel(rows.first);
+            if (_isLocalId(id) ||
+                await db.pendingMutationsDao.hasWaiting(entityId: id) ||
+                !await connectivityService.isConnected) {
+              if (local != null) return local;
+              throw _isLocalId(id)
+                  ? const NotFoundFailure()
+                  : const NetworkFailure();
+            }
+            try {
+              final epoch = session.current;
+              final remote = await remoteDataSource.getMedicationById(id);
+              session.ensure(epoch);
+              for (final row in rows) {
+                await _meds.updateMedication(row.copyWith(
+                  morningJson:
+                      Value(MedicationMapper.encodeSchedule(remote.morning)),
+                  afternoonJson:
+                      Value(MedicationMapper.encodeSchedule(remote.afternoon)),
+                  eveningJson:
+                      Value(MedicationMapper.encodeSchedule(remote.evening)),
+                ));
+              }
+              recent.markFetched(key, remote);
+              return remote;
+            } catch (_) {
+              if (local != null) return local;
+              rethrow;
+            }
+          }));
 
   @override
   AsyncResult<String> createMedication(MedicationForm form) => guard(() async {
+        recent.clear();
         if (form.problem case final problem?) throw problem;
         String norm(String s) => s.trim().toLowerCase();
         final existing = await _meds.getAllMedications();
@@ -178,6 +192,7 @@ class MedicationRepositoryImpl
   @override
   AsyncResult<void> updateMedication(String id, MedicationForm form) =>
       guard(() async {
+        recent.clear();
         if (form.problem case final problem?) throw problem;
         final previous = await _meds.getMedicationById(id);
         final rows = MedicationMapper.rowsFor(id, form, previous: previous);
@@ -198,6 +213,7 @@ class MedicationRepositoryImpl
 
   @override
   AsyncResult<void> deleteMedication(String id) => guard(() async {
+        recent.clear();
         await db.transaction(() async {
           await _meds.deleteMedication(id);
           await _queue(id, 'deleteMedication', const {});

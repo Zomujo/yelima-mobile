@@ -5,8 +5,8 @@ import 'package:yelima/core/failures/app_failure.dart';
 void main() {
   test('Retry-After in seconds is read; other forms are ignored', () {
     expect(ApiException.parseRetryAfter('30'), const Duration(seconds: 30));
-    expect(ApiException.parseRetryAfter('Wed, 21 Oct 2026 07:28:00 GMT'),
-        isNull);
+    expect(
+        ApiException.parseRetryAfter('Wed, 21 Oct 2026 07:28:00 GMT'), isNull);
     expect(ApiException.parseRetryAfter(null), isNull);
   });
 

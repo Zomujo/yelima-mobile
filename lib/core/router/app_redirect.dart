@@ -47,7 +47,13 @@ String? appRedirect(Uri uri, String location, RedirectState s) {
   if (!s.onboarded) return isWelcomeRoute ? null : RoutePaths.welcome;
 
   if (!s.authenticated) {
-    return isAuthRoute ? null : withRedirect(RoutePaths.signIn);
+    if (isAuthRoute) return null;
+    // Keep only a link that was waiting at start-up (e.g. a tapped notification),
+    // never the screen the user just logged out from.
+    final waiting = uri.queryParameters['redirect'];
+    return waiting == null || waiting == '/'
+        ? RoutePaths.signIn
+        : '${RoutePaths.signIn}?redirect=${Uri.encodeComponent(waiting)}';
   }
 
   // Login expired: lock the app until the user signs in again or logs out.

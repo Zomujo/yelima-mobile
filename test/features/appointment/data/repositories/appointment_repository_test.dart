@@ -1,6 +1,7 @@
 import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/core/db/app_database.dart';
+import 'package:yelima/core/services/recent_fetches.dart';
 import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/features/appointment/data/datasources/appointment_remote_datasource.dart';
 import 'package:yelima/features/appointment/data/repositories/appointment_repository_impl.dart';
@@ -27,12 +28,13 @@ void main() {
         },
       };
 
-  AppointmentRepositoryImpl repo({bool online = true}) =>
+  AppointmentRepositoryImpl repo({bool online = true, RecentFetches? recent}) =>
       AppointmentRepositoryImpl(
         remoteDataSource: AppointmentRemoteDataSource(apiClient: api.client),
         connectivityService: FakeConnectivity(online: online),
         db: db,
         session: SessionEpoch(),
+        recent: recent,
       );
 
   setUp(() {
@@ -44,6 +46,28 @@ void main() {
 
   Future<T> at<T>(Future<T> Function() body) =>
       withClock(Clock.fixed(now), body);
+
+  test(
+      'the same page asked again within a minute is not downloaded again, '
+      'and keeps the server\'s page count', () async {
+    api.on(
+        'GET',
+        listPath,
+        FakeReply.ok({
+          'rows': [row('a1', now.add(const Duration(days: 1)))],
+          'total': 7,
+          'totalPages': 3,
+        }));
+    final appointments = repo(recent: RecentFetches());
+    Future<int?> pages() async => (await at(() => appointments.getAppointments(
+            page: 1, pageSize: 3, filter: AppointmentFilter.upcoming)))
+        .toNullable()
+        ?.totalPages;
+
+    expect(await pages(), 3);
+    expect(await pages(), 3);
+    expect(api.sent('GET', listPath).length, 1);
+  });
 
   test('a fetched page is cached and shown again offline', () async {
     api.on(

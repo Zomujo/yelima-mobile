@@ -22,7 +22,8 @@ void main() {
     expect(manifest, contains('android.intent.action.MY_PACKAGE_REPLACED'));
   });
 
-  test('asks for "Alarms & reminders" instead of the alarm-clock-only permission',
+  test(
+      'asks for "Alarms & reminders" instead of the alarm-clock-only permission',
       () {
     expect(manifest, contains('android.permission.SCHEDULE_EXACT_ALARM'));
     expect(manifest, isNot(contains('android.permission.USE_EXACT_ALARM')));

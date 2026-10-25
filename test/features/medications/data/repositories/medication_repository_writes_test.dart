@@ -12,6 +12,8 @@ import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/core/services/notification_service.dart';
 import 'package:yelima/core/services/session_epoch.dart';
+import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
+import 'package:yelima/core/services/recent_fetches.dart';
 import 'package:yelima/features/medications/data/datasources/medication_remote_datasource.dart';
 import 'package:yelima/features/medications/data/models/medication_list_response_model.dart';
 import 'package:yelima/features/medications/data/models/medication_model.dart';
@@ -60,7 +62,8 @@ void main() {
     },
   );
 
-  MedicationRepositoryImpl repoWith(AppDatabase db, {bool online = false}) {
+  MedicationRepositoryImpl repoWith(AppDatabase db,
+      {bool online = false, RecentFetches? recent}) {
     final sync = MockSync();
     when(() => sync.triggerSync()).thenAnswer((_) async {});
     return MedicationRepositoryImpl(
@@ -71,6 +74,7 @@ void main() {
       notificationService: notifications,
       session: SessionEpoch(),
       l10n: () => lookupAppLocalizations(const Locale('en')),
+      recent: recent,
     );
   }
 
@@ -114,7 +118,7 @@ void main() {
     });
 
     test('schedules a reminder in the app language, without the drug name',
-      () async {
+        () async {
       await repoWith(db).createMedication(form);
 
       verify(() => notifications.scheduleDailyReminder(
@@ -203,6 +207,34 @@ void main() {
         .singleWhere((m) => m.action == 'confirmMedication');
     expect(jsonDecode(confirm.payloadJson),
         {'section': 'MORNING', 'date': '2026-10-23'});
+  });
+
+  test(
+      'a medicine opened again within a minute is not downloaded again, '
+      'but is after the minute', () async {
+    final details = MedicationDetailModel(
+        id: '665f00000000000000000001',
+        name: 'Amlodipine',
+        dosage: '5mg',
+        createdAt: DateTime(2026, 10, 1),
+        updatedAt: DateTime(2026, 10, 1));
+    when(() => remote.getMedicationById('665f00000000000000000001'))
+        .thenAnswer((_) async => details);
+    final repo = repoWith(db, online: true, recent: RecentFetches());
+
+    final start = DateTime(2026, 10, 25, 9);
+    Future<void> openAt(Duration later) => withClock(
+        Clock.fixed(start.add(later)),
+        () => repo.getMedicationById('665f00000000000000000001'));
+
+    await openAt(Duration.zero);
+    await openAt(const Duration(seconds: 30));
+    verify(() => remote.getMedicationById('665f00000000000000000001'))
+        .called(1);
+
+    await openAt(const Duration(minutes: 2));
+    verify(() => remote.getMedicationById('665f00000000000000000001'))
+        .called(1);
   });
 
   group('exact reminders', () {

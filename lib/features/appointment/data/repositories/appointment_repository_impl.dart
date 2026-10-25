@@ -5,6 +5,7 @@ import '../../../../core/db/app_database.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/recent_fetches.dart';
 import '../../../../core/services/session_epoch.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/appointment_list_response.dart';
@@ -18,42 +19,52 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     required this.connectivityService,
     required this.db,
     required this.session,
-  });
+    RecentFetches? recent,
+  }) : recent = recent ?? RecentFetches(window: Duration.zero);
 
   final AppointmentRemoteDataSource remoteDataSource;
   final ConnectivityService connectivityService;
   final AppDatabase db;
   final SessionEpoch session;
 
+  /// Skips a download made in the last minute.
+  final RecentFetches recent;
+
   @override
   AsyncResult<AppointmentListResponse> getAppointments(
           {required int page,
           required int pageSize,
           required AppointmentFilter filter}) =>
-      guard(() async {
-        try {
-          if (!await connectivityService.isConnected) {
-            throw const NetworkFailure();
-          }
-          final epoch = session.current;
-          final remote = await remoteDataSource.getAppointments(
-              page: page, pageSize: pageSize, filter: filter.name);
-          session.ensure(epoch);
-          await db.transaction(() async {
-            if (page == 1) {
-              filter == AppointmentFilter.upcoming
-                  ? await db.appointmentsDao.clearUpcomingAppointments()
-                  : await db.appointmentsDao.clearPastAppointments();
+      guard(() =>
+          recent.share('appointments:${filter.name}:$page:$pageSize', () async {
+            final key = 'appointments:${filter.name}:$page:$pageSize';
+            if (recent.valueOf<AppointmentListResponse>(key) case final page?) {
+              return page;
             }
-            for (final a in remote.rows) {
-              await db.appointmentsDao.insertOrUpdateAppointment(_toRow(a));
+            try {
+              if (!await connectivityService.isConnected) {
+                throw const NetworkFailure();
+              }
+              final epoch = session.current;
+              final remote = await remoteDataSource.getAppointments(
+                  page: page, pageSize: pageSize, filter: filter.name);
+              session.ensure(epoch);
+              await db.transaction(() async {
+                if (page == 1) {
+                  filter == AppointmentFilter.upcoming
+                      ? await db.appointmentsDao.clearUpcomingAppointments()
+                      : await db.appointmentsDao.clearPastAppointments();
+                }
+                for (final a in remote.rows) {
+                  await db.appointmentsDao.insertOrUpdateAppointment(_toRow(a));
+                }
+              });
+              recent.markFetched(key, remote);
+              return remote;
+            } catch (_) {
+              return _cachedPage(page, pageSize, filter);
             }
-          });
-          return remote;
-        } catch (_) {
-          return _cachedPage(page, pageSize, filter);
-        }
-      });
+          }));
 
   @override
   AsyncResult<AppointmentListResponse> getCachedAppointments(
@@ -63,24 +74,30 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       guard(() => _cachedPage(page, pageSize, filter));
 
   @override
-  AsyncResult<AppointmentEntity?> getNearestAppointment() => guard(() async {
-        try {
-          if (!await connectivityService.isConnected) {
-            throw const NetworkFailure();
-          }
-          final epoch = session.current;
-          final remote = await remoteDataSource.getNearestAppointment();
-          session.ensure(epoch);
-          remote == null
-              // None on the server: drop a stale one cached here (APPT-EC-27).
-              ? await db.appointmentsDao.clearUpcomingAppointments()
-              : await db.appointmentsDao
-                  .insertOrUpdateAppointment(_toRow(remote));
-          return remote;
-        } catch (_) {
-          return (await _sorted(AppointmentFilter.upcoming)).firstOrNull;
-        }
-      });
+  AsyncResult<AppointmentEntity?> getNearestAppointment() =>
+      guard(() => recent.share('appointments:nearest', () async {
+            const key = 'appointments:nearest';
+            if (recent.isFresh(key)) {
+              return (await _sorted(AppointmentFilter.upcoming)).firstOrNull;
+            }
+            try {
+              if (!await connectivityService.isConnected) {
+                throw const NetworkFailure();
+              }
+              final epoch = session.current;
+              final remote = await remoteDataSource.getNearestAppointment();
+              session.ensure(epoch);
+              remote == null
+                  // None on the server: drop a stale one cached here (APPT-EC-27).
+                  ? await db.appointmentsDao.clearUpcomingAppointments()
+                  : await db.appointmentsDao
+                      .insertOrUpdateAppointment(_toRow(remote));
+              recent.markFetched(key);
+              return remote;
+            } catch (_) {
+              return (await _sorted(AppointmentFilter.upcoming)).firstOrNull;
+            }
+          }));
 
   @override
   AsyncResult<AppointmentEntity?> getCachedNearestAppointment() => guard(

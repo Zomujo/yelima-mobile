@@ -83,8 +83,8 @@ class _EmailAuthFormState extends State<EmailAuthForm> {
         AppFormField(
           controller: _password,
           label: l10n.passwordLabel,
-          // Sign-in only checks it's filled: the rule is for new passwords.
-          hintText: widget.isSignUp ? l10n.passwordHint : null,
+          // Sign-up shows the rule for new passwords; sign-in only needs it filled.
+          hintText: widget.isSignUp ? l10n.passwordHint : '********',
           prefixIcon: Icons.lock_outline,
           isPassword: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,

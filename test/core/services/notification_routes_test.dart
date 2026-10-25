@@ -17,8 +17,8 @@ void main() {
         '/appointments');
     expect(notificationRoute({'notification_type': 'vital_alert'}),
         '/reading-logging');
-    expect(notificationRoute({'notification_type': 'medication'}),
-        '/medications');
+    expect(
+        notificationRoute({'notification_type': 'medication'}), '/medications');
   });
 
   test('an AI message opens the AI chat', () {

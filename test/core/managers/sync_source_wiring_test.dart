@@ -12,6 +12,7 @@ import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/core/services/connectivity_service.dart';
 import 'package:yelima/core/services/file_service.dart';
 import 'package:yelima/core/services/notification_service.dart';
+import 'package:yelima/core/services/recent_fetches.dart';
 import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/core/services/session_lifecycle_service.dart';
 import 'package:yelima/core/services/shared_prefs_service.dart';
@@ -60,6 +61,7 @@ void main() {
       ..registerSingleton<FirebaseAuth>(MockFirebaseAuth())
       ..registerSingleton<SharedPrefsService>(MockPrefs())
       ..registerSingleton(LocaleController(MockPrefs()))
+      ..registerSingleton(RecentFetches())
       ..registerSingleton(
           MutationSyncManager(connectivityService: connectivity, db: db))
       ..registerSingleton(

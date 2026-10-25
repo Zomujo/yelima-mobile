@@ -5,6 +5,7 @@ import '../../../../core/db/app_database.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/recent_fetches.dart';
 import '../../../../core/services/session_epoch.dart';
 import '../../domain/entities/reading_form.dart';
 import '../../domain/entities/vital_history_entity.dart';
@@ -22,7 +23,11 @@ class VitalsRepositoryImpl implements VitalsRepository {
     required this.session,
     required this.db,
     this.severityRules = _bundled,
-  });
+    RecentFetches? recent,
+  }) : recent = recent ?? RecentFetches(window: Duration.zero);
+
+  /// Skips a download made in the last minute.
+  final RecentFetches recent;
 
   final VitalsRemoteDataSource remoteDataSource;
   final ConnectivityService connectivityService;
@@ -50,22 +55,29 @@ class VitalsRepositoryImpl implements VitalsRepository {
   Stream<LatestVitals> watchLatest() => watchReadings().map(LatestVitals.from);
 
   @override
-  AsyncResult<void> refresh() => guardOnline(connectivityService, () async {
-        final epoch = session.current;
-        final remote = await remoteDataSource.fetchVitalHistories();
-        session.ensure(epoch);
-        // Readings still waiting to sync aren't on the server yet, so keep them.
-        final unsent = await db.pendingMutationsDao.getEntityIdsOfType(_type);
-        await db.transaction(() async {
-          await db.vitalsDao.clearVitals(keepIds: unsent);
-          await db.vitalsDao
-              .insertVitals([for (final m in remote) m.toDrift()]);
-        });
-      });
+  AsyncResult<void> refresh() => guardOnline(
+      connectivityService,
+      () => recent.share(_type, () async {
+            if (recent.isFresh(_type)) return;
+            final epoch = session.current;
+            final remote = await remoteDataSource.fetchVitalHistories();
+            session.ensure(epoch);
+            // Readings still waiting to sync aren't on the server yet, so keep them.
+            final unsent =
+                await db.pendingMutationsDao.getEntityIdsOfType(_type);
+            await db.transaction(() async {
+              await db.vitalsDao.clearVitals(keepIds: unsent);
+              await db.vitalsDao
+                  .insertVitals([for (final m in remote) m.toDrift()]);
+            });
+            recent.markFetched(_type);
+          }));
 
   @override
   AsyncResult<void> saveReading(ReadingForm form) => guard(() async {
         if (form.problem case final problem?) throw ReadingFailure(problem);
+        // A new reading changes the readings and the trends.
+        recent.clear();
         final model = VitalHistoryModel.fromEntity(
             form.toReading(const Uuid().v4(), rules: severityRules()));
         final body = {

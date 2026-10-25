@@ -41,9 +41,10 @@ void main() {
 
     test('older responses with a status still read as taken', () {
       expect(
-          AdherenceDayModel.fromJson(
-                  const {'dateTaken': '2026-10-19T00:00:00.000Z', 'status': 'taken'})
-              .taken,
+          AdherenceDayModel.fromJson(const {
+            'dateTaken': '2026-10-19T00:00:00.000Z',
+            'status': 'taken'
+          }).taken,
           isTrue);
     });
   });

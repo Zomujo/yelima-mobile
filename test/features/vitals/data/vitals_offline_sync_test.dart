@@ -3,6 +3,7 @@ import 'package:yelima/core/api/i_remote_mutation.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
+import 'package:yelima/core/services/recent_fetches.dart';
 import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/features/vitals/data/datasources/vitals_remote_datasource.dart';
 import 'package:yelima/features/vitals/data/datasources/vitals_remote_mutation_source.dart';
@@ -73,6 +74,34 @@ void main() {
     await repo().refresh();
 
     expect(await storedIds(), {'3f2b9c1e-uuid', 'srv-1'});
+  });
+
+  test(
+      'readings fetched a moment ago are not downloaded again, until a new one is saved',
+      () async {
+    serverHas([serverRow('srv-1', '120/80')]);
+    api.on('POST', logsPath, FakeReply.ok('srv-2', status: 201));
+    final recent = RecentFetches();
+    final vitals = VitalsRepositoryImpl(
+      remoteDataSource: VitalsRemoteDataSource(apiClient: api.client),
+      connectivityService: FakeConnectivity(),
+      session: SessionEpoch(),
+      db: db,
+      recent: recent,
+    );
+
+    await vitals.refresh();
+    await vitals.refresh();
+    expect(api.sent('GET', logsPath).length, 1);
+
+    await vitals.saveReading(ReadingForm(
+        kind: VitalKind.bloodPressure,
+        systolic: 130,
+        diastolic: 85,
+        sugarLevel: 0,
+        recordedAt: DateTime(2026, 10, 23, 9)));
+    await vitals.refresh();
+    expect(api.sent('GET', logsPath).length, 2);
   });
 
   test('a synced reading is replaced by the server list', () async {

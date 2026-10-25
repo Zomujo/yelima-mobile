@@ -5,6 +5,7 @@ import '../../../../core/db/app_database.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/recent_fetches.dart';
 import '../../../../core/services/session_epoch.dart';
 import '../../domain/entities/symptom_entity.dart';
 import '../../domain/repositories/symptoms_repository.dart';
@@ -17,17 +18,18 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
     required this.connectivityService,
     required this.db,
     required this.session,
-  });
+    RecentFetches? recent,
+  }) : recent = recent ?? RecentFetches(window: Duration.zero);
 
   final SymptomsRemoteDataSource remoteDataSource;
   final ConnectivityService connectivityService;
   final AppDatabase db;
   final SessionEpoch session;
 
+  /// Skips a download made in the last minute.
+  final RecentFetches recent;
+
   static const _type = 'symptom';
-  static const _fresh = Duration(minutes: 5);
-  DateTime? _lastRefresh;
-  int? _lastRefreshEpoch;
 
   @override
   Stream<List<SymptomEntity>> watchSymptoms() =>
@@ -38,34 +40,29 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
           ]);
 
   @override
-  AsyncResult<void> refresh({bool force = false}) =>
-      guardOnline(connectivityService, () async {
-        // A refresh from an earlier session (another user) never counts as fresh.
-        final last = _lastRefresh;
-        if (!force &&
-            last != null &&
-            session.isCurrent(_lastRefreshEpoch ?? -1) &&
-            clock.now().difference(last) < _fresh) {
-          return;
-        }
-        final epoch = session.current;
-        final remote = await remoteDataSource.getSymptoms();
-        session.ensure(epoch);
-        await db.transaction(() async {
-          // Symptoms still waiting to sync aren't on the server yet, so keep them.
-          await db.symptomsDao.clearSymptoms(
-              keepIds: await db.pendingMutationsDao.getEntityIdsOfType(_type));
-          for (final s in remote) {
-            await db.symptomsDao
-                .insertOrUpdateSymptom(_row(s.id, s.description, s.onsetDate));
-          }
-        });
-        _lastRefresh = clock.now();
-        _lastRefreshEpoch = epoch;
-      });
+  AsyncResult<void> refresh({bool force = false}) => guardOnline(
+      connectivityService,
+      () => recent.share(_type, () async {
+            if (!force && recent.isFresh(_type)) return;
+            final epoch = session.current;
+            final remote = await remoteDataSource.getSymptoms();
+            session.ensure(epoch);
+            await db.transaction(() async {
+              // Symptoms still waiting to sync aren't on the server yet, so keep them.
+              await db.symptomsDao.clearSymptoms(
+                  keepIds:
+                      await db.pendingMutationsDao.getEntityIdsOfType(_type));
+              for (final s in remote) {
+                await db.symptomsDao.insertOrUpdateSymptom(
+                    _row(s.id, s.description, s.onsetDate));
+              }
+            });
+            recent.markFetched(_type);
+          }));
 
   @override
   AsyncResult<String> createSymptom(String description) => guard(() async {
+        recent.clear();
         final now = clock.now();
         final tempId = 'temp_${now.millisecondsSinceEpoch}';
         final row = _row(tempId, description, now);

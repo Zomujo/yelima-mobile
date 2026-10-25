@@ -16,6 +16,7 @@ import 'managers/audio_player_manager.dart';
 import 'services/voice_recording_service.dart';
 import 'services/notification_service.dart';
 import 'services/monitoring_service.dart';
+import 'services/recent_fetches.dart';
 import 'services/session_epoch.dart';
 import 'services/session_expiry.dart';
 import 'services/fcm_token_service.dart';
@@ -89,6 +90,11 @@ void initCore(GetIt sl) {
             .logDiscardedChanges(n, reason: 'other_user'))
         ..init()
         ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));
+
+  sl.registerLazySingleton(() => RecentFetches(
+        connectivity: sl<ConnectivityService>().onConnectivityChanged,
+        synced: sl<MutationSyncManager>().onMutationSynced,
+      )..also((r) => sl<SessionLifecycleService>().register(r, priority: 90)));
 }
 
 extension _Also<T> on T {

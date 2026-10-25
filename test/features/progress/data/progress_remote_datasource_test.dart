@@ -4,8 +4,7 @@ import 'package:yelima/features/progress/data/datasources/progress_remote_dataso
 import '../../../helpers/fake_api.dart';
 
 void main() {
-  test('trend presets are sent in Accra time, and no groupby',
-      () async {
+  test('trend presets are sent in Accra time, and no groupby', () async {
     const path = '/api/v1/client/vital-histories/trends';
     final api = FakeApi()
       ..on('GET', '$path/bp', FakeReply.ok({}))

@@ -82,10 +82,10 @@ void main() {
       localChatId: 'l-1',
     );
     final controller = await createController(initialMessages: [failed]);
-    when(() => mockRepository.sendMessage(any(),
-            localChatId: any(named: 'localChatId')))
-        .thenAnswer((_) async =>
-            right(chatResponse(userId: 'srv-user', botId: 'bot-1')));
+    when(() =>
+        mockRepository.sendMessage(any(),
+            localChatId: any(named: 'localChatId'))).thenAnswer(
+        (_) async => right(chatResponse(userId: 'srv-user', botId: 'bot-1')));
 
     await controller.retryMessage(failed);
 

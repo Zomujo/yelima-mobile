@@ -62,9 +62,9 @@ void main() {
   group('signed out', () {
     final s = stateWith(authenticated: false, registered: false);
 
-    test('goes to sign-in and keeps the target', () {
-      expect(go('/progress', s),
-          '/sign-in?redirect=${Uri.encodeComponent('/progress')}');
+    test('after logging out from a screen, sign-in does not return to it', () {
+      expect(go('/profile', s), '/sign-in');
+      expect(go('/progress', s), '/sign-in');
     });
 
     test('leaves auth routes alone', () {
@@ -133,7 +133,7 @@ void main() {
 
     test('a signed-out user never sees the lock screen', () {
       expect(go('/home', stateWith(expired: true, authenticated: false)),
-          '/sign-in?redirect=${Uri.encodeComponent('/home')}');
+          '/sign-in');
     });
   });
 

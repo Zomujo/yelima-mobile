@@ -3,7 +3,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
-/// Systolic over diastolic in large type.
+/// Systolic over diastolic in large type; shrinks to fit long labels or narrow screens.
 class BloodPressureDisplay extends StatelessWidget {
   const BloodPressureDisplay({
     super.key,
@@ -18,53 +18,45 @@ class BloodPressureDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Column(
-            children: [
-              AppText.labelMedium(context.l10n.systolic,
-                  color: AppColors.textGrey),
-              const SizedBox(height: 4),
-              AppText.displaySmall(
-                systolic,
-                color: AppColors.slate800,
-                fontWeight: FontWeight.w500,
-              ),
-            ],
-          ),
+        Flexible(child: _Value(context.l10n.systolic, systolic)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: AppText.displaySmall('/', color: Colors.grey.shade300),
         ),
-        const SizedBox(width: 15),
-        Column(
-          children: [
-            AppText.displaySmall(
-              '/',
-              color: Colors.grey.shade300,
-            ),
-          ],
-        ),
-        const SizedBox(width: 15),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F8FF),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              AppText.labelMedium(context.l10n.diastolic,
-                  color: AppColors.textGrey),
-              const SizedBox(height: 4),
-              AppText.displaySmall(
-                diastolic,
-                color: AppColors.slate800,
-                fontWeight: FontWeight.w500,
-              ),
-            ],
-          ),
+        Flexible(
+          child: _Value(context.l10n.diastolic, diastolic,
+              background: const Color(0xFFF4F8FF)),
         ),
       ],
     );
   }
+}
+
+class _Value extends StatelessWidget {
+  const _Value(this.label, this.value, {this.background});
+
+  final String label;
+  final String value;
+  final Color? background;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: background == null
+            ? null
+            : BoxDecoration(
+                color: background, borderRadius: BorderRadius.circular(16)),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            children: [
+              AppText.labelMedium(label, color: AppColors.textGrey),
+              const SizedBox(height: 4),
+              AppText.displaySmall(value,
+                  color: AppColors.slate800, fontWeight: FontWeight.w500),
+            ],
+          ),
+        ),
+      );
 }

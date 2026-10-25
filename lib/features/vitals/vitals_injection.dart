@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/services/recent_fetches.dart';
+
 import '../../core/managers/mutation_sync_manager.dart';
 import '../../core/services/session_lifecycle_service.dart';
 import 'data/datasources/vitals_remote_datasource.dart';
@@ -20,6 +22,7 @@ void initVitals(GetIt sl) {
         session: sl(),
         db: sl(),
         severityRules: () => rules.current,
+        recent: sl<RecentFetches>(),
       ));
 
   // Registered last: the source needs this feature's datasources above.

@@ -7,17 +7,22 @@ mixin _MedicationRefresh {
   AppDatabase get db;
   SessionEpoch get session;
   MedicationReminders get _reminders;
+  RecentFetches get recent;
 
   MedicationsDao get _meds => db.medicationsDao;
 
   /// Pulls every section and the list from the server, when online.
-  Future<void> refreshAll() async {
-    if (!await connectivityService.isConnected) return;
-    await Future.wait([
-      for (final s in MedicationSection.values) _refreshSection(s),
-      _refreshList(),
-    ]);
-  }
+  Future<void> refreshAll() => recent.share('medications', () async {
+        if (recent.isFresh('medications') ||
+            !await connectivityService.isConnected) {
+          return;
+        }
+        await Future.wait([
+          for (final s in MedicationSection.values) _refreshSection(s),
+          _refreshList(),
+        ]);
+        recent.markFetched('medications');
+      });
 
   /// Replaces [section]'s rows with the server's, except rows with unsent changes.
   Future<void> _refreshSection(MedicationSection section) async {

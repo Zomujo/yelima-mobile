@@ -7,6 +7,7 @@ import '../../../../core/db/app_database.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
 import '../../../../core/services/connectivity_service.dart';
+import '../../../../core/services/recent_fetches.dart';
 import '../../../../core/services/session_epoch.dart';
 import '../../domain/entities/vital_trends.dart';
 import '../../domain/repositories/progress_repository.dart';
@@ -21,12 +22,17 @@ class ProgressRepositoryImpl implements ProgressRepository {
     required this.connectivityService,
     required this.db,
     required this.session,
-  }) : _remote = remoteDataSource;
+    RecentFetches? recent,
+  })  : _remote = remoteDataSource,
+        recent = recent ?? RecentFetches(window: Duration.zero);
 
   final ProgressRemoteDataSource _remote;
   final ConnectivityService connectivityService;
   final AppDatabase db;
   final SessionEpoch session;
+
+  /// Skips a download made in the last minute.
+  final RecentFetches recent;
 
   static String _bpKey(ChartDateRange r) => 'bp_trend_cache_${r.name}';
   static String _sugarKey(ChartDateRange r) =>
@@ -65,32 +71,38 @@ class ProgressRepositoryImpl implements ProgressRepository {
     required Map<String, dynamic> Function(T) toJson,
     required T Function(Map<String, dynamic>) fromJson,
   }) =>
-      guard(() async {
-        try {
-          if (!await connectivityService.isConnected) {
-            throw const NetworkFailure();
-          }
-          final epoch = session.current;
-          final trend = await fetch();
-          session.ensure(epoch);
-          await db.vitalsDao.insertVitals([
-            VitalHistoriesCompanion(
-              id: Value(key),
-              vitalType: Value(type),
-              vitalName: Value(key),
-              value: Value(jsonEncode(toJson(trend))),
-              unit: const Value('json'),
-              severity: const Value('normal'),
-              recordedAt: Value(clock.now()),
-            )
-          ]);
-          return trend;
-        } catch (_) {
-          final cached = await _cachedOrNull(key, fromJson);
-          if (cached != null) return cached;
-          rethrow;
-        }
-      });
+      guard(() => recent.share(key, () async {
+            if (recent.isFresh(key)) {
+              if (await _cachedOrNull(key, fromJson) case final cached?) {
+                return cached;
+              }
+            }
+            try {
+              if (!await connectivityService.isConnected) {
+                throw const NetworkFailure();
+              }
+              final epoch = session.current;
+              final trend = await fetch();
+              session.ensure(epoch);
+              await db.vitalsDao.insertVitals([
+                VitalHistoriesCompanion(
+                  id: Value(key),
+                  vitalType: Value(type),
+                  vitalName: Value(key),
+                  value: Value(jsonEncode(toJson(trend))),
+                  unit: const Value('json'),
+                  severity: const Value('normal'),
+                  recordedAt: Value(clock.now()),
+                )
+              ]);
+              recent.markFetched(key);
+              return trend;
+            } catch (_) {
+              final cached = await _cachedOrNull(key, fromJson);
+              if (cached != null) return cached;
+              rethrow;
+            }
+          }));
 
   Future<T> _cached<T>(
           String key, T Function(Map<String, dynamic>) fromJson) async =>

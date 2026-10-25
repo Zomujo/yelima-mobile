@@ -25,8 +25,8 @@ void main() {
   });
 
   testWidgets('a message replaces the rows', (tester) async {
-    await tester.pumpApp(
-        const SuggestionList(items: ['A'], message: 'Nothing found'));
+    await tester
+        .pumpApp(const SuggestionList(items: ['A'], message: 'Nothing found'));
 
     expect(find.text('Nothing found'), findsOneWidget);
     expect(find.text('A'), findsNothing);

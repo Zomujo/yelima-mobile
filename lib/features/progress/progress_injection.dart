@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/services/recent_fetches.dart';
+
 import 'data/datasources/progress_remote_datasource.dart';
 import 'data/repositories/progress_repository_impl.dart';
 import 'domain/repositories/progress_repository.dart';
@@ -13,6 +15,7 @@ void initProgress(GetIt sl) {
         connectivityService: sl(),
         db: sl(),
         session: sl(),
+        recent: sl<RecentFetches>(),
       ));
   sl.registerLazySingleton(() => ProgressController(sl()));
 }
