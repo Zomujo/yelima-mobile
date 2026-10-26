@@ -22,13 +22,21 @@ class VitalsRemoteDataSource {
     ];
   }
 
+  /// The fields the server takes; it grades the reading itself.
+  static const _accepted = {'vitalType', 'value', 'recordedAt'};
+
   /// Saves a reading and returns the server's id for it, if it sent one.
   ///
   /// [idempotencyKey] is the reading's local id, so a retry never saves twice.
   Future<String?> saveVitalReading(Map<String, dynamic> body,
       {required String idempotencyKey}) async {
+    // Only the fields the server accepts; older queued readings carry more.
     final response = await _api.post(_logs,
-        data: body, options: APIClient.idempotent(idempotencyKey));
+        data: {
+          for (final e in body.entries)
+            if (_accepted.contains(e.key)) e.key: e.value
+        },
+        options: APIClient.idempotent(idempotencyKey));
     final id = response is Map ? response['data'] : null;
     return id is String && id.isNotEmpty ? id : null;
   }

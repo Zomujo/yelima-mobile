@@ -83,9 +83,6 @@ class VitalsRepositoryImpl implements VitalsRepository {
         final body = {
           'vitalType': model.vitalType,
           'value': model.value,
-          'unit': model.unit,
-          'severity': model.severity,
-          if (model.vitalSubType != null) 'vitalSubType': model.vitalSubType,
           'recordedAt':
               (model.recordedAt ?? clock.now()).toUtc().toIso8601String(),
         };

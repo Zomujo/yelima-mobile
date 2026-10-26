@@ -166,6 +166,30 @@ void main() {
   });
 
   test(
+      'a reading is sent with only the fields the server accepts, '
+      'even one queued by an older version', () async {
+    api.on('POST', logsPath, FakeReply.ok('srv-1', status: 201));
+    final source = VitalsRemoteMutationSource(
+        VitalsRemoteDataSource(apiClient: api.client), db);
+
+    await source.syncMutation(
+      entityId: 'local-1',
+      action: 'saveVitalReading',
+      payloadJson:
+          '{"vitalType":"bloodPressure","value":"120/80","unit":"mmHg",'
+          '"severity":"hypertensive","vitalSubType":"fasting",'
+          '"recordedAt":"2026-10-26T11:46:56.000Z"}',
+      createdAt: DateTime(2026, 10, 26),
+    );
+
+    expect(api.sent('POST', logsPath).single.data, {
+      'vitalType': 'bloodPressure',
+      'value': '120/80',
+      'recordedAt': '2026-10-26T11:46:56.000Z',
+    });
+  });
+
+  test(
       'VIT-EC-25: after sync the local reading takes its server id, no duplicate',
       () async {
     await db.vitalsDao.insertVitals([reading('local-1').toDrift()]);
