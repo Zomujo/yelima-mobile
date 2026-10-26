@@ -90,20 +90,27 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                     );
                   }),
                   const SizedBox(height: 32),
-                  AppText.titleLarge(
-                    context.l10n.todaysMedications,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.slate800,
+                  // The tutorial needs a box to point at; the list below is a sliver.
+                  Column(
+                    key: AppTutorialKeys.medicationsListKey,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText.titleLarge(
+                        context.l10n.todaysMedications,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.slate800,
+                      ),
+                      const SizedBox(height: 16),
+                      Consumer<MedicationController>(
+                          builder: (context, controller, child) {
+                        return TimeOfDayTabs(
+                          selected: controller.state.section,
+                          onSelected: controller.selectSection,
+                          counts: controller.state.counts,
+                        );
+                      }),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Consumer<MedicationController>(
-                      builder: (context, controller, child) {
-                    return TimeOfDayTabs(
-                      selected: controller.state.section,
-                      onSelected: controller.selectSection,
-                      counts: controller.state.counts,
-                    );
-                  }),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -113,10 +120,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             sliver: Consumer<MedicationController>(
                 builder: (context, controller, child) {
-              return TodaysMedicationsList(
-                key: AppTutorialKeys.medicationsListKey,
-                controller: controller,
-              );
+              return TodaysMedicationsList(controller: controller);
             }),
           ),
           const SliverToBoxAdapter(

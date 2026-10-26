@@ -32,13 +32,22 @@ class AppTutorialService {
 
     if (isCompletedLocally || isCompletedInProfile) return;
 
+    // A step without a laid-out box on screen would stop the whole tutorial.
+    final shown = [
+      for (final t in targets)
+        if (t.keyTarget?.currentContext?.findRenderObject()
+            case RenderBox(hasSize: true))
+          t
+    ];
+    if (shown.isEmpty) return;
+
     void markSeen() {
       prefsService.setTutorialCompleted(localKey);
       userController.markTutorialCompleted(tutorialId);
     }
 
     TutorialCoachMark(
-      targets: targets,
+      targets: shown,
       colorShadow: Colors.black.withValues(alpha: 0.85),
       paddingFocus: 10,
       opacityShadow: 0.85,
@@ -115,12 +124,6 @@ class AppTutorialService {
       context: context,
       tutorialId: 'appointments_screen_intro',
       targets: [
-        AppTutorialTarget.create(
-          identify: 'appointments_ask',
-          key: AppTutorialKeys.appointmentAskKey,
-          title: context.l10n.tutorialAppointmentAskTitle,
-          description: context.l10n.tutorialAppointmentAskDesc,
-        ),
         AppTutorialTarget.create(
           identify: 'appointments_list',
           key: AppTutorialKeys.appointmentListKey,

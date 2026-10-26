@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 class AppTutorialKeys {
   static final GlobalKey homeMetricsKey = GlobalKey();
   static final GlobalKey homeAdherenceKey = GlobalKey();
-  static final GlobalKey homeNextStepKey = GlobalKey();
   static final GlobalKey homeDailyCheckInKey = GlobalKey();
   static final GlobalKey homeActionCardsKey = GlobalKey();
 
@@ -12,8 +11,6 @@ class AppTutorialKeys {
   static final GlobalKey medicationsListKey = GlobalKey();
 
   static final GlobalKey progressGraphKey = GlobalKey();
-
-  static final GlobalKey appointmentAskKey = GlobalKey();
   static final GlobalKey appointmentListKey = GlobalKey();
   static final GlobalKey appointmentPastListKey = GlobalKey();
 
