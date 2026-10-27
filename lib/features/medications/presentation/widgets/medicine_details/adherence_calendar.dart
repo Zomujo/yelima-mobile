@@ -13,53 +13,43 @@ class AdherenceCalendar extends StatefulWidget {
   /// Called with the first day of the month the user picks.
   final ValueChanged<DateTime> onMonthChanged;
 
+  /// When the medicine started; earlier days and months aren't shown. Null when unknown.
+  final DateTime? startDate;
+
   const AdherenceCalendar({
     super.key,
     required this.history,
     required this.onMonthChanged,
+    this.startDate,
   });
+
+  /// The months to pick from, newest first: back to [start]'s month, or 6 when unknown.
+  static List<DateTime> monthsSince(DateTime? start, DateTime now) {
+    final first = start == null
+        ? DateTime(now.year, now.month - 5)
+        : DateTime(start.year, start.month);
+    return [
+      for (var m = DateTime(now.year, now.month);
+          !m.isBefore(first);
+          m = DateTime(m.year, m.month - 1))
+        m,
+    ];
+  }
 
   @override
   State<AdherenceCalendar> createState() => _AdherenceCalendarState();
 }
 
 class _AdherenceCalendarState extends State<AdherenceCalendar> {
-  late DateTime _selectedMonth;
-  late List<DateTime> _recentMonths;
-
-  @override
-  void initState() {
-    super.initState();
-    _initMonths();
-  }
-
-  void _initMonths() {
-    final now = clock.now();
-    _selectedMonth = DateTime(now.year, now.month, 1);
-
-    _recentMonths = List.generate(6, (index) {
-      int month = now.month - index;
-      int year = now.year;
-      if (month <= 0) {
-        month += 12;
-        year -= 1;
-      }
-      return DateTime(year, month, 1);
-    });
-
-    if (widget.history.logs.isNotEmpty) {
-      final firstLog = widget.history.logs.first.takenAt;
-      final historyMonth = DateTime(firstLog.year, firstLog.month, 1);
-      if (_recentMonths.any((m) =>
-          m.year == historyMonth.year && m.month == historyMonth.month)) {
-        _selectedMonth = historyMonth;
-      }
-    }
-  }
+  late DateTime _selectedMonth = DateTime(clock.now().year, clock.now().month);
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final start = widget.startDate?.toLocal();
+    final firstDay =
+        start == null ? null : DateTime(start.year, start.month, start.day);
+    final months = AdherenceCalendar.monthsSince(start, clock.now());
     final weekdays = [
       l10n.weekdaySun,
       l10n.weekdayMon,
@@ -87,6 +77,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             PopupMenuButton<DateTime>(
+              enabled: months.length > 1,
               initialValue: _selectedMonth,
               position: PopupMenuPosition.under,
               padding: EdgeInsets.zero,
@@ -101,7 +92,7 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                   widget.onMonthChanged(newValue);
                 }
               },
-              itemBuilder: (context) => _recentMonths
+              itemBuilder: (context) => months
                   .map((item) => PopupMenuItem<DateTime>(
                         value: item,
                         child: AppText.bodyMedium(
@@ -120,11 +111,13 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                       fontWeight: FontWeight.w500,
                       color: AppColors.slate800,
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: AppColors.slate400,
-                    ),
+                    if (months.length > 1) ...[
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.slate400,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -181,8 +174,13 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                 DateTime(_selectedMonth.year, _selectedMonth.month, day);
             final now = clock.now();
             final isFuture = dayDate.isAfter(now);
+            // Before the medicine started there was nothing to take or miss.
+            final beforeStart = firstDay != null && dayDate.isBefore(firstDay);
 
-            if (isTaken == true) {
+            if (beforeStart) {
+              bgColor = Colors.transparent;
+              textColor = AppColors.slate300;
+            } else if (isTaken == true) {
               bgColor = AppColors.emerald500; // Emerald 500
             } else if (isTaken == false && !isFuture) {
               bgColor = AppColors.slate300; // Slate 300

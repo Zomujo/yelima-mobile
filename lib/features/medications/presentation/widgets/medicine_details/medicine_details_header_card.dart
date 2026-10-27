@@ -46,7 +46,9 @@ class MedicineDetailsHeaderCard extends StatelessWidget {
                 height: 200, width: double.infinity, borderRadius: 16)
           else
             AdherenceCalendar(
-                history: history, onMonthChanged: controller.loadHistory),
+                history: history,
+                startDate: controller.detail?.startDate,
+                onMonthChanged: controller.loadHistory),
         ],
       ),
     );

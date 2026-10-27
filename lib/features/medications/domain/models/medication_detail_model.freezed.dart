@@ -23,6 +23,9 @@ mixin _$MedicationDetailModel {
   DosingScheduleModel? get morning;
   DosingScheduleModel? get afternoon;
   DosingScheduleModel? get evening;
+
+  /// The first scheduled dose, from the server only; null in rows built offline.
+  DateTime? get startDate;
   DateTime get createdAt;
   DateTime get updatedAt;
 
@@ -50,6 +53,8 @@ mixin _$MedicationDetailModel {
             (identical(other.afternoon, afternoon) ||
                 other.afternoon == afternoon) &&
             (identical(other.evening, evening) || other.evening == evening) &&
+            (identical(other.startDate, startDate) ||
+                other.startDate == startDate) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -59,11 +64,11 @@ mixin _$MedicationDetailModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, dosage, notes, morning,
-      afternoon, evening, createdAt, updatedAt);
+      afternoon, evening, startDate, createdAt, updatedAt);
 
   @override
   String toString() {
-    return 'MedicationDetailModel(id: $id, name: $name, dosage: $dosage, notes: $notes, morning: $morning, afternoon: $afternoon, evening: $evening, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'MedicationDetailModel(id: $id, name: $name, dosage: $dosage, notes: $notes, morning: $morning, afternoon: $afternoon, evening: $evening, startDate: $startDate, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 }
 
@@ -81,6 +86,7 @@ abstract mixin class $MedicationDetailModelCopyWith<$Res> {
       DosingScheduleModel? morning,
       DosingScheduleModel? afternoon,
       DosingScheduleModel? evening,
+      DateTime? startDate,
       DateTime createdAt,
       DateTime updatedAt});
 
@@ -109,6 +115,7 @@ class _$MedicationDetailModelCopyWithImpl<$Res>
     Object? morning = freezed,
     Object? afternoon = freezed,
     Object? evening = freezed,
+    Object? startDate = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -141,6 +148,10 @@ class _$MedicationDetailModelCopyWithImpl<$Res>
           ? _self.evening
           : evening // ignore: cast_nullable_to_non_nullable
               as DosingScheduleModel?,
+      startDate: freezed == startDate
+          ? _self.startDate
+          : startDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       createdAt: null == createdAt
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -206,6 +217,7 @@ class _MedicationDetailModel implements MedicationDetailModel {
       this.morning,
       this.afternoon,
       this.evening,
+      this.startDate,
       required this.createdAt,
       required this.updatedAt});
   factory _MedicationDetailModel.fromJson(Map<String, dynamic> json) =>
@@ -226,6 +238,10 @@ class _MedicationDetailModel implements MedicationDetailModel {
   final DosingScheduleModel? afternoon;
   @override
   final DosingScheduleModel? evening;
+
+  /// The first scheduled dose, from the server only; null in rows built offline.
+  @override
+  final DateTime? startDate;
   @override
   final DateTime createdAt;
   @override
@@ -260,6 +276,8 @@ class _MedicationDetailModel implements MedicationDetailModel {
             (identical(other.afternoon, afternoon) ||
                 other.afternoon == afternoon) &&
             (identical(other.evening, evening) || other.evening == evening) &&
+            (identical(other.startDate, startDate) ||
+                other.startDate == startDate) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -269,11 +287,11 @@ class _MedicationDetailModel implements MedicationDetailModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, dosage, notes, morning,
-      afternoon, evening, createdAt, updatedAt);
+      afternoon, evening, startDate, createdAt, updatedAt);
 
   @override
   String toString() {
-    return 'MedicationDetailModel(id: $id, name: $name, dosage: $dosage, notes: $notes, morning: $morning, afternoon: $afternoon, evening: $evening, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'MedicationDetailModel(id: $id, name: $name, dosage: $dosage, notes: $notes, morning: $morning, afternoon: $afternoon, evening: $evening, startDate: $startDate, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 }
 
@@ -293,6 +311,7 @@ abstract mixin class _$MedicationDetailModelCopyWith<$Res>
       DosingScheduleModel? morning,
       DosingScheduleModel? afternoon,
       DosingScheduleModel? evening,
+      DateTime? startDate,
       DateTime createdAt,
       DateTime updatedAt});
 
@@ -324,6 +343,7 @@ class __$MedicationDetailModelCopyWithImpl<$Res>
     Object? morning = freezed,
     Object? afternoon = freezed,
     Object? evening = freezed,
+    Object? startDate = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -356,6 +376,10 @@ class __$MedicationDetailModelCopyWithImpl<$Res>
           ? _self.evening
           : evening // ignore: cast_nullable_to_non_nullable
               as DosingScheduleModel?,
+      startDate: freezed == startDate
+          ? _self.startDate
+          : startDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       createdAt: null == createdAt
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable

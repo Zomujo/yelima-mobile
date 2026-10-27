@@ -98,20 +98,22 @@ class AppTutorialService {
     );
   }
 
-  static Future<void> showMedicationsTutorial(BuildContext context) async {
+  /// The keys belong to the screen, which a notification can open twice.
+  static Future<void> showMedicationsTutorial(BuildContext context,
+      {required GlobalKey adherenceKey, required GlobalKey listKey}) async {
     await showTutorial(
       context: context,
       tutorialId: 'medications_screen_intro',
       targets: [
         AppTutorialTarget.create(
           identify: 'medications_adherence',
-          key: AppTutorialKeys.medicationsAdherenceKey,
+          key: adherenceKey,
           title: context.l10n.tutorialMedicationsAdherenceTitle,
           description: context.l10n.tutorialMedicationsAdherenceDesc,
         ),
         AppTutorialTarget.create(
           identify: 'medications_list',
-          key: AppTutorialKeys.medicationsListKey,
+          key: listKey,
           title: context.l10n.tutorialMedicationsListTitle,
           description: context.l10n.tutorialMedicationsListDesc,
         ),

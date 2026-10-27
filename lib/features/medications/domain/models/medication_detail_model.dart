@@ -16,6 +16,9 @@ abstract class MedicationDetailModel with _$MedicationDetailModel {
     DosingScheduleModel? morning,
     DosingScheduleModel? afternoon,
     DosingScheduleModel? evening,
+
+    /// The first scheduled dose, from the server only; null in rows built offline.
+    DateTime? startDate,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _MedicationDetailModel;
