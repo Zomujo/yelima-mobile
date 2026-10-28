@@ -57,7 +57,8 @@ class GlucoseGraph extends StatelessWidget {
               .where((e) => e.value != null)
               .map((e) => FlSpot(e.key.toDouble(), e.value!.toDouble()))
               .toList(),
-          isCurved: true,
+          // Straight lines: a curve would show values that were never measured.
+          isCurved: false,
           color: AppColors.blue500,
           barWidth: 3,
           dotData: FlDotData(

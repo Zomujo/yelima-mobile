@@ -69,25 +69,19 @@ class ReadingHistoryItem extends StatelessWidget {
     );
   }
 
-  Color _getSeverityColor(VitalSeverity sev) {
-    switch (sev) {
-      case VitalSeverity.normal:
-        return Colors.green;
-      case VitalSeverity.slightlyHigh:
-      case VitalSeverity.low:
-        return Colors.amber.shade700;
-      case VitalSeverity.criticallyLow:
-        return Colors.deepOrange;
-      case VitalSeverity.high:
-        return Colors.orange.shade700;
-      case VitalSeverity.veryHigh:
-        return Colors.deepOrange;
-      case VitalSeverity.critical:
-        return Colors.red.shade700;
-      case VitalSeverity.unknown:
-        return Colors.grey;
-    }
-  }
+  /// Red for anything that needs help now, whether too high or too low.
+  Color _getSeverityColor(VitalSeverity sev) => switch (sev) {
+        VitalSeverity.normal => Colors.green,
+        VitalSeverity.slightlyHigh ||
+        VitalSeverity.low =>
+          Colors.amber.shade700,
+        VitalSeverity.high => Colors.orange.shade700,
+        VitalSeverity.veryHigh => Colors.deepOrange,
+        VitalSeverity.critical ||
+        VitalSeverity.criticallyLow =>
+          Colors.red.shade700,
+        VitalSeverity.unknown => Colors.grey,
+      };
 
   String _getSeverityText(BuildContext context, VitalSeverity sev) {
     final l10n = context.l10n;

@@ -66,6 +66,23 @@ class UserRepositoryImpl implements UserRepository {
       guard(() => _save(uid, changes));
 
   @override
+  AsyncResult<void> updatePatientProfile(String uid, ProfileChanges changes) =>
+      guard(() async {
+        await _save(uid, changes);
+        // Both name parts always: the record stores one name and can't split it reliably.
+        await _sendOrQueue(
+            uid,
+            'updatePatient',
+            {
+              'firstname': changes.firstName ?? '',
+              'lastname': changes.lastName ?? '',
+              if (changes.gender case final gender?)
+                'gender': gender.toLowerCase(),
+            },
+            remoteDataSource.updatePatient);
+      });
+
+  @override
   AsyncResult<UserEntity> completeOnboarding(
           UserEntity profile, String facilityId) =>
       guardOnline(connectivityService, () async {
@@ -85,14 +102,23 @@ class UserRepositoryImpl implements UserRepository {
       guardOnline(
           connectivityService, () => remoteDataSource.searchFacilities(search));
 
-  /// Writes [changes] here, then sends them or queues them; only a 401/403 is reported.
+  /// Writes [changes] here, then sends them to Firestore or queues them.
   Future<void> _save(String uid, ProfileChanges changes) async {
     await db.userProfilesDao.patchProfile(uid, changes.toCompanion());
-    final payload = changes.toJson();
+    await _sendOrQueue(uid, 'updateUserProfile', changes.toJson(),
+        (payload) => remoteDataSource.updateUserProfile(uid, payload));
+  }
+
+  /// Sends [payload] now or queues it as [action]; only a 401/403 is reported.
+  Future<void> _sendOrQueue(
+      String uid,
+      String action,
+      Map<String, dynamic> payload,
+      Future<void> Function(Map<String, dynamic>) send) async {
     Object? error;
     if (await connectivityService.isConnected) {
       try {
-        return await remoteDataSource.updateUserProfile(uid, payload);
+        return await send(payload);
       } catch (e) {
         error = e;
       }
@@ -100,7 +126,7 @@ class UserRepositoryImpl implements UserRepository {
     await db.pendingMutationsDao.queueMutation(
         entityId: uid,
         entityType: 'user_profile',
-        action: 'updateUserProfile',
+        action: action,
         payload: payload);
     if (error != null && AppFailure.from(error) is UnauthorizedFailure) {
       throw error;

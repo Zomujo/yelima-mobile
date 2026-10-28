@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -124,7 +125,9 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
                                 ),
                                 ...symptomsList.map((symptom) {
                                   return SymptomCard(
-                                      content: symptom.description);
+                                      content: symptom.description,
+                                      time: AppDateFormats.timeShort
+                                          .format(symptom.onsetDate.toLocal()));
                                 }),
                               ],
                             );

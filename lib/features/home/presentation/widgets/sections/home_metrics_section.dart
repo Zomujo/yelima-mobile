@@ -7,7 +7,9 @@ import '../medication_adherence_card.dart';
 import 'critical_health_banner.dart';
 import '../../controllers/home_metrics_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/features/vitals/domain/entities/reading_form.dart';
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/features/vitals/presentation/health_warning.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 /// Blood pressure, blood sugar and adherence cards, with warnings for dangerous readings.
@@ -31,47 +33,15 @@ class HomeMetricsSection extends StatelessWidget {
     final bpSev = state.vitals?.bloodPressure?.grade ?? VitalSeverity.unknown;
     final bgSev = state.vitals?.bloodSugar?.grade ?? VitalSeverity.unknown;
 
-    final List<Widget> banners = [];
-
-    if (bpSev == VitalSeverity.critical) {
-      banners.add(CriticalHealthBanner(
-        title: context.l10n.criticalBloodPressureTitle,
-        message: context.l10n.criticalBloodPressureMessage,
-        isCritical: true,
-      ));
-    } else if (bpSev == VitalSeverity.veryHigh) {
-      banners.add(CriticalHealthBanner(
-        title: context.l10n.veryHighBloodPressureTitle,
-        message: context.l10n.veryHighBloodPressureMessage,
-        isCritical: false,
-      ));
-    }
-
-    if (bgSev == VitalSeverity.critical) {
-      banners.add(CriticalHealthBanner(
-        title: context.l10n.criticalBloodSugarTitle,
-        message: context.l10n.criticalBloodSugarMessage,
-        isCritical: true,
-      ));
-    } else if (bgSev == VitalSeverity.veryHigh) {
-      banners.add(CriticalHealthBanner(
-        title: context.l10n.veryHighBloodSugarTitle,
-        message: context.l10n.veryHighBloodSugarMessage,
-        isCritical: false,
-      ));
-    } else if (bgSev == VitalSeverity.criticallyLow) {
-      banners.add(CriticalHealthBanner(
-        title: context.l10n.criticallyLowBloodSugarTitle,
-        message: context.l10n.criticallyLowBloodSugarMessage,
-        isCritical: true,
-      ));
-    } else if (bgSev == VitalSeverity.low) {
-      banners.add(CriticalHealthBanner(
-        title: context.l10n.lowBloodSugarTitle,
-        message: context.l10n.lowBloodSugarMessage,
-        isCritical: false,
-      ));
-    }
+    final banners = [
+      for (final (kind, grade) in [
+        (VitalKind.bloodPressure, bpSev),
+        (VitalKind.bloodSugar, bgSev),
+      ])
+        if (healthWarning(kind, grade, context.l10n) case final w?)
+          CriticalHealthBanner(
+              title: w.title, message: w.message, isCritical: w.isCritical),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

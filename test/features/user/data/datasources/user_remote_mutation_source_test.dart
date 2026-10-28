@@ -15,6 +15,7 @@ void main() {
     remote = MockUserRemote();
     source = UserRemoteMutationSource(remote);
     when(() => remote.updateUserProfile(any(), any())).thenAnswer((_) async {});
+    when(() => remote.updatePatient(any())).thenAnswer((_) async {});
   });
 
   Future<String?> sync(String action, Map<String, dynamic> payload) =>
@@ -35,6 +36,14 @@ void main() {
           'dateOfBirth': '1980-04-02T00:00:00.000'
         })).called(1);
     expect(result, isNull, reason: 'the uid never changes, so no id remap');
+  });
+
+  test('replays a queued name change to the clinic record', () async {
+    await sync('updatePatient', {'firstname': 'Ama', 'lastname': 'Mensah'});
+
+    verify(() =>
+            remote.updatePatient({'firstname': 'Ama', 'lastname': 'Mensah'}))
+        .called(1);
   });
 
   test('a server failure propagates so the queue keeps the edit', () async {

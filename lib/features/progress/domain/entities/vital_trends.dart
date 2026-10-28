@@ -2,15 +2,6 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/utils/app_date_formats.dart';
 
-/// One x-axis label; a boundary label also shows the day or month it starts.
-class TrendLabel {
-  const TrendLabel({required this.main, this.sub, this.isBoundary = false});
-
-  final String main;
-  final String? sub;
-  final bool isBoundary;
-}
-
 /// How far back a chart goes.
 enum ChartDateRange { today, thisWeek, thisMonth }
 
@@ -19,33 +10,23 @@ mixin TrendLabels {
   /// ISO timestamps, one per point.
   List<String> get labels;
 
-  /// Times for a span of about a day, otherwise day numbers; the day or month shows where it changes.
-  List<TrendLabel> get labelMetadata {
-    if (labels.isEmpty) return const [];
+  /// Times for a span of about a day; otherwise the day number, once per day.
+  List<String> get formattedLabels {
     final dates = [for (final l in labels) DateTime.parse(l).toLocal()];
-    final short = dates.last.difference(dates.first).inHours <= 26;
-    TrendLabel label(DateTime d, DateTime? prev) {
-      final boundary =
-          prev == null || (short ? d.day != prev.day : d.month != prev.month);
-      return TrendLabel(
-        main:
-            (short ? AppDateFormats.time24h : AppDateFormats.dayOnly).format(d),
-        sub: boundary
-            ? (short ? AppDateFormats.dayMonthShort : AppDateFormats.monthShort)
-                .format(d)
-                .toUpperCase()
-            : null,
-        isBoundary: boundary,
-      );
+    if (dates.isEmpty) return const [];
+    if (dates.last.difference(dates.first).inHours <= 26) {
+      return [for (final d in dates) AppDateFormats.time24h.format(d)];
     }
-
     return [
       for (var i = 0; i < dates.length; i++)
-        label(dates[i], i > 0 ? dates[i - 1] : null)
+        i > 0 && _sameDay(dates[i], dates[i - 1])
+            ? ''
+            : AppDateFormats.dayOnly.format(dates[i]),
     ];
   }
 
-  List<String> get formattedLabels => [for (final m in labelMetadata) m.main];
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
 /// Systolic and diastolic readings over time.

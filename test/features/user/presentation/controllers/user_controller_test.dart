@@ -37,6 +37,8 @@ void main() {
     when(() => repo.watchProfile(any())).thenAnswer((_) => profileWatch.stream);
     when(() => repo.updateProfile(any(), any()))
         .thenAnswer((_) async => right(null));
+    when(() => repo.updatePatientProfile(any(), any()))
+        .thenAnswer((_) async => right(null));
     controller = UserController(repository: repo);
   });
 
@@ -140,7 +142,9 @@ void main() {
 
       await controller.updateName(firstName: 'Akua', lastName: 'Mensah');
 
-      final changes = sent();
+      final changes = verify(() => repo.updatePatientProfile('a', captureAny()))
+          .captured
+          .single as ProfileChanges;
       expect(changes.firstName, 'Akua');
       expect(changes.registrationStatus, isNull);
       expect(controller.userEntity?.firstName, 'Akua');
@@ -160,7 +164,7 @@ void main() {
 
     test('a failed save leaves the profile as it was', () async {
       await emit(ama);
-      when(() => repo.updateProfile(any(), any()))
+      when(() => repo.updatePatientProfile(any(), any()))
           .thenAnswer((_) async => left(const StorageFailure()));
 
       final result =

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
 import 'package:yelima/shared/widgets/modals/app_modal.dart';
-import 'package:yelima/core/extensions/context_extensions.dart';
+import 'package:yelima/shared/widgets/modals/discard_changes_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:yelima/features/symptoms/presentation/controllers/symptoms_controller.dart';
@@ -12,27 +11,55 @@ import 'package:yelima/shared/utils/run_with_loader.dart';
 
 /// Asks how the patient feels and reports it as a symptom.
 class ReportSymptomModal extends StatefulWidget {
-  const ReportSymptomModal({super.key});
+  const ReportSymptomModal({super.key, required this.text});
 
-  static void show(BuildContext context) {
-    context.showModal(
-      alignment: ModalAlignment.center,
-      child: const ReportSymptomModal(),
+  /// The note being written; made by [show] so closing can check it, freed here.
+  final TextEditingController text;
+
+  /// The server's limit for a symptom description.
+  static const maxLength = 1000;
+
+  static Future<void> show(BuildContext context) {
+    final text = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.transparent,
+      useSafeArea: false,
+      builder: (context) => OverlayModal(
+        isDismissible: true,
+        animationDuration: const Duration(milliseconds: 300),
+        onDismiss: () => Navigator.of(context).pop(),
+        confirmDismiss: () => canClose(context, text),
+        child: ReportSymptomModal(text: text),
+      ),
     );
   }
+
+  /// True when nothing was written, or the patient agrees to drop it.
+  static Future<bool> canClose(
+          BuildContext context, TextEditingController text) async =>
+      text.text.trim().isEmpty ||
+      await DiscardChangesModal.show(context) == true;
 
   @override
   State<ReportSymptomModal> createState() => _ReportSymptomModalState();
 }
 
 class _ReportSymptomModalState extends State<ReportSymptomModal> {
-  final _controller = TextEditingController();
+  TextEditingController get _controller => widget.text;
   bool _isLoading = false;
 
   @override
   void dispose() {
+    // Here, after the closing animation, not as soon as the dialog pops.
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _close() async {
+    if (await ReportSymptomModal.canClose(context, _controller) && mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _sendRequest() async {
@@ -50,14 +77,14 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
     if (!mounted) return;
 
     setState(() => _isLoading = false);
-    context.removeModal();
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return ModalContainer(
       isBottomSheet: false,
-      onClose: context.removeModal,
+      onClose: _close,
       padding: const EdgeInsets.all(24),
       showCloseButton: false,
       child: Column(
@@ -87,7 +114,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
                   constraints:
                       const BoxConstraints(minWidth: 36, minHeight: 36),
                   padding: EdgeInsets.zero,
-                  onPressed: _isLoading ? null : context.removeModal,
+                  onPressed: _isLoading ? null : _close,
                 ),
               ),
             ],
@@ -107,8 +134,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
             child: TextFormField(
               controller: _controller,
               maxLines: 4,
-              // The server's limit for a symptom description.
-              inputFormatters: [LengthLimitingTextInputFormatter(1000)],
+              maxLength: ReportSymptomModal.maxLength,
               enabled: !_isLoading,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {

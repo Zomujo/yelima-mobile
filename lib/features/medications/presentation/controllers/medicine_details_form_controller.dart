@@ -78,6 +78,9 @@ class MedicineDetailsFormController extends MedicationFormController {
     return null;
   }
 
+  /// Deletes this medication and its reminders.
+  AsyncResult<void> delete() => _repository.deleteMedication(medicationId);
+
   @override
   void dispose() {
     _idSub.cancel();

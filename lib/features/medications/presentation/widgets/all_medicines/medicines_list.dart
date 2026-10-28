@@ -61,8 +61,8 @@ class MedicinesList extends StatelessWidget {
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
                 confirmDismiss: (direction) async {
-                  final result =
-                      await DeleteMedicationModal.show(context, medication);
+                  final result = await DeleteMedicationModal.show(
+                      context, medication.name);
                   return result ?? false;
                 },
                 onDismissed: (_) async {

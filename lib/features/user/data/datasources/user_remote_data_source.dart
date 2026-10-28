@@ -55,6 +55,10 @@ class UserRemoteDataSource {
         'phoneNumber': profile.phoneNumber ?? '',
       });
 
+  /// Updates the name and gender the clinic sees on the patient record.
+  Future<void> updatePatient(Map<String, dynamic> body) =>
+      _api.patch('/api/v1/client/patient', data: body);
+
   /// Up to 20 facilities whose name matches [search].
   Future<List<FacilityModel>> searchFacilities(String search) async {
     final response = await _api.get('/api/v1/client/facilities',

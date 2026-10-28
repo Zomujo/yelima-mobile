@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:yelima/core/api/i_remote_mutation.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/core/failures/app_failure.dart';
@@ -242,6 +243,16 @@ void main() {
 
       expect(await db.select(db.pendingMutations).get(), isEmpty);
       expect((await repo().watchReadings().first).length, 1);
+    });
+
+    test('gives the grade, so a crisis can be shown at once', () async {
+      api.on('POST', logsPath, FakeReply.ok('srv-1', status: 201));
+
+      final online = await repo().saveReading(bp(211, 131));
+      final offline = await repo(online: false).saveReading(bp(118, 76));
+
+      expect(online.getRight().toNullable(), VitalSeverity.critical);
+      expect(offline.getRight().toNullable(), VitalSeverity.normal);
     });
 
     test(

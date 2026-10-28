@@ -3,21 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../../../../shared/widgets/modals/app_modal.dart';
-import '../../../domain/entities/medication_entity.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// Asks before deleting a medication; returns true to delete.
 class DeleteMedicationModal extends StatelessWidget {
-  final MedicationEntity medication;
+  final String name;
 
-  const DeleteMedicationModal({
-    super.key,
-    required this.medication,
-  });
+  const DeleteMedicationModal({super.key, required this.name});
 
-  static Future<bool?> show(BuildContext context, MedicationEntity medication) {
-    return showAppDialog<bool>(
-        context, DeleteMedicationModal(medication: medication),
+  static Future<bool?> show(BuildContext context, String name) {
+    return showAppDialog<bool>(context, DeleteMedicationModal(name: name),
         dismissValue: false);
   }
 
@@ -30,7 +25,7 @@ class DeleteMedicationModal extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppText.titleMedium(
-            context.l10n.deleteMedicationConfirmation(medication.name),
+            context.l10n.deleteMedicationConfirmation(name),
             color: Colors.black54,
           ),
           const SizedBox(height: 36),

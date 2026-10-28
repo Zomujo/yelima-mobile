@@ -74,12 +74,13 @@ class VitalsRepositoryImpl implements VitalsRepository {
           }));
 
   @override
-  AsyncResult<void> saveReading(ReadingForm form) => guard(() async {
+  AsyncResult<VitalSeverity> saveReading(ReadingForm form) => guard(() async {
         if (form.problem case final problem?) throw ReadingFailure(problem);
         // A new reading changes the readings and the trends.
         recent.clear();
-        final model = VitalHistoryModel.fromEntity(
-            form.toReading(const Uuid().v4(), rules: severityRules()));
+        final reading =
+            form.toReading(const Uuid().v4(), rules: severityRules());
+        final model = VitalHistoryModel.fromEntity(reading);
         final body = {
           'vitalType': model.vitalType,
           'value': model.value,
@@ -92,7 +93,8 @@ class VitalsRepositoryImpl implements VitalsRepository {
           try {
             await remoteDataSource.saveVitalReading(body,
                 idempotencyKey: model.id);
-            return db.vitalsDao.insertVitals([model.toDrift()]);
+            await db.vitalsDao.insertVitals([model.toDrift()]);
+            return reading.grade;
           } catch (e) {
             error = e;
           }
@@ -110,5 +112,6 @@ class VitalsRepositoryImpl implements VitalsRepository {
         if (error != null && AppFailure.from(error) is UnauthorizedFailure) {
           throw error;
         }
+        return reading.grade;
       });
 }

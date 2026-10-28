@@ -16,6 +16,9 @@ class OverlayModal extends StatefulWidget {
   final VoidCallback onDismiss;
   final ModalAlignment alignment;
 
+  /// Asked before a tap outside or Back closes the modal; false keeps it open.
+  final Future<bool> Function()? confirmDismiss;
+
   const OverlayModal({
     super.key,
     required this.child,
@@ -23,6 +26,7 @@ class OverlayModal extends StatefulWidget {
     required this.animationDuration,
     required this.onDismiss,
     this.alignment = ModalAlignment.center,
+    this.confirmDismiss,
   });
 
   @override
@@ -74,7 +78,12 @@ class _OverlayModalState extends State<OverlayModal>
 
   void _dismiss() async {
     if (_isDismissing) return;
-    setState(() => _isDismissing = true);
+    _isDismissing =
+        true; // also while asking, so a second tap doesn't ask twice
+    final keep = await widget.confirmDismiss?.call() == false;
+    if (!mounted) return;
+    setState(() => _isDismissing = !keep);
+    if (keep) return;
     await _animationController.reverse();
     widget.onDismiss();
   }

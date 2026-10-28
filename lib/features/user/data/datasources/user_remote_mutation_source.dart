@@ -20,6 +20,10 @@ class UserRemoteMutationSource implements IRemoteMutationSource {
         await _remoteDataSource.updateUserProfile(
             entityId, jsonDecode(payloadJson) as Map<String, dynamic>);
         return null;
+      case 'updatePatient':
+        await _remoteDataSource
+            .updatePatient(jsonDecode(payloadJson) as Map<String, dynamic>);
+        return null;
       default:
         throw UnimplementedError('Unknown action $action for user_profile');
     }

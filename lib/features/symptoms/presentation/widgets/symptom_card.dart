@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
-/// One symptom; long text expands on tap.
+/// One symptom and when it was reported; long text expands on tap.
 class SymptomCard extends StatefulWidget {
   final String content;
+  final String time;
 
   const SymptomCard({
     super.key,
     required this.content,
+    required this.time,
   });
 
   @override
@@ -88,6 +90,8 @@ class _SymptomCardState extends State<SymptomCard> {
                       ],
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  AppText.labelSmall(widget.time, color: AppColors.slate400),
                 ],
               ),
             ),

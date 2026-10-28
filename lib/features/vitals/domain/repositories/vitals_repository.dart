@@ -13,6 +13,6 @@ abstract class VitalsRepository {
   /// Replaces the phone's readings with the server's, keeping unsent ones.
   AsyncResult<void> refresh();
 
-  /// Checks and saves a reading, sending it now or queueing it while offline.
-  AsyncResult<void> saveReading(ReadingForm form);
+  /// Checks and saves a reading, sending it now or queueing it while offline; gives its grade.
+  AsyncResult<VitalSeverity> saveReading(ReadingForm form);
 }

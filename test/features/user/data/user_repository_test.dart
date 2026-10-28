@@ -28,6 +28,7 @@ void main() {
     db = testDb();
     remote = MockRemote();
     when(() => remote.updateUserProfile(any(), any())).thenAnswer((_) async {});
+    when(() => remote.updatePatient(any())).thenAnswer((_) async {});
     connectivity = FakeConnectivity();
     repo = UserRepositoryImpl(
         remoteDataSource: remote,
@@ -88,6 +89,36 @@ void main() {
 
       expect(result, left<AppFailure, void>(const UnauthorizedFailure()));
       expect(await queued(), 1);
+    });
+  });
+
+  group('updatePatientProfile', () {
+    const edit = ProfileChanges(
+        firstName: 'Mary Ann', lastName: 'Smith', gender: 'Female');
+
+    test('updates Firestore and the clinic record with both name parts',
+        () async {
+      await repo.updatePatientProfile(uid, edit);
+
+      verify(() => remote.updateUserProfile(uid, any())).called(1);
+      verify(() => remote.updatePatient({
+            'firstname': 'Mary Ann',
+            'lastname': 'Smith',
+            'gender': 'female'
+          })).called(1);
+    });
+
+    test('offline, queues both so they replay later', () async {
+      connectivity.online = false;
+
+      final result = await repo.updatePatientProfile(uid, edit);
+
+      expect(result.isRight(), isTrue);
+      final actions = [
+        for (final m in await db.pendingMutationsDao.getAllPendingMutations())
+          m.action
+      ];
+      expect(actions, unorderedEquals(['updateUserProfile', 'updatePatient']));
     });
   });
 

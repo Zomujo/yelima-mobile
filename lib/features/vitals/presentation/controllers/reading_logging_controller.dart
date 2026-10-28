@@ -93,8 +93,8 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
         hasChanged: true);
   }
 
-  /// Saves the reading.
-  AsyncResult<void> saveReading() async {
+  /// Saves the reading and gives its grade.
+  AsyncResult<VitalSeverity> saveReading() async {
     state = state.copyWith(isSaving: true);
     final result = await _repository.saveReading(ReadingForm(
       kind: state.kind,

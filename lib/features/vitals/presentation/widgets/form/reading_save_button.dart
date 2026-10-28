@@ -6,7 +6,9 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
 import '../../../../../shared/widgets/layout/app_button.dart';
 import '../../controllers/reading_logging_controller.dart';
+import '../../health_warning.dart';
 import '../../vital_failure_message.dart';
+import 'health_warning_modal.dart';
 
 /// Saves the reading and says whether it worked.
 class ReadingSaveButton extends StatelessWidget {
@@ -15,12 +17,16 @@ class ReadingSaveButton extends StatelessWidget {
   Future<void> _save(
       BuildContext context, ReadingLoggingController controller) async {
     final l10n = context.l10n;
+    final kind = controller.state.kind;
     final result = await controller.saveReading();
     if (!context.mounted) return;
     result.fold(
       (f) =>
           AppSnackBar.showError(context, message: f.vitalMessage(l10n) ?? ''),
-      (_) => AppSnackBar.showSuccess(context, message: l10n.readingSaved),
+      (grade) => switch (healthWarning(kind, grade, l10n)) {
+        final warning? => HealthWarningModal.show(context, warning),
+        null => AppSnackBar.showSuccess(context, message: l10n.readingSaved),
+      },
     );
   }
 

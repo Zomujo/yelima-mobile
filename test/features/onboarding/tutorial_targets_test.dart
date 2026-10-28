@@ -15,7 +15,8 @@ void main() {
         .listSync(recursive: true)
         .whereType<File>()
         .where((f) =>
-            f.path.endsWith('.dart') && !f.path.contains('app_tutorial_service'))
+            f.path.endsWith('.dart') &&
+            !f.path.contains('app_tutorial_service'))
         .map((f) => f.readAsStringSync())
         .join('\n');
 

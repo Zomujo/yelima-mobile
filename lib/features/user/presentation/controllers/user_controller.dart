@@ -118,13 +118,15 @@ class UserController extends ChangeNotifier with SafeNotifier {
         registrationStatus: _reached(RegistrationStatus.facilitySelection),
       ));
 
-  /// Saves a profile edit; the registration status is never touched.
+  /// Saves a profile edit, also for the clinic; the registration status is never touched.
   AsyncResult<void> updateName(
           {required String firstName,
           required String lastName,
           String? gender}) =>
-      _save(ProfileChanges(
-          firstName: firstName, lastName: lastName, gender: gender));
+      _save(
+          ProfileChanges(
+              firstName: firstName, lastName: lastName, gender: gender),
+          patient: true);
 
   /// Records that a tutorial was seen.
   Future<void> markTutorialCompleted(String tutorialId) async {
@@ -150,10 +152,13 @@ class UserController extends ChangeNotifier with SafeNotifier {
       (userEntity?.registrationStatus ?? RegistrationStatus.personalDetails)
           .atLeast(step);
 
-  AsyncResult<void> _save(ProfileChanges changes) async {
+  AsyncResult<void> _save(ProfileChanges changes,
+      {bool patient = false}) async {
     final user = _user;
     if (user == null) return left(const UnauthorizedFailure());
-    final result = await _repository.updateProfile(user.uid, changes);
+    final result = await (patient
+        ? _repository.updatePatientProfile(user.uid, changes)
+        : _repository.updateProfile(user.uid, changes));
     if (result.isRight()) {
       final current =
           userEntity ?? UserEntity(id: user.uid, email: user.email ?? '');

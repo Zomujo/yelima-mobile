@@ -45,10 +45,22 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
-  // Medication Logs
-  Future<void> saveMedicationLogs(List<MedicationLog> logs) async {
-    await batch((batch) {
-      batch.insertAll(medicationLogs, logs, mode: InsertMode.insertOrReplace);
+  /// Replaces a medication's stored days in [month] with [logs].
+  ///
+  /// By day, not by id: the server gives some days a new id on every call.
+  Future<void> replaceMonthLogs(
+      String medicationId, DateTime month, List<MedicationLog> logs) async {
+    final start = DateTime.utc(month.year, month.month);
+    final end = DateTime.utc(month.year, month.month + 1);
+    await transaction(() async {
+      await (delete(medicationLogs)
+            ..where((t) =>
+                t.medicationId.equals(medicationId) &
+                t.takenAt.isBiggerOrEqualValue(start) &
+                t.takenAt.isSmallerThanValue(end)))
+          .go();
+      await batch((batch) => batch.insertAll(medicationLogs, logs,
+          mode: InsertMode.insertOrReplace));
     });
   }
 

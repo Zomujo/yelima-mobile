@@ -122,20 +122,23 @@ class _AdherenceCalendarState extends State<AdherenceCalendar> {
                 ),
               ),
             ),
-            Row(
-              children: [
-                AppText.labelMedium(
-                  '${widget.history.adherenceRate.toStringAsFixed(0)}%',
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFF59E0B), // Orange-ish adherence color
-                ),
-                const SizedBox(width: 4),
-                AppText.labelMedium(
-                  'adherence',
-                  color: Colors.grey.shade500,
-                ),
-              ],
-            ),
+            // The server sends 0 when nothing is settled yet; that's no data, not 0 %.
+            if (widget.history.logs.any((l) => l.taken != null))
+              Row(
+                children: [
+                  AppText.labelMedium(
+                    '${widget.history.adherenceRate.toStringAsFixed(0)}%',
+                    fontWeight: FontWeight.bold,
+                    color:
+                        const Color(0xFFF59E0B), // Orange-ish adherence color
+                  ),
+                  const SizedBox(width: 4),
+                  AppText.labelMedium(
+                    'adherence',
+                    color: Colors.grey.shade500,
+                  ),
+                ],
+              ),
           ],
         ),
         const SizedBox(height: 16),

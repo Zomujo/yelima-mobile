@@ -17,6 +17,9 @@ abstract class UserRepository {
   /// Saves [changes] here at once and syncs them, queueing them while offline.
   AsyncResult<void> updateProfile(String uid, ProfileChanges changes);
 
+  /// Like [updateProfile], and also updates the clinic's patient record.
+  AsyncResult<void> updatePatientProfile(String uid, ProfileChanges changes);
+
   /// Registers the patient with [facilityId]; returns the completed profile.
   AsyncResult<UserEntity> completeOnboarding(
       UserEntity profile, String facilityId);

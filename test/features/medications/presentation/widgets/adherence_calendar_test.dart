@@ -103,4 +103,25 @@ void main() {
       expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
     });
   });
+
+  testWidgets('no settled day yet shows no percentage, not 0 %',
+      (tester) async {
+    await withClock(Clock.fixed(now), () async {
+      await tester.pumpApp(SingleChildScrollView(
+        child: AdherenceCalendar(
+          history: MedicationHistoryEntity(
+            medicationName: 'Metformin',
+            adherenceRate: 0,
+            logs: [
+              MedicationLogEntity(
+                  id: '1', taken: null, takenAt: DateTime(2026, 10, 26)),
+            ],
+          ),
+          onMonthChanged: (_) {},
+        ),
+      ));
+
+      expect(find.text('0%'), findsNothing);
+    });
+  });
 }

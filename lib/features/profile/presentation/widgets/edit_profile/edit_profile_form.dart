@@ -54,6 +54,10 @@ class _EditProfileFormState extends State<EditProfileForm> {
     super.dispose();
   }
 
+  /// Says why Save is off when a name is cleared.
+  String? _required(String? value) =>
+      (value ?? '').trim().isEmpty ? context.l10n.requiredField : null;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -63,12 +67,16 @@ class _EditProfileFormState extends State<EditProfileForm> {
           label: context.l10n.firstName,
           hintText: context.l10n.enterFirstName,
           controller: _firstNameController,
+          validator: _required,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
         const SizedBox(height: 24),
         AppFormField(
           label: context.l10n.lastName,
           hintText: context.l10n.enterLastName,
           controller: _lastNameController,
+          validator: _required,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
         const SizedBox(height: 24),
         AppText.labelLarge(

@@ -80,7 +80,7 @@ mixin _MedicationAdherence {
                 date: AppDateFormats.yyyyMM15.format(month));
             session.ensure(epoch);
             // Only settled days: a pending one shows as no data offline.
-            await _adherence.saveMedicationLogs([
+            await _adherence.replaceMonthLogs(medicationId, month, [
               for (final l in result.logs)
                 if (l.taken case final taken?)
                   MedicationLog(

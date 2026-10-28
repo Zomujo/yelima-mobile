@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import 'nice_step.dart';
+
 /// The scrollable line chart both trends are drawn with.
 class BaseVitalGraph extends StatefulWidget {
   final List<LineChartBarData> lineBarsData;
@@ -61,6 +63,10 @@ class _BaseVitalGraphState extends State<BaseVitalGraph> {
 
     final range = widget.maxY - widget.minY;
     final padding = range > 0 ? range * 0.3 : 15.0;
+    // Readings are never negative, so the axis stops at 0.
+    final minY = max(0.0, widget.minY - padding);
+    final maxY = widget.maxY + padding;
+    final step = niceStep((maxY - minY) / 4);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -72,13 +78,13 @@ class _BaseVitalGraphState extends State<BaseVitalGraph> {
           LineChartData(
             minX: -0.5,
             maxX: maxX,
-            minY: widget.minY - padding,
-            maxY: widget.maxY + padding,
+            minY: minY,
+            maxY: maxY,
             gridData: FlGridData(
               show: true,
               drawVerticalLine: true,
               drawHorizontalLine: true,
-              horizontalInterval: range > 0 ? range / 3 : 10,
+              horizontalInterval: step,
               getDrawingHorizontalLine: (value) {
                 if (value == widget.targetLineY) {
                   return FlLine(
@@ -106,7 +112,13 @@ class _BaseVitalGraphState extends State<BaseVitalGraph> {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 30,
+                  interval: step,
                   getTitlesWidget: (value, meta) {
+                    // The axis ends are off the grid and would be cut or crowd a neighbour.
+                    final steps = value / step;
+                    if ((steps - steps.round()).abs() > 1e-6) {
+                      return const SizedBox.shrink();
+                    }
                     return Text(
                       value.toInt().toString(),
                       style: const TextStyle(

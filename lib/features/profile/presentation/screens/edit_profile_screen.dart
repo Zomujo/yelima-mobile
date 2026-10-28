@@ -40,27 +40,20 @@ class _EditProfileView extends StatelessWidget {
         onBackPressed: () => context.pop(),
         backgroundColor: Colors.transparent,
       ),
+      // The button scrolls with the form, so the keyboard never hides a field behind it.
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                        child: UserAvatar(
-                            user: context.watch<UserController>().userEntity)),
-                    const SizedBox(height: 48),
-                    const EditProfileForm(),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Consumer<EditProfileController>(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                  child: UserAvatar(
+                      user: context.watch<UserController>().userEntity)),
+              const SizedBox(height: 48),
+              const EditProfileForm(),
+              const SizedBox(height: 32),
+              Consumer<EditProfileController>(
                 builder: (context, controller, child) {
                   return AppButton(
                     text: context.l10n.saveChanges,
@@ -78,8 +71,8 @@ class _EditProfileView extends StatelessWidget {
                   );
                 },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

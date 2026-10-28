@@ -71,8 +71,9 @@ class _ReadingHistorySectionState extends State<ReadingHistorySection> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final vital = displayVitals[index];
-                final date = vital.recordedAt ?? clock.now();
-                final dateStr = AppDateFormats.dayDateMonth.format(date);
+                final date = (vital.recordedAt ?? clock.now()).toLocal();
+                final dateStr = '${AppDateFormats.dayDateMonth.format(date)}'
+                    ' • ${AppDateFormats.timeShort.format(date)}';
                 final vitalName = vital.isBloodPressure
                     ? context.l10n.bpShort
                     : context.l10n.sugar;

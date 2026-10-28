@@ -4,11 +4,12 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/utils/failure_message.dart';
 import '../../controllers/medicine_details_form_controller.dart';
+import 'delete_medicine_button.dart';
 import 'medicine_details_header_card.dart';
 import 'medicine_details_form_fields.dart';
 import 'medicine_details_schedule_section.dart';
 
-/// The details screen content: history card, fields and schedule.
+/// The details screen content: history card, fields, schedule and delete.
 class MedicineDetailsBody extends StatelessWidget {
   final MedicineDetailsFormController controller;
 
@@ -44,6 +45,10 @@ class MedicineDetailsBody extends StatelessWidget {
           MedicineDetailsFormFields(controller: controller),
           const SizedBox(height: 32),
           MedicineDetailsScheduleSection(controller: controller),
+          if (!controller.isEditing) ...[
+            const SizedBox(height: 40),
+            DeleteMedicineButton(controller: controller),
+          ],
         ],
       ),
     );
