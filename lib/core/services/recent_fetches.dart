@@ -34,10 +34,10 @@ class RecentFetches implements SessionLifecycleHandler {
   final _running = <String, Future<Object?>>{};
   late final List<StreamSubscription<Object?>> _subs;
 
-  /// Whether [key] was downloaded within the last [window].
+  /// Whether [key] was downloaded within the last [window], on the same day.
   bool isFresh(String key) {
-    final at = _fetchedAt[key];
-    return at != null && clock.now().difference(at) < window;
+    final at = _fetchedAt[key], now = clock.now();
+    return at != null && now.difference(at) < window && now.day == at.day;
   }
 
   /// The answer saved with [key], while it is still fresh.

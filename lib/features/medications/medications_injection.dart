@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/services/day_changes.dart';
 import '../../core/services/recent_fetches.dart';
 
 import '../../core/controllers/locale_controller.dart';
@@ -38,7 +39,8 @@ void initMedications(GetIt sl) {
       MedicationAlarmSyncService(sl(), sl(), sl<LocaleController>()),
       priority: 80);
 
-  sl.registerFactory(() => MedicationController(repository: sl()));
+  sl.registerFactory(() =>
+      MedicationController(repository: sl(), newDays: sl<DayChanges>().stream));
   sl.registerFactory(() => AllMedicinesController(repository: sl()));
 
   // Registered last: the source needs this feature's datasources above.

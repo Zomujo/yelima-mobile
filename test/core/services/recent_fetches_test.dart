@@ -21,6 +21,17 @@ void main() {
         isFalse);
   });
 
+  test('a download from before midnight is stale after it', () {
+    final recent = RecentFetches();
+    final lateNight = DateTime(2026, 11, 1, 23, 59, 30);
+    withClock(Clock.fixed(lateNight), () => recent.markFetched('adherence'));
+
+    expect(
+        withClock(Clock.fixed(DateTime(2026, 11, 2, 0, 0, 10)),
+            () => recent.isFresh('adherence')),
+        isFalse);
+  });
+
   test('the saved answer comes back only while fresh', () {
     final recent = RecentFetches()..markFetched('page', 'rows');
 

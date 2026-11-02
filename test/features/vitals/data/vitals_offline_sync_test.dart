@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:yelima/core/api/i_remote_mutation.dart';
 import 'package:yelima/core/db/app_database.dart';
-import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/core/services/recent_fetches.dart';
 import 'package:yelima/core/services/session_epoch.dart';
@@ -39,11 +38,13 @@ void main() {
         recordedAt: DateTime(2026, 10, 23, 8),
       );
 
-  VitalsRepositoryImpl repo({bool online = true}) => VitalsRepositoryImpl(
+  VitalsRepositoryImpl repo({bool online = true, FakeSync? sync}) =>
+      VitalsRepositoryImpl(
         remoteDataSource: VitalsRemoteDataSource(apiClient: api.client),
         connectivityService: FakeConnectivity(online: online),
         session: SessionEpoch(),
         db: db,
+        mutationSyncManager: sync ?? FakeSync(),
       );
 
   Future<void> queueReading(String id) => db.pendingMutationsDao.queueMutation(
@@ -89,6 +90,7 @@ void main() {
       session: SessionEpoch(),
       db: db,
       recent: recent,
+      mutationSyncManager: FakeSync(),
     );
 
     await vitals.refresh();
@@ -236,36 +238,22 @@ void main() {
       expect(api.requests, isEmpty);
     });
 
-    test('online, sends it and keeps it without queueing', () async {
-      api.on('POST', logsPath, FakeReply.ok('srv-1', status: 201));
+    test('online too, it is stored and queued at once, then a sync starts',
+        () async {
+      final sync = FakeSync();
 
-      await repo().saveReading(bp(150, 95));
+      await repo(sync: sync).saveReading(bp(150, 95));
 
-      expect(await db.select(db.pendingMutations).get(), isEmpty);
       expect((await repo().watchReadings().first).length, 1);
+      expect((await db.select(db.pendingMutations).get()).length, 1);
+      expect(api.requests, isEmpty, reason: 'Save never waits on the network');
+      expect(sync.syncs, 1);
     });
 
     test('gives the grade, so a crisis can be shown at once', () async {
-      api.on('POST', logsPath, FakeReply.ok('srv-1', status: 201));
+      final result = await repo().saveReading(bp(211, 131));
 
-      final online = await repo().saveReading(bp(211, 131));
-      final offline = await repo(online: false).saveReading(bp(118, 76));
-
-      expect(online.getRight().toNullable(), VitalSeverity.critical);
-      expect(offline.getRight().toNullable(), VitalSeverity.normal);
-    });
-
-    test(
-        'a server error queues it, with the same idempotency key for the retry',
-        () async {
-      api.on('POST', logsPath, FakeReply.error(500));
-
-      final result = await repo().saveReading(bp(150, 95));
-
-      expect(result.isRight(), isTrue);
-      final queued = (await db.select(db.pendingMutations).get()).single;
-      expect(api.sent('POST', logsPath).single.headers['Idempotency-Key'],
-          queued.entityId);
+      expect(result.getRight().toNullable(), VitalSeverity.critical);
     });
 
     test('VIT-EC-11: an impossible reading is refused and not stored',
@@ -275,16 +263,6 @@ void main() {
       expect(result.getLeft().toNullable(),
           const ReadingFailure(ReadingError.systolicNotAboveDiastolic));
       expect(await storedIds(), isEmpty);
-    });
-
-    test('a lost login is reported, with the reading kept and queued',
-        () async {
-      api.on('POST', logsPath, FakeReply.error(401));
-
-      final result = await repo().saveReading(bp(150, 95));
-
-      expect(result.getLeft().toNullable(), const UnauthorizedFailure());
-      expect((await db.select(db.pendingMutations).get()).length, 1);
     });
   });
 }

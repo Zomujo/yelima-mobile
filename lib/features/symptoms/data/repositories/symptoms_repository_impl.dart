@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show Value;
 import '../../../../core/db/app_database.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/services/recent_fetches.dart';
 import '../../../../core/services/session_epoch.dart';
@@ -18,6 +19,7 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
     required this.connectivityService,
     required this.db,
     required this.session,
+    required this.mutationSyncManager,
     RecentFetches? recent,
   }) : recent = recent ?? RecentFetches(window: Duration.zero);
 
@@ -25,6 +27,7 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
   final ConnectivityService connectivityService;
   final AppDatabase db;
   final SessionEpoch session;
+  final MutationSyncManager mutationSyncManager;
 
   /// Skips a download made in the last minute.
   final RecentFetches recent;
@@ -67,25 +70,12 @@ class SymptomsRepositoryImpl implements SymptomsRepository {
         final tempId = 'temp_${now.millisecondsSinceEpoch}';
         final row = _row(tempId, description, now);
 
-        if (await connectivityService.isConnected) {
-          // Saved first so the list updates at once while the request runs.
-          await db.symptomsDao.insertOrUpdateSymptom(row);
-          try {
-            final id = await remoteDataSource.createSymptom(description,
-                onsetDate: now, idempotencyKey: tempId);
-            await db.symptomsDao.updateSymptomId(tempId, id);
-            return id;
-          } catch (_) {
-            // Reachable but the request failed: retry later.
-            await _queue(tempId, description, now);
-            return tempId;
-          }
-        }
         // Saved and queued in one step, so a crash can't keep one without the other.
         await db.transaction(() async {
           await db.symptomsDao.insertOrUpdateSymptom(row);
           await _queue(tempId, description, now);
         });
+        mutationSyncManager.triggerSync();
         return tempId;
       });
 

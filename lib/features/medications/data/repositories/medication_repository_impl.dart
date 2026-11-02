@@ -16,6 +16,7 @@ import '../../../../core/services/session_epoch.dart';
 import '../../../../core/utils/app_date_formats.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/medication_adherence.dart';
+import '../../domain/week_adherence.dart';
 import '../../domain/entities/medication_count.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_form.dart';
@@ -76,8 +77,11 @@ class MedicationRepositoryImpl
   @override
   Stream<MedicationCount> watchCounts() =>
       _meds.watchAllMedications().map((rows) {
-        int count(MedicationSection s) =>
-            rows.where((m) => m.section == s.key).length;
+        final now = clock.now();
+        int count(MedicationSection s) => rows
+            .where((m) =>
+                m.section == s.key && MedicationMapper.isDueToday(m, now))
+            .length;
         return MedicationCount(
             morning: count(MedicationSection.morning),
             afternoon: count(MedicationSection.afternoon),
@@ -86,9 +90,18 @@ class MedicationRepositoryImpl
 
   @override
   Stream<List<MedicationEntity>> watchSection(MedicationSection section) =>
-      _meds
-          .watchMedicationsBySection(section.key)
-          .map((rows) => rows.map(MedicationMapper.toEntity).toList());
+      _meds.watchMedicationsBySection(section.key).map((rows) => [
+            for (final m in rows)
+              if (MedicationMapper.isDueToday(m, clock.now()))
+                MedicationMapper.toEntity(m)
+          ]..sort(_byTime));
+
+  /// Earliest dose first, then by name, so the list keeps one order.
+  static int _byTime(MedicationEntity a, MedicationEntity b) {
+    int minutes(DateTime t) => t.hour * 60 + t.minute;
+    final byTime = minutes(a.toBeTakenAt).compareTo(minutes(b.toBeTakenAt));
+    return byTime != 0 ? byTime : a.name.compareTo(b.name);
+  }
 
   @override
   AsyncResult<void> confirmDose(
@@ -100,6 +113,8 @@ class MedicationRepositoryImpl
         final row = (await _meds.getMedicationById(medicationId))
             .where((m) => m.section == section.key)
             .firstOrNull;
+        // Online the server's month rate arrives in a moment; a guess would flicker.
+        final estimate = !await connectivityService.isConnected;
         // The local "taken" state and its queued sync are saved together or not at all.
         await db.transaction(() async {
           if (row != null) {
@@ -109,9 +124,11 @@ class MedicationRepositoryImpl
           await _queue(medicationId, 'confirmMedication',
               {'section': section.key, 'date': day});
           await db.adherenceDao.markMedicationLogAsTakenOffline(
-              const Uuid().v4(), medicationId, now);
-          await db.adherenceDao.markGlobalDayAsTakenOffline(day);
+              const Uuid().v4(), medicationId, now,
+              estimateRate: estimate);
         });
+        // The week counts the dose at once; the server's figure replaces it.
+        await _workOutHere();
         mutationSyncManager.triggerSync();
       });
 
@@ -126,6 +143,12 @@ class MedicationRepositoryImpl
       });
 
   @override
+  Future<MedicationDetailModel?> getCachedMedication(String id) async {
+    final rows = await _meds.getMedicationById(id);
+    return rows.isEmpty ? null : MedicationMapper.detailsOf(rows);
+  }
+
+  @override
   AsyncResult<MedicationDetailModel> getMedicationById(String id) =>
       guard(() => recent.share('medication:$id', () async {
             final key = 'medication:$id';
@@ -133,9 +156,7 @@ class MedicationRepositoryImpl
               return fresh;
             }
             final rows = await _meds.getMedicationById(id);
-            final local = rows.isEmpty
-                ? null
-                : MedicationMapper.toDetailModel(rows.first);
+            final local = await getCachedMedication(id);
             if (_isLocalId(id) ||
                 await db.pendingMutationsDao.hasWaiting(entityId: id) ||
                 !await connectivityService.isConnected) {
@@ -150,6 +171,8 @@ class MedicationRepositoryImpl
               session.ensure(epoch);
               for (final row in rows) {
                 await _meds.updateMedication(row.copyWith(
+                  // The local time it was added wins: the server's is its first dose.
+                  startDate: Value(row.startDate ?? remote.startDate),
                   morningJson:
                       Value(MedicationMapper.encodeSchedule(remote.morning)),
                   afternoonJson:

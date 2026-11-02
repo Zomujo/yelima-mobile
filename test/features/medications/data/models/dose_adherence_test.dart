@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/core/db/app_database.dart';
 import 'package:yelima/features/medications/data/models/medication_adherence_model.dart';
@@ -62,46 +63,48 @@ void main() {
     expect(history.logs.map((l) => l.taken), [null, false]);
   });
 
-  group('a dose confirmed offline', () {
+  group('saved days', () {
     late AppDatabase db;
-    setUp(() async {
-      db = testDb();
-      await db.adherenceDao.saveGlobalAdherence('global_weekly', 50, [
-        const AdherenceGlobalDay(
-            dateTakenStr: '2026-10-22T00:00:00.000',
-            taken: null,
-            label: '',
-            type: 'global_weekly',
-            takenDoses: 1,
-            scheduledDoses: 2),
-        const AdherenceGlobalDay(
-            dateTakenStr: '2026-10-21T00:00:00.000',
-            taken: true,
-            label: '',
-            type: 'global_weekly',
-            takenDoses: 2,
-            scheduledDoses: 2),
-      ]);
-    });
+    setUp(() => db = testDb());
     tearDown(() => db.close());
 
-    test('adds to the day, which is done once all its doses are', () async {
-      await db.adherenceDao.markGlobalDayAsTakenOffline('2026-10-22');
+    AdherenceGlobalDay day(DateTime date) => AdherenceGlobalDay(
+        dateTakenStr: date.toIso8601String(),
+        taken: true,
+        label: '',
+        type: 'global_weekly',
+        takenDoses: 1,
+        scheduledDoses: 1);
+    Future<List<String>> dates() async => [
+          for (final d in await db.adherenceDao.getGlobalAdherenceDays())
+            d.dateTakenStr.substring(0, 10)
+        ];
 
-      final day = (await db.adherenceDao.getGlobalAdherenceDays())
-          .firstWhere((d) => d.dateTakenStr.startsWith('2026-10-22'));
-      expect((day.taken, day.takenDoses), (true, 2));
-      expect(
-          (await db.adherenceDao.getGlobalAdherenceRate('global_weekly'))?.rate,
-          100);
+    test('a new week is merged in, so last week stays for the 7-day rate',
+        () async {
+      await withClock(
+          Clock.fixed(DateTime(2026, 11, 1)),
+          () => db.adherenceDao.saveGlobalAdherence(
+              'global_weekly', 85, [day(DateTime(2026, 11, 1))]));
+      await withClock(
+          Clock.fixed(DateTime(2026, 11, 2)),
+          () => db.adherenceDao.saveGlobalAdherence(
+              'global_weekly', 82, [day(DateTime(2026, 11, 2))]));
+
+      expect(await dates(), ['2026-11-01', '2026-11-02']);
     });
 
-    test('never counts more doses than were scheduled', () async {
-      await db.adherenceDao.markGlobalDayAsTakenOffline('2026-10-21');
+    test('days older than two weeks are dropped', () async {
+      await withClock(
+          Clock.fixed(DateTime(2026, 11, 1)),
+          () => db.adherenceDao.saveGlobalAdherence(
+              'global_weekly', 85, [day(DateTime(2026, 11, 1))]));
+      await withClock(
+          Clock.fixed(DateTime(2026, 11, 20)),
+          () => db.adherenceDao.saveGlobalAdherence(
+              'global_weekly', 90, [day(DateTime(2026, 11, 20))]));
 
-      final day = (await db.adherenceDao.getGlobalAdherenceDays())
-          .firstWhere((d) => d.dateTakenStr.startsWith('2026-10-21'));
-      expect(day.takenDoses, 2);
+      expect(await dates(), ['2026-11-20']);
     });
   });
 }

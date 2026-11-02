@@ -2,13 +2,23 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:yelima/core/db/app_database.dart';
+import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/core/services/connectivity_service.dart';
 
 /// Fresh app database held in memory (no SQLCipher), one per test.
 AppDatabase testDb() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   return AppDatabase(executor: NativeDatabase.memory());
+}
+
+/// Sync manager that only counts how often a sync was started.
+class FakeSync extends Fake implements MutationSyncManager {
+  int syncs = 0;
+
+  @override
+  Future<void> triggerSync() async => syncs++;
 }
 
 /// Connectivity you switch on and off from the test.

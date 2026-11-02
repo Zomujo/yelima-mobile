@@ -17,6 +17,7 @@ import 'features/medications/domain/repositories/medication_repository.dart';
 import 'features/appointment/presentation/controllers/appointment_controller.dart';
 import 'core/managers/audio_player_manager.dart';
 import 'core/managers/mutation_sync_manager.dart';
+import 'core/services/day_changes.dart';
 import 'core/services/recent_fetches.dart';
 import 'core/services/shared_prefs_service.dart';
 import 'core/services/voice_recording_service.dart';
@@ -59,6 +60,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       // Coming back to the app always shows fresh data.
       sl<RecentFetches>().clear();
+      sl<DayChanges>().check();
       sl<MutationSyncManager>().triggerSync();
     }
   }

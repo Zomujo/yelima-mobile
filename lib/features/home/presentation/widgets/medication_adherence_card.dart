@@ -4,7 +4,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
-/// This week's medication adherence on home.
+/// Medication adherence over the last 7 days, on home.
 class MedicationAdherenceCard extends StatelessWidget {
   final double percentage;
   final String message;
@@ -33,10 +33,18 @@ class MedicationAdherenceCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              AppText.bodyMedium(
-                context.l10n.medicationAdherence,
-                fontWeight: FontWeight.w500,
-                color: AppColors.slate800,
+              // The server's rate covers today and the 6 days before.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText.bodyMedium(
+                    context.l10n.medicationAdherence,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.slate800,
+                  ),
+                  AppText.labelSmall(context.l10n.last7Days,
+                      color: AppColors.slate400),
+                ],
               ),
               if (isLoading)
                 AppShimmer.box(width: 48, height: 24)

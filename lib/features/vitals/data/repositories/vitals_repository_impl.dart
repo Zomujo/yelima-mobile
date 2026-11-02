@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/db/app_database.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/services/recent_fetches.dart';
 import '../../../../core/services/session_epoch.dart';
@@ -22,6 +23,7 @@ class VitalsRepositoryImpl implements VitalsRepository {
     required this.connectivityService,
     required this.session,
     required this.db,
+    required this.mutationSyncManager,
     this.severityRules = _bundled,
     RecentFetches? recent,
   }) : recent = recent ?? RecentFetches(window: Duration.zero);
@@ -33,6 +35,7 @@ class VitalsRepositoryImpl implements VitalsRepository {
   final ConnectivityService connectivityService;
   final SessionEpoch session;
   final AppDatabase db;
+  final MutationSyncManager mutationSyncManager;
 
   /// The grading table in use; the server's copy once fetched.
   final SeverityRules Function() severityRules;
@@ -88,17 +91,6 @@ class VitalsRepositoryImpl implements VitalsRepository {
               (model.recordedAt ?? clock.now()).toUtc().toIso8601String(),
         };
 
-        Object? error;
-        if (await connectivityService.isConnected) {
-          try {
-            await remoteDataSource.saveVitalReading(body,
-                idempotencyKey: model.id);
-            await db.vitalsDao.insertVitals([model.toDrift()]);
-            return reading.grade;
-          } catch (e) {
-            error = e;
-          }
-        }
         // Saved and queued in one step, so a crash can't keep one without the other.
         await db.transaction(() async {
           await db.vitalsDao.insertVitals([model.toDrift()]);
@@ -108,10 +100,7 @@ class VitalsRepositoryImpl implements VitalsRepository {
               action: 'saveVitalReading',
               payload: body);
         });
-        // Queued either way; only a lost login is reported.
-        if (error != null && AppFailure.from(error) is UnauthorizedFailure) {
-          throw error;
-        }
+        mutationSyncManager.triggerSync();
         return reading.grade;
       });
 }

@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yelima/core/db/app_database.dart';
@@ -77,6 +78,13 @@ void main() {
       expect(rows.every((r) => r.afternoonJson == null), isTrue);
     });
 
+    test('starts today, so its calendar has no earlier months', () {
+      final rows = atToday(() => MedicationMapper.rowsFor(
+          'local-1', form({MedicationSection.evening: at(20)})));
+
+      expect(MedicationMapper.toDetailModel(rows.single).startDate, today);
+    });
+
     test('MED-EC-38: no schedule produces no rows', () {
       expect(MedicationMapper.rowsFor('l', form({})), isEmpty);
     });
@@ -100,6 +108,17 @@ void main() {
       expect(rows.first.notes, 'after food');
     });
 
+    test('keeps the original start date', () {
+      final start = DateTime(2026, 8, 1);
+      final rows = atToday(() => MedicationMapper.rowsFor(
+            'm1',
+            form({MedicationSection.morning: at(7)}),
+            previous: [row('MORNING').copyWith(startDate: Value(start))],
+          ));
+
+      expect(rows.single.startDate, start);
+    });
+
     test('a newly added section starts untaken', () {
       final rows = atToday(() => MedicationMapper.rowsFor(
             'm1',
@@ -109,6 +128,50 @@ void main() {
 
       expect(rows.single.section, 'AFTERNOON');
       expect(rows.single.taken, isFalse);
+    });
+
+    test('a dose added after its time today waits for tomorrow', () {
+      final start = DateTime(2026, 8, 1);
+      final rows = atToday(() => MedicationMapper.rowsFor(
+            'm1',
+            form({
+              MedicationSection.morning: at(7),
+              MedicationSection.afternoon: at(8),
+            }),
+            previous: [row('MORNING').copyWith(startDate: Value(start))],
+          ));
+      final added = rows.last;
+
+      expect(added.startDate, today);
+      expect(MedicationMapper.isDueToday(added, today), isFalse);
+      // The details still start with the medicine's first dose.
+      expect(
+          MedicationMapper.detailsOf(rows.reversed.toList()).startDate, start);
+    });
+  });
+
+  group('isDueToday', () {
+    final now = DateTime(2026, 10, 28, 22, 30);
+    Medication dose(int hour, DateTime? start) => row('EVENING').copyWith(
+        toBeTakenAt: Value(DateTime(2026, 10, 28, hour)),
+        startDate: Value(start));
+
+    test('a dose already past when the medicine was added today is hidden', () {
+      final added = DateTime(2026, 10, 28, 22, 21);
+
+      expect(MedicationMapper.isDueToday(dose(8, added), now), isFalse);
+      expect(MedicationMapper.isDueToday(dose(20, added), now), isFalse);
+      expect(MedicationMapper.isDueToday(dose(23, added), now), isTrue);
+    });
+
+    test('from the next day every dose is due', () {
+      final added = DateTime(2026, 10, 27, 22, 21);
+
+      expect(MedicationMapper.isDueToday(dose(8, added), now), isTrue);
+    });
+
+    test('a medicine with no known start shows every dose', () {
+      expect(MedicationMapper.isDueToday(dose(8, null), now), isTrue);
     });
   });
 

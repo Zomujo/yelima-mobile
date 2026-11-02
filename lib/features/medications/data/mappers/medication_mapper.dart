@@ -37,9 +37,32 @@ abstract final class MedicationMapper {
         morning: decodeSchedule(med.morningJson),
         afternoon: decodeSchedule(med.afternoonJson),
         evening: decodeSchedule(med.eveningJson),
+        startDate: med.startDate,
         createdAt: med.toBeTakenAt ?? clock.now(),
         updatedAt: med.toBeTakenAt ?? clock.now(),
       );
+
+  /// A medicine's details from its rows; it started with its earliest dose.
+  static MedicationDetailModel detailsOf(List<Medication> rows) =>
+      toDetailModel(rows.reduce((a, b) => _startsBefore(b, a) ? b : a));
+
+  /// No start date means an older row, so it counts as the earliest.
+  static bool _startsBefore(Medication a, Medication b) => a.startDate == null
+      ? b.startDate != null
+      : b.startDate != null && a.startDate!.isBefore(b.startDate!);
+
+  /// False for a dose whose time had already passed when it was added today,
+  /// so it can't be confirmed and raise adherence.
+  static bool isDueToday(Medication med, DateTime now) {
+    final start = med.startDate?.toLocal();
+    final at = med.toBeTakenAt?.toLocal();
+    if (start == null || at == null) return true;
+    final addedToday = start.year == now.year &&
+        start.month == now.month &&
+        start.day == now.day;
+    return !addedToday ||
+        at.hour * 60 + at.minute >= start.hour * 60 + start.minute;
+  }
 
   /// The server request to create [form].
   static CreateMedicationModel toCreateModel(MedicationForm form) =>
@@ -88,6 +111,8 @@ abstract final class MedicationMapper {
             DateTime(now.year, now.month, now.day, dose.hour, dose.minute),
         taken: before?.taken ?? false,
         takenOn: before?.takenOn,
+        // A medicine or dose added here starts now, so a time already past waits for tomorrow.
+        startDate: before == null ? now : before.startDate,
         section: section.key,
         morningJson: json[MedicationSection.morning],
         afternoonJson: json[MedicationSection.afternoon],
@@ -144,6 +169,7 @@ abstract final class MedicationMapper {
       // The server's "taken" is for today.
       takenOn: remote.taken ? (existing?.takenOn ?? now) : null,
       section: section.key,
+      startDate: existing?.startDate,
       notes: existing?.notes,
       morningJson: existing?.morningJson,
       afternoonJson: existing?.afternoonJson,

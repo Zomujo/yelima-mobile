@@ -19,6 +19,7 @@ void initSymptoms(GetIt sl) {
         db: sl(),
         session: sl(),
         recent: sl<RecentFetches>(),
+        mutationSyncManager: sl(),
       ));
   sl.registerFactory(() => SymptomsController(repository: sl()));
 

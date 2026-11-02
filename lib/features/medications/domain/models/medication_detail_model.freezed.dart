@@ -24,7 +24,7 @@ mixin _$MedicationDetailModel {
   DosingScheduleModel? get afternoon;
   DosingScheduleModel? get evening;
 
-  /// The first scheduled dose, from the server only; null in rows built offline.
+  /// The first scheduled dose; null for medicines cached before it was stored.
   DateTime? get startDate;
   DateTime get createdAt;
   DateTime get updatedAt;
@@ -239,7 +239,7 @@ class _MedicationDetailModel implements MedicationDetailModel {
   @override
   final DosingScheduleModel? evening;
 
-  /// The first scheduled dose, from the server only; null in rows built offline.
+  /// The first scheduled dose; null for medicines cached before it was stored.
   @override
   final DateTime? startDate;
   @override

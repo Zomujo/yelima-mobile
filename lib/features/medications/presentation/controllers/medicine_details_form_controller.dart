@@ -30,31 +30,44 @@ class MedicineDetailsFormController extends MedicationFormController {
   bool isLoading = true;
   bool isEditing = false;
   MedicationHistoryEntity? history;
-  bool isHistoryLoading = true;
   AppFailure? historyError;
+  DateTime? _month;
 
   @override
   String get name => detail?.name ?? '';
 
-  /// Loads the details and this month's history.
+  /// Shows the phone's copy at once, then the server's details and this month's history.
   Future<void> init() async {
     loadHistory(clock.now());
+    if (await _repository.getCachedMedication(medicationId)
+        case final cached?) {
+      _show(cached);
+    }
     final result = await _repository.getMedicationById(medicationId);
     isLoading = false;
-    result.fold((f) => error = f, (data) {
-      detail = data;
-      error = null;
-      load(data);
-    });
+    // A failed refresh keeps the phone's copy on screen.
+    result.fold((f) => error = detail == null ? f : null, _show);
     notifyListeners();
   }
 
-  /// Loads the dose history for [month].
+  void _show(MedicationDetailModel data) {
+    detail = data;
+    error = null;
+    isLoading = false;
+    if (!isEditing) load(data);
+    notifyListeners();
+  }
+
+  /// Shows [month]'s doses from the phone, then from the server.
   Future<void> loadHistory(DateTime month) async {
-    isHistoryLoading = true;
+    _month = month;
+    final cached = await _repository.getCachedHistory(medicationId, month);
+    if (_month != month) return;
+    history = cached;
     notifyListeners();
     final result = await _repository.getMedicationHistory(medicationId, month);
-    isHistoryLoading = false;
+    // A slower reply for a month no longer shown is dropped.
+    if (_month != month) return;
     result.fold((f) => historyError = f, (h) {
       history = h;
       historyError = null;

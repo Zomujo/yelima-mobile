@@ -14,7 +14,7 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
       : _repository = repository {
     _sub = _repository
         .watchSymptoms()
-        .listen((list) => state = SymptomsState(symptoms: list));
+        .listen((list) => state = state.copyWith(symptoms: list));
   }
 
   final SymptomsRepository _repository;
@@ -29,8 +29,11 @@ class SymptomsController extends ChangeNotifier with SafeNotifier {
   }
 
   /// Refreshes from the server (at most every 5 minutes unless [force]).
-  Future<void> fetchSymptoms({bool force = false}) =>
-      _repository.refresh(force: force);
+  Future<void> fetchSymptoms({bool force = false}) async {
+    state = state.copyWith(refreshing: true);
+    await _repository.refresh(force: force);
+    state = state.copyWith(refreshing: false);
+  }
 
   /// Reports a new symptom.
   AsyncResult<String> createSymptom(String description) =>

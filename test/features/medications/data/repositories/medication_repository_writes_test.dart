@@ -209,6 +209,78 @@ void main() {
         {'section': 'MORNING', 'date': '2026-10-23'});
   });
 
+  group('offline, the week is worked out on the phone', () {
+    final monday = DateTime(2026, 11, 2, 9);
+    Medication dose(String id, String section, int hour,
+            {bool taken = false}) =>
+        Medication(
+            id: id,
+            name: id,
+            dosage: '5mg',
+            section: section,
+            toBeTakenAt: DateTime(2026, 11, 2, hour),
+            taken: taken,
+            takenOn: taken ? DateTime(2026, 11, 2, 8, 5) : null,
+            startDate: DateTime(2026, 10, 1));
+
+    setUp(() async {
+      // Last week as the server sent it on Sunday.
+      await withClock(
+          Clock.fixed(DateTime(2026, 11, 1, 18)),
+          () => db.adherenceDao.saveGlobalAdherence('global_weekly', 85, [
+                for (final (d, taken, done, planned) in [
+                  (27, true, 2, 2),
+                  (28, true, 3, 3),
+                  (29, true, 7, 7),
+                  (30, true, 7, 7),
+                  (31, false, 4, 7),
+                ])
+                  AdherenceGlobalDay(
+                      dateTakenStr: DateTime(2026, 10, d).toIso8601String(),
+                      taken: taken,
+                      label: '',
+                      type: 'global_weekly',
+                      takenDoses: done,
+                      scheduledDoses: planned),
+                AdherenceGlobalDay(
+                    dateTakenStr: DateTime(2026, 11, 1).toIso8601String(),
+                    taken: null,
+                    label: '',
+                    type: 'global_weekly',
+                    takenDoses: 4,
+                    scheduledDoses: 7),
+              ]));
+      await db.medicationsDao.insertMedications([
+        dose('a', 'MORNING', 8, taken: true),
+        dose('b', 'EVENING', 20),
+      ]);
+    });
+
+    test('a new week shows this week, with the rate from the last 7 days',
+        () async {
+      final week = (await withClock(
+              Clock.fixed(monday), () => repoWith(db).getAdherence()))
+          .getOrElse((_) => throw StateError('no week'));
+
+      expect(week.rate, 82);
+      expect(week.days.map((d) => d.takenAt.day), [2, 3, 4, 5, 6, 7, 8]);
+      expect(
+          (week.days.first.takenDoses, week.days.first.scheduledDoses), (1, 2));
+      expect(week.days[1].scheduledDoses, 2, reason: "tomorrow's plan");
+    });
+
+    test('a dose confirmed counts in the week at once', () async {
+      await withClock(Clock.fixed(DateTime(2026, 11, 2, 20, 5)),
+          () => repoWith(db).confirmDose('b', MedicationSection.evening));
+
+      final week = await withClock(Clock.fixed(DateTime(2026, 11, 2, 20, 6)),
+          () => repoWith(db).getCachedAdherence());
+      expect(week.days.first.taken, isTrue);
+      expect(
+          (week.days.first.takenDoses, week.days.first.scheduledDoses), (2, 2));
+    });
+  });
+
   test(
       'a medicine opened again within a minute is not downloaded again, '
       'but is after the minute', () async {

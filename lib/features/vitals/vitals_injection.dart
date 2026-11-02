@@ -23,6 +23,7 @@ void initVitals(GetIt sl) {
         db: sl(),
         severityRules: () => rules.current,
         recent: sl<RecentFetches>(),
+        mutationSyncManager: sl(),
       ));
 
   // Registered last: the source needs this feature's datasources above.

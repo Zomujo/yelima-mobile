@@ -16,6 +16,7 @@ import 'managers/audio_player_manager.dart';
 import 'services/voice_recording_service.dart';
 import 'services/notification_service.dart';
 import 'services/monitoring_service.dart';
+import 'services/day_changes.dart';
 import 'services/recent_fetches.dart';
 import 'services/session_epoch.dart';
 import 'services/session_expiry.dart';
@@ -90,6 +91,8 @@ void initCore(GetIt sl) {
             .logDiscardedChanges(n, reason: 'other_user'))
         ..init()
         ..also((s) => sl<SessionLifecycleService>().register(s, priority: 80)));
+
+  sl.registerLazySingleton(DayChanges.new);
 
   sl.registerLazySingleton(() => RecentFetches(
         connectivity: sl<ConnectivityService>().onConnectivityChanged,

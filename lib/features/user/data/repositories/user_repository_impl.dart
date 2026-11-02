@@ -3,6 +3,7 @@ import 'package:clock/clock.dart';
 import '../../../../core/db/app_database.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/failures/guard.dart';
+import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/services/session_epoch.dart';
 import '../../domain/entities/profile_changes.dart';
@@ -19,12 +20,14 @@ class UserRepositoryImpl implements UserRepository {
     required this.connectivityService,
     required this.db,
     required this.session,
+    required this.mutationSyncManager,
   });
 
   final UserRemoteDataSource remoteDataSource;
   final ConnectivityService connectivityService;
   final AppDatabase db;
   final SessionEpoch session;
+  final MutationSyncManager mutationSyncManager;
 
   @override
   Future<UserEntity?> getCachedProfile(String uid) async {
@@ -68,18 +71,14 @@ class UserRepositoryImpl implements UserRepository {
   @override
   AsyncResult<void> updatePatientProfile(String uid, ProfileChanges changes) =>
       guard(() async {
-        await _save(uid, changes);
+        await _save(uid, changes, sync: false);
         // Both name parts always: the record stores one name and can't split it reliably.
-        await _sendOrQueue(
-            uid,
-            'updatePatient',
-            {
-              'firstname': changes.firstName ?? '',
-              'lastname': changes.lastName ?? '',
-              if (changes.gender case final gender?)
-                'gender': gender.toLowerCase(),
-            },
-            remoteDataSource.updatePatient);
+        await _queue(uid, 'updatePatient', {
+          'firstname': changes.firstName ?? '',
+          'lastname': changes.lastName ?? '',
+          if (changes.gender case final gender?) 'gender': gender.toLowerCase(),
+        });
+        mutationSyncManager.triggerSync();
       });
 
   @override
@@ -102,34 +101,19 @@ class UserRepositoryImpl implements UserRepository {
       guardOnline(
           connectivityService, () => remoteDataSource.searchFacilities(search));
 
-  /// Writes [changes] here, then sends them to Firestore or queues them.
-  Future<void> _save(String uid, ProfileChanges changes) async {
+  /// Writes [changes] here and queues them for Firestore; [sync] starts sending.
+  Future<void> _save(String uid, ProfileChanges changes,
+      {bool sync = true}) async {
     await db.userProfilesDao.patchProfile(uid, changes.toCompanion());
-    await _sendOrQueue(uid, 'updateUserProfile', changes.toJson(),
-        (payload) => remoteDataSource.updateUserProfile(uid, payload));
+    await _queue(uid, 'updateUserProfile', changes.toJson());
+    if (sync) mutationSyncManager.triggerSync();
   }
 
-  /// Sends [payload] now or queues it as [action]; only a 401/403 is reported.
-  Future<void> _sendOrQueue(
-      String uid,
-      String action,
-      Map<String, dynamic> payload,
-      Future<void> Function(Map<String, dynamic>) send) async {
-    Object? error;
-    if (await connectivityService.isConnected) {
-      try {
-        return await send(payload);
-      } catch (e) {
-        error = e;
-      }
-    }
-    await db.pendingMutationsDao.queueMutation(
-        entityId: uid,
-        entityType: 'user_profile',
-        action: action,
-        payload: payload);
-    if (error != null && AppFailure.from(error) is UnauthorizedFailure) {
-      throw error;
-    }
-  }
+  Future<void> _queue(
+          String uid, String action, Map<String, dynamic> payload) =>
+      db.pendingMutationsDao.queueMutation(
+          entityId: uid,
+          entityType: 'user_profile',
+          action: action,
+          payload: payload);
 }

@@ -91,7 +91,7 @@ class HomeMetricsSection extends StatelessWidget {
             message: adherence >= 0.8
                 ? context.l10n.adherenceGreat
                 : context.l10n.adherenceImprove,
-            isLoading: isLoading,
+            isLoading: isLoading || state.adherence == null,
           ),
         ),
       ],

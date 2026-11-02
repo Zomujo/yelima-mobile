@@ -12,19 +12,26 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
     with _$AdherenceDaoMixin {
   AdherenceDao(super.db);
 
-  // Global Adherence
+  /// Saves the weekly rate and merges [days] in by date. Days stay for two
+  /// weeks, since the 7-day rate reaches back into last week.
   Future<void> saveGlobalAdherence(
       String id, double rate, List<AdherenceGlobalDay> days) async {
+    final now = clock.now();
+    final oldest = DateTime(now.year, now.month, now.day - 14);
     await transaction(() async {
       await into(adherenceGlobals).insert(
-        AdherenceGlobal(id: id, rate: rate, updatedAt: clock.now()),
+        AdherenceGlobal(id: id, rate: rate, updatedAt: now),
         mode: InsertMode.insertOrReplace,
       );
-      await (delete(adherenceGlobalDays)..where((t) => t.type.equals(id))).go();
       await batch((batch) {
         batch.insertAll(adherenceGlobalDays, days,
             mode: InsertMode.insertOrReplace);
       });
+      await (delete(adherenceGlobalDays)
+            ..where((t) =>
+                t.type.equals(id) &
+                t.dateTakenStr.isSmallerThanValue(oldest.toIso8601String())))
+          .go();
     });
   }
 
@@ -48,8 +55,19 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
   /// Replaces a medication's stored days in [month] with [logs].
   ///
   /// By day, not by id: the server gives some days a new id on every call.
+  /// Where the server's rate for one medication's month is kept.
+  static String monthRateId(String medicationId, DateTime month) =>
+      'medication:$medicationId:${month.year}-${month.month}';
+
+  /// The server's rate for [medicationId] in [month], if it was saved here.
+  Future<int?> getMonthRate(String medicationId, DateTime month) async =>
+      (await getGlobalAdherenceRate(monthRateId(medicationId, month)))
+          ?.rate
+          .round();
+
   Future<void> replaceMonthLogs(
-      String medicationId, DateTime month, List<MedicationLog> logs) async {
+      String medicationId, DateTime month, List<MedicationLog> logs,
+      {int? rate}) async {
     final start = DateTime.utc(month.year, month.month);
     final end = DateTime.utc(month.year, month.month + 1);
     await transaction(() async {
@@ -61,6 +79,14 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
           .go();
       await batch((batch) => batch.insertAll(medicationLogs, logs,
           mode: InsertMode.insertOrReplace));
+      if (rate != null) {
+        await into(adherenceGlobals).insert(
+            AdherenceGlobal(
+                id: monthRateId(medicationId, month),
+                rate: rate.toDouble(),
+                updatedAt: clock.now()),
+            mode: InsertMode.insertOrReplace);
+      }
     });
   }
 
@@ -78,9 +104,16 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
-  // Optimistic updates
+  /// Marks the day taken here. With [estimateRate] (offline) the saved server
+  /// rate is dropped for the phone's own count; online the server's new one follows.
   Future<void> markMedicationLogAsTakenOffline(
-      String logId, String medicationId, DateTime date) async {
+      String logId, String medicationId, DateTime date,
+      {bool estimateRate = true}) async {
+    if (estimateRate) {
+      await (delete(adherenceGlobals)
+            ..where((t) => t.id.equals(monthRateId(medicationId, date))))
+          .go();
+    }
     // Find the log for this exact medication on this exact day
     final logs = await (select(medicationLogs)
           ..where((t) => t.medicationId.equals(medicationId)))
@@ -103,34 +136,6 @@ class AdherenceDao extends DatabaseAccessor<AppDatabase>
         taken: true,
       ));
     }
-  }
-
-  /// Counts one more dose taken on [dateStr] (yyyy-MM-dd) until the server's
-  /// numbers arrive. The day is done once all its doses are; the rate is per dose.
-  Future<void> markGlobalDayAsTakenOffline(String dateStr) async {
-    final day = await (select(adherenceGlobalDays)
-          ..where((t) => t.dateTakenStr.like('$dateStr%')))
-        .getSingleOrNull();
-    final scheduled = day?.scheduledDoses;
-    if (day == null || scheduled == null) return;
-
-    final taken = ((day.takenDoses ?? 0) + 1).clamp(0, scheduled);
-    await update(adherenceGlobalDays).replace(day.copyWith(
-      takenDoses: Value(taken),
-      taken: taken >= scheduled ? const Value(true) : Value(day.taken),
-    ));
-
-    final week = await (select(adherenceGlobalDays)
-          ..where((t) => t.type.equals(day.type)))
-        .get();
-    var takenSum = 0, scheduledSum = 0;
-    for (final d in week) {
-      takenSum += d.takenDoses ?? 0;
-      scheduledSum += d.scheduledDoses ?? 0;
-    }
-    if (scheduledSum == 0) return;
-    await (update(adherenceGlobals)..where((t) => t.id.equals(day.type))).write(
-        AdherenceGlobalsCompanion(rate: Value(takenSum / scheduledSum * 100)));
   }
 
   Future<void> clearAllAdherenceData() async {

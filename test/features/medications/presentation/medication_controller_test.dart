@@ -18,6 +18,7 @@ class MockRepo extends Mock implements MedicationRepository {}
 void main() {
   late MockRepo repo;
   late MedicationController controller;
+  late StreamController<void> newDays;
   const week = MedicationAdherence(rate: 50, days: []);
 
   MedicationEntity dose(DateTime at, {bool taken = false}) => MedicationEntity(
@@ -42,7 +43,9 @@ void main() {
     when(() => repo.refreshAll()).thenAnswer((_) async {});
     when(() => repo.confirmDose(any(), any()))
         .thenAnswer((_) async => right(null));
-    controller = MedicationController(repository: repo);
+    newDays = StreamController<void>.broadcast();
+    controller =
+        MedicationController(repository: repo, newDays: newDays.stream);
   });
 
   tearDown(() => controller.dispose());
@@ -55,6 +58,52 @@ void main() {
     expect(controller.state.counts?.evening, 2);
     expect(controller.state.adherence, week);
     verify(() => repo.refreshAll()).called(1);
+  });
+
+  group('weekly adherence', () {
+    final now = DateTime.now();
+    MedicationAdherence saved(DateTime at) =>
+        MedicationAdherence(rate: 37, days: const [], savedAt: at);
+
+    test('a copy saved today shows before the server answers', () async {
+      final server = Completer<Either<AppFailure, MedicationAdherence>>();
+      when(() => repo.getCachedAdherence()).thenAnswer((_) async => saved(now));
+      when(() => repo.getAdherence()).thenAnswer((_) => server.future);
+
+      final done = controller.fetchAdherence();
+      await pumpEventQueue();
+      expect(controller.state.adherence?.rate, 37);
+
+      server.complete(right(week));
+      await done;
+      expect(controller.state.adherence, week);
+    });
+
+    test('a copy from an earlier day waits for the server', () async {
+      final server = Completer<Either<AppFailure, MedicationAdherence>>();
+      when(() => repo.getCachedAdherence()).thenAnswer(
+          (_) async => saved(now.subtract(const Duration(days: 2))));
+      when(() => repo.getAdherence()).thenAnswer((_) => server.future);
+
+      final done = controller.fetchAdherence();
+      await pumpEventQueue();
+      expect(controller.state.adherence, isNull);
+
+      server.complete(right(week));
+      await done;
+      expect(controller.state.adherence, week);
+    });
+
+    test('if the server call fails, the older copy is shown', () async {
+      final old = saved(now.subtract(const Duration(days: 2)));
+      when(() => repo.getCachedAdherence()).thenAnswer((_) async => old);
+      when(() => repo.getAdherence())
+          .thenAnswer((_) async => left(const NetworkFailure()));
+
+      await controller.fetchAdherence();
+
+      expect(controller.state.adherence, old);
+    });
   });
 
   test('a dose tapped before its time is refused without saving', () async {
@@ -71,6 +120,36 @@ void main() {
 
     expect(result.isRight(), isTrue);
     verify(() => repo.confirmDose('m1', MedicationSection.morning)).called(1);
+  });
+
+  test('redraws when the next dose falls due, so Wait turns into Confirm',
+      () async {
+    final now = DateTime(2026, 10, 29, 2, 50, 59, 950);
+    when(() => repo.watchSection(any())).thenAnswer((_) => Stream.value([
+          dose(DateTime(2026, 10, 29, 2, 51)),
+          dose(DateTime(2026, 10, 29, 1), taken: true),
+        ]));
+    withClock(Clock.fixed(now), controller.init);
+    await pumpEventQueue();
+    var redraws = 0;
+    controller.addListener(() => redraws++);
+
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    expect(redraws, 1);
+  });
+
+  test('a new day reloads today\'s doses and the week', () async {
+    controller.init();
+    await pumpEventQueue();
+    clearInteractions(repo);
+
+    newDays.add(null);
+    await pumpEventQueue();
+
+    verify(() => repo.watchSection(any())).called(1);
+    verify(() => repo.refreshAll()).called(1);
+    verify(() => repo.getAdherence()).called(1);
   });
 
   test('a dose already taken is left alone', () async {

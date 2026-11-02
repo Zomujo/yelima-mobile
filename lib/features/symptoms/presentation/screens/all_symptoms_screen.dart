@@ -79,27 +79,9 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
               ),
             ),
             Expanded(
-              child: symptoms == null
-                  ? ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: 3,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AppShimmer.box(width: 100, height: 16),
-                              const SizedBox(height: 16),
-                              AppShimmer.box(height: 64, borderRadius: 16),
-                              const SizedBox(height: 16),
-                              AppShimmer.box(height: 64, borderRadius: 16),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  : symptoms.isEmpty
+              child: controller.state.isLoading
+                  ? const _SymptomsShimmer()
+                  : symptoms!.isEmpty
                       ? Center(
                           child: AppText.bodyMedium(
                             context.l10n.noSymptomsReported,
@@ -139,4 +121,28 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
       ),
     ));
   }
+}
+
+/// Placeholder day groups while the symptoms load.
+class _SymptomsShimmer extends StatelessWidget {
+  const _SymptomsShimmer();
+
+  @override
+  Widget build(BuildContext context) => ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: 3,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppShimmer.box(width: 100, height: 16),
+              const SizedBox(height: 16),
+              AppShimmer.box(height: 64, borderRadius: 16),
+              const SizedBox(height: 16),
+              AppShimmer.box(height: 64, borderRadius: 16),
+            ],
+          ),
+        ),
+      );
 }

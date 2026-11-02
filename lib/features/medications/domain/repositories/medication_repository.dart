@@ -13,8 +13,8 @@ abstract class MedicationRepository {
   /// This week's adherence as last saved on the phone.
   Future<MedicationAdherence> getCachedAdherence();
 
-  /// Live weekly adherence rate (0–100) as saved on the phone.
-  Stream<double?> watchAdherenceRate();
+  /// Live weekly adherence as saved on the phone, or null if none is.
+  Stream<MedicationAdherence?> watchAdherence();
 
   /// This week's adherence from the server, or the phone's copy.
   AsyncResult<MedicationAdherence> getAdherence();
@@ -37,8 +37,15 @@ abstract class MedicationRepository {
   /// Full details, including the schedule.
   AsyncResult<MedicationDetailModel> getMedicationById(String id);
 
+  /// The phone's copy of the details, or null if it isn't stored here.
+  Future<MedicationDetailModel?> getCachedMedication(String id);
+
   /// Taken and missed doses of [medicationId] in [month].
   AsyncResult<MedicationHistoryEntity> getMedicationHistory(
+      String medicationId, DateTime month);
+
+  /// The phone's copy of [month]'s doses of [medicationId].
+  Future<MedicationHistoryEntity> getCachedHistory(
       String medicationId, DateTime month);
 
   /// Adds a medication and returns its (local) id.

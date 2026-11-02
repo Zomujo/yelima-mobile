@@ -17,6 +17,8 @@ class Medications extends Table {
   BoolColumn get taken => boolean().withDefault(const Constant(false))();
   // When the dose was confirmed; "taken" only counts on that day.
   DateTimeColumn get takenOn => dateTime().nullable()();
+  // The first scheduled dose: set when added here or read from the server.
+  DateTimeColumn get startDate => dateTime().nullable()();
   TextColumn get section => text().withDefault(const Constant('UNKNOWN'))();
 
   @override

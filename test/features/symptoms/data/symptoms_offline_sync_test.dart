@@ -17,6 +17,7 @@ void main() {
   late FakeApi api;
   late FakeConnectivity connectivity;
   late SessionEpoch session;
+  late FakeSync sync;
   late SymptomsRepositoryImpl repo;
 
   Map<String, dynamic> serverSymptom(String id, String text) =>
@@ -30,11 +31,13 @@ void main() {
     api = FakeApi();
     connectivity = FakeConnectivity(online: false);
     session = SessionEpoch();
+    sync = FakeSync();
     repo = SymptomsRepositoryImpl(
       remoteDataSource: SymptomsRemoteDataSource(apiClient: api.client),
       connectivityService: connectivity,
       db: db,
       session: session,
+      mutationSyncManager: sync,
     );
   });
 
@@ -130,6 +133,7 @@ void main() {
       db: db,
       session: session,
       recent: RecentFetches(),
+      mutationSyncManager: sync,
     );
 
     await throttled.refresh();
@@ -140,18 +144,16 @@ void main() {
     expect(api.sent('GET', path).length, 2);
   });
 
-  test('online, a symptom gets its server id straight away', () async {
+  test('online too, a symptom is stored and queued at once, then synced',
+      () async {
     connectivity.online = true;
-    api.on('POST', path, FakeReply.ok('srv-1', status: 201));
 
     final id = (await repo.createSymptom('Headache')).getOrElse((_) => '');
 
-    expect(id, 'srv-1');
-    expect(await storedIds(), ['srv-1']);
-    expect(await db.select(db.pendingMutations).get(), isEmpty);
-    final sent = api.sent('POST', path).single;
-    expect(sent.headers['Idempotency-Key'], startsWith('temp_'));
-    expect(DateTime.tryParse(sent.data['onsetDate']), isNotNull);
+    expect(await storedIds(), [id]);
+    expect((await db.select(db.pendingMutations).get()).length, 1);
+    expect(api.requests, isEmpty, reason: 'Save never waits on the network');
+    expect(sync.syncs, 1);
   });
 
   test('a queued symptom is replayed with the time it was reported', () async {

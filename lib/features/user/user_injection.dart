@@ -16,6 +16,7 @@ void initUser(GetIt sl) {
         connectivityService: sl(),
         db: sl(),
         session: sl(),
+        mutationSyncManager: sl(),
       ));
   sl.registerLazySingleton<UserController>(
       () => UserController(repository: sl()));

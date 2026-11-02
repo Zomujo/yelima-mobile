@@ -46,4 +46,28 @@ void main() {
     expect(
         (await db.adherenceDao.getLogsForMedication('m2')).single.id, 'other');
   });
+
+  test('keeps the server rate for the month, until a dose is confirmed offline',
+      () async {
+    final october = DateTime(2026, 10, 15);
+    await db.adherenceDao.replaceMonthLogs('m1', october, [], rate: 83);
+
+    expect(await db.adherenceDao.getMonthRate('m1', october), 83);
+    expect(await db.adherenceDao.getMonthRate('m1', DateTime(2026, 9)), isNull);
+
+    await db.adherenceDao
+        .markMedicationLogAsTakenOffline('n1', 'm1', DateTime(2026, 10, 28));
+    expect(await db.adherenceDao.getMonthRate('m1', october), isNull);
+  });
+
+  test('online, a confirmed dose keeps the saved server rate', () async {
+    final october = DateTime(2026, 10, 15);
+    await db.adherenceDao.replaceMonthLogs('m1', october, [], rate: 83);
+
+    await db.adherenceDao.markMedicationLogAsTakenOffline(
+        'n1', 'm1', DateTime(2026, 10, 28),
+        estimateRate: false);
+
+    expect(await db.adherenceDao.getMonthRate('m1', october), 83);
+  });
 }
