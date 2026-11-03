@@ -16,6 +16,8 @@ import '../datasources/progress_remote_datasource.dart';
 /// [ProgressRepository] that keeps the last trend of each range on the phone.
 ///
 /// Trends are stored as JSON rows in the vitals table; its refresh leaves TREND rows alone.
+/// Readings saved on the phone are added to every trend, so the charts match home
+/// even offline or before the server has them.
 class ProgressRepositoryImpl implements ProgressRepository {
   ProgressRepositoryImpl({
     required ProgressRemoteDataSource remoteDataSource,
@@ -38,13 +40,18 @@ class ProgressRepositoryImpl implements ProgressRepository {
   static String _sugarKey(ChartDateRange r) =>
       'vital_trend_cache_bloodSugar_${r.name}';
 
+  static const _noBP = BPTrend(labels: [], systolic: [], diastolic: []);
+  static const _noSugar = VitalTrend(labels: [], values: []);
+
   @override
   AsyncResult<BPTrend> getCachedBPTrend(ChartDateRange range) =>
-      guard(() => _cached(_bpKey(range), BPTrend.fromJson));
+      guard(() async =>
+          _withBP(range, await _cachedOrNull(_bpKey(range), BPTrend.fromJson)));
 
   @override
   AsyncResult<VitalTrend> getCachedSugarTrend(ChartDateRange range) =>
-      guard(() => _cached(_sugarKey(range), VitalTrend.fromJson));
+      guard(() async => _withSugar(
+          range, await _cachedOrNull(_sugarKey(range), VitalTrend.fromJson)));
 
   @override
   AsyncResult<BPTrend> getBPTrend(ChartDateRange range) => _fetch(
@@ -52,7 +59,8 @@ class ProgressRepositoryImpl implements ProgressRepository {
       type: 'PROGRESS_BP_TREND',
       fetch: () => _remote.getBPTrend(dateRange: range.name),
       toJson: (t) => t.toJson(),
-      fromJson: BPTrend.fromJson);
+      fromJson: BPTrend.fromJson,
+      withPhone: (t) => _withBP(range, t));
 
   @override
   AsyncResult<VitalTrend> getSugarTrend(ChartDateRange range) => _fetch(
@@ -61,20 +69,38 @@ class ProgressRepositoryImpl implements ProgressRepository {
       fetch: () =>
           _remote.getVitalTrend(vitalType: 'bloodSugar', dateRange: range.name),
       toJson: (t) => t.toJson(),
-      fromJson: VitalTrend.fromJson);
+      fromJson: VitalTrend.fromJson,
+      withPhone: (t) => _withSugar(range, t));
 
-  /// Fetches and caches a trend; when that fails, the cached one, else the original failure.
-  AsyncResult<T> _fetch<T>({
+  Future<BPTrend> _withBP(ChartDateRange range, BPTrend? trend) async =>
+      (trend ?? _noBP).withReadings(
+          await _phoneReadings('bloodPressure'), range.since(clock.now()));
+
+  Future<VitalTrend> _withSugar(
+          ChartDateRange range, VitalTrend? trend) async =>
+      (trend ?? _noSugar).withReadings(
+          await _phoneReadings('bloodSugar'), range.since(clock.now()));
+
+  Future<List<PhoneReading>> _phoneReadings(String type) async => [
+        for (final v in await db.vitalsDao.getAllVitals())
+          if (v.vitalType == type && v.recordedAt != null)
+            (v.recordedAt!, v.value),
+      ];
+
+  /// Fetches and caches a trend, adding the phone's readings; when that fails,
+  /// the cached one, or the phone's readings alone, else the original failure.
+  AsyncResult<T> _fetch<T extends TrendLabels>({
     required String key,
     required String type,
     required Future<T> Function() fetch,
     required Map<String, dynamic> Function(T) toJson,
     required T Function(Map<String, dynamic>) fromJson,
+    required Future<T> Function(T?) withPhone,
   }) =>
       guard(() => recent.share(key, () async {
             if (recent.isFresh(key)) {
               if (await _cachedOrNull(key, fromJson) case final cached?) {
-                return cached;
+                return withPhone(cached);
               }
             }
             try {
@@ -96,17 +122,14 @@ class ProgressRepositoryImpl implements ProgressRepository {
                 )
               ]);
               recent.markFetched(key);
-              return trend;
+              return withPhone(trend);
             } catch (_) {
               final cached = await _cachedOrNull(key, fromJson);
-              if (cached != null) return cached;
+              final merged = await withPhone(cached);
+              if (cached != null || merged.labels.isNotEmpty) return merged;
               rethrow;
             }
           }));
-
-  Future<T> _cached<T>(
-          String key, T Function(Map<String, dynamic>) fromJson) async =>
-      await _cachedOrNull(key, fromJson) ?? (throw const NotFoundFailure());
 
   Future<T?> _cachedOrNull<T>(
       String key, T Function(Map<String, dynamic>) fromJson) async {

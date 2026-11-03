@@ -6,13 +6,15 @@ import 'entities/medication_adherence.dart';
 abstract final class WeekAdherence {
   /// Builds the week from the days the server sent before ([saved]) and
   /// today's doses on the phone. [perDay] is how many doses a day the
-  /// current schedules plan, for the days still to come.
+  /// current schedules plan, for the days still to come. [lastRate] is kept
+  /// when a day of the last 7 was never saved here, so its count is unknown.
   static MedicationAdherence compute({
     required List<AdherenceDay> saved,
     required int scheduledToday,
     required int takenToday,
     required int perDay,
     required DateTime now,
+    double lastRate = 0,
   }) {
     final today = _date(now);
     final byDate = {for (final d in saved) _date(d.takenAt): d};
@@ -46,16 +48,21 @@ abstract final class WeekAdherence {
           scheduledDoses: planned);
     }
 
-    var taken = 0, planned = 0;
+    var taken = 0, planned = 0, unknown = false;
     for (var i = 0; i < 7; i++) {
       final d = dayOn(_addDays(today, -i));
+      if (i > 0 && d.scheduledDoses == null) unknown = true;
       if (d.taken == null) continue;
       taken += d.takenDoses ?? 0;
       planned += d.scheduledDoses ?? 0;
     }
     final monday = mondayOf(now);
     return MedicationAdherence(
-      rate: planned == 0 ? 0 : (100 * taken / planned).roundToDouble(),
+      rate: unknown
+          ? lastRate
+          : planned == 0
+              ? 0
+              : (100 * taken / planned).roundToDouble(),
       days: [for (var i = 0; i < 7; i++) dayOn(_addDays(monday, i))],
     );
   }

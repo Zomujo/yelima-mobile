@@ -74,6 +74,7 @@ mixin _MedicationAdherence {
       takenToday: today.where((r) => MedicationMapper.toEntity(r).taken).length,
       perDay: rows.length,
       now: now,
+      lastRate: (await _adherence.getGlobalAdherenceRate(_weekly))?.rate ?? 0,
     ));
     return getCachedAdherence();
   }

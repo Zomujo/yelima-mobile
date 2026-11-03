@@ -6,6 +6,7 @@ import 'package:yelima/shared/widgets/layout/step_layout.dart';
 import 'package:yelima/shared/widgets/forms/app_form_field.dart';
 import 'package:yelima/shared/widgets/forms/search_suggestions.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/shared/utils/failure_message.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 /// Registration step 4: pick the health facility.
@@ -27,6 +28,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
   bool _isLoadingFacilities = false;
   bool _isDropdownVisible = false;
   List<FacilityModel> _options = [];
+  String? _searchError;
   FacilityModel? _selectedFacility;
   final _search = LatestSearch();
   final TextEditingController _searchController = TextEditingController();
@@ -88,6 +90,8 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
     setState(() {
       _isLoadingFacilities = false;
       _options = result.getOrElse((_) => const []);
+      // Offline is not the same as no match, so say which it was.
+      _searchError = result.fold((f) => f.message(context.l10n), (_) => null);
     });
   }
 
@@ -130,9 +134,10 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
                 items: [for (final o in _options) o.name],
                 message: _isLoadingFacilities
                     ? context.l10n.loading
-                    : _options.isEmpty
-                        ? context.l10n.noFacilitiesFound
-                        : null,
+                    : _searchError ??
+                        (_options.isEmpty
+                            ? context.l10n.noFacilitiesFound
+                            : null),
                 onTap: (i) => _select(_options[i]),
               ),
             ),

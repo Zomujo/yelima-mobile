@@ -1,6 +1,8 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/features/vitals/domain/entities/reading_form.dart';
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
@@ -29,6 +31,13 @@ void main() {
 
   setUp(() => repo = MockRepo());
 
+  setUpAll(() => registerFallbackValue(ReadingForm(
+      kind: VitalKind.bloodPressure,
+      systolic: 120,
+      diastolic: 80,
+      sugarLevel: 5.5,
+      recordedAt: DateTime(2026))));
+
   test('prefills the form with the last reading', () async {
     final c = await withLast('135/85', '6.2');
 
@@ -50,5 +59,20 @@ void main() {
       80,
       5.5
     ), reason: 'keeps the defaults');
+  });
+
+  test('a reading is timed when it is saved, not when the screen opened',
+      () async {
+    final c = await withClock(Clock.fixed(DateTime(2026, 11, 2, 14, 58)),
+        () => withLast('120/80', '5.5'));
+    when(() => repo.saveReading(any()))
+        .thenAnswer((_) async => right(VitalSeverity.normal));
+
+    await withClock(
+        Clock.fixed(DateTime(2026, 11, 2, 15, 6)), () => c.saveReading());
+
+    final saved = verify(() => repo.saveReading(captureAny())).captured.single
+        as ReadingForm;
+    expect(saved.recordedAt, DateTime(2026, 11, 2, 15, 6));
   });
 }

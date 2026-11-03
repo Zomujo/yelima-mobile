@@ -86,12 +86,16 @@ void main() {
     );
 
     expect(week.days[2].taken, isTrue);
-    expect(week.rate, 100);
   });
 
   test('a day with nothing planned is not a miss and adds nothing', () {
     final week = WeekAdherence.compute(
-      saved: [day(11, 2, false, 0, 0), day(11, 3, true, 1, 1)],
+      saved: [
+        for (final d in [29, 30, 31]) day(10, d, false, 0, 0),
+        day(11, 1, false, 0, 0),
+        day(11, 2, false, 0, 0),
+        day(11, 3, true, 1, 1),
+      ],
       scheduledToday: 1,
       takenToday: 0,
       perDay: 1,
@@ -99,6 +103,21 @@ void main() {
     );
 
     expect(week.rate, 100);
+  });
+
+  test('a missing day of the last 7 keeps the last known rate', () {
+    // After a fresh sign-in the phone only has this week from the server.
+    final week = WeekAdherence.compute(
+      saved: [day(11, 2, null, 3, 7)],
+      scheduledToday: 7,
+      takenToday: 3,
+      perDay: 7,
+      now: DateTime(2026, 11, 2, 15),
+      lastRate: 82,
+    );
+
+    expect(week.rate, 82);
+    expect(week.days.first.takenDoses, 3);
   });
 
   test('nothing decided yet gives 0, which the app shows as no data', () {

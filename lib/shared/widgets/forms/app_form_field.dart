@@ -94,6 +94,8 @@ class _AppFormFieldState extends State<AppFormField> {
           focusNode: w.focusNode,
           onFieldSubmitted: w.onFieldSubmitted,
           onChanged: w.onChanged,
+          // The iPhone number pad has no Done key, so a tap outside closes it.
+          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
           enabled: w.enabled,
           obscureText: _hidden,
           obscuringCharacter: '*',

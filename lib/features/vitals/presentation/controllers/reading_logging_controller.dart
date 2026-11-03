@@ -84,13 +84,15 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
     }
   }
 
-  /// Sets the day of the reading, at the current time.
-  void setSelectedDate(DateTime date) {
+  /// Sets the day of the reading; its time is taken when it is saved.
+  void setSelectedDate(DateTime date) =>
+      state = state.copyWith(selectedDate: date, hasChanged: true);
+
+  /// The chosen day at the moment of saving, not when the screen opened.
+  static DateTime _atNow(DateTime day) {
     final now = clock.now();
-    state = state.copyWith(
-        selectedDate: DateTime(
-            date.year, date.month, date.day, now.hour, now.minute, now.second),
-        hasChanged: true);
+    return DateTime(
+        day.year, day.month, day.day, now.hour, now.minute, now.second);
   }
 
   /// Saves the reading and gives its grade.
@@ -102,7 +104,7 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
       systolic: state.systolic,
       diastolic: state.diastolic,
       sugarLevel: state.sugarLevel,
-      recordedAt: state.selectedDate,
+      recordedAt: _atNow(state.selectedDate),
     ));
     state = state.copyWith(isSaving: false, hasChanged: result.isLeft());
     return result;
