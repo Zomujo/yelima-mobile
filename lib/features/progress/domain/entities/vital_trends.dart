@@ -28,17 +28,18 @@ enum ChartDateRange {
 typedef PhoneReading = (DateTime at, String value);
 
 /// The trend's points plus [phone] readings since [since] it doesn't have yet,
-/// oldest first. The same moment is one point, to the millisecond like the server.
+/// oldest first. The same second is one point: the phone stores whole seconds,
+/// the server milliseconds.
 List<(DateTime, V)> _mergePoints<V>(List<String> labels, List<V> values,
     Iterable<(DateTime, V)> phone, DateTime since) {
-  DateTime ms(DateTime t) =>
-      DateTime.fromMillisecondsSinceEpoch(t.millisecondsSinceEpoch,
-          isUtc: true);
+  DateTime second(DateTime t) => DateTime.fromMillisecondsSinceEpoch(
+      t.millisecondsSinceEpoch ~/ 1000 * 1000,
+      isUtc: true);
   final points = {
     for (var i = 0; i < labels.length && i < values.length; i++)
-      ms(DateTime.parse(labels[i])): values[i],
+      second(DateTime.parse(labels[i])): values[i],
     for (final (at, v) in phone)
-      if (!at.isBefore(since)) ms(at): v,
+      if (!at.isBefore(since)) second(at): v,
   };
   return [for (final e in points.entries) (e.key, e.value)]
     ..sort((a, b) => a.$1.compareTo(b.$1));

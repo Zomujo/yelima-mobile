@@ -21,9 +21,9 @@ void main() {
   });
 
   test('a reading the server already has is not drawn twice', () {
-    // The phone keeps microseconds; the server sends milliseconds.
+    // The phone's database keeps whole seconds; the server sends milliseconds.
     final trend = serverBP.withReadings(
-        [(DateTime.utc(2026, 10, 26, 12, 57, 18, 542, 251), '211/131')], since);
+        [(DateTime.utc(2026, 10, 26, 12, 57, 18), '211/131')], since);
 
     expect(trend.systolic, [120, 211]);
   });
