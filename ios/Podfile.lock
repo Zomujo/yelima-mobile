@@ -1539,14 +1539,14 @@ PODS:
     - FlutterMacOS
   - sign_in_with_apple (0.0.1):
     - Flutter
-  - SQLCipher (4.5.7):
-    - SQLCipher/standard (= 4.5.7)
-  - SQLCipher/common (4.5.7)
-  - SQLCipher/standard (4.5.7):
+  - SQLCipher (4.10.0):
+    - SQLCipher/standard (= 4.10.0)
+  - SQLCipher/common (4.10.0)
+  - SQLCipher/standard (4.10.0):
     - SQLCipher/common
   - sqlcipher_flutter_libs (0.0.1):
     - Flutter
-    - SQLCipher (~> 4.5.4)
+    - SQLCipher (~> 4.10.0)
   - url_launcher_ios (0.0.1):
     - Flutter
 
@@ -1711,10 +1711,10 @@ SPEC CHECKSUMS:
   ScreenProtectorKit: 6ceb3e0808341a9bc15d175bff40dfdd4b32da71
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
-  SQLCipher: 5e6bfb47323635c8b657b1b27d25c5f1baf63bf5
-  sqlcipher_flutter_libs: decb18941aabe3a408c6529f70bdc8738731cedf
+  SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc
+  sqlcipher_flutter_libs: ae224763b087bffb3a5955fe295a1c460d458cb1
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
 
-PODFILE CHECKSUM: 8ddd59f89e6f221936ad78a476a5642b23be1820
+PODFILE CHECKSUM: 23c78266759f24b6db8e780491fe3e92743e6624
 
 COCOAPODS: 1.16.2

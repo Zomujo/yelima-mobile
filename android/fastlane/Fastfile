@@ -18,7 +18,9 @@ platform :android do
 
   desc "Deploy a new Production build to Google Play"
   lane :deploy_production do
-    sh("flutter build appbundle --flavor prod -t lib/main_prod.dart")
+    # sh runs in fastlane/, so build from the project root. Obfuscated, with symbols for Crashlytics.
+    sh("cd ../.. && flutter build appbundle --flavor prod -t lib/main_prod.dart --obfuscate --split-debug-info=build/symbols")
+    sh("cd ../.. && firebase crashlytics:symbols:upload --app=1:701397813152:android:8610ac187db89176af46c5 build/symbols")
     upload_to_play_store(
       track: 'production',
       aab: '../build/app/outputs/bundle/prodRelease/app-prod-release.aab'

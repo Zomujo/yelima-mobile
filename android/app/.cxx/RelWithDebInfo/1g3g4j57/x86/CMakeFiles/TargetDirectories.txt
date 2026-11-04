@@ -1,0 +1,2 @@
+/Users/macbookpro/Desktop/zomujo projects/yelima/android/app/.cxx/RelWithDebInfo/1g3g4j57/x86/CMakeFiles/edit_cache.dir
+/Users/macbookpro/Desktop/zomujo projects/yelima/android/app/.cxx/RelWithDebInfo/1g3g4j57/x86/CMakeFiles/rebuild_cache.dir

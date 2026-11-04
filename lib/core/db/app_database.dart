@@ -4,15 +4,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'dart:ffi';
-import 'package:sqlite3/open.dart';
-// ignore: undefined_hidden_name
-import 'package:sqlite3/sqlite3.dart' hide Exception;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import '../services/monitoring_service.dart';
 import 'db_key.dart';
+import 'sqlcipher.dart';
 
 import 'tables/vital_histories.dart';
 import 'tables/ai_chat_conversations.dart';
@@ -198,39 +195,17 @@ LazyDatabase _openConnection() {
       onQuarantined: _reportQuarantine,
     );
 
-    if (Platform.isAndroid) {
-      open.overrideFor(OperatingSystem.android, () {
-        return DynamicLibrary.open('libsqlcipher.so');
-      });
-    }
-
-    if (file.existsSync()) {
-      try {
-        final tempDb = sqlite3.open(file.path);
-        tempDb.execute("PRAGMA key = '$encryptionKey';");
-        // Trigger a read to ensure the key is correct
-        tempDb.execute("SELECT count(*) FROM sqlite_master;");
-        tempDb.dispose();
-      } catch (e) {
-        // Never delete: move it aside so a fresh database can open (CORE-EC-10).
-        debugPrint('Database decryption failed or file corrupted: $e');
-        await quarantineDb(file);
-        _reportQuarantine('decrypt_failed');
-      }
+    useSqlCipher();
+    if (file.existsSync() && !opensWith(file, encryptionKey)) {
+      // Never delete: move it aside so a fresh database can open (CORE-EC-10).
+      await quarantineDb(file);
+      _reportQuarantine('decrypt_failed');
     }
 
     return NativeDatabase.createInBackground(
       file,
-      isolateSetup: () async {
-        if (Platform.isAndroid) {
-          open.overrideFor(OperatingSystem.android, () {
-            return DynamicLibrary.open('libsqlcipher.so');
-          });
-        }
-      },
-      setup: (db) {
-        db.execute("PRAGMA key = '$encryptionKey';");
-      },
+      isolateSetup: useSqlCipher,
+      setup: (db) => unlock(db, encryptionKey),
     );
   });
 }

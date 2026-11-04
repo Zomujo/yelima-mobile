@@ -18,7 +18,9 @@ platform :ios do
 
   desc "Push a new Production build to App Store"
   lane :deploy_production do
-    sh("flutter build ipa --flavor prod -t lib/main_prod.dart --export-options-plist=ExportOptions.plist")
+    # sh runs in fastlane/, so build from the project root. Obfuscated, with symbols for Crashlytics.
+    sh("cd ../.. && flutter build ipa --flavor prod -t lib/main_prod.dart --obfuscate --split-debug-info=build/symbols --export-options-plist=ios/fastlane/ExportOptions.plist")
+    sh("cd ../.. && firebase crashlytics:symbols:upload --app=1:701397813152:ios:dbca261fce3a8e41af46c5 build/symbols")
     upload_to_app_store(
       app_identifier: ENV["IOS_BUNDLE_ID_PROD"],
       ipa: "../build/ios/ipa/*.ipa"

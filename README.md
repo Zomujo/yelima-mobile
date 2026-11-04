@@ -170,7 +170,7 @@ Yelima is designed to offer a frictionless, highly engaging journey tailored to 
 
    ```bash
    flutter build appbundle --flavor prod -t lib/main_prod.dart --obfuscate --split-debug-info=build/symbols
-   firebase crashlytics:symbols:upload --app=<android-app-id> build/symbols
+   firebase crashlytics:symbols:upload --app=1:701397813152:android:8610ac187db89176af46c5 build/symbols
    ```
 
    Prod blanks screenshots and screen recordings and hides the app in the app switcher (`screen_protector`, Android and iOS); dev allows them for testing.

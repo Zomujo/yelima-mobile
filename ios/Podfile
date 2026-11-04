@@ -54,4 +54,13 @@ post_install do |installer|
       ]
     end
   end
+
+  # Firebase links the system sqlite3, which would hide SQLCipher and leave the
+  # database unencrypted. Drop it so SQLCipher provides sqlite3 for everyone.
+  installer.aggregate_targets.each do |target|
+    target.xcconfigs.each_key do |config|
+      path = target.xcconfig_path(config)
+      File.write(path, File.read(path).gsub(' -l"sqlite3"', ''))
+    end
+  end
 end
