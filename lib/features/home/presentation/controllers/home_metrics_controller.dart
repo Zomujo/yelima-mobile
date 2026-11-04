@@ -1,58 +1,57 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/utils/session_scoped.dart';
+import '../../../../core/core_providers.dart';
+import '../../../../core/utils/follow_session.dart';
 import '../../../medications/domain/entities/medication_adherence.dart';
 import '../../../medications/domain/repositories/medication_repository.dart';
+import '../../../medications/medications_providers.dart';
 import '../../../vitals/domain/repositories/vitals_repository.dart';
+import '../../../vitals/vitals_providers.dart';
 import '../states/home_metrics_state.dart';
 
-/// The home metric cards, kept live from the phone and refreshed from the server.
-class HomeMetricsController extends ChangeNotifier
-    with SafeNotifier, SessionScoped {
-  HomeMetricsController({
-    required VitalsRepository vitals,
-    required MedicationRepository medications,
-    Stream<void> newDays = const Stream.empty(),
-  })  : _vitals = vitals,
-        _medications = medications,
-        _newDays = newDays {
-    joinSession();
-    _follow();
-  }
+part 'home_metrics_controller.g.dart';
 
-  final VitalsRepository _vitals;
-  final MedicationRepository _medications;
-  final Stream<void> _newDays;
+/// The home metric cards, kept live from the phone and refreshed from the server.
+@Riverpod(keepAlive: true)
+class HomeMetricsController extends _$HomeMetricsController {
+  late VitalsRepository _vitals;
+  late MedicationRepository _medications;
+  late Stream<void> _newDays;
   final _subs = <StreamSubscription<Object?>>[];
   MedicationAdherence? _saved;
   bool _asked = false;
 
-  HomeMetricsState _state = const HomeMetricsState();
-  HomeMetricsState get state => _state;
-  set state(HomeMetricsState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
+  @override
+  HomeMetricsState build() {
+    _vitals = ref.watch(vitalsRepositoryProvider);
+    _medications = ref.watch(medicationRepositoryProvider);
+    _newDays = ref.watch(dayChangesProvider).stream;
+    followSession(ref,
+        onStart: (_) => _follow(),
+        onEnd: () async {
+          await _stop();
+          _saved = null;
+          _asked = false;
+          state = const HomeMetricsState();
+        });
+    ref.onDispose(_stop);
+    _follow();
+    Future.microtask(fetchMetrics);
+    return const HomeMetricsState();
   }
 
   @override
-  String get serviceName => 'HomeMetricsController';
+  bool updateShouldNotify(HomeMetricsState previous, HomeMetricsState next) =>
+      previous != next;
 
-  @override
-  Future<void> onSessionStarted(String userId) async => _follow();
-
-  @override
-  Future<void> onSessionEnded() async {
-    for (final s in _subs) {
+  Future<void> _stop() async {
+    final subs = [..._subs];
+    _subs.clear();
+    for (final s in subs) {
       await s.cancel();
     }
-    _subs.clear();
-    _saved = null;
-    _asked = false;
-    state = const HomeMetricsState();
   }
 
   /// A reading or dose saved anywhere updates home straight away.
@@ -90,13 +89,5 @@ class HomeMetricsController extends ChangeNotifier
     await Future.wait([_vitals.refresh(), _medications.getAdherence()]);
     _asked = true;
     _showAdherence();
-  }
-
-  @override
-  void dispose() {
-    for (final s in _subs) {
-      s.cancel();
-    }
-    super.dispose();
   }
 }

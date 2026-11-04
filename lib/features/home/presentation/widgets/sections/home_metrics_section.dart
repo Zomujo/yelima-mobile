@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../metric_card.dart';
@@ -13,13 +13,12 @@ import 'package:yelima/features/vitals/presentation/health_warning.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 /// Blood pressure, blood sugar and adherence cards, with warnings for dangerous readings.
-class HomeMetricsSection extends StatelessWidget {
+class HomeMetricsSection extends ConsumerWidget {
   const HomeMetricsSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = context.watch<HomeMetricsController>();
-    final state = controller.state;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(homeMetricsControllerProvider);
     final isLoading = state.vitals == null;
 
     final bp = state.vitals?.bloodPressure?.value ?? '--/--';

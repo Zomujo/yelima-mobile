@@ -1,17 +1,17 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../auth/auth_providers.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../core/router/router.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 /// Confirms, then deletes the account (password users re-enter it).
-class DeleteAccountModal extends StatefulWidget {
+class DeleteAccountModal extends ConsumerStatefulWidget {
   const DeleteAccountModal({super.key});
 
   static void show(BuildContext context) {
@@ -19,10 +19,10 @@ class DeleteAccountModal extends StatefulWidget {
   }
 
   @override
-  State<DeleteAccountModal> createState() => _DeleteAccountModalState();
+  ConsumerState<DeleteAccountModal> createState() => _DeleteAccountModalState();
 }
 
-class _DeleteAccountModalState extends State<DeleteAccountModal> {
+class _DeleteAccountModalState extends ConsumerState<DeleteAccountModal> {
   final _passwordController = TextEditingController();
   bool _isPasswordProvider = false;
   bool _isButtonEnabled = true;
@@ -30,7 +30,8 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
   @override
   void initState() {
     super.initState();
-    _isPasswordProvider = context.read<AuthController>().reauthNeedsPassword;
+    _isPasswordProvider =
+        ref.read(authControllerProvider.notifier).reauthNeedsPassword;
 
     if (_isPasswordProvider) {
       _isButtonEnabled = false;
@@ -88,7 +89,8 @@ class _DeleteAccountModalState extends State<DeleteAccountModal> {
                       _isButtonEnabled ? AppColors.red500 : Colors.grey,
                   onPressed: _isButtonEnabled
                       ? () async {
-                          final controller = context.read<AuthController>();
+                          final controller =
+                              ref.read(authControllerProvider.notifier);
                           // Read everything first: the modal and its context go away on pop.
                           final password = _isPasswordProvider
                               ? _passwordController.text

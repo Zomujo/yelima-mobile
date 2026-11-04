@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
@@ -11,27 +11,27 @@ import '../controllers/symptoms_controller.dart';
 import '../widgets/symptom_card.dart';
 
 /// Every reported symptom, grouped by day, with Add.
-class AllSymptomsScreen extends StatefulWidget {
+class AllSymptomsScreen extends ConsumerStatefulWidget {
   const AllSymptomsScreen({super.key});
 
   @override
-  State<AllSymptomsScreen> createState() => _AllSymptomsScreenState();
+  ConsumerState<AllSymptomsScreen> createState() => _AllSymptomsScreenState();
 }
 
-class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
+class _AllSymptomsScreenState extends ConsumerState<AllSymptomsScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SymptomsController>().fetchSymptoms();
+      ref.read(symptomsControllerProvider.notifier).fetchSymptoms();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<SymptomsController>();
-    final symptoms = controller.state.symptoms;
-    final byDay = controller.byDay;
+    final state = ref.watch(symptomsControllerProvider);
+    final symptoms = state.symptoms;
+    final byDay = state.byDay;
 
     return Scaffold(
         body: Container(
@@ -79,7 +79,7 @@ class _AllSymptomsScreenState extends State<AllSymptomsScreen> {
               ),
             ),
             Expanded(
-              child: controller.state.isLoading
+              child: state.isLoading
                   ? const _SymptomsShimmer()
                   : symptoms!.isEmpty
                       ? Center(

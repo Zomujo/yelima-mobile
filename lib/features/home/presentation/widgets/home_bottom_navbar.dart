@@ -8,7 +8,7 @@ import '../../../../core/config/features.dart';
 import '../../../../core/constants/app_decoration.dart';
 import '../../../../core/router/route_paths.dart';
 import '../controllers/home_metrics_controller.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// One tab of the bottom bar.
 class HomeBottomNavItem {
@@ -86,21 +86,23 @@ class HomeBottomNavBar extends StatelessWidget {
   }
 }
 
-class _NavItemButton extends StatelessWidget {
+class _NavItemButton extends ConsumerWidget {
   final bool isActive;
   final HomeBottomNavItem item;
 
   const _NavItemButton({required this.item, this.isActive = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: isActive
           ? null
           : () {
               if (item.route == RoutePaths.home) {
                 try {
-                  context.read<HomeMetricsController>().fetchMetrics();
+                  ref
+                      .read(homeMetricsControllerProvider.notifier)
+                      .fetchMetrics();
                 } catch (_) {}
               }
               context.go(item.route);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -8,23 +9,32 @@ import 'package:yelima/features/medications/domain/medication_failures.dart';
 import 'package:yelima/features/medications/domain/models/dosing_schedule_model.dart';
 import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
 import 'package:yelima/features/medications/domain/repositories/medication_repository.dart';
+import 'package:yelima/features/medications/medications_providers.dart';
 import 'package:yelima/features/medications/presentation/controllers/add_medication_form_controller.dart';
+import 'package:yelima/features/medications/presentation/states/medication_form_state.dart';
 
 class MockRepo extends Mock implements MedicationRepository {}
 
 void main() {
   late MockRepo repo;
+  late ProviderContainer container;
   late AddMedicationFormController form;
+  MedicationFormState fields() =>
+      container.read(addMedicationFormControllerProvider).form;
 
   setUpAll(
       () => registerFallbackValue(const MedicationForm(name: '', dosage: '')));
 
   setUp(() {
     repo = MockRepo();
-    form = AddMedicationFormController(repository: repo);
+    container = ProviderContainer(
+        overrides: [medicationRepositoryProvider.overrideWithValue(repo)]);
+    // Screen-local: kept alive by a listener, as the screen would.
+    container.listen(addMedicationFormControllerProvider, (_, __) {});
+    form = container.read(addMedicationFormControllerProvider.notifier);
   });
 
-  tearDown(() => form.dispose());
+  tearDown(() => container.dispose());
 
   test('only switched-on sections become doses, on the 24-hour clock', () {
     form
@@ -38,7 +48,7 @@ void main() {
       MedicationSection.evening:
           const DoseSchedule(hour: 21, minute: 15, quantity: 1),
     });
-    expect(form.hasChanges, isTrue);
+    expect(fields().hasChanges, isTrue);
   });
 
   test('loading saved details fills the fields without counting as a change',
@@ -56,12 +66,12 @@ void main() {
       updatedAt: DateTime(2026),
     ));
 
-    final evening = form.slots[MedicationSection.evening]!;
+    final evening = fields().slots[MedicationSection.evening]!;
     expect((evening.enabled, evening.time, evening.quantity),
         (true, const TimeOfDay(hour: 21, minute: 30), 2));
-    expect(form.slots[MedicationSection.morning]!.enabled, isFalse);
-    expect(form.unit, 'capsule');
-    expect(form.hasChanges, isFalse);
+    expect(fields().slots[MedicationSection.morning]!.enabled, isFalse);
+    expect(fields().unit, 'capsule');
+    expect(fields().hasChanges, isFalse);
   });
 
   test('a failed save reports why and stays changed', () async {
@@ -70,6 +80,6 @@ void main() {
     form.markChanged();
 
     expect(await form.persist(), const MissingScheduleFailure());
-    expect(form.hasChanges, isTrue);
+    expect(fields().hasChanges, isTrue);
   });
 }

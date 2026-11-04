@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_images.dart';
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../shared/utils/run_with_loader.dart';
-import '../controllers/auth_controller.dart';
+import '../../auth_providers.dart';
 import '../widgets/auth_divider.dart';
 import '../widgets/auth_footer.dart';
 import '../widgets/auth_layout.dart';
@@ -15,15 +15,16 @@ import '../widgets/social_auth_button.dart';
 import '../widgets/terms_and_privacy_text.dart';
 
 /// Sign-in or sign-up: Google, then email and password.
-class AuthScreen extends StatelessWidget {
+class AuthScreen extends ConsumerWidget {
   const AuthScreen({super.key, required this.isSignUp});
 
   final bool isSignUp;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final isLoading = context.select((AuthController a) => a.isAuthLoading);
+    final isLoading =
+        ref.watch(authControllerProvider.select((s) => s.isAuthLoading));
     return AuthLayout(
       title: isSignUp ? l10n.signUpTitle : l10n.signInTitle,
       subtitle: isSignUp ? l10n.signUpSubtitle : l10n.signInSubtitle,
@@ -39,7 +40,9 @@ class AuthScreen extends StatelessWidget {
                   ? null
                   : () => runWithLoader(context,
                       message: l10n.continuingWithGoogle,
-                      action: context.read<AuthController>().signInWithGoogle),
+                      action: ref
+                          .read(authControllerProvider.notifier)
+                          .signInWithGoogle),
             ),
             const SizedBox(height: 32),
             const AuthDivider(),

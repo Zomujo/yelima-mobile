@@ -1,4 +1,5 @@
 import 'package:clock/clock.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -6,6 +7,8 @@ import 'package:yelima/features/vitals/domain/entities/reading_form.dart';
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
+import 'package:yelima/features/vitals/presentation/states/reading_logging_state.dart';
+import 'package:yelima/features/vitals/vitals_providers.dart';
 
 class MockRepo extends Mock implements VitalsRepository {}
 
@@ -20,13 +23,21 @@ void main() {
       severity: 'normal',
       vitalName: '');
 
+  late ProviderContainer container;
+
+  ReadingLoggingState state() => container.read(readingLoggingControllerProvider);
+
+  /// Opens the form with [bp] and [sugar] as the last saved readings.
   Future<ReadingLoggingController> withLast(String bp, String sugar) async {
     when(() => repo.watchReadings()).thenAnswer((_) => Stream.value(
         [reading('bloodPressure', bp), reading('bloodSugar', sugar)]));
     when(() => repo.refresh()).thenAnswer((_) async => right(null));
-    final c = ReadingLoggingController(repository: repo)..init();
+    container = ProviderContainer(
+        overrides: [vitalsRepositoryProvider.overrideWithValue(repo)]);
+    addTearDown(container.dispose);
+    container.listen(readingLoggingControllerProvider, (_, __) {});
     await pumpEventQueue();
-    return c;
+    return container.read(readingLoggingControllerProvider.notifier);
   }
 
   setUp(() => repo = MockRepo());
@@ -39,21 +50,21 @@ void main() {
       recordedAt: DateTime(2026))));
 
   test('prefills the form with the last reading', () async {
-    final c = await withLast('135/85', '6.2');
+    await withLast('135/85', '6.2');
 
-    expect((c.state.systolic, c.state.diastolic, c.state.sugarLevel),
+    expect((state().systolic, state().diastolic, state().sugarLevel),
         (135, 85, 6.2));
-    expect(c.history?.length, 2);
+    expect(state().history?.length, 2);
     verify(() => repo.refresh()).called(1);
   });
 
   test('VIT-EC-12/13: skips last readings the pickers can\'t show', () async {
-    final c = await withLast('300/20', '126');
+    await withLast('300/20', '126');
 
     expect((
-      c.state.systolic,
-      c.state.diastolic,
-      c.state.sugarLevel
+      state().systolic,
+      state().diastolic,
+      state().sugarLevel
     ), (
       120,
       80,

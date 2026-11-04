@@ -1,70 +1,59 @@
 import 'dart:async';
 
 import 'package:clock/clock.dart';
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/core_providers.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/services/connectivity_service.dart';
-import '../../../../core/utils/safe_notifier.dart';
+import '../../chat_providers.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../../domain/entities/paginated_chat_result.dart';
 import '../../domain/repositories/ai_chat_repository.dart';
 import 'ai_chat_state.dart';
 
+part 'ai_chat_controller.g.dart';
 part 'ai_chat_sending.dart';
 
 /// The AI chat: history, paging, sending with offline queueing, retry and delete.
-class AiChatController extends ChangeNotifier with SafeNotifier {
-  AiChatController(this._repository, this._connectivityService) {
-    _init();
-  }
-
-  final AiChatRepository _repository;
-  final ConnectivityService _connectivityService;
-  StreamSubscription<bool>? _connectivitySubscription;
-  StreamSubscription<void>? _syncSubscription;
+@riverpod
+class AiChatController extends _$AiChatController with _AiChatSending {
+  @override
+  late AiChatRepository _repository;
+  @override
   Future<void>? _activeSync;
+  @override
+  bool _disposed = false;
 
-  AiChatState _state = const AiChatState();
-  AiChatState get state => _state;
+  static const int _pageSize = 20;
 
-  set state(AiChatState value) {
-    if (_state == value) return;
-    _state = value;
-    if (!_state.syncPending) {
-      notifyListeners();
-    }
+  @override
+  AiChatState build() {
+    _repository = ref.watch(aiChatRepositoryProvider);
+    _disposed = false;
+    ref.onDispose(() => _disposed = true);
+    _init(ref.watch(connectivityProvider));
+    return const AiChatState();
   }
 
-  List<AiChatMessage> get messages => state.messages;
-  bool get isLoading => state.isLoading;
-  bool get isLoadingMore => state.isLoadingMore;
-  bool get hasMoreMessages => state.hasMoreMessages;
-  bool get isOnline => state.isOnline;
-  bool get isSending => state.isSending;
-  AppFailure? get error => state.error;
+  /// Listeners hear nothing while a deferred sync is pending.
+  @override
+  bool updateShouldNotify(AiChatState previous, AiChatState next) =>
+      previous != next && !next.syncPending;
 
   /// Marks the error as shown.
   void clearError() {
     state = state.copyWith(error: null);
   }
 
-  static const int _pageSize = 20;
-
-  @override
-  void dispose() {
-    _connectivitySubscription?.cancel();
-    _syncSubscription?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _init() async {
-    final isConnected = await _connectivityService.isConnected;
+  Future<void> _init(ConnectivityService connectivity) async {
+    final isConnected = await connectivity.isConnected;
+    // Closed before the first check finished: nothing to listen to.
+    if (_disposed) return;
     state = state.copyWith(isOnline: isConnected);
 
-    _connectivitySubscription =
-        _connectivityService.onConnectivityChanged.listen((isConnected) {
+    final online = connectivity.onConnectivityChanged.listen((isConnected) {
       final wasOffline = !state.isOnline;
       state = state.copyWith(isOnline: isConnected);
 
@@ -72,8 +61,11 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
         syncConversations();
       }
     });
-
-    _syncSubscription = _repository.onSynced.listen((_) => syncConversations());
+    final synced = _repository.onSynced.listen((_) => syncConversations());
+    ref.onDispose(() {
+      online.cancel();
+      synced.cancel();
+    });
 
     await syncConversations();
   }
@@ -121,7 +113,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
         }
 
         await _repository.syncRemoteConversations();
-        if (isDisposed) return;
+        if (_disposed) return;
         await _reloadAfterRemoteSync();
       },
     );
@@ -165,7 +157,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     final targetPage = state.currentPage + 1;
     final result =
         await _repository.fetchPaginatedConversations(page: targetPage);
-    if (isDisposed) return;
+    if (_disposed) return;
 
     await result.fold(
       (err) async {
@@ -205,6 +197,7 @@ class AiChatController extends ChangeNotifier with SafeNotifier {
     );
   }
 
+  @override
   void _triggerPendingSyncIfAny() {
     if (state.syncPending) {
       state = state.copyWith(syncPending: false);

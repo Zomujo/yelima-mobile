@@ -4,27 +4,29 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/page_navigator.dart';
 import 'package:yelima/features/vitals/presentation/widgets/history/reading_history_item.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:clock/clock.dart';
 
 /// The saved readings, five per page.
-class ReadingHistorySection extends StatefulWidget {
+class ReadingHistorySection extends ConsumerStatefulWidget {
   const ReadingHistorySection({super.key});
 
   @override
-  State<ReadingHistorySection> createState() => _ReadingHistorySectionState();
+  ConsumerState<ReadingHistorySection> createState() =>
+      _ReadingHistorySectionState();
 }
 
-class _ReadingHistorySectionState extends State<ReadingHistorySection> {
+class _ReadingHistorySectionState extends ConsumerState<ReadingHistorySection> {
   int _currentPage = 1;
   final int _pageSize = 5;
 
   @override
   Widget build(BuildContext context) {
     final vitals =
-        context.select((ReadingLoggingController c) => c.history) ?? const [];
+        ref.watch(readingLoggingControllerProvider.select((s) => s.history)) ??
+            const [];
     if (vitals.isEmpty) return const SizedBox.shrink();
 
     final totalItems = vitals.length;

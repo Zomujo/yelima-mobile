@@ -1,59 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../../../../shared/utils/app_snackbar.dart';
-import '../../../../core/services/connectivity_service.dart';
 import '../../../../shared/utils/failure_message.dart';
-import '../../domain/repositories/ai_chat_repository.dart';
 import '../controllers/ai_chat_controller.dart';
+import '../controllers/ai_chat_state.dart';
 import '../widgets/ai_messages_list_view.dart';
 import '../widgets/chat_input_area.dart';
 
 import '../../../home/presentation/controllers/home_metrics_controller.dart';
 
 /// The AI daily check-in chat.
-class AiChatScreen extends StatefulWidget {
+class AiChatScreen extends ConsumerStatefulWidget {
   const AiChatScreen({super.key});
 
   @override
-  State<AiChatScreen> createState() => _AiChatScreenState();
+  ConsumerState<AiChatScreen> createState() => _AiChatScreenState();
 }
 
-class _AiChatScreenState extends State<AiChatScreen> {
-  late HomeMetricsController _homeMetricsController;
-  late final AiChatController _chatController;
+class _AiChatScreenState extends ConsumerState<AiChatScreen> {
+  late final HomeMetricsController _homeMetricsController;
 
   @override
   void initState() {
     super.initState();
-    _chatController = AiChatController(
-        context.read<AiChatRepository>(), ConnectivityService())
-      ..addListener(_onChatControllerChanged);
+    _homeMetricsController = ref.read(homeMetricsControllerProvider.notifier);
   }
 
-  void _onChatControllerChanged() {
-    final error = _chatController.error;
+  void _onChatChanged(AiChatState? _, AiChatState chat) {
+    final error = chat.error;
     if (error != null && mounted) {
       AppSnackBar.showError(context,
           message: error.message(context.l10n) ?? '');
-      _chatController.clearError();
+      ref.read(aiChatControllerProvider.notifier).clearError();
     }
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _homeMetricsController = context.read<HomeMetricsController>();
-  }
-
-  @override
   void dispose() {
-    _chatController.removeListener(_onChatControllerChanged);
-    _chatController.dispose();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
         _homeMetricsController.fetchMetrics();
@@ -64,22 +52,21 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _chatController,
-      child: Scaffold(
-        backgroundColor: AppColors.globalBackground,
-        appBar: _buildAppBar(context),
-        body: const Column(
-          children: [
-            Expanded(
-              child: AiMessagesListView(),
-            ),
-            SafeArea(
-              top: false,
-              child: ChatInputArea(),
-            ),
-          ],
-        ),
+    // Keeps the chat alive while this screen is open and shows its errors.
+    ref.listen(aiChatControllerProvider, _onChatChanged);
+    return Scaffold(
+      backgroundColor: AppColors.globalBackground,
+      appBar: _buildAppBar(context),
+      body: const Column(
+        children: [
+          Expanded(
+            child: AiMessagesListView(),
+          ),
+          SafeArea(
+            top: false,
+            child: ChatInputArea(),
+          ),
+        ],
       ),
     );
   }

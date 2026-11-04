@@ -4,18 +4,18 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import '../controllers/ai_chat_controller.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'audio/audio_message_bubble.dart';
 
 /// One message bubble with its status, suggestions and retry.
-class AiMessageTile extends StatelessWidget {
+class AiMessageTile extends ConsumerWidget {
   final AiChatMessage message;
 
   const AiMessageTile({super.key, required this.message});
 
-  void _showLongPressMenu(BuildContext context) {
-    final chatController = context.read<AiChatController>();
+  void _showLongPressMenu(BuildContext context, WidgetRef ref) {
+    final chatController = ref.read(aiChatControllerProvider.notifier);
 
     showModalBottomSheet(
       context: context,
@@ -57,8 +57,11 @@ class AiMessageTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isUser = message.sender == 'user';
+    final hasSuggestions = !isUser && message.suggestions.isNotEmpty;
+    final isSending = hasSuggestions &&
+        ref.watch(aiChatControllerProvider.select((s) => s.isSending));
 
     return Column(
       crossAxisAlignment:
@@ -79,7 +82,7 @@ class AiMessageTile extends StatelessWidget {
             ],
             Flexible(
               child: GestureDetector(
-                onLongPress: () => _showLongPressMenu(context),
+                onLongPress: () => _showLongPressMenu(context, ref),
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -142,7 +145,9 @@ class AiMessageTile extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     if (message.localChatId != null) {
-                      context.read<AiChatController>().retryMessage(message);
+                      ref
+                          .read(aiChatControllerProvider.notifier)
+                          .retryMessage(message);
                     }
                   },
                   child: Row(
@@ -160,40 +165,37 @@ class AiMessageTile extends StatelessWidget {
             ],
           ],
         ),
-        if (!isUser && message.suggestions.isNotEmpty) ...[
+        if (hasSuggestions) ...[
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.only(left: 40),
-            child: Consumer<AiChatController>(
-              builder: (context, controller, child) {
-                final isSending = controller.isSending;
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: message.suggestions.map((suggestion) {
-                    return ActionChip(
-                      label: AppText.labelMedium(
-                        suggestion,
-                        color: isSending ? Colors.grey : Colors.black54,
-                      ),
-                      backgroundColor: isSending
-                          ? Colors.grey.withValues(alpha: 0.1)
-                          : AppColors.primary.withValues(alpha: 0.1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: isSending ? Colors.grey : AppColors.primary,
-                        ),
-                      ),
-                      onPressed: isSending
-                          ? null
-                          : () {
-                              controller.sendMessage(suggestion);
-                            },
-                    );
-                  }).toList(),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: message.suggestions.map((suggestion) {
+                return ActionChip(
+                  label: AppText.labelMedium(
+                    suggestion,
+                    color: isSending ? Colors.grey : Colors.black54,
+                  ),
+                  backgroundColor: isSending
+                      ? Colors.grey.withValues(alpha: 0.1)
+                      : AppColors.primary.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: isSending ? Colors.grey : AppColors.primary,
+                    ),
+                  ),
+                  onPressed: isSending
+                      ? null
+                      : () {
+                          ref
+                              .read(aiChatControllerProvider.notifier)
+                              .sendMessage(suggestion);
+                        },
                 );
-              },
+              }).toList(),
             ),
           ),
         ],

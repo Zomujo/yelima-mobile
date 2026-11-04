@@ -1,59 +1,35 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/failures/app_failure.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../../domain/entities/symptom_entity.dart';
-import '../../domain/repositories/symptoms_repository.dart';
+import '../../symptoms_providers.dart';
 import 'symptoms_state.dart';
 
+part 'symptoms_controller.g.dart';
+
 /// The reported symptoms, kept live from the phone and refreshed from the server.
-class SymptomsController extends ChangeNotifier with SafeNotifier {
-  SymptomsController({required SymptomsRepository repository})
-      : _repository = repository {
-    _sub = _repository
+@Riverpod(keepAlive: true)
+class SymptomsController extends _$SymptomsController {
+  @override
+  SymptomsState build() {
+    final sub = ref
+        .watch(symptomsRepositoryProvider)
         .watchSymptoms()
         .listen((list) => state = state.copyWith(symptoms: list));
-  }
-
-  final SymptomsRepository _repository;
-  late final StreamSubscription<List<SymptomEntity>> _sub;
-
-  SymptomsState _state = const SymptomsState();
-  SymptomsState get state => _state;
-  set state(SymptomsState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
+    ref.onDispose(sub.cancel);
+    Future.microtask(fetchSymptoms);
+    return const SymptomsState();
   }
 
   /// Refreshes from the server (at most every 5 minutes unless [force]).
   Future<void> fetchSymptoms({bool force = false}) async {
     state = state.copyWith(refreshing: true);
-    await _repository.refresh(force: force);
+    await ref.read(symptomsRepositoryProvider).refresh(force: force);
     state = state.copyWith(refreshing: false);
   }
 
   /// Reports a new symptom.
   AsyncResult<String> createSymptom(String description) =>
-      _repository.createSymptom(description);
-
-  /// Symptoms grouped by the day they started, newest day first.
-  List<(DateTime day, List<SymptomEntity> symptoms)> get byDay {
-    final sorted = [...?state.symptoms]
-      ..sort((a, b) => b.onsetDate.compareTo(a.onsetDate));
-    final groups = <DateTime, List<SymptomEntity>>{};
-    for (final s in sorted) {
-      final d = s.onsetDate;
-      groups.putIfAbsent(DateTime(d.year, d.month, d.day), () => []).add(s);
-    }
-    return [for (final e in groups.entries) (e.key, e.value)];
-  }
-
-  @override
-  void dispose() {
-    _sub.cancel();
-    super.dispose();
-  }
+      ref.read(symptomsRepositoryProvider).createSymptom(description);
 }

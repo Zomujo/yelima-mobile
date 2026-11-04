@@ -1,7 +1,12 @@
 part of 'ai_chat_controller.dart';
 
 /// Sending text and voice notes: shown at once, then updated from the server's reply.
-extension AiChatSending on AiChatController {
+mixin _AiChatSending on _$AiChatController {
+  AiChatRepository get _repository;
+  Future<void>? get _activeSync;
+  bool get _disposed;
+  void _triggerPendingSyncIfAny();
+
   /// Sends a text message; a retry passes the failed message's [localChatId].
   Future<void> sendMessage(String text, {String? localChatId}) async {
     if (text.trim().isEmpty) return;
@@ -58,7 +63,7 @@ extension AiChatSending on AiChatController {
 
     final res = await call(localId);
     // Closed (e.g. logout) while waiting: don't write into the next session.
-    if (isDisposed) return;
+    if (_disposed) return;
     final msgs = List<AiChatMessage>.from(state.messages);
     final index = msgs.indexWhere((m) => m.localChatId == localId);
 

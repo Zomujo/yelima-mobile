@@ -1,18 +1,24 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/core/core_providers.dart';
 import 'package:yelima/core/failures/app_failure.dart';
+import 'package:yelima/core/services/session_lifecycle_service.dart';
 import 'package:yelima/features/progress/domain/entities/vital_trends.dart';
 import 'package:yelima/features/progress/domain/repositories/progress_repository.dart';
 import 'package:yelima/features/progress/presentation/controllers/progress_controller.dart';
+import 'package:yelima/features/progress/presentation/controllers/progress_state.dart';
+import 'package:yelima/features/progress/progress_providers.dart';
 
 class MockRepo extends Mock implements ProgressRepository {}
 
 void main() {
   late MockRepo repo;
-  late ProgressController controller;
+  late SessionLifecycleService session;
+  late ProviderContainer container;
   const today = ChartDateRange.today;
   const bp = BPTrend(
       labels: ['2026-10-23T10:00:00Z'], systolic: [120], diastolic: [80]);
@@ -28,27 +34,34 @@ void main() {
         .thenAnswer((_) async => left(const NotFoundFailure()));
     when(() => repo.getBPTrend(any())).thenAnswer((_) async => right(bp));
     when(() => repo.getSugarTrend(any())).thenAnswer((_) async => right(sugar));
-    controller = ProgressController(repo);
+    session = SessionLifecycleService();
+    container = ProviderContainer(overrides: [
+      progressRepositoryProvider.overrideWithValue(repo),
+      sessionLifecycleProvider.overrideWithValue(session),
+    ]);
+    addTearDown(container.dispose);
   });
 
-  tearDown(() => controller.dispose());
+  ProgressController controller() =>
+      container.read(progressControllerProvider.notifier);
+  ProgressCharts charts() => container.read(progressControllerProvider);
 
   test('loads both charts', () async {
-    await controller.load(today);
+    await controller().load(today);
 
-    expect(controller.bpTrendState.data, bp);
-    expect(controller.glucoseTrendState.data, sugar);
-    expect(controller.bpTrendState.isLoading, isFalse);
+    expect(charts().bpTrendState.data, bp);
+    expect(charts().glucoseTrendState.data, sugar);
+    expect(charts().bpTrendState.isLoading, isFalse);
   });
 
   test('a failure with nothing cached shows the error', () async {
     when(() => repo.getBPTrend(any()))
         .thenAnswer((_) async => left(const NetworkFailure()));
 
-    await controller.load(today);
+    await controller().load(today);
 
-    expect(controller.bpTrendState.data, isNull);
-    expect(controller.bpTrendState.error, const NetworkFailure());
+    expect(charts().bpTrendState.data, isNull);
+    expect(charts().bpTrendState.error, const NetworkFailure());
   });
 
   test('the cached chart stays when the refresh fails', () async {
@@ -56,10 +69,10 @@ void main() {
     when(() => repo.getBPTrend(today))
         .thenAnswer((_) async => left(const NetworkFailure()));
 
-    await controller.load(today);
+    await controller().load(today);
 
-    expect(controller.bpTrendState.data, bp);
-    expect(controller.bpTrendState.error, const NetworkFailure());
+    expect(charts().bpTrendState.data, bp);
+    expect(charts().bpTrendState.error, const NetworkFailure());
   });
 
   test('an answer for a range the user left is ignored', () async {
@@ -70,11 +83,34 @@ void main() {
     when(() => repo.getBPTrend(ChartDateRange.thisMonth))
         .thenAnswer((_) async => right(month));
 
-    final first = controller.load(today);
-    await controller.load(ChartDateRange.thisMonth);
+    final first = controller().load(today);
+    await controller().load(ChartDateRange.thisMonth);
     slow.complete(right(bp));
     await first;
 
-    expect(controller.bpTrendState.data, month);
+    expect(charts().bpTrendState.data, month);
+  });
+
+  test('signing out clears both charts', () async {
+    await controller().load(today);
+
+    await session.startSession('u');
+    await session.endSession();
+
+    expect(charts(), const ProgressCharts());
+    expect(charts().bpTrendState.isLoading, isTrue);
+  });
+
+  test('a chart still loading when the user signs out is dropped', () async {
+    final slow = Completer<Either<AppFailure, BPTrend>>();
+    when(() => repo.getBPTrend(today)).thenAnswer((_) => slow.future);
+
+    final load = controller().load(today);
+    await session.startSession('u');
+    await session.endSession();
+    slow.complete(right(bp));
+    await load;
+
+    expect(charts().bpTrendState.data, isNull);
   });
 }

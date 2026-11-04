@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -9,14 +10,18 @@ import '../../controllers/medicine_details_form_controller.dart';
 import 'adherence_calendar.dart';
 
 /// Name, dosage and the month's dose calendar.
-class MedicineDetailsHeaderCard extends StatelessWidget {
-  const MedicineDetailsHeaderCard({super.key, required this.controller});
+class MedicineDetailsHeaderCard extends ConsumerWidget {
+  const MedicineDetailsHeaderCard({super.key, required this.medicationId});
 
-  final MedicineDetailsFormController controller;
+  final String medicationId;
+
+  MedicineDetailsFormControllerProvider get _form =>
+      medicineDetailsFormControllerProvider(medicationId);
 
   @override
-  Widget build(BuildContext context) {
-    final history = controller.history;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(_form);
+    final history = state.history;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -29,26 +34,26 @@ class MedicineDetailsHeaderCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              AppText.bodyLarge(controller.name,
+              AppText.bodyLarge(state.name,
                   fontWeight: FontWeight.bold, color: AppColors.slate800),
               const SizedBox(width: 8),
-              AppText.titleMedium(controller.detail?.dosage ?? '',
+              AppText.titleMedium(state.detail?.dosage ?? '',
                   color: AppColors.slate400),
             ],
           ),
           const SizedBox(height: 24),
-          if (history == null && controller.historyError != null)
+          if (history == null && state.historyError != null)
             Center(
                 child: AppText.bodyMedium(
-                    controller.historyError!.message(context.l10n) ?? ''))
+                    state.historyError!.message(context.l10n) ?? ''))
           else if (history == null)
             AppShimmer.box(
                 height: 200, width: double.infinity, borderRadius: 16)
           else
             AdherenceCalendar(
                 history: history,
-                startDate: controller.detail?.startDate,
-                onMonthChanged: controller.loadHistory),
+                startDate: state.detail?.startDate,
+                onMonthChanged: ref.read(_form.notifier).loadHistory),
         ],
       ),
     );

@@ -1,12 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/features/vitals/domain/entities/reading_form.dart';
 import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
 import 'package:yelima/features/vitals/domain/repositories/vitals_repository.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/features/vitals/presentation/widgets/form/reading_save_button.dart';
+import 'package:yelima/features/vitals/vitals_providers.dart';
 
 import '../../../helpers/pump_app.dart';
 
@@ -31,14 +32,13 @@ void main() {
   /// Saves a sugar reading that the repository grades [grade].
   Future<void> saveGraded(WidgetTester tester, VitalSeverity grade) async {
     when(() => repo.saveReading(any())).thenAnswer((_) async => right(grade));
-    final controller = ReadingLoggingController(repository: repo)
-      ..init()
+    await tester.pumpApp(const ReadingSaveButton(),
+        overrides: [vitalsRepositoryProvider.overrideWithValue(repo)]);
+    ProviderScope.containerOf(tester.element(find.byType(ReadingSaveButton)))
+        .read(readingLoggingControllerProvider.notifier)
       ..setKind(VitalKind.bloodSugar)
       ..setSugarLevel(1.0);
-    await tester.pumpApp(
-      const ReadingSaveButton(),
-      providers: [ChangeNotifierProvider.value(value: controller)],
-    );
+    await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
   }

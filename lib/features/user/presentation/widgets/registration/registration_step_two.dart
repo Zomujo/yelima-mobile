@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yelima/features/user/user_providers.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/step_layout.dart';
@@ -13,7 +13,7 @@ import 'package:yelima/shared/utils/app_snackbar.dart';
 import 'package:yelima/features/user/domain/entities/user_entity.dart';
 
 /// Registration step 2: date of birth, or age.
-class RegistrationStepTwo extends StatefulWidget {
+class RegistrationStepTwo extends ConsumerStatefulWidget {
   const RegistrationStepTwo({
     super.key,
     required this.onBack,
@@ -24,10 +24,11 @@ class RegistrationStepTwo extends StatefulWidget {
   final VoidCallback onContinue;
 
   @override
-  State<RegistrationStepTwo> createState() => _RegistrationStepTwoState();
+  ConsumerState<RegistrationStepTwo> createState() =>
+      _RegistrationStepTwoState();
 }
 
-class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
+class _RegistrationStepTwoState extends ConsumerState<RegistrationStepTwo> {
   DateTime? _selectedDate;
   bool _isEnteringAge = false;
   final _ageController = TextEditingController();
@@ -36,7 +37,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
   void initState() {
     super.initState();
 
-    _selectedDate = context.read<UserController>().userEntity?.dateOfBirth;
+    _selectedDate = ref.read(userControllerProvider).userEntity?.dateOfBirth;
 
     _ageController.addListener(() {
       if (_isEnteringAge) setState(() {});
@@ -65,7 +66,7 @@ class _RegistrationStepTwoState extends State<RegistrationStepTwo> {
       return;
     }
     FocusScope.of(context).unfocus();
-    final users = context.read<UserController>();
+    final users = ref.read(userControllerProvider.notifier);
     final saved = await runWithLoader(context,
         message: context.l10n.savingDob, action: () => users.updateDob(dob));
     if (saved && mounted) widget.onContinue();

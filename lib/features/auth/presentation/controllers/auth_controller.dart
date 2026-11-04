@@ -1,74 +1,64 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/core_providers.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../../core/managers/mutation_sync_manager.dart';
 import '../../../../core/services/session_expiry.dart';
 import '../../../../core/services/session_lifecycle_service.dart';
-import '../../../../core/utils/safe_notifier.dart';
+import '../../../user/user_providers.dart';
+import '../../auth_providers.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
-/// Tracks who is signed in and runs sign-in, logout and account deletion.
-class AuthController extends ChangeNotifier with SafeNotifier {
-  AuthController({
-    required AuthRepository repository,
-    required SessionLifecycleService session,
-    required MutationSyncManager syncManager,
-    required SessionExpiry sessionExpiry,
-    Future<void> Function(AuthUser? user)? onUserChanged,
-  })  : _repository = repository,
-        _session = session,
-        _sync = syncManager,
-        _sessionExpiry = sessionExpiry,
-        _onUserChanged = onUserChanged ?? ((_) async {}) {
-    _subscription = _repository.watchUser().listen(_onAuthChanged);
-  }
+part 'auth_controller.g.dart';
 
-  final AuthRepository _repository;
-  final SessionLifecycleService _session;
-  final MutationSyncManager _sync;
-  final SessionExpiry _sessionExpiry;
-  final Future<void> Function(AuthUser? user) _onUserChanged;
-  late final StreamSubscription<AuthUser?> _subscription;
+/// Tracks who is signed in and runs sign-in, logout and account deletion.
+@Riverpod(keepAlive: true)
+class AuthController extends _$AuthController {
+  late AuthRepository _repository;
+  late SessionLifecycleService _session;
+  late MutationSyncManager _sync;
+  late SessionExpiry _sessionExpiry;
   Completer<void>? _loginReady;
 
-  AuthState _state = const AuthState();
-  AuthState get state => _state;
-  bool get isAuthenticated => _state.isAuthenticated;
-  bool get isInitialized => _state.isInitialized;
-  bool get isAuthLoading => _state.isAuthLoading;
-  bool get isInitialSyncInProgress => _state.isInitialSyncInProgress;
+  @override
+  AuthState build() {
+    _repository = ref.watch(authRepositoryProvider);
+    _session = ref.watch(sessionLifecycleProvider);
+    _sync = ref.watch(mutationSyncManagerProvider);
+    _sessionExpiry = ref.watch(sessionExpiryProvider);
+    final sub = _repository.watchUser().listen(_onAuthChanged);
+    ref.onDispose(sub.cancel);
+    return const AuthState();
+  }
 
   /// Whether "Sign in again" needs a password field.
   bool get reauthNeedsPassword => _repository.usesPassword;
 
-  void _update(AuthState state) {
-    _state = state;
-    notifyListeners();
-  }
+  // Read lazily, so creating AuthController doesn't create UserController early.
+  Future<void> _onUserChanged(AuthUser? user) =>
+      ref.read(userControllerProvider.notifier).onUserChanged(user);
 
   Future<void> _onAuthChanged(AuthUser? user) async {
     if (user == null) {
       await _onUserChanged(null);
-      _update(_state.copyWith(currentUser: null, isInitialized: true));
+      state = state.copyWith(currentUser: null, isInitialized: true);
       await _sync.flush();
       await _session.endSession();
       return;
     }
-    _update(_state.copyWith(
-        currentUser: user,
-        isInitialSyncInProgress: true,
-        isInitialized: false));
+    state = state.copyWith(
+        currentUser: user, isInitialSyncInProgress: true, isInitialized: false);
     try {
       // The profile loads before auth reports ready, so the router never sees half a login.
       await Future.wait([_resumeSession(user), _onUserChanged(user)]);
     } finally {
-      _update(
-          _state.copyWith(isInitialSyncInProgress: false, isInitialized: true));
+      state =
+          state.copyWith(isInitialSyncInProgress: false, isInitialized: true);
       if (_loginReady?.isCompleted == false) _loginReady!.complete();
     }
   }
@@ -100,15 +90,15 @@ class AuthController extends ChangeNotifier with SafeNotifier {
 
   /// One attempt at a time; completes once the profile has loaded, so the loader covers it.
   AsyncResult<void> _authenticate(AsyncResult<void> Function() call) async {
-    if (_state.isAuthLoading) return left(const CancelledFailure());
-    _update(_state.copyWith(isAuthLoading: true));
+    if (state.isAuthLoading) return left(const CancelledFailure());
+    state = state.copyWith(isAuthLoading: true);
     final ready = _loginReady = Completer<void>();
     final result = await call();
     if (result.isRight()) {
       await ready.future.timeout(const Duration(seconds: 30), onTimeout: () {});
     }
     _loginReady = null;
-    _update(_state.copyWith(isAuthLoading: false));
+    state = state.copyWith(isAuthLoading: false);
     return result;
   }
 
@@ -141,11 +131,5 @@ class AuthController extends ChangeNotifier with SafeNotifier {
   Future<bool> signOut() async {
     await _session.endSession();
     return (await _repository.signOut()).isRight();
-  }
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
   }
 }

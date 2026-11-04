@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -9,14 +10,17 @@ import '../../controllers/medicine_details_form_controller.dart';
 import '../all_medicines/delete_medication_modal.dart';
 
 /// Deletes the medicine after asking, then leaves its screen.
-class DeleteMedicineButton extends StatelessWidget {
-  const DeleteMedicineButton({super.key, required this.controller});
+class DeleteMedicineButton extends ConsumerWidget {
+  const DeleteMedicineButton({super.key, required this.medicationId});
 
-  final MedicineDetailsFormController controller;
+  final String medicationId;
 
-  Future<void> _delete(BuildContext context) async {
+  MedicineDetailsFormControllerProvider get _form =>
+      medicineDetailsFormControllerProvider(medicationId);
+
+  Future<void> _delete(BuildContext context, WidgetRef ref, String name) async {
     final l10n = context.l10n;
-    final name = controller.name;
+    final controller = ref.read(_form.notifier);
     if (await DeleteMedicationModal.show(context, name) != true) return;
     final result = await controller.delete();
     if (!context.mounted) return;
@@ -30,7 +34,8 @@ class DeleteMedicineButton extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = ref.watch(_form.select((s) => s.name));
     return AppButton(
       text: context.l10n.deleteMedicationTitle,
       variant: AppButtonVariant.outlined,
@@ -38,7 +43,7 @@ class DeleteMedicineButton extends StatelessWidget {
       outlineColor: AppColors.red500,
       width: double.infinity,
       prefixIcon: const Icon(Icons.delete_outline, color: AppColors.red500),
-      onPressed: () => _delete(context),
+      onPressed: () => _delete(context, ref, name),
     );
   }
 }

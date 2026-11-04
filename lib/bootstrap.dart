@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:yelima/core/utils/logger.dart';
 
 import 'package:firebase_core/firebase_core.dart';
-import 'injection_container.dart' as di;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app_container.dart';
 
 import 'core/config/app_config.dart';
 import 'app.dart';
@@ -63,13 +64,13 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
     return true;
   };
 
-  // Initialize GetIt Dependency Injection
-  await di.init();
+  // Create the app's services (Riverpod providers).
+  final container = await createAppContainer();
 
   AppLogger.i(
       '🚀 Bootstrapping ${AppConfig.instance.appName} [${AppConfig.instance.flavor.name}]...');
 
-  runApp(const MyApp());
+  runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
 
   // Prod only, so dev builds can still be screenshotted for testing.
   if (AppConfig.instance.isProd) {

@@ -1,41 +1,34 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/utils/session_scoped.dart';
+import '../../../../core/utils/follow_session.dart';
+import '../../appointment_providers.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/appointment_list_response.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../states/appointment_state.dart';
 
-/// Upcoming and past appointment pages, and the next appointment for home.
-class AppointmentController extends ChangeNotifier
-    with SafeNotifier, SessionScoped {
-  AppointmentController({required this.repository}) {
-    joinSession();
-  }
+part 'appointment_controller.g.dart';
 
-  final AppointmentRepository repository;
+/// Upcoming and past appointment pages, and the next appointment for home.
+@Riverpod(keepAlive: true)
+class AppointmentController extends _$AppointmentController {
+  late AppointmentRepository _repository;
   static const _pageSize = 3;
 
   /// Bumped per nearest-appointment fetch, so a slow old answer can't win.
   int _nearestStamp = 0;
 
-  AppointmentState _state = const AppointmentState();
-  AppointmentState get state => _state;
-  set state(AppointmentState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
+  @override
+  AppointmentState build() {
+    _repository = ref.watch(appointmentRepositoryProvider);
+    followSession(ref, onEnd: () => state = const AppointmentState());
+    Future.microtask(initialize);
+    return const AppointmentState();
   }
 
   @override
-  String get serviceName => 'AppointmentController';
-
-  @override
-  Future<void> onSessionStarted(String userId) async {}
-
-  @override
-  Future<void> onSessionEnded() async => state = const AppointmentState();
+  bool updateShouldNotify(AppointmentState previous, AppointmentState next) =>
+      previous != next;
 
   /// Loads the first page of both lists.
   void initialize() {
@@ -48,12 +41,12 @@ class AppointmentController extends ChangeNotifier
   Future<void> fetchNearestAppointment() async {
     final stamp = ++_nearestStamp;
     final cached =
-        (await repository.getCachedNearestAppointment()).toNullable();
+        (await _repository.getCachedNearestAppointment()).toNullable();
     state = state.copyWith(
         nearestAppointment: cached ?? state.nearestAppointment,
         isNearestLoading: (cached ?? state.nearestAppointment) == null);
 
-    final result = await repository.getNearestAppointment();
+    final result = await _repository.getNearestAppointment();
     if (stamp != _nearestStamp) return;
     state = result.fold(
       (f) => state.copyWith(isNearestLoading: false, nearestError: f),
@@ -65,7 +58,7 @@ class AppointmentController extends ChangeNotifier
   /// Shows [page] of [filter]'s list: the phone's copy first, then the server's.
   Future<void> fetchAppointments(
       {required AppointmentFilter filter, int page = 1}) async {
-    final cached = (await repository.getCachedAppointments(
+    final cached = (await _repository.getCachedAppointments(
             page: page, pageSize: _pageSize, filter: filter))
         .toNullable();
     if (cached != null && cached.rows.isNotEmpty) {
@@ -74,7 +67,7 @@ class AppointmentController extends ChangeNotifier
       _set(filter, _list(filter).copyWith(isLoading: true));
     }
 
-    (await repository.getAppointments(
+    (await _repository.getAppointments(
             page: page, pageSize: _pageSize, filter: filter))
         .fold(
       (f) => _set(filter, _list(filter).copyWith(isLoading: false, error: f)),

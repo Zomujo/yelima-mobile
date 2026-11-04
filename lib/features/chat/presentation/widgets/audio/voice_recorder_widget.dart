@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/core_providers.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
@@ -8,16 +9,17 @@ import '../../../../../core/services/voice_recording_service.dart';
 import '../../controllers/ai_chat_controller.dart';
 
 /// Records a voice note and sends it.
-class VoiceRecorderWidget extends StatefulWidget {
+class VoiceRecorderWidget extends ConsumerStatefulWidget {
   final VoidCallback onClose;
 
   const VoiceRecorderWidget({super.key, required this.onClose});
 
   @override
-  State<VoiceRecorderWidget> createState() => _VoiceRecorderWidgetState();
+  ConsumerState<VoiceRecorderWidget> createState() =>
+      _VoiceRecorderWidgetState();
 }
 
-class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
+class _VoiceRecorderWidgetState extends ConsumerState<VoiceRecorderWidget>
     with WidgetsBindingObserver {
   late final VoiceRecordingService _recordingService;
 
@@ -25,7 +27,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _recordingService = context.read<VoiceRecordingService>();
+    _recordingService = ref.read(voiceRecordingServiceProvider);
     _recordingService.addListener(_onRecordingServiceChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recordingService.startRecording();
@@ -77,7 +79,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget>
     if (!mounted) return;
 
     if (path != null) {
-      final controller = context.read<AiChatController>();
+      final controller = ref.read(aiChatControllerProvider.notifier);
       final durationStr =
           _recordingService.recorderValueNotifier.value.durationString;
       controller.sendAudioMessage(path, durationStr: durationStr);

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
@@ -14,14 +14,14 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 
 /// The medications tab: adherence, section tabs and today's doses.
-class MedicationsScreen extends StatefulWidget {
+class MedicationsScreen extends ConsumerStatefulWidget {
   const MedicationsScreen({super.key});
 
   @override
-  State<MedicationsScreen> createState() => _MedicationsScreenState();
+  ConsumerState<MedicationsScreen> createState() => _MedicationsScreenState();
 }
 
-class _MedicationsScreenState extends State<MedicationsScreen> {
+class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
   final _adherenceKey = GlobalKey();
   final _listKey = GlobalKey();
 
@@ -29,7 +29,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MedicationController>().init();
+      ref.read(medicationControllerProvider.notifier).init();
       if (mounted) {
         AppTutorialService.showMedicationsTutorial(context,
             adherenceKey: _adherenceKey, listKey: _listKey);
@@ -79,18 +79,17 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Consumer<MedicationController>(
-                        builder: (context, controller, child) {
+                    Consumer(builder: (context, ref, child) {
+                      final adherence = ref.watch(medicationControllerProvider
+                          .select((s) => s.adherence));
                       return SizedBox(
                         key: _adherenceKey,
                         width: double.infinity,
                         child: ShimmerLoading(
-                          isLoading: controller.state.adherence == null,
+                          isLoading: adherence == null,
                           shimmer: AppShimmer.box(
                               width: double.infinity, height: 150),
-                          child: AdherenceCard(
-                            adherence: controller.state.adherence,
-                          ),
+                          child: AdherenceCard(adherence: adherence),
                         ),
                       );
                     }),
@@ -106,12 +105,14 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                           color: AppColors.slate800,
                         ),
                         const SizedBox(height: 16),
-                        Consumer<MedicationController>(
-                            builder: (context, controller, child) {
+                        Consumer(builder: (context, ref, child) {
+                          final state = ref.watch(medicationControllerProvider);
                           return TimeOfDayTabs(
-                            selected: controller.state.section,
-                            onSelected: controller.selectSection,
-                            counts: controller.state.counts,
+                            selected: state.section,
+                            onSelected: ref
+                                .read(medicationControllerProvider.notifier)
+                                .selectSection,
+                            counts: state.counts,
                           );
                         }),
                       ],
@@ -121,12 +122,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: Consumer<MedicationController>(
-                  builder: (context, controller, child) {
-                return TodaysMedicationsList(controller: controller);
-              }),
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              sliver: TodaysMedicationsList(),
             ),
             const SliverToBoxAdapter(
               child: SizedBox(height: 60),

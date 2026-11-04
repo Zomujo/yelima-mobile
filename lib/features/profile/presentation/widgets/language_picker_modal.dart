@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/controllers/locale_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/core_providers.dart';
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 
 /// Lets the user switch the app language.
-class LanguagePickerModal extends StatelessWidget {
+class LanguagePickerModal extends ConsumerWidget {
   const LanguagePickerModal({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -20,9 +20,9 @@ class LanguagePickerModal extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final localeController = context.watch<LocaleController>();
-    final currentLanguageCode = localeController.locale?.languageCode ?? 'en';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentLanguageCode =
+        ref.watch(localeControllerProvider)?.languageCode ?? 'en';
 
     return Container(
       decoration: const BoxDecoration(
@@ -69,7 +69,9 @@ class LanguagePickerModal extends StatelessWidget {
               final isSelected = currentLanguageCode == code;
               return InkWell(
                 onTap: () {
-                  context.read<LocaleController>().setLocale(Locale(code));
+                  ref
+                      .read(localeControllerProvider.notifier)
+                      .setLocale(Locale(code));
                   Navigator.pop(context);
                 },
                 child: Container(

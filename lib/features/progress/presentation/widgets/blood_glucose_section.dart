@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'trend_view.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/vital_trends.dart';
 import '../controllers/progress_controller.dart';
 import '../screens/full_screen_graph_view.dart';
@@ -9,24 +9,22 @@ import 'progress_graph_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// The blood sugar chart card.
-class BloodGlucoseSection extends StatelessWidget {
+class BloodGlucoseSection extends ConsumerWidget {
   final String durationLabel;
 
   const BloodGlucoseSection({super.key, required this.durationLabel});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<ProgressController>(
-      builder: (context, controller, child) {
-        return ProgressGraphCard(
-          title: context.l10n.bloodGlucose,
-          latestValue: _getLatestGlucose(controller.glucoseTrendState.data),
-          latestSubtext: context.l10n.mmolL,
-          description: context.l10n.bloodGlucoseTrend,
-          graph: _buildGlucoseGraph(context, controller),
-          onExpand: () => _openFullScreen(context, controller, 'glucose'),
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trend = ref
+        .watch(progressControllerProvider.select((s) => s.glucoseTrendState));
+    return ProgressGraphCard(
+      title: context.l10n.bloodGlucose,
+      latestValue: _getLatestGlucose(trend.data),
+      latestSubtext: context.l10n.mmolL,
+      description: context.l10n.bloodGlucoseTrend,
+      graph: TrendView(state: trend, chart: (d) => GlucoseGraph(data: d)),
+      onExpand: () => _openFullScreen(context, 'glucose'),
     );
   }
 
@@ -38,22 +36,12 @@ class BloodGlucoseSection extends StatelessWidget {
     return valid.last!.toStringAsFixed(1);
   }
 
-  Widget _buildGlucoseGraph(
-          BuildContext context, ProgressController controller) =>
-      TrendView(
-          state: controller.glucoseTrendState,
-          chart: (d) => GlucoseGraph(data: d));
-
-  void _openFullScreen(
-      BuildContext context, ProgressController controller, String tab) {
+  void _openFullScreen(BuildContext context, String tab) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider<ProgressController>.value(
-          value: controller,
-          child: FullScreenGraphView(
-            activeTab: tab,
-            durationLabel: durationLabel,
-          ),
+        builder: (_) => FullScreenGraphView(
+          activeTab: tab,
+          durationLabel: durationLabel,
         ),
       ),
     );

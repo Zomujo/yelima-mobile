@@ -7,47 +7,28 @@ import 'core/theme/app_theme.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'core/utils/globals.dart';
-import 'package:provider/provider.dart';
-import 'features/auth/presentation/controllers/auth_controller.dart';
-import 'features/user/presentation/controllers/user_controller.dart';
-import 'features/home/presentation/controllers/home_metrics_controller.dart';
-import 'features/medications/presentation/controllers/medication_controller.dart';
-import 'features/medications/presentation/controllers/all_medicines_controller.dart';
-import 'features/medications/domain/repositories/medication_repository.dart';
-import 'features/appointment/presentation/controllers/appointment_controller.dart';
-import 'core/managers/audio_player_manager.dart';
-import 'core/managers/mutation_sync_manager.dart';
-import 'core/services/day_changes.dart';
-import 'core/services/recent_fetches.dart';
-import 'core/services/shared_prefs_service.dart';
-import 'core/services/voice_recording_service.dart';
-import 'features/progress/presentation/controllers/progress_controller.dart';
-import 'features/chat/domain/repositories/ai_chat_repository.dart';
-import 'features/vitals/domain/repositories/vitals_repository.dart';
-import 'features/symptoms/presentation/controllers/symptoms_controller.dart';
-import 'injection_container.dart';
-import 'core/controllers/locale_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/core_providers.dart';
 import 'core/localization/fallback_localization_delegates.dart';
-
 import 'package:go_router/go_router.dart';
 
-/// The app root: providers, theme, translations and router.
-class MyApp extends StatefulWidget {
+/// The app root: theme, translations and router.
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends ConsumerState<MyApp>
+    with WidgetsBindingObserver {
   late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _router =
-        AppRouter.createRouter(sl<AuthController>(), sl<UserController>());
+    _router = ref.read(appRouterProvider);
     // After the first frame, so a notification that launched the app can navigate.
     WidgetsBinding.instance.addPostFrameCallback(
         (_) => NotificationService.instance.attachNavigator(_router.go));
@@ -59,9 +40,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Coming back to the app always shows fresh data.
-      sl<RecentFetches>().clear();
-      sl<DayChanges>().check();
-      sl<MutationSyncManager>().triggerSync();
+      ref.read(recentFetchesProvider).clear();
+      ref.read(dayChangesProvider).check();
+      ref.read(mutationSyncManagerProvider).triggerSync();
     }
   }
 
@@ -84,50 +65,21 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         systemNavigationBarIconBrightness: Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
-      child: Builder(
-        builder: (context) => MultiProvider(
-          providers: [
-            ChangeNotifierProvider.value(value: sl<AuthController>()),
-            ChangeNotifierProvider.value(value: sl<UserController>()),
-            ChangeNotifierProvider.value(value: sl<LocaleController>()),
-            ChangeNotifierProvider(
-                create: (_) => sl<HomeMetricsController>()..fetchMetrics()),
-            ChangeNotifierProvider(create: (_) => sl<MedicationController>()),
-            ChangeNotifierProvider(create: (_) => sl<AllMedicinesController>()),
-            Provider<MedicationRepository>(create: (_) => sl()),
-            ChangeNotifierProvider(
-                create: (_) => sl<AppointmentController>()..initialize()),
-            Provider<VitalsRepository>(create: (_) => sl()),
-            Provider<MutationSyncManager>.value(value: sl()),
-            Provider<AiChatRepository>.value(value: sl()),
-            Provider<AudioPlayerManager>.value(value: sl()),
-            ChangeNotifierProvider<VoiceRecordingService>.value(value: sl()),
-            Provider<SharedPrefsService>.value(value: sl()),
-            ChangeNotifierProvider.value(value: sl<ProgressController>()),
-            ChangeNotifierProvider(
-                create: (_) => sl<SymptomsController>()..fetchSymptoms()),
-          ],
-          child: Consumer<LocaleController>(
-            builder: (context, localeController, child) {
-              return MaterialApp.router(
-                scaffoldMessengerKey: scaffoldMessengerKey,
-                routerConfig: _router,
-                title: 'yelima',
-                locale: localeController.locale,
-                localizationsDelegates: const [
-                  AppLocalizations.delegate,
-                  FallbackMaterialLocalizationDelegate(),
-                  FallbackCupertinoLocalizationDelegate(),
-                  FallbackWidgetsLocalizationDelegate(),
-                ],
-                supportedLocales: AppLocalizations.supportedLocales,
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.theme,
-                themeMode: ThemeMode.light,
-              );
-            },
-          ),
-        ),
+      child: MaterialApp.router(
+        scaffoldMessengerKey: scaffoldMessengerKey,
+        routerConfig: _router,
+        title: 'yelima',
+        locale: ref.watch(localeControllerProvider),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          FallbackMaterialLocalizationDelegate(),
+          FallbackCupertinoLocalizationDelegate(),
+          FallbackWidgetsLocalizationDelegate(),
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.theme,
+        themeMode: ThemeMode.light,
       ),
     );
   }

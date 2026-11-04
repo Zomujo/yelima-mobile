@@ -4,7 +4,7 @@ import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../domain/entities/appointment_entity.dart';
 
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/appointment_controller.dart';
 import '../widgets/paginated_appointment_list.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
@@ -12,20 +12,20 @@ import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_s
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 /// Upcoming and past appointments.
-class AppointmentsScreen extends StatefulWidget {
+class AppointmentsScreen extends ConsumerStatefulWidget {
   const AppointmentsScreen({super.key});
 
   @override
-  State<AppointmentsScreen> createState() => _AppointmentsScreenState();
+  ConsumerState<AppointmentsScreen> createState() => _AppointmentsScreenState();
 }
 
-class _AppointmentsScreenState extends State<AppointmentsScreen> {
+class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<AppointmentController>().initialize();
+        ref.read(appointmentControllerProvider.notifier).initialize();
         AppTutorialService.showAppointmentsTutorial(context);
       }
     });
@@ -49,10 +49,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           ),
         ),
       ),
-      body: Consumer<AppointmentController>(
-        builder: (context, controller, child) {
-          final upcomingState = controller.state.upcomingState;
-          final pastState = controller.state.pastState;
+      body: Consumer(
+        builder: (context, ref, child) {
+          final state = ref.watch(appointmentControllerProvider);
+          final upcomingState = state.upcomingState;
+          final pastState = state.pastState;
 
           return ListView(
             padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
@@ -75,7 +76,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 isPast: false,
                 emptyMessage: context.l10n.noUpcomingAppointments,
                 filter: AppointmentFilter.upcoming,
-                controller: controller,
               ),
               const SizedBox(height: 32),
               AppText.labelMedium(
@@ -90,7 +90,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 isPast: true,
                 emptyMessage: context.l10n.noPastAppointments,
                 filter: AppointmentFilter.past,
-                controller: controller,
               ),
               SizedBox(height: AppSizes.bottomNavClearance(context)),
             ],

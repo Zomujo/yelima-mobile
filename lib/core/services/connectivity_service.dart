@@ -9,7 +9,13 @@ class ConnectivityService {
     return _instance;
   }
 
-  ConnectivityService._internal();
+  ConnectivityService._internal() {
+    // iOS stops its network monitor when the last listener leaves (e.g. the
+    // Profile screen closing on logout), and a new monitor says "no network"
+    // until its first update, so the next sign-in failed as offline. One
+    // listener for the app's lifetime keeps the monitor running.
+    _connectivity.onConnectivityChanged.listen((_) {}, onError: (_) {});
+  }
 
   final Connectivity _connectivity = Connectivity();
   final InternetConnection _internetConnection =

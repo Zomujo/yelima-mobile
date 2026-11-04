@@ -1,8 +1,8 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yelima/features/user/user_providers.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 import 'package:yelima/shared/widgets/layout/app_text.dart';
@@ -12,7 +12,7 @@ import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// Registration step 1: name, phone and gender.
-class RegistrationStepOne extends StatefulWidget {
+class RegistrationStepOne extends ConsumerStatefulWidget {
   const RegistrationStepOne({
     super.key,
     required this.onContinue,
@@ -21,10 +21,11 @@ class RegistrationStepOne extends StatefulWidget {
   final VoidCallback onContinue;
 
   @override
-  State<RegistrationStepOne> createState() => _RegistrationStepOneState();
+  ConsumerState<RegistrationStepOne> createState() =>
+      _RegistrationStepOneState();
 }
 
-class _RegistrationStepOneState extends State<RegistrationStepOne> {
+class _RegistrationStepOneState extends ConsumerState<RegistrationStepOne> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -34,7 +35,7 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
   void initState() {
     super.initState();
 
-    final user = context.read<UserController>().userEntity;
+    final user = ref.read(userControllerProvider).userEntity;
     if (user != null) {
       _firstNameController.text = user.firstName ?? '';
       _lastNameController.text = user.lastName ?? '';
@@ -70,7 +71,7 @@ class _RegistrationStepOneState extends State<RegistrationStepOne> {
 
   Future<void> _continue() async {
     FocusScope.of(context).unfocus();
-    final users = context.read<UserController>();
+    final users = ref.read(userControllerProvider.notifier);
     final saved = await runWithLoader(context,
         message: context.l10n.savingDetails,
         action: () => users.updateBasicInfo(

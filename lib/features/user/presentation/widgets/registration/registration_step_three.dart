@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/features/user/domain/entities/user_entity.dart';
-import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/features/user/user_providers.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/utils/app_snackbar.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
@@ -11,7 +11,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 /// Registration step 3: conditions and consent to store health data.
-class RegistrationStepThree extends StatefulWidget {
+class RegistrationStepThree extends ConsumerStatefulWidget {
   const RegistrationStepThree({
     super.key,
     required this.onBack,
@@ -22,17 +22,18 @@ class RegistrationStepThree extends StatefulWidget {
   final VoidCallback onContinue;
 
   @override
-  State<RegistrationStepThree> createState() => _RegistrationStepThreeState();
+  ConsumerState<RegistrationStepThree> createState() =>
+      _RegistrationStepThreeState();
 }
 
-class _RegistrationStepThreeState extends State<RegistrationStepThree> {
+class _RegistrationStepThreeState extends ConsumerState<RegistrationStepThree> {
   HealthConditionCategory? _selectedCondition;
   bool _hasConsented = false;
 
   @override
   void initState() {
     super.initState();
-    final user = context.read<UserController>().userEntity;
+    final user = ref.read(userControllerProvider).userEntity;
     _selectedCondition = HealthConditionCategory.from(user?.conditions ?? []);
     _hasConsented = user?.hasConsented ?? false;
   }
@@ -47,7 +48,7 @@ class _RegistrationStepThreeState extends State<RegistrationStepThree> {
           message: context.l10n.pleaseSelectCondition);
       return;
     }
-    final users = context.read<UserController>();
+    final users = ref.read(userControllerProvider.notifier);
     final saved = await runWithLoader(context,
         message: context.l10n.savingHealthConditions,
         action: () => users.updateHealthConditions(

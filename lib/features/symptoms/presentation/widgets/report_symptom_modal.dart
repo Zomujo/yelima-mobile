@@ -5,12 +5,12 @@ import 'package:yelima/shared/widgets/layout/app_button.dart';
 import 'package:yelima/shared/widgets/modals/app_modal.dart';
 import 'package:yelima/shared/widgets/modals/discard_changes_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/features/symptoms/presentation/controllers/symptoms_controller.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 /// Asks how the patient feels and reports it as a symptom.
-class ReportSymptomModal extends StatefulWidget {
+class ReportSymptomModal extends ConsumerStatefulWidget {
   const ReportSymptomModal({super.key, required this.text});
 
   /// The note being written; made by [show] so closing can check it, freed here.
@@ -42,10 +42,10 @@ class ReportSymptomModal extends StatefulWidget {
       await DiscardChangesModal.show(context) == true;
 
   @override
-  State<ReportSymptomModal> createState() => _ReportSymptomModalState();
+  ConsumerState<ReportSymptomModal> createState() => _ReportSymptomModalState();
 }
 
-class _ReportSymptomModalState extends State<ReportSymptomModal> {
+class _ReportSymptomModalState extends ConsumerState<ReportSymptomModal> {
   TextEditingController get _controller => widget.text;
   bool _isLoading = false;
 
@@ -67,7 +67,7 @@ class _ReportSymptomModalState extends State<ReportSymptomModal> {
     if (note.length <= 5) return;
 
     setState(() => _isLoading = true);
-    final controller = context.read<SymptomsController>();
+    final controller = ref.read(symptomsControllerProvider.notifier);
     await runWithLoader(
       context,
       message: context.l10n.reportingSymptom,

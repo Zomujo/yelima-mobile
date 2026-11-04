@@ -1,36 +1,33 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/failures/app_failure.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../../../user/domain/entities/user_entity.dart';
-import '../../../user/presentation/controllers/user_controller.dart';
+import '../../../user/user_providers.dart';
 import '../states/edit_profile_state.dart';
 
-/// Holds the edit-profile form and saves it through [UserController].
-class EditProfileController extends ChangeNotifier with SafeNotifier {
-  EditProfileController({required UserController userController})
-      : _users = userController;
+part 'edit_profile_controller.g.dart';
 
-  final UserController _users;
+/// Holds the edit-profile form and saves it through the user controller.
+@riverpod
+class EditProfileController extends _$EditProfileController {
   EditProfileState _initial = const EditProfileState();
+  bool _disposed = false;
 
-  EditProfileState _state = const EditProfileState();
-  EditProfileState get state => _state;
-  set state(EditProfileState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
-  }
-
-  /// Fills the form from [user].
-  void init(UserEntity? user) {
-    if (user == null) return;
-    _initial = EditProfileState(
+  /// Fills the form from the signed-in user's profile.
+  @override
+  EditProfileState build() {
+    ref.onDispose(() => _disposed = true);
+    final user = ref.read(userControllerProvider).userEntity;
+    if (user == null) return const EditProfileState();
+    return _initial = EditProfileState(
         firstName: user.firstName ?? '',
         lastName: user.lastName ?? '',
         gender: user.gender);
-    _state = _initial;
   }
+
+  /// Listeners hear only real changes, as before.
+  @override
+  bool updateShouldNotify(EditProfileState previous, EditProfileState next) =>
+      previous != next;
 
   /// Updates the form and whether it can be saved.
   void updateForm({String? firstName, String? lastName, String? gender}) {
@@ -54,11 +51,11 @@ class EditProfileController extends ChangeNotifier with SafeNotifier {
 
   /// Saves the form.
   AsyncResult<void> saveProfile() async {
-    final result = await _users.updateName(
+    final result = await ref.read(userControllerProvider.notifier).updateName(
         firstName: state.firstName.trim(),
         lastName: state.lastName.trim(),
         gender: state.gender);
-    if (result.isRight()) {
+    if (result.isRight() && !_disposed) {
       _initial = EditProfileState(
           firstName: state.firstName.trim(),
           lastName: state.lastName.trim(),

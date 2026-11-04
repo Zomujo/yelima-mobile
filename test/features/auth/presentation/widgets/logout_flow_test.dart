@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:yelima/features/auth/presentation/controllers/auth_state.dart';
 import 'package:yelima/features/auth/presentation/widgets/logout_flow.dart';
 
 import '../../../../helpers/pump_app.dart';
 
-class MockAuthController extends Mock implements AuthController {}
+class MockAuthController extends Notifier<AuthState>
+    with Mock
+    implements AuthController {
+  @override
+  AuthState build() => const AuthState();
+}
 
 void main() {
   late MockAuthController auth;
@@ -28,7 +34,7 @@ void main() {
           child: const Text('start'),
         ),
       ),
-      providers: [ChangeNotifierProvider<AuthController>.value(value: auth)],
+      overrides: [authControllerProvider.overrideWith(() => auth)],
     );
     await tester.tap(find.text('start'));
     await tester.pumpAndSettle();

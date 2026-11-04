@@ -1,18 +1,18 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../user/presentation/controllers/user_controller.dart';
+import '../../../../user/user_providers.dart';
 import '../../../../user/presentation/widgets/user_avatar.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// The patient's avatar, name and role at the top of the profile tab.
-class ProfileAvatar extends StatelessWidget {
+class ProfileAvatar extends ConsumerWidget {
   const ProfileAvatar({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = context.watch<UserController>().userEntity;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userControllerProvider).userEntity;
     final name = user?.fullName ?? '';
 
     return Center(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/router/route_paths.dart';
@@ -9,18 +9,19 @@ import '../../../../core/utils/validators.dart';
 import '../../../../shared/utils/run_with_loader.dart';
 import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
-import '../controllers/auth_controller.dart';
+import '../../auth_providers.dart';
 import '../widgets/auth_layout.dart';
 
 /// Sends a password reset link to an email address.
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _email = TextEditingController();
   bool _isValid = false;
 
@@ -35,7 +36,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _send() async {
     FocusScope.of(context).unfocus();
-    final auth = context.read<AuthController>();
+    final auth = ref.read(authControllerProvider.notifier);
     final sent = await runWithLoader(context,
         message: context.l10n.sendingResetLink,
         successMessage: context.l10n.resetLinkSent,

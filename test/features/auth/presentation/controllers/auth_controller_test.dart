@@ -1,21 +1,40 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/core/core_providers.dart';
 import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/core/managers/mutation_sync_manager.dart';
 import 'package:yelima/core/services/session_expiry.dart';
 import 'package:yelima/core/services/session_lifecycle_service.dart';
 import 'package:yelima/features/auth/domain/entities/auth_user.dart';
 import 'package:yelima/features/auth/domain/repositories/auth_repository.dart';
+import 'package:yelima/features/auth/auth_providers.dart';
 import 'package:yelima/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:yelima/features/auth/presentation/controllers/auth_state.dart';
+import 'package:yelima/features/user/presentation/controllers/user_state.dart';
+import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockSession extends Mock implements SessionLifecycleService {}
 
 class MockSyncManager extends Mock implements MutationSyncManager {}
+
+/// Hands login changes to [onChanged] instead of loading a profile.
+class FakeUserController extends UserController {
+  FakeUserController(this.onChanged);
+
+  final Future<void> Function(AuthUser? user) onChanged;
+
+  @override
+  UserState build() => const UserState();
+
+  @override
+  Future<void> onUserChanged(AuthUser? user) => onChanged(user);
+}
 
 void main() {
   const ama = AuthUser(uid: 'uid-1', email: 'ama@example.com');
@@ -25,16 +44,25 @@ void main() {
   late MockSyncManager sync;
   late SessionExpiry expiry;
   late List<String> calls;
-  late AuthController controller;
+  late ProviderContainer container;
 
-  AuthController build({Future<void> Function(AuthUser?)? onUserChanged}) =>
-      AuthController(
-        repository: repo,
-        session: session,
-        syncManager: sync,
-        sessionExpiry: expiry,
-        onUserChanged: onUserChanged,
-      );
+  ProviderContainer build({Future<void> Function(AuthUser?)? onUserChanged}) {
+    final c = ProviderContainer(overrides: [
+      authRepositoryProvider.overrideWithValue(repo),
+      sessionLifecycleProvider.overrideWithValue(session),
+      mutationSyncManagerProvider.overrideWithValue(sync),
+      sessionExpiryProvider.overrideWithValue(expiry),
+      userControllerProvider.overrideWith(
+          () => FakeUserController(onUserChanged ?? (_) async {})),
+    ]);
+    addTearDown(c.dispose);
+    c.read(authControllerProvider); // starts listening for login changes
+    return c;
+  }
+
+  AuthState auth() => container.read(authControllerProvider);
+  AuthController controller() =>
+      container.read(authControllerProvider.notifier);
 
   setUp(() {
     calls = [];
@@ -53,13 +81,10 @@ void main() {
       return (waiting: 0, failed: 0);
     });
     expiry = SessionExpiry();
-    controller = build();
+    container = build();
   });
 
-  tearDown(() async {
-    controller.dispose();
-    await authEvents.close();
-  });
+  tearDown(() => authEvents.close());
 
   Future<void> emit(AuthUser? user) async {
     authEvents.add(user);
@@ -67,33 +92,33 @@ void main() {
   }
 
   test('starts uninitialised until the first login event', () {
-    expect(controller.isInitialized, isFalse);
-    expect(controller.isAuthenticated, isFalse);
+    expect(auth().isInitialized, isFalse);
+    expect(auth().isAuthenticated, isFalse);
   });
 
   test('a sign-out event sends queued changes, then ends the session',
       () async {
     await emit(null);
 
-    expect(controller.isInitialized, isTrue);
-    expect(controller.isAuthenticated, isFalse);
+    expect(auth().isInitialized, isTrue);
+    expect(auth().isAuthenticated, isFalse);
     expect(calls, ['flush', 'end']);
   });
 
   test('a sign-in event starts the session', () async {
     await emit(ama);
 
-    expect(controller.isAuthenticated, isTrue);
-    expect(controller.isInitialized, isTrue);
+    expect(auth().isAuthenticated, isTrue);
+    expect(auth().isInitialized, isTrue);
     expect(calls, ['start']);
   });
 
   test('login changes reach the profile before auth reports ready', () async {
     final seen = <(String?, bool)>[];
-    late final AuthController c;
+    late final ProviderContainer c;
     c = build(
-        onUserChanged: (user) async => seen.add((user?.uid, c.isInitialized)));
-    addTearDown(c.dispose);
+        onUserChanged: (user) async => seen
+            .add((user?.uid, c.read(authControllerProvider).isInitialized)));
 
     await emit(ama);
     await emit(null);
@@ -128,21 +153,21 @@ void main() {
           .thenAnswer((_) async => right(null));
       var done = false;
 
-      controller.signIn('a@b.c', 'pw').then((_) => done = true);
+      controller().signIn('a@b.c', 'pw').then((_) => done = true);
       await pumpEventQueue();
       expect(done, isFalse);
       await emit(ama);
 
       expect(done, isTrue);
-      expect(controller.isAuthLoading, isFalse);
+      expect(auth().isAuthLoading, isFalse);
     });
 
     test('a second tap while one is running is ignored quietly', () async {
       final pending = Completer<Either<AppFailure, void>>();
       when(() => repo.signIn('a@b.c', 'pw')).thenAnswer((_) => pending.future);
 
-      controller.signIn('a@b.c', 'pw');
-      final second = await controller.signIn('a@b.c', 'pw');
+      controller().signIn('a@b.c', 'pw');
+      final second = await controller().signIn('a@b.c', 'pw');
 
       expect(second, left(const CancelledFailure()));
       verify(() => repo.signIn('a@b.c', 'pw')).called(1);
@@ -153,10 +178,10 @@ void main() {
       when(() => repo.signIn('a@b.c', 'pw')).thenAnswer(
           (_) async => left(const AuthFailure(AuthError.wrongPassword)));
 
-      final result = await controller.signIn('a@b.c', 'pw');
+      final result = await controller().signIn('a@b.c', 'pw');
 
       expect(result, left(const AuthFailure(AuthError.wrongPassword)));
-      expect(controller.isAuthLoading, isFalse);
+      expect(auth().isAuthLoading, isFalse);
     });
   });
 
@@ -166,7 +191,7 @@ void main() {
       when(() => repo.reauthenticate(password: 'pw'))
           .thenAnswer((_) async => right(null));
 
-      final result = await controller.reauthenticate(password: 'pw');
+      final result = await controller().reauthenticate(password: 'pw');
 
       expect(result.isRight(), isTrue);
       expect(expiry.isExpired, isFalse);
@@ -178,7 +203,7 @@ void main() {
       when(() => repo.reauthenticate(password: 'wrong')).thenAnswer(
           (_) async => left(const AuthFailure(AuthError.wrongPassword)));
 
-      final result = await controller.reauthenticate(password: 'wrong');
+      final result = await controller().reauthenticate(password: 'wrong');
 
       expect(result, left(const AuthFailure(AuthError.wrongPassword)));
       expect(expiry.isExpired, isTrue);
@@ -193,7 +218,7 @@ void main() {
         return right(null);
       });
 
-      expect(await controller.signOut(), isTrue);
+      expect(await controller().signOut(), isTrue);
       expect(calls, ['end', 'signOut']);
     });
 
@@ -202,19 +227,19 @@ void main() {
       when(() => repo.signOut())
           .thenAnswer((_) async => left(const StorageFailure()));
 
-      expect(await controller.signOut(), isFalse);
+      expect(await controller().signOut(), isFalse);
     });
 
     test('deleting the account ends the session only once it succeeded',
         () async {
       when(() => repo.deleteAccount(password: 'pw'))
           .thenAnswer((_) async => left(const NetworkFailure()));
-      await controller.deleteAccount(password: 'pw');
+      await controller().deleteAccount(password: 'pw');
       expect(calls, isEmpty);
 
       when(() => repo.deleteAccount(password: 'pw'))
           .thenAnswer((_) async => right(null));
-      await controller.deleteAccount(password: 'pw');
+      await controller().deleteAccount(password: 'pw');
       expect(calls, ['end']);
     });
   });

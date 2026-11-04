@@ -1,10 +1,11 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/reading_form.dart';
+import '../../domain/entities/vital_history_entity.dart';
 
 part 'reading_logging_state.freezed.dart';
 
-/// The log-a-reading form.
+/// The log-a-reading form and the saved readings.
 @freezed
 abstract class ReadingLoggingState with _$ReadingLoggingState {
   const factory ReadingLoggingState({
@@ -17,5 +18,8 @@ abstract class ReadingLoggingState with _$ReadingLoggingState {
     @Default(false) bool hasChanged,
     @Default(false) bool isSaving,
     @Default(true) bool isInitializing,
+
+    /// Every reading on the phone, newest first; null until loaded.
+    List<VitalHistoryEntity>? history,
   }) = _ReadingLoggingState;
 }

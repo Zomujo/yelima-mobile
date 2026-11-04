@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
@@ -10,19 +10,19 @@ import '../widgets/all_medicines/medicines_list.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// Every medication, with add and swipe-to-delete.
-class AllMedicinesScreen extends StatefulWidget {
+class AllMedicinesScreen extends ConsumerStatefulWidget {
   const AllMedicinesScreen({super.key});
 
   @override
-  State<AllMedicinesScreen> createState() => _AllMedicinesScreenState();
+  ConsumerState<AllMedicinesScreen> createState() => _AllMedicinesScreenState();
 }
 
-class _AllMedicinesScreenState extends State<AllMedicinesScreen> {
+class _AllMedicinesScreenState extends ConsumerState<AllMedicinesScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AllMedicinesController>().init();
+      ref.read(allMedicinesControllerProvider.notifier).init();
     });
   }
 

@@ -3,12 +3,11 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:provider/provider.dart';
 import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/features/symptoms/domain/entities/symptom_entity.dart';
 import 'package:yelima/features/symptoms/domain/repositories/symptoms_repository.dart';
-import 'package:yelima/features/symptoms/presentation/controllers/symptoms_controller.dart';
 import 'package:yelima/features/symptoms/presentation/screens/all_symptoms_screen.dart';
+import 'package:yelima/features/symptoms/symptoms_providers.dart';
 import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -27,10 +26,8 @@ void main() {
     when(() => repo.refresh(force: any(named: 'force')))
         .thenAnswer((_) => server.future);
     when(() => repo.watchSymptoms()).thenAnswer((_) => Stream.value(onPhone));
-    await tester.pumpApp(const AllSymptomsScreen(), providers: [
-      ChangeNotifierProvider(
-          create: (_) => SymptomsController(repository: repo)),
-    ]);
+    await tester.pumpApp(const AllSymptomsScreen(),
+        overrides: [symptomsRepositoryProvider.overrideWithValue(repo)]);
     await tester.pump();
   }
 

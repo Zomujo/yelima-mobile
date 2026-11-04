@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -11,14 +11,14 @@ import '../../vital_failure_message.dart';
 import 'health_warning_modal.dart';
 
 /// Saves the reading and says whether it worked.
-class ReadingSaveButton extends StatelessWidget {
+class ReadingSaveButton extends ConsumerWidget {
   const ReadingSaveButton({super.key});
 
-  Future<void> _save(
-      BuildContext context, ReadingLoggingController controller) async {
+  Future<void> _save(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
-    final kind = controller.state.kind;
-    final result = await controller.saveReading();
+    final kind = ref.read(readingLoggingControllerProvider).kind;
+    final result =
+        await ref.read(readingLoggingControllerProvider.notifier).saveReading();
     if (!context.mounted) return;
     result.fold(
       (f) =>
@@ -31,12 +31,11 @@ class ReadingSaveButton extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final controller = context.watch<ReadingLoggingController>();
-    final state = controller.state;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(readingLoggingControllerProvider);
     return AppButton(
       text: state.isSaving ? '${context.l10n.save}...' : context.l10n.save,
-      onPressed: () => _save(context, controller),
+      onPressed: () => _save(context, ref),
       isDisabled: !state.hasChanged || state.isSaving,
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,

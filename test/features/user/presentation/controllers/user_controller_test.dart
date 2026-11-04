@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -9,6 +10,8 @@ import 'package:yelima/features/user/domain/entities/profile_changes.dart';
 import 'package:yelima/features/user/domain/entities/user_entity.dart';
 import 'package:yelima/features/user/domain/repositories/user_repository.dart';
 import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/features/user/presentation/controllers/user_state.dart';
+import 'package:yelima/features/user/user_providers.dart';
 
 class MockUserRepository extends Mock implements UserRepository {}
 
@@ -16,7 +19,7 @@ void main() {
   const ama = AuthUser(uid: 'a', email: 'a@example.com');
   late MockUserRepository repo;
   late StreamController<UserEntity?> profileWatch;
-  late UserController controller;
+  late ProviderContainer container;
 
   UserEntity profile(String id,
           [RegistrationStatus status = RegistrationStatus.personalDetails]) =>
@@ -39,25 +42,40 @@ void main() {
         .thenAnswer((_) async => right(null));
     when(() => repo.updatePatientProfile(any(), any()))
         .thenAnswer((_) async => right(null));
-    controller = UserController(repository: repo);
+    container = ProviderContainer(
+        overrides: [userRepositoryProvider.overrideWithValue(repo)]);
   });
 
   tearDown(() async {
-    controller.dispose();
+    container.dispose();
     await profileWatch.close();
   });
 
+  UserController controller() =>
+      container.read(userControllerProvider.notifier);
+  UserState user() => container.read(userControllerProvider);
+
   // Login changes arrive from AuthController; not awaited, like stream events.
   Future<void> emit(AuthUser? user) async {
-    controller.onUserChanged(user);
+    controller().onUserChanged(user);
     await pumpEventQueue();
   }
 
   test('loads the cached profile when a user signs in', () async {
     await emit(ama);
 
-    expect(controller.isInitialized, isTrue);
-    expect(controller.userEntity?.id, 'a');
+    expect(user().isInitialized, isTrue);
+    expect(user().userEntity?.id, 'a');
+  });
+
+  test('an unchanged profile does not notify listeners', () async {
+    await emit(null);
+    var notified = 0;
+    container.listen(userControllerProvider, (_, __) => notified++);
+
+    await emit(null);
+
+    expect(notified, 0);
   });
 
   test('ACC-EC-01: a profile refresh that lands after sign-out is dropped',
@@ -70,7 +88,7 @@ void main() {
     late.complete(right(profile('a')));
     await pumpEventQueue();
 
-    expect(controller.userEntity, isNull);
+    expect(user().userEntity, isNull);
   });
 
   test('ACC-EC-03: sign-out stops watching the previous user\'s profile',
@@ -80,7 +98,7 @@ void main() {
     profileWatch.add(profile('a'));
     await pumpEventQueue();
 
-    expect(controller.userEntity, isNull);
+    expect(user().userEntity, isNull);
   });
 
   group('ACC-EC-05: profile unavailable', () {
@@ -95,9 +113,9 @@ void main() {
 
       await emit(ama);
 
-      expect(controller.isInitialized, isTrue);
-      expect(controller.profileUnavailable, isTrue);
-      expect(controller.userEntity, isNull);
+      expect(user().isInitialized, isTrue);
+      expect(user().profileUnavailable, isTrue);
+      expect(user().userEntity, isNull);
     });
 
     test('a user with no profile yet is new, not unavailable', () async {
@@ -105,7 +123,7 @@ void main() {
 
       await emit(ama);
 
-      expect(controller.profileUnavailable, isFalse);
+      expect(user().profileUnavailable, isFalse);
     });
 
     test('retry loads the profile and clears the flag', () async {
@@ -115,10 +133,10 @@ void main() {
 
       when(() => repo.fetchProfile('a'))
           .thenAnswer((_) async => right(profile('a')));
-      await controller.retryProfile();
+      await controller().retryProfile();
 
-      expect(controller.profileUnavailable, isFalse);
-      expect(controller.userEntity?.id, 'a');
+      expect(user().profileUnavailable, isFalse);
+      expect(user().userEntity?.id, 'a');
     });
 
     test('sign-out clears the flag', () async {
@@ -127,7 +145,7 @@ void main() {
       await emit(ama);
       await emit(null);
 
-      expect(controller.profileUnavailable, isFalse);
+      expect(user().profileUnavailable, isFalse);
     });
   });
 
@@ -140,14 +158,14 @@ void main() {
         () async {
       await emit(ama);
 
-      await controller.updateName(firstName: 'Akua', lastName: 'Mensah');
+      await controller().updateName(firstName: 'Akua', lastName: 'Mensah');
 
       final changes = verify(() => repo.updatePatientProfile('a', captureAny()))
           .captured
           .single as ProfileChanges;
       expect(changes.firstName, 'Akua');
       expect(changes.registrationStatus, isNull);
-      expect(controller.userEntity?.firstName, 'Akua');
+      expect(user().userEntity?.firstName, 'Akua');
     });
 
     test('registration never goes backwards', () async {
@@ -157,7 +175,7 @@ void main() {
           (_) async => right(profile('a', RegistrationStatus.complete)));
       await emit(ama);
 
-      await controller.updateDob(DateTime(1980));
+      await controller().updateDob(DateTime(1980));
 
       expect(sent().registrationStatus, RegistrationStatus.complete);
     });
@@ -168,20 +186,20 @@ void main() {
           .thenAnswer((_) async => left(const StorageFailure()));
 
       final result =
-          await controller.updateName(firstName: 'Akua', lastName: 'M');
+          await controller().updateName(firstName: 'Akua', lastName: 'M');
 
       expect(result, left(const StorageFailure()));
-      expect(controller.userEntity?.firstName, isNull);
+      expect(user().userEntity?.firstName, isNull);
     });
 
     test('a tutorial is recorded once', () async {
       await emit(ama);
 
-      await controller.markTutorialCompleted('home');
-      await controller.markTutorialCompleted('home');
+      await controller().markTutorialCompleted('home');
+      await controller().markTutorialCompleted('home');
 
       verify(() => repo.updateProfile('a', any())).called(1);
-      expect(controller.userEntity?.completedTutorials, ['home']);
+      expect(user().userEntity?.completedTutorials, ['home']);
     });
 
     test('finishing onboarding shows the completed profile', () async {
@@ -190,9 +208,9 @@ void main() {
       when(() => repo.completeOnboarding(any(), 'f1'))
           .thenAnswer((_) async => right(done));
 
-      await controller.submitOnboarding('f1');
+      await controller().submitOnboarding('f1');
 
-      expect(controller.userEntity, done);
+      expect(user().userEntity, done);
     });
   });
 }

@@ -11,21 +11,21 @@ import '../../../../core/services/connectivity_service.dart';
 import '../../../../shared/utils/app_snackbar.dart';
 import '../widgets/profile/profile_avatar.dart';
 import '../widgets/language_picker_modal.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/controllers/locale_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/core_providers.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 /// The profile tab: patient details and account options.
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
@@ -106,9 +106,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: context.l10n.language,
                       blockItems: [
                         OptionBlockItem(
-                          label: context.l10n.languageName(context
-                                  .watch<LocaleController>()
-                                  .locale
+                          label: context.l10n.languageName(ref
+                                  .watch(localeControllerProvider)
                                   ?.languageCode ??
                               'en'),
                           icon: Iconsax.language_square,

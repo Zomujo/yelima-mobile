@@ -1,12 +1,16 @@
 import 'package:yelima/features/chat/domain/entities/paginated_chat_result.dart';
 import 'dart:async';
 import 'package:fpdart/fpdart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/core/core_providers.dart';
 import 'package:yelima/core/services/connectivity_service.dart';
 import 'package:yelima/core/failures/app_failure.dart';
 import 'package:yelima/features/chat/domain/entities/ai_chat_message.dart';
+import 'package:yelima/features/chat/chat_providers.dart';
 import 'package:yelima/features/chat/presentation/controllers/ai_chat_controller.dart';
+import 'package:yelima/features/chat/presentation/controllers/ai_chat_state.dart';
 
 import 'package:yelima/features/chat/domain/repositories/ai_chat_repository.dart';
 
@@ -17,6 +21,10 @@ class MockConnectivityService extends Mock implements ConnectivityService {}
 void main() {
   late MockAiChatRepository mockRepository;
   late MockConnectivityService mockConnectivityService;
+  late ProviderContainer container;
+
+  /// The chat's current state.
+  AiChatState chat() => container.read(aiChatControllerProvider);
 
   AiChatMessage botMessage(String id, {String value = 'bot reply'}) {
     return AiChatMessage(
@@ -62,9 +70,15 @@ void main() {
   }) async {
     when(() => mockRepository.loadConversations())
         .thenAnswer((_) async => right(initialMessages));
-    final controller =
-        AiChatController(mockRepository, mockConnectivityService);
-    // Let the constructor's fire-and-forget initial syncConversations() settle.
+    container = ProviderContainer(overrides: [
+      aiChatRepositoryProvider.overrideWithValue(mockRepository),
+      connectivityProvider.overrideWithValue(mockConnectivityService),
+    ]);
+    addTearDown(container.dispose);
+    // Keeps the auto-dispose chat alive, as the open screen does.
+    container.listen(aiChatControllerProvider, (_, __) {});
+    final controller = container.read(aiChatControllerProvider.notifier);
+    // Let build's fire-and-forget initial syncConversations() settle.
     await Future<void>.delayed(Duration.zero);
     await Future<void>.delayed(Duration.zero);
     return controller;
@@ -91,7 +105,6 @@ void main() {
 
     verify(() => mockRepository.sendMessage('Hello', localChatId: 'l-1'))
         .called(1);
-    controller.dispose();
   });
 
   group('AiChatController duplicate-message regression', () {
@@ -112,11 +125,10 @@ void main() {
       await controller.sendMessage('Hello');
 
       final botEntries =
-          controller.messages.where((m) => m.id == 'bot-1').toList();
+          chat().messages.where((m) => m.id == 'bot-1').toList();
       expect(botEntries, hasLength(1));
       expect(botEntries.single.value, 'updated reply');
 
-      controller.dispose();
     });
 
     test(
@@ -137,7 +149,7 @@ void main() {
 
       final sendFuture = controller.sendMessage('Hello');
       await Future<void>.delayed(Duration.zero);
-      expect(controller.isSending, isTrue);
+      expect(chat().isSending, isTrue);
 
       // A connectivity-triggered resync fires while the send is still pending.
       await controller.syncConversations();
@@ -154,9 +166,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(loadConversationsCallCount, greaterThanOrEqualTo(1));
-      expect(controller.isSending, isFalse);
+      expect(chat().isSending, isFalse);
 
-      controller.dispose();
     });
 
     test('sendMessage waits for an in-flight sync before touching _messages',
@@ -174,7 +185,7 @@ void main() {
 
       final syncFuture = controller.syncConversations();
       await Future<void>.delayed(Duration.zero);
-      expect(controller.isLoading, isTrue);
+      expect(chat().isLoading, isTrue);
 
       // A send comes in while the sync is still rewriting _messages.
       final sendFuture = controller.sendMessage('Hello');
@@ -182,21 +193,20 @@ void main() {
 
       // isSending is claimed immediately (so a second tap is rejected), but
       // the optimistic message must not be added until the sync finishes.
-      expect(controller.isSending, isTrue);
-      expect(controller.messages.any((m) => m.value == 'Hello'), isFalse);
+      expect(chat().isSending, isTrue);
+      expect(chat().messages.any((m) => m.value == 'Hello'), isFalse);
 
       syncCompleter.complete();
       await syncFuture;
       await sendFuture;
 
       expect(
-          controller.messages
+          chat().messages
               .any((m) => m.id == 'user-1' && m.status == MessageStatus.sent),
           isTrue,
           reason: 'send should proceed normally once the sync finishes');
-      expect(controller.messages.any((m) => m.id == 'bot-1'), isTrue);
+      expect(chat().messages.any((m) => m.id == 'bot-1'), isTrue);
 
-      controller.dispose();
     });
 
     test(
@@ -217,7 +227,7 @@ void main() {
 
       final loadMoreFuture = controller.loadMoreMessages();
       await Future<void>.delayed(Duration.zero);
-      expect(controller.isLoadingMore, isTrue);
+      expect(chat().isLoadingMore, isTrue);
 
       // A connectivity-triggered resync fires while pagination is in flight.
       await controller.syncConversations();
@@ -236,9 +246,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(loadConversationsCallCount, greaterThanOrEqualTo(1));
-      expect(controller.isLoadingMore, isFalse);
+      expect(chat().isLoadingMore, isFalse);
 
-      controller.dispose();
     });
 
     test(
@@ -257,7 +266,7 @@ void main() {
 
       final syncFuture = controller.syncConversations();
       await Future<void>.delayed(Duration.zero);
-      expect(controller.isLoading, isTrue);
+      expect(chat().isLoading, isTrue);
 
       // A scroll-triggered pagination fetch comes in while the sync is still
       // rewriting _messages and _currentPage.
@@ -267,17 +276,16 @@ void main() {
       // isLoadingMore is claimed immediately (so a second scroll event is
       // rejected), but the page fetch/merge must not run until the sync
       // finishes.
-      expect(controller.isLoadingMore, isTrue);
-      expect(controller.messages.any((m) => m.id == 'bot-2'), isFalse);
+      expect(chat().isLoadingMore, isTrue);
+      expect(chat().messages.any((m) => m.id == 'bot-2'), isFalse);
 
       syncCompleter.complete();
       await syncFuture;
       await loadMoreFuture;
 
-      expect(controller.messages.any((m) => m.id == 'bot-2'), isTrue,
+      expect(chat().messages.any((m) => m.id == 'bot-2'), isTrue,
           reason: 'pagination should proceed normally once the sync finishes');
 
-      controller.dispose();
     });
   });
 
@@ -292,7 +300,7 @@ void main() {
 
     final sending = controller.sendMessage('Hello');
     await Future<void>.delayed(Duration.zero);
-    controller.dispose(); // e.g. logout pops the chat screen
+    container.dispose(); // e.g. logout pops the chat screen
     reply.complete(right(chatResponse(userId: 'user-1', botId: 'bot-1')));
     await sending;
 
@@ -303,11 +311,10 @@ void main() {
     when(() => mockRepository.loadInitialMessage())
         .thenAnswer((_) async => left(const NetworkFailure()));
 
-    final controller = await createController();
+    await createController();
     await pumpEventQueue();
 
-    expect(controller.error, isNull);
-    controller.dispose();
+    expect(chat().error, isNull);
   });
 
   test('a queued send stays "sending" until it syncs', () async {
@@ -318,7 +325,6 @@ void main() {
 
     await controller.sendMessage('Hello');
 
-    expect(controller.messages.single.status, MessageStatus.sending);
-    controller.dispose();
+    expect(chat().messages.single.status, MessageStatus.sending);
   });
 }

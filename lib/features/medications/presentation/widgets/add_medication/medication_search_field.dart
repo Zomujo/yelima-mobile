@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/forms/search_suggestions.dart';
 import 'package:yelima/features/medications/domain/models/seeded_medication_model.dart';
@@ -7,14 +7,15 @@ import '../../controllers/add_medication_form_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// Medication name field that suggests known medications as the user types.
-class MedicationSearchField extends StatefulWidget {
+class MedicationSearchField extends ConsumerStatefulWidget {
   const MedicationSearchField({super.key});
 
   @override
-  State<MedicationSearchField> createState() => _MedicationSearchFieldState();
+  ConsumerState<MedicationSearchField> createState() =>
+      _MedicationSearchFieldState();
 }
 
-class _MedicationSearchFieldState extends State<MedicationSearchField> {
+class _MedicationSearchFieldState extends ConsumerState<MedicationSearchField> {
   final _search = LatestSearch();
 
   /// Autocomplete owns its text field; its text is copied into the form's name.
@@ -22,7 +23,8 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    final formController = context.read<AddMedicationFormController>();
+    final formController =
+        ref.read(addMedicationFormControllerProvider.notifier);
 
     return Autocomplete<SeededMedicationModel>(
       optionsBuilder: (TextEditingValue textEditingValue) async {
@@ -57,7 +59,7 @@ class _MedicationSearchFieldState extends State<MedicationSearchField> {
           _bound = textEditingController;
           textEditingController.addListener(() {
             formController.nameController.text = textEditingController.text;
-            final picked = formController.picked;
+            final picked = ref.read(addMedicationFormControllerProvider).picked;
             if (picked != null && textEditingController.text != picked.name) {
               formController.pick(null);
             }

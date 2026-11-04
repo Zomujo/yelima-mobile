@@ -1,31 +1,27 @@
-import 'package:flutter/material.dart';
-import '../services/shared_prefs_service.dart';
+import 'package:flutter/widgets.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-/// The chosen app language, saved between launches.
-class LocaleController extends ChangeNotifier {
-  final SharedPrefsService _prefsService;
+import '../core_providers.dart';
+
+part 'locale_controller.g.dart';
+
+/// The chosen app language (null until one is picked), saved between launches.
+@Riverpod(keepAlive: true)
+class LocaleController extends _$LocaleController {
   static const _localeKey = 'selected_locale';
 
-  Locale? _locale;
-
-  LocaleController(this._prefsService) {
-    _loadLocale();
+  @override
+  Locale? build() {
+    final code = ref.watch(sharedPrefsServiceProvider).getString(_localeKey);
+    return code == null ? null : Locale(code);
   }
 
-  Locale? get locale => _locale;
-
-  void _loadLocale() {
-    final langCode = _prefsService.getString(_localeKey);
-    if (langCode != null) {
-      _locale = Locale(langCode);
-      notifyListeners();
-    }
-  }
-
+  /// Switches the app to [locale] and remembers it.
   Future<void> setLocale(Locale locale) async {
-    if (_locale == locale) return;
-    _locale = locale;
-    await _prefsService.setString(_localeKey, locale.languageCode);
-    notifyListeners();
+    if (state == locale) return;
+    state = locale;
+    await ref
+        .read(sharedPrefsServiceProvider)
+        .setString(_localeKey, locale.languageCode);
   }
 }

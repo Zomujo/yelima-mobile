@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -8,19 +9,24 @@ import '../../controllers/medicine_details_form_controller.dart';
 import '../medication_form/unit_picker.dart';
 
 /// Dosage, unit and notes: read-only, or editable in edit mode.
-class MedicineDetailsFormFields extends StatelessWidget {
-  const MedicineDetailsFormFields({super.key, required this.controller});
+class MedicineDetailsFormFields extends ConsumerWidget {
+  const MedicineDetailsFormFields({super.key, required this.medicationId});
 
-  final MedicineDetailsFormController controller;
+  final String medicationId;
+
+  MedicineDetailsFormControllerProvider get _form =>
+      medicineDetailsFormControllerProvider(medicationId);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final data = controller.detail!;
+    final state = ref.watch(_form);
+    final controller = ref.read(_form.notifier);
+    final data = state.detail!;
     Widget heading(String text) => AppText.titleMedium(text,
         fontWeight: FontWeight.bold, color: AppColors.slate800);
 
-    if (!controller.isEditing) {
+    if (!state.isEditing) {
       final notes = data.notes ?? '';
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +58,7 @@ class MedicineDetailsFormFields extends StatelessWidget {
         const SizedBox(height: 24),
         heading(l10n.medicationFormUnit),
         const SizedBox(height: 12),
-        UnitPicker(value: controller.unit, onSelected: controller.setUnit),
+        UnitPicker(value: state.form.unit, onSelected: controller.setUnit),
         const SizedBox(height: 32),
         AppFormField(
           controller: controller.notesController,

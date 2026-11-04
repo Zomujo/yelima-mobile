@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:yelima/core/config/features.dart';
-import 'package:yelima/core/services/shared_prefs_service.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yelima/core/core_providers.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/features/user/user_providers.dart';
 
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_target.dart';
@@ -20,10 +20,10 @@ class AppTutorialService {
   }) async {
     if (!context.mounted) return;
 
-    final userController = context.read<UserController>();
-    final user = userController.userEntity;
+    final container = ProviderScope.containerOf(context, listen: false);
+    final user = container.read(userControllerProvider).userEntity;
 
-    final prefsService = context.read<SharedPrefsService>();
+    final prefsService = container.read(sharedPrefsServiceProvider);
     final String localKey = '${user?.id}_$tutorialId';
 
     final bool isCompletedLocally = prefsService.isTutorialCompleted(localKey);
@@ -43,7 +43,9 @@ class AppTutorialService {
 
     void markSeen() {
       prefsService.setTutorialCompleted(localKey);
-      userController.markTutorialCompleted(tutorialId);
+      container
+          .read(userControllerProvider.notifier)
+          .markTutorialCompleted(tutorialId);
     }
 
     TutorialCoachMark(

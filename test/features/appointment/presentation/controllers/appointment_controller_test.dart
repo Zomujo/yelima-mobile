@@ -1,19 +1,25 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:yelima/core/core_providers.dart';
 import 'package:yelima/core/failures/app_failure.dart';
+import 'package:yelima/core/services/session_lifecycle_service.dart';
+import 'package:yelima/features/appointment/appointment_providers.dart';
 import 'package:yelima/features/appointment/domain/entities/appointment_entity.dart';
 import 'package:yelima/features/appointment/domain/entities/appointment_list_response.dart';
 import 'package:yelima/features/appointment/domain/repositories/appointment_repository.dart';
 import 'package:yelima/features/appointment/presentation/controllers/appointment_controller.dart';
+import 'package:yelima/features/appointment/presentation/states/appointment_state.dart';
 
 class MockRepo extends Mock implements AppointmentRepository {}
 
 void main() {
   late MockRepo repo;
-  late AppointmentController controller;
+  late ProviderContainer container;
+  late SessionLifecycleService session;
 
   AppointmentEntity appt(String id) => AppointmentEntity(
       id: id,
@@ -34,10 +40,51 @@ void main() {
 
   setUp(() {
     repo = MockRepo();
-    controller = AppointmentController(repository: repo);
+    // Opening loads the first page of both lists; by default both are empty.
+    when(() => repo.getCachedAppointments(
+        page: any(named: 'page'),
+        pageSize: any(named: 'pageSize'),
+        filter: any(named: 'filter'))).thenAnswer((_) async => right(page([])));
+    when(() => repo.getAppointments(
+        page: any(named: 'page'),
+        pageSize: any(named: 'pageSize'),
+        filter: any(named: 'filter'))).thenAnswer((_) async => right(page([])));
+    session = SessionLifecycleService();
+    container = ProviderContainer(overrides: [
+      appointmentRepositoryProvider.overrideWithValue(repo),
+      sessionLifecycleProvider.overrideWithValue(session),
+    ]);
   });
 
-  tearDown(() => controller.dispose());
+  tearDown(() => container.dispose());
+
+  AppointmentState state() => container.read(appointmentControllerProvider);
+  AppointmentController controller() =>
+      container.read(appointmentControllerProvider.notifier);
+
+  test('opening loads the first page of both lists', () async {
+    controller();
+    await pumpEventQueue();
+
+    for (final filter in AppointmentFilter.values) {
+      verify(() => repo.getAppointments(page: 1, pageSize: 3, filter: filter))
+          .called(1);
+    }
+  });
+
+  test('signing out clears the lists and the next visit', () async {
+    when(() => repo.getCachedNearestAppointment())
+        .thenAnswer((_) async => right(null));
+    when(() => repo.getNearestAppointment())
+        .thenAnswer((_) async => right(appt('next')));
+    await controller().fetchNearestAppointment();
+    expect(state().nearestAppointment?.id, 'next');
+
+    await session.startSession('u');
+    await session.endSession();
+
+    expect(state(), const AppointmentState());
+  });
 
   test('shows the cached page at once, then the server\'s', () async {
     final server = Completer<Either<AppFailure, AppointmentListResponse>>();
@@ -50,14 +97,14 @@ void main() {
         filter: AppointmentFilter.upcoming)).thenAnswer((_) => server.future);
 
     final done =
-        controller.fetchAppointments(filter: AppointmentFilter.upcoming);
+        controller().fetchAppointments(filter: AppointmentFilter.upcoming);
     await pumpEventQueue();
-    expect(controller.state.upcomingState.items.single.id, 'cached');
+    expect(state().upcomingState.items.single.id, 'cached');
 
     server.complete(right(page(['fresh'])));
     await done;
-    expect(controller.state.upcomingState.items.single.id, 'fresh');
-    expect(controller.state.pastState.items, isEmpty);
+    expect(state().upcomingState.items.single.id, 'fresh');
+    expect(state().pastState.items, isEmpty);
   });
 
   test('a failure with nothing cached shows the error', () async {
@@ -71,10 +118,10 @@ void main() {
             filter: any(named: 'filter')))
         .thenAnswer((_) async => left(const StorageFailure()));
 
-    await controller.fetchAppointments(filter: AppointmentFilter.past);
+    await controller().fetchAppointments(filter: AppointmentFilter.past);
 
-    expect(controller.state.pastState.error, const StorageFailure());
-    expect(controller.state.pastState.isLoading, isFalse);
+    expect(state().pastState.error, const StorageFailure());
+    expect(state().pastState.isLoading, isFalse);
   });
 
   test('a slow older nearest-appointment answer can\'t overwrite a newer one',
@@ -86,12 +133,12 @@ void main() {
     when(() => repo.getNearestAppointment()).thenAnswer(
         (_) => calls++ == 0 ? slow.future : Future.value(right(appt('new'))));
 
-    final first = controller.fetchNearestAppointment();
+    final first = controller().fetchNearestAppointment();
     await pumpEventQueue();
-    await controller.fetchNearestAppointment();
+    await controller().fetchNearestAppointment();
     slow.complete(right(appt('old')));
     await first;
 
-    expect(controller.state.nearestAppointment?.id, 'new');
+    expect(state().nearestAppointment?.id, 'new');
   });
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/trend_view.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../controllers/progress_controller.dart';
 import '../widgets/graphs/bp_graph.dart';
@@ -10,7 +10,7 @@ import '../widgets/graphs/glucose_graph.dart';
 import '../widgets/full_screen_close_button.dart';
 
 /// One chart in landscape, filling the screen.
-class FullScreenGraphView extends StatefulWidget {
+class FullScreenGraphView extends ConsumerStatefulWidget {
   final String activeTab;
   final String durationLabel;
 
@@ -21,10 +21,11 @@ class FullScreenGraphView extends StatefulWidget {
   });
 
   @override
-  State<FullScreenGraphView> createState() => _FullScreenGraphViewState();
+  ConsumerState<FullScreenGraphView> createState() =>
+      _FullScreenGraphViewState();
 }
 
-class _FullScreenGraphViewState extends State<FullScreenGraphView> {
+class _FullScreenGraphViewState extends ConsumerState<FullScreenGraphView> {
   @override
   void initState() {
     super.initState();
@@ -103,14 +104,14 @@ class _FullScreenGraphViewState extends State<FullScreenGraphView> {
   }
 
   Widget _buildGraph(BuildContext context) {
-    final controller = context.watch<ProgressController>();
+    final charts = ref.watch(progressControllerProvider);
     return widget.activeTab == 'bp'
         ? TrendView(
-            state: controller.bpTrendState,
+            state: charts.bpTrendState,
             chart: (d) => BPGraph(data: d),
             height: null)
         : TrendView(
-            state: controller.glucoseTrendState,
+            state: charts.glucoseTrendState,
             chart: (d) => GlucoseGraph(data: d),
             height: null);
   }

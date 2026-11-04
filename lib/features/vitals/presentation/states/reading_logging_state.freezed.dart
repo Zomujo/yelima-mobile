@@ -25,6 +25,9 @@ mixin _$ReadingLoggingState {
   bool get isSaving;
   bool get isInitializing;
 
+  /// Every reading on the phone, newest first; null until loaded.
+  List<VitalHistoryEntity>? get history;
+
   /// Create a copy of ReadingLoggingState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -54,7 +57,8 @@ mixin _$ReadingLoggingState {
             (identical(other.isSaving, isSaving) ||
                 other.isSaving == isSaving) &&
             (identical(other.isInitializing, isInitializing) ||
-                other.isInitializing == isInitializing));
+                other.isInitializing == isInitializing) &&
+            const DeepCollectionEquality().equals(other.history, history));
   }
 
   @override
@@ -68,11 +72,12 @@ mixin _$ReadingLoggingState {
       selectedDate,
       hasChanged,
       isSaving,
-      isInitializing);
+      isInitializing,
+      const DeepCollectionEquality().hash(history));
 
   @override
   String toString() {
-    return 'ReadingLoggingState(kind: $kind, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving, isInitializing: $isInitializing)';
+    return 'ReadingLoggingState(kind: $kind, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving, isInitializing: $isInitializing, history: $history)';
   }
 }
 
@@ -91,7 +96,8 @@ abstract mixin class $ReadingLoggingStateCopyWith<$Res> {
       DateTime selectedDate,
       bool hasChanged,
       bool isSaving,
-      bool isInitializing});
+      bool isInitializing,
+      List<VitalHistoryEntity>? history});
 }
 
 /// @nodoc
@@ -116,6 +122,7 @@ class _$ReadingLoggingStateCopyWithImpl<$Res>
     Object? hasChanged = null,
     Object? isSaving = null,
     Object? isInitializing = null,
+    Object? history = freezed,
   }) {
     return _then(_self.copyWith(
       kind: null == kind
@@ -154,6 +161,10 @@ class _$ReadingLoggingStateCopyWithImpl<$Res>
           ? _self.isInitializing
           : isInitializing // ignore: cast_nullable_to_non_nullable
               as bool,
+      history: freezed == history
+          ? _self.history
+          : history // ignore: cast_nullable_to_non_nullable
+              as List<VitalHistoryEntity>?,
     ));
   }
 }
@@ -170,7 +181,9 @@ class _ReadingLoggingState implements ReadingLoggingState {
       required this.selectedDate,
       this.hasChanged = false,
       this.isSaving = false,
-      this.isInitializing = true});
+      this.isInitializing = true,
+      final List<VitalHistoryEntity>? history})
+      : _history = history;
 
   @override
   @JsonKey()
@@ -198,6 +211,19 @@ class _ReadingLoggingState implements ReadingLoggingState {
   @override
   @JsonKey()
   final bool isInitializing;
+
+  /// Every reading on the phone, newest first; null until loaded.
+  final List<VitalHistoryEntity>? _history;
+
+  /// Every reading on the phone, newest first; null until loaded.
+  @override
+  List<VitalHistoryEntity>? get history {
+    final value = _history;
+    if (value == null) return null;
+    if (_history is EqualUnmodifiableListView) return _history;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   /// Create a copy of ReadingLoggingState
   /// with the given fields replaced by the non-null parameter values.
@@ -229,7 +255,8 @@ class _ReadingLoggingState implements ReadingLoggingState {
             (identical(other.isSaving, isSaving) ||
                 other.isSaving == isSaving) &&
             (identical(other.isInitializing, isInitializing) ||
-                other.isInitializing == isInitializing));
+                other.isInitializing == isInitializing) &&
+            const DeepCollectionEquality().equals(other._history, _history));
   }
 
   @override
@@ -243,11 +270,12 @@ class _ReadingLoggingState implements ReadingLoggingState {
       selectedDate,
       hasChanged,
       isSaving,
-      isInitializing);
+      isInitializing,
+      const DeepCollectionEquality().hash(_history));
 
   @override
   String toString() {
-    return 'ReadingLoggingState(kind: $kind, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving, isInitializing: $isInitializing)';
+    return 'ReadingLoggingState(kind: $kind, vitalSubType: $vitalSubType, systolic: $systolic, diastolic: $diastolic, sugarLevel: $sugarLevel, selectedDate: $selectedDate, hasChanged: $hasChanged, isSaving: $isSaving, isInitializing: $isInitializing, history: $history)';
   }
 }
 
@@ -268,7 +296,8 @@ abstract mixin class _$ReadingLoggingStateCopyWith<$Res>
       DateTime selectedDate,
       bool hasChanged,
       bool isSaving,
-      bool isInitializing});
+      bool isInitializing,
+      List<VitalHistoryEntity>? history});
 }
 
 /// @nodoc
@@ -293,6 +322,7 @@ class __$ReadingLoggingStateCopyWithImpl<$Res>
     Object? hasChanged = null,
     Object? isSaving = null,
     Object? isInitializing = null,
+    Object? history = freezed,
   }) {
     return _then(_ReadingLoggingState(
       kind: null == kind
@@ -331,6 +361,10 @@ class __$ReadingLoggingStateCopyWithImpl<$Res>
           ? _self.isInitializing
           : isInitializing // ignore: cast_nullable_to_non_nullable
               as bool,
+      history: freezed == history
+          ? _self._history
+          : history // ignore: cast_nullable_to_non_nullable
+              as List<VitalHistoryEntity>?,
     ));
   }
 }

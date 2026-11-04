@@ -1,5 +1,6 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/utils/failure_message.dart';
@@ -10,21 +11,25 @@ import 'medicine_details_form_fields.dart';
 import 'medicine_details_schedule_section.dart';
 
 /// The details screen content: history card, fields, schedule and delete.
-class MedicineDetailsBody extends StatelessWidget {
-  final MedicineDetailsFormController controller;
+class MedicineDetailsBody extends ConsumerWidget {
+  const MedicineDetailsBody({super.key, required this.medicationId});
 
-  const MedicineDetailsBody({super.key, required this.controller});
+  final String medicationId;
+
+  MedicineDetailsFormControllerProvider get _form =>
+      medicineDetailsFormControllerProvider(medicationId);
 
   @override
-  Widget build(BuildContext context) {
-    if (controller.isLoading) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(_form);
+    if (state.isLoading) {
       return const Center(
           child: CircularProgressIndicator(color: AppColors.orange300));
     }
-    final data = controller.detail;
+    final data = state.detail;
     if (data == null) {
       return Center(
-          child: AppText.bodyMedium(controller.error?.message(context.l10n) ??
+          child: AppText.bodyMedium(state.error?.message(context.l10n) ??
               context.l10n.medicationNotFound));
     }
 
@@ -38,16 +43,16 @@ class MedicineDetailsBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MedicineDetailsHeaderCard(controller: controller),
+          MedicineDetailsHeaderCard(medicationId: medicationId),
           const SizedBox(height: 32),
           const Divider(color: AppColors.slate200, height: 1),
           const SizedBox(height: 24),
-          MedicineDetailsFormFields(controller: controller),
+          MedicineDetailsFormFields(medicationId: medicationId),
           const SizedBox(height: 32),
-          MedicineDetailsScheduleSection(controller: controller),
-          if (!controller.isEditing) ...[
+          MedicineDetailsScheduleSection(medicationId: medicationId),
+          if (!state.isEditing) ...[
             const SizedBox(height: 40),
-            DeleteMedicineButton(controller: controller),
+            DeleteMedicineButton(medicationId: medicationId),
           ],
         ],
       ),

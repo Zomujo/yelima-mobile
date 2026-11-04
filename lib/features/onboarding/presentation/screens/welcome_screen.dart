@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yelima/core/router/route_paths.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
-import 'package:yelima/core/services/shared_prefs_service.dart';
-import 'package:yelima/core/controllers/locale_controller.dart';
+import 'package:yelima/core/core_providers.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/core/constants/app_images.dart';
 import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
 
 /// First launch: pick the app language, then continue to sign-in.
-class WelcomeScreen extends StatefulWidget {
+class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
 
   @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
+  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   String _selectedLang = 'en';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final currentLocale =
-          context.read<LocaleController>().locale?.languageCode;
+      final currentLocale = ref.read(localeControllerProvider)?.languageCode;
       if (languageCodes.contains(currentLocale)) {
         setState(() {
           _selectedLang = currentLocale!;
@@ -37,8 +35,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _onContinue() async {
-    context.read<LocaleController>().setLocale(Locale(_selectedLang));
-    await context.read<SharedPrefsService>().setOnboardingCompleted();
+    ref
+        .read(localeControllerProvider.notifier)
+        .setLocale(Locale(_selectedLang));
+    await ref.read(sharedPrefsServiceProvider).setOnboardingCompleted();
     if (mounted) {
       context.go(RoutePaths.signIn);
     }
@@ -92,7 +92,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   setState(() {
                     _selectedLang = code;
                   });
-                  context.read<LocaleController>().setLocale(Locale(code));
+                  ref
+                      .read(localeControllerProvider.notifier)
+                      .setLocale(Locale(code));
                 },
               ),
               const Spacer(flex: 3),

@@ -1,5 +1,6 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_images.dart';
@@ -18,7 +19,6 @@ class PaginatedAppointmentList extends StatelessWidget {
   final bool isPast;
   final String emptyMessage;
   final AppointmentFilter filter;
-  final AppointmentController controller;
 
   const PaginatedAppointmentList({
     super.key,
@@ -26,7 +26,6 @@ class PaginatedAppointmentList extends StatelessWidget {
     required this.isPast,
     required this.emptyMessage,
     required this.filter,
-    required this.controller,
   });
 
   @override
@@ -94,29 +93,27 @@ class PaginatedAppointmentList extends StatelessWidget {
             ),
           );
         }),
-        _PaginationControls(
-            state: state, filter: filter, controller: controller),
+        _PaginationControls(state: state, filter: filter),
       ],
     );
   }
 }
 
-class _PaginationControls extends StatelessWidget {
-  const _PaginationControls(
-      {required this.state, required this.filter, required this.controller});
+class _PaginationControls extends ConsumerWidget {
+  const _PaginationControls({required this.state, required this.filter});
 
   final PaginatedAppointmentState state;
   final AppointmentFilter filter;
-  final AppointmentController controller;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context, WidgetRef ref) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: PageNavigator(
           page: state.page,
           totalPages: state.totalPages,
-          onPage: (page) =>
-              controller.fetchAppointments(filter: filter, page: page),
+          onPage: (page) => ref
+              .read(appointmentControllerProvider.notifier)
+              .fetchAppointments(filter: filter, page: page),
         ),
       );
 }

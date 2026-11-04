@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -9,14 +9,15 @@ import '../../controllers/add_medication_form_controller.dart';
 import '../medication_form/unit_picker.dart';
 
 /// Dosage (with suggestions for a picked medication), unit and notes.
-class MedicationFormFields extends StatelessWidget {
+class MedicationFormFields extends ConsumerWidget {
   const MedicationFormFields({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = context.watch<AddMedicationFormController>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(addMedicationFormControllerProvider);
+    final controller = ref.read(addMedicationFormControllerProvider.notifier);
     final l10n = context.l10n;
-    final suggestions = controller.picked?.possibleDosages ?? const [];
+    final suggestions = state.picked?.possibleDosages ?? const [];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -31,24 +32,28 @@ class MedicationFormFields extends StatelessWidget {
         ),
         if (suggestions.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final dosage in suggestions)
-                _DosageChip(
-                  dosage: dosage,
-                  selected: controller.dosageController.text == dosage,
-                  onSelected: (on) =>
-                      controller.selectDosage(on ? dosage : null),
-                ),
-            ],
+          // The chip for the typed dosage lights up as the text changes.
+          ListenableBuilder(
+            listenable: controller.dosageController,
+            builder: (_, __) => Wrap(
+              spacing: 8,
+              children: [
+                for (final dosage in suggestions)
+                  _DosageChip(
+                    dosage: dosage,
+                    selected: controller.dosageController.text == dosage,
+                    onSelected: (on) =>
+                        controller.selectDosage(on ? dosage : null),
+                  ),
+              ],
+            ),
           ),
         ],
         const SizedBox(height: 24),
         AppText.titleMedium(l10n.medicationFormUnit,
             fontWeight: FontWeight.bold, color: AppColors.slate800),
         const SizedBox(height: 12),
-        UnitPicker(value: controller.unit, onSelected: controller.setUnit),
+        UnitPicker(value: state.form.unit, onSelected: controller.setUnit),
         const SizedBox(height: 24),
         AppFormField(
           controller: controller.notesController,

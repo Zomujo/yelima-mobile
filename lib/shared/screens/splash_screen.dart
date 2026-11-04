@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/services/app_startup_service.dart';
 import '../../core/constants/app_images.dart';
 import '../../core/theme/app_colors.dart';
-import '../../injection_container.dart';
+import '../../core/core_providers.dart';
 
 /// Shown while the app starts and the login is checked.
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   bool _isAnimationComplete = false;
@@ -60,8 +61,10 @@ class _SplashScreenState extends State<SplashScreen>
     });
   }
 
+  late final AppStartupService _startup = ref.read(appStartupProvider);
+
   Future<void> _init() async {
-    final startupService = sl<AppStartupService>();
+    final startupService = _startup;
     startupService.addListener(_onStartupStatusChanged);
     await startupService.start();
   }
@@ -78,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
   void _navigateBasedOnStartupStatus() {
     if (!mounted || _hasNavigated) return;
 
-    final startupService = sl<AppStartupService>();
+    final startupService = _startup;
     final status = startupService.value;
 
     if (status.phase == StartupPhase.ready ||
@@ -92,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _controller.dispose();
-    sl<AppStartupService>().removeListener(_onStartupStatusChanged);
+    _startup.removeListener(_onStartupStatusChanged);
     super.dispose();
   }
 

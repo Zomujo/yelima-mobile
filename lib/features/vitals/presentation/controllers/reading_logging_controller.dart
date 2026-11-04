@@ -1,43 +1,35 @@
-import 'dart:async';
-
 import 'package:clock/clock.dart';
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/failures/app_failure.dart';
-import '../../../../core/utils/safe_notifier.dart';
 import '../../domain/entities/reading_form.dart';
 import '../../domain/entities/vital_history_entity.dart';
 import '../../domain/reading_limits.dart';
-import '../../domain/repositories/vitals_repository.dart';
+import '../../vitals_providers.dart';
 import '../states/reading_logging_state.dart';
 
+part 'reading_logging_controller.g.dart';
+
 /// The log-a-reading screen: the form, prefilled from the last reading, and the history.
-class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
-  ReadingLoggingController({required VitalsRepository repository})
-      : _repository = repository;
-
-  final VitalsRepository _repository;
-  StreamSubscription<List<VitalHistoryEntity>>? _sub;
-
-  /// Every reading on the phone, newest first; null until loaded.
-  List<VitalHistoryEntity>? history;
-
-  ReadingLoggingState _state = ReadingLoggingState(selectedDate: clock.now());
-  ReadingLoggingState get state => _state;
-  set state(ReadingLoggingState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
-  }
+@riverpod
+class ReadingLoggingController extends _$ReadingLoggingController {
+  bool _disposed = false;
 
   /// Follows the saved readings and refreshes them from the server.
-  void init() {
-    _sub ??= _repository.watchReadings().listen((rows) {
-      history = _newestFirst(rows);
+  @override
+  ReadingLoggingState build() {
+    final repository = ref.watch(vitalsRepositoryProvider);
+    final sub = repository.watchReadings().listen((rows) {
+      state = state.copyWith(history: _newestFirst(rows));
       if (!state.hasChanged) _prefillFrom(LatestVitals.from(rows));
-      notifyListeners();
     });
-    _repository.refresh();
+    _disposed = false;
+    ref.onDispose(() {
+      _disposed = true;
+      sub.cancel();
+    });
+    repository.refresh();
+    return ReadingLoggingState(selectedDate: clock.now());
   }
 
   /// Starts the form from the last reading, skipping values the pickers can't show.
@@ -98,15 +90,18 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
   /// Saves the reading and gives its grade.
   AsyncResult<VitalSeverity> saveReading() async {
     state = state.copyWith(isSaving: true);
-    final result = await _repository.saveReading(ReadingForm(
-      kind: state.kind,
-      subType: state.vitalSubType,
-      systolic: state.systolic,
-      diastolic: state.diastolic,
-      sugarLevel: state.sugarLevel,
-      recordedAt: _atNow(state.selectedDate),
-    ));
-    state = state.copyWith(isSaving: false, hasChanged: result.isLeft());
+    final result =
+        await ref.read(vitalsRepositoryProvider).saveReading(ReadingForm(
+              kind: state.kind,
+              subType: state.vitalSubType,
+              systolic: state.systolic,
+              diastolic: state.diastolic,
+              sugarLevel: state.sugarLevel,
+              recordedAt: _atNow(state.selectedDate),
+            ));
+    if (!_disposed) {
+      state = state.copyWith(isSaving: false, hasChanged: result.isLeft());
+    }
     return result;
   }
 
@@ -119,10 +114,4 @@ class ReadingLoggingController extends ChangeNotifier with SafeNotifier {
               ? b.id.compareTo(a.id)
               : tb.compareTo(ta);
         });
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
-  }
 }

@@ -1,62 +1,57 @@
 import 'dart:async';
 
 import 'package:clock/clock.dart';
-import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/failures/app_failure.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/utils/session_scoped.dart';
+import '../../../../core/core_providers.dart';
+import '../../../../core/utils/follow_session.dart';
 import '../../domain/dose_window.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/entities/medication_section.dart';
 import '../../domain/medication_failures.dart';
 import '../../domain/repositories/medication_repository.dart';
+import '../../medications_providers.dart';
 import '../states/medications_state.dart';
 
-/// The medications tab: today's doses by section, counts and weekly adherence.
-class MedicationController extends ChangeNotifier
-    with SafeNotifier, SessionScoped {
-  MedicationController(
-      {required MedicationRepository repository,
-      Stream<void> newDays = const Stream.empty()})
-      : _repository = repository,
-        _newDays = newDays {
-    joinSession();
-  }
+part 'medication_controller.g.dart';
 
-  final MedicationRepository _repository;
-  final Stream<void> _newDays;
+/// The medications tab: today's doses by section, counts and weekly adherence.
+@Riverpod(keepAlive: true)
+class MedicationController extends _$MedicationController {
+  late MedicationRepository _repository;
+  late Stream<void> _newDays;
   StreamSubscription<void>? _syncSub;
   StreamSubscription<void>? _daySub;
   StreamSubscription<Object?>? _countsSub;
   StreamSubscription<List<MedicationEntity>>? _dosesSub;
   Timer? _dueTimer;
 
-  MedicationsState _state = const MedicationsState();
-  MedicationsState get state => _state;
-  set state(MedicationsState value) {
-    if (_state == value) return;
-    _state = value;
-    notifyListeners();
+  @override
+  MedicationsState build() {
+    _repository = ref.watch(medicationRepositoryProvider);
+    _newDays = ref.watch(dayChangesProvider).stream;
+    followSession(ref, onEnd: () async {
+      await _stop();
+      state = const MedicationsState();
+    });
+    ref.onDispose(_stop);
+    return const MedicationsState();
   }
 
   @override
-  String get serviceName => 'MedicationController';
+  bool updateShouldNotify(MedicationsState previous, MedicationsState next) =>
+      previous != next;
 
-  @override
-  Future<void> onSessionStarted(String userId) async {}
-
-  @override
-  Future<void> onSessionEnded() async {
-    await _syncSub?.cancel();
-    await _daySub?.cancel();
-    await _countsSub?.cancel();
-    await _dosesSub?.cancel();
+  Future<void> _stop() async {
     _dueTimer?.cancel();
+    final subs = [_syncSub, _daySub, _countsSub, _dosesSub];
     _syncSub = _daySub = null;
     _countsSub = _dosesSub = null;
-    state = const MedicationsState();
+    for (final s in subs) {
+      await s?.cancel();
+    }
   }
 
   /// Opens on the section for the time of day and refreshes everything.
@@ -66,7 +61,7 @@ class MedicationController extends ChangeNotifier
     _countsSub ??= _repository
         .watchCounts()
         .listen((counts) => state = state.copyWith(counts: counts));
-    _state = _state.copyWith(section: MedicationSection.at(clock.now().hour));
+    state = state.copyWith(section: MedicationSection.at(clock.now().hour));
     _watchSection();
     fetchAdherence();
     _repository.refreshAll();
@@ -134,7 +129,7 @@ class MedicationController extends ChangeNotifier
     ].where((t) => t.isAfter(now)).toList()
       ..sort();
     if (due.isNotEmpty) {
-      _dueTimer = Timer(due.first.difference(now), notifyListeners);
+      _dueTimer = Timer(due.first.difference(now), ref.notifyListeners);
     }
   }
 
@@ -142,14 +137,4 @@ class MedicationController extends ChangeNotifier
       confirmingMedicationIds: confirming
           ? {...state.confirmingMedicationIds, id}
           : ({...state.confirmingMedicationIds}..remove(id)));
-
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _daySub?.cancel();
-    _countsSub?.cancel();
-    _dosesSub?.cancel();
-    _dueTimer?.cancel();
-    super.dispose();
-  }
 }

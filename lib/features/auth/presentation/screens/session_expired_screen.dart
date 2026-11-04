@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/utils/failure_message.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
-import '../controllers/auth_controller.dart';
+import '../../auth_providers.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/logout_flow.dart';
 
 /// Locks the app until the user signs in again or logs out.
-class SessionExpiredScreen extends StatefulWidget {
+class SessionExpiredScreen extends ConsumerStatefulWidget {
   const SessionExpiredScreen({super.key});
 
   @override
-  State<SessionExpiredScreen> createState() => _SessionExpiredScreenState();
+  ConsumerState<SessionExpiredScreen> createState() =>
+      _SessionExpiredScreenState();
 }
 
-class _SessionExpiredScreenState extends State<SessionExpiredScreen> {
+class _SessionExpiredScreenState extends ConsumerState<SessionExpiredScreen> {
   final _password = TextEditingController();
   bool _busy = false;
   String? _error;
@@ -33,8 +34,8 @@ class _SessionExpiredScreenState extends State<SessionExpiredScreen> {
       _busy = true;
       _error = null;
     });
-    final result = await context
-        .read<AuthController>()
+    final result = await ref
+        .read(authControllerProvider.notifier)
         .reauthenticate(password: _password.text);
     if (!mounted) return;
     setState(() {
@@ -45,7 +46,7 @@ class _SessionExpiredScreenState extends State<SessionExpiredScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthController>();
+    final auth = ref.read(authControllerProvider.notifier);
     final l10n = context.l10n;
     return AuthLayout(
       title: l10n.sessionExpiredTitle,

@@ -20,7 +20,8 @@ class FCMTokenService {
   String? _registeredToken;
 
   FCMTokenService(this._apiClient, this._connectivityService) {
-    _tokenManager = TokenManager();
+    _tokenManager = TokenManager()
+      ..onFcmTokenRefreshed = () => registerFCMToken().catchError((_) {});
     _initConnectivityListener();
   }
 

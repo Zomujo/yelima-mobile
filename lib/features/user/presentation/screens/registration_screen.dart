@@ -1,10 +1,10 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yelima/core/router/route_paths.dart';
 import 'package:yelima/features/user/domain/entities/user_entity.dart';
-import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:yelima/features/user/user_providers.dart';
 import 'package:yelima/features/user/presentation/widgets/registration/registration_app_bar.dart';
 import 'package:yelima/features/user/presentation/widgets/registration/registration_step_one.dart';
 import 'package:yelima/features/user/presentation/widgets/registration/registration_step_two.dart';
@@ -13,14 +13,14 @@ import 'package:yelima/features/user/presentation/widgets/registration/registrat
 import 'package:yelima/features/auth/presentation/widgets/logout_flow.dart';
 
 /// The four registration steps, resuming where the user left off.
-class RegistrationScreen extends StatefulWidget {
+class RegistrationScreen extends ConsumerStatefulWidget {
   const RegistrationScreen({super.key});
 
   @override
-  State<RegistrationScreen> createState() => _RegistrationScreenState();
+  ConsumerState<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
+class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   late final PageController _pageController;
   late final ValueNotifier<int> _currentPage;
 
@@ -28,9 +28,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void initState() {
     super.initState();
 
-    final userController = context.read<UserController>();
-    final status = userController.userEntity?.registrationStatus ??
-        RegistrationStatus.personalDetails;
+    final status =
+        ref.read(userControllerProvider).userEntity?.registrationStatus ??
+            RegistrationStatus.personalDetails;
 
     /// Clamp initial page to 0-3 range to prevent out-of-bounds error.
     final initialPage = status.index.clamp(0, 3);

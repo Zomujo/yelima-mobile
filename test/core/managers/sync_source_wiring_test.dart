@@ -2,25 +2,18 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get_it/get_it.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:yelima/core/api/api_client.dart';
-import 'package:yelima/core/controllers/locale_controller.dart';
 import 'package:yelima/core/db/app_database.dart';
-import 'package:yelima/core/managers/deletion_sync_manager.dart';
-import 'package:yelima/core/managers/mutation_sync_manager.dart';
-import 'package:yelima/core/services/connectivity_service.dart';
 import 'package:yelima/core/services/file_service.dart';
 import 'package:yelima/core/services/notification_service.dart';
-import 'package:yelima/core/services/recent_fetches.dart';
-import 'package:yelima/core/services/session_epoch.dart';
-import 'package:yelima/core/services/session_lifecycle_service.dart';
+import 'package:yelima/core/core_providers.dart';
 import 'package:yelima/core/services/shared_prefs_service.dart';
-import 'package:yelima/features/chat/chat_injection.dart';
-import 'package:yelima/features/vitals/vitals_injection.dart';
-import 'package:yelima/features/medications/medications_injection.dart';
-import 'package:yelima/features/symptoms/symptoms_injection.dart';
-import 'package:yelima/features/user/user_injection.dart';
+import 'package:yelima/features/chat/chat_providers.dart';
+import 'package:yelima/features/vitals/vitals_providers.dart';
+import 'package:yelima/features/medications/medications_providers.dart';
+import 'package:yelima/features/symptoms/symptoms_providers.dart';
+import 'package:yelima/features/user/user_providers.dart';
 
 import '../../helpers/fake_api.dart';
 import '../../helpers/fakes.dart';
@@ -44,45 +37,38 @@ Set<String> queuedEntityTypes() => {
     };
 
 void main() {
-  final sl = GetIt.instance;
   late AppDatabase db;
+  late ProviderContainer c;
 
   setUp(() {
     db = testDb();
-    final connectivity = FakeConnectivity();
-    sl
-      ..registerSingleton<AppDatabase>(db)
-      ..registerSingleton<APIClient>(FakeApi().client)
-      ..registerSingleton<ConnectivityService>(connectivity)
-      ..registerSingleton(SessionLifecycleService())
-      ..registerSingleton(SessionEpoch())
-      ..registerSingleton<NotificationService>(MockNotifications())
-      ..registerSingleton<FileService>(MockFileService())
-      ..registerSingleton<FirebaseAuth>(MockFirebaseAuth())
-      ..registerSingleton<SharedPrefsService>(MockPrefs())
-      ..registerSingleton(LocaleController(MockPrefs()))
-      ..registerSingleton(RecentFetches())
-      ..registerSingleton(
-          MutationSyncManager(connectivityService: connectivity, db: db))
-      ..registerSingleton(
-          DeletionSyncManager(connectivityService: connectivity, db: db));
+    final prefs = MockPrefs();
+    c = ProviderContainer(overrides: [
+      appDatabaseProvider.overrideWithValue(db),
+      apiClientProvider.overrideWithValue(FakeApi().client),
+      connectivityProvider.overrideWithValue(FakeConnectivity()),
+      notificationServiceProvider.overrideWithValue(MockNotifications()),
+      fileServiceProvider.overrideWithValue(MockFileService()),
+      firebaseAuthProvider.overrideWithValue(MockFirebaseAuth()),
+      sharedPrefsServiceProvider.overrideWithValue(prefs),
+    ]);
   });
 
   tearDown(() async {
-    await sl.reset();
+    c.dispose();
     await db.close();
   });
 
   test(
       'CORE-EC-04: the feature modules register a sync source for every queued type',
       () {
-    initSymptoms(sl);
-    initUser(sl);
-    initChat(sl);
-    initVitals(sl);
-    initMedications(sl);
+    setUpSymptoms(c);
+    setUpUser(c);
+    setUpChat(c);
+    setUpVitals(c);
+    setUpMedications(c);
 
-    final registered = sl<MutationSyncManager>().sourceTypes;
+    final registered = c.read(mutationSyncManagerProvider).sourceTypes;
     expect(queuedEntityTypes().difference(registered), isEmpty);
     expect(queuedEntityTypes(), isNotEmpty);
   });

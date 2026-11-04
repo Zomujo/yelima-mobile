@@ -3,26 +3,26 @@ import 'package:flutter/services.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/ai_chat_controller.dart';
 import 'audio/voice_recorder_widget.dart';
 
 /// Text field, send and voice-note buttons.
-class ChatInputArea extends StatefulWidget {
+class ChatInputArea extends ConsumerStatefulWidget {
   const ChatInputArea({super.key});
 
   @override
-  State<ChatInputArea> createState() => _ChatInputAreaState();
+  ConsumerState<ChatInputArea> createState() => _ChatInputAreaState();
 }
 
-class _ChatInputAreaState extends State<ChatInputArea> {
+class _ChatInputAreaState extends ConsumerState<ChatInputArea> {
   final TextEditingController _controller = TextEditingController();
   bool _isRecording = false;
 
   void _handleSend() {
     final text = _controller.text;
     if (text.isNotEmpty) {
-      context.read<AiChatController>().sendMessage(text);
+      ref.read(aiChatControllerProvider.notifier).sendMessage(text);
       _controller.clear();
     }
   }
@@ -53,6 +53,8 @@ class _ChatInputAreaState extends State<ChatInputArea> {
 
   @override
   Widget build(BuildContext context) {
+    final isSending =
+        ref.watch(aiChatControllerProvider.select((s) => s.isSending));
     if (_isRecording) {
       return VoiceRecorderWidget(
         onClose: () {
@@ -81,70 +83,60 @@ class _ChatInputAreaState extends State<ChatInputArea> {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: AppColors.slate200),
               ),
-              child: Consumer<AiChatController>(
-                builder: (context, controller, child) {
-                  return TextField(
-                    controller: _controller,
-                    readOnly: controller.isSending,
-                    minLines: 1,
-                    maxLines: 4,
-                    // The server's limit for one chat message.
-                    inputFormatters: [LengthLimitingTextInputFormatter(2000)],
-                    textInputAction: TextInputAction.newline,
-                    keyboardType: TextInputType.multiline,
-                    onSubmitted:
-                        controller.isSending ? null : (_) => _handleSend(),
-                    decoration: InputDecoration(
-                      hintText: controller.isSending
-                          ? context.l10n.sending
-                          : context.l10n.typeYourReply,
-                      hintStyle: const TextStyle(
-                        color: AppColors.slate400,
-                        fontSize: 16,
-                        fontFamily: 'ProductSans',
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                    ),
-                  );
-                },
+              child: TextField(
+                controller: _controller,
+                readOnly: isSending,
+                minLines: 1,
+                maxLines: 4,
+                // The server's limit for one chat message.
+                inputFormatters: [LengthLimitingTextInputFormatter(2000)],
+                textInputAction: TextInputAction.newline,
+                keyboardType: TextInputType.multiline,
+                onSubmitted: isSending ? null : (_) => _handleSend(),
+                decoration: InputDecoration(
+                  hintText: isSending
+                      ? context.l10n.sending
+                      : context.l10n.typeYourReply,
+                  hintStyle: const TextStyle(
+                    color: AppColors.slate400,
+                    fontSize: 16,
+                    fontFamily: 'ProductSans',
+                  ),
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Consumer<AiChatController>(
-            builder: (context, controller, child) {
-              return ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _controller,
-                builder: (context, value, child) {
-                  final isTyping = value.text.trim().isNotEmpty;
-                  final isSending = controller.isSending;
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _controller,
+            builder: (context, value, child) {
+              final isTyping = value.text.trim().isNotEmpty;
 
-                  return GestureDetector(
-                    onTap: (isTyping && !isSending)
-                        ? _handleSend
-                        : (isSending ? null : _handleStartRecording),
-                    child: Opacity(
-                      opacity: isSending ? 0.5 : 1.0,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: isTyping
-                              ? AppColors.primary
-                              : const Color(0xFFF6A96C),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isTyping ? Icons.send : Icons.mic_none_outlined,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
+              return GestureDetector(
+                onTap: (isTyping && !isSending)
+                    ? _handleSend
+                    : (isSending ? null : _handleStartRecording),
+                child: Opacity(
+                  opacity: isSending ? 0.5 : 1.0,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isTyping
+                          ? AppColors.primary
+                          : const Color(0xFFF6A96C),
+                      shape: BoxShape.circle,
                     ),
-                  );
-                },
+                    child: Icon(
+                      isTyping ? Icons.send : Icons.mic_none_outlined,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
               );
             },
           ),

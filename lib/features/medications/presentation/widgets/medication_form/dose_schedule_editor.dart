@@ -4,36 +4,35 @@ import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_section.dart';
-import '../../controllers/medication_form_controller.dart';
+import '../../states/medication_form_state.dart';
 import '../../medication_section_label.dart';
+
+/// Changes one section's dose; the form controller's `setSlot` fits.
+typedef SlotChange = void Function(MedicationSection section,
+    {bool? enabled, TimeOfDay? time, int? quantity});
 
 /// On/off, time and quantity for each dose section of a medication form.
 class DoseScheduleEditor extends StatelessWidget {
-  const DoseScheduleEditor({super.key, required this.controller});
+  const DoseScheduleEditor(
+      {super.key, required this.slots, required this.onChanged});
 
-  final MedicationFormController controller;
+  final Map<MedicationSection, DoseSlot> slots;
+  final SlotChange onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) => Column(
-        children: [
-          for (final section in MedicationSection.values) ...[
-            _DoseToggle(
-              section: section,
-              slot: controller.slots[section]!,
-              onChanged: ({enabled, time, quantity}) => controller.setSlot(
-                  section,
-                  enabled: enabled,
-                  time: time,
-                  quantity: quantity),
-            ),
-            if (section != MedicationSection.evening)
-              const SizedBox(height: 16),
-          ],
+    return Column(
+      children: [
+        for (final section in MedicationSection.values) ...[
+          _DoseToggle(
+            section: section,
+            slot: slots[section]!,
+            onChanged: ({enabled, time, quantity}) => onChanged(section,
+                enabled: enabled, time: time, quantity: quantity),
+          ),
+          if (section != MedicationSection.evening) const SizedBox(height: 16),
         ],
-      ),
+      ],
     );
   }
 }

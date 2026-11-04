@@ -1,56 +1,44 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/failures/app_failure.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/utils/session_scoped.dart';
+import '../../../../core/utils/follow_session.dart';
 import '../../domain/entities/medication_entity.dart';
 import '../../domain/repositories/medication_repository.dart';
+import '../../medications_providers.dart';
 
-/// The all-medicines list, kept live from the phone's database.
-class AllMedicinesController extends ChangeNotifier
-    with SafeNotifier, SessionScoped {
-  AllMedicinesController({required MedicationRepository repository})
-      : _repository = repository {
-    joinSession();
-  }
+part 'all_medicines_controller.g.dart';
 
-  final MedicationRepository _repository;
+/// The all-medicines list, kept live from the phone's database; null until loaded.
+@Riverpod(keepAlive: true)
+class AllMedicinesController extends _$AllMedicinesController {
+  late MedicationRepository _repository;
   StreamSubscription<List<MedicationEntity>>? _sub;
 
-  /// Null until the list has loaded.
-  List<MedicationEntity>? medicines;
-
   @override
-  String get serviceName => 'AllMedicinesController';
+  List<MedicationEntity>? build() {
+    _repository = ref.watch(medicationRepositoryProvider);
+    followSession(ref, onEnd: () async {
+      await _stop();
+      state = null;
+    });
+    ref.onDispose(_stop);
+    return null;
+  }
 
-  @override
-  Future<void> onSessionStarted(String userId) async {}
-
-  @override
-  Future<void> onSessionEnded() async {
-    await _sub?.cancel();
+  Future<void> _stop() async {
+    final sub = _sub;
     _sub = null;
-    medicines = null;
-    notifyListeners();
+    await sub?.cancel();
   }
 
   /// Follows the list and refreshes it from the server.
   void init() {
-    _sub ??= _repository.watchAll().listen((list) {
-      medicines = list;
-      notifyListeners();
-    });
+    _sub ??= _repository.watchAll().listen((list) => state = list);
     _repository.refreshAll();
   }
 
   /// Deletes a medication; the list updates itself.
   AsyncResult<void> delete(String id) => _repository.deleteMedication(id);
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
-  }
 }

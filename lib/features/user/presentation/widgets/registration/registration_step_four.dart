@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yelima/features/user/user_providers.dart';
 import 'package:yelima/features/user/domain/models/facility_model.dart';
 import 'package:yelima/shared/widgets/layout/step_layout.dart';
 import 'package:yelima/shared/widgets/forms/app_form_field.dart';
@@ -10,7 +10,7 @@ import 'package:yelima/shared/utils/failure_message.dart';
 import 'package:yelima/shared/utils/run_with_loader.dart';
 
 /// Registration step 4: pick the health facility.
-class RegistrationStepFour extends StatefulWidget {
+class RegistrationStepFour extends ConsumerStatefulWidget {
   const RegistrationStepFour({
     super.key,
     required this.onBack,
@@ -21,10 +21,11 @@ class RegistrationStepFour extends StatefulWidget {
   final VoidCallback onContinue;
 
   @override
-  State<RegistrationStepFour> createState() => _RegistrationStepFourState();
+  ConsumerState<RegistrationStepFour> createState() =>
+      _RegistrationStepFourState();
 }
 
-class _RegistrationStepFourState extends State<RegistrationStepFour> {
+class _RegistrationStepFourState extends ConsumerState<RegistrationStepFour> {
   bool _isLoadingFacilities = false;
   bool _isDropdownVisible = false;
   List<FacilityModel> _options = [];
@@ -57,7 +58,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
 
   Future<void> _continue() async {
     FocusScope.of(context).unfocus();
-    final users = context.read<UserController>();
+    final users = ref.read(userControllerProvider.notifier);
     final saved = await runWithLoader(context,
         message: context.l10n.completingProfile,
         action: () => users.submitOnboarding(_selectedFacility!.id));
@@ -84,7 +85,7 @@ class _RegistrationStepFourState extends State<RegistrationStepFour> {
       _isLoadingFacilities = true;
       _isDropdownVisible = true;
     });
-    final users = context.read<UserController>();
+    final users = ref.read(userControllerProvider.notifier);
     final result = await _search.run(() => users.searchFacilities(query));
     if (result == null || !mounted) return;
     setState(() {

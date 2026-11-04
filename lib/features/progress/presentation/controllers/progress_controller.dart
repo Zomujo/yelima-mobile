@@ -1,40 +1,38 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/failures/app_failure.dart';
-import '../../../../core/utils/safe_notifier.dart';
-import '../../../../core/utils/session_scoped.dart';
+import '../../../../core/utils/follow_session.dart';
 import '../../domain/entities/vital_trends.dart';
-import '../../domain/repositories/progress_repository.dart';
+import '../../progress_providers.dart';
 import 'progress_state.dart';
 
+part 'progress_controller.g.dart';
+
 /// The progress screen's blood pressure and blood sugar charts.
-class ProgressController extends ChangeNotifier
-    with SafeNotifier, SessionScoped {
-  ProgressController(ProgressRepository repository) {
+@Riverpod(keepAlive: true)
+class ProgressController extends _$ProgressController {
+  late _Trend<BPTrend> _bp;
+  late _Trend<VitalTrend> _sugar;
+
+  @override
+  ProgressCharts build() {
+    final repo = ref.watch(progressRepositoryProvider);
     _bp = _Trend(
-        repository.getCachedBPTrend, repository.getBPTrend, notifyListeners);
-    _sugar = _Trend(repository.getCachedSugarTrend, repository.getSugarTrend,
-        notifyListeners);
-    joinSession();
-  }
-
-  late final _Trend<BPTrend> _bp;
-  late final _Trend<VitalTrend> _sugar;
-
-  ProgressState<BPTrend> get bpTrendState => _bp.state;
-  ProgressState<VitalTrend> get glucoseTrendState => _sugar.state;
-
-  @override
-  String get serviceName => 'ProgressController';
-
-  @override
-  Future<void> onSessionStarted(String userId) async {}
-
-  @override
-  Future<void> onSessionEnded() async {
-    _bp.reset();
-    _sugar.reset();
-    notifyListeners();
+        repo.getCachedBPTrend,
+        repo.getBPTrend,
+        () => state.bpTrendState,
+        (s) => state = state.copyWith(bpTrendState: s));
+    _sugar = _Trend(
+        repo.getCachedSugarTrend,
+        repo.getSugarTrend,
+        () => state.glucoseTrendState,
+        (s) => state = state.copyWith(glucoseTrendState: s));
+    followSession(ref, onEnd: () {
+      _bp.reset();
+      _sugar.reset();
+      state = const ProgressCharts();
+    });
+    return const ProgressCharts();
   }
 
   /// Loads both charts for [range].
@@ -44,16 +42,16 @@ class ProgressController extends ChangeNotifier
 
 /// One chart: the phone's copy at once, then the server's, ignoring answers for an old range.
 class _Trend<T extends TrendLabels> {
-  _Trend(this._cached, this._fetch, this._notify);
+  _Trend(this._cached, this._fetch, this._get, this._set);
 
   final AsyncResult<T> Function(ChartDateRange) _cached;
   final AsyncResult<T> Function(ChartDateRange) _fetch;
-  final VoidCallback _notify;
-  ProgressState<T> state = const ProgressState(isLoading: true);
+  final ProgressState<T> Function() _get;
+  final void Function(ProgressState<T>) _set;
   ChartDateRange? _range;
 
   Future<void> load(ChartDateRange range) async {
-    if (range != _range || state.data == null) {
+    if (range != _range || _get().data == null) {
       _range = range;
       _set(const ProgressState(isLoading: true));
       final cached = (await _cached(range)).toNullable();
@@ -63,17 +61,10 @@ class _Trend<T extends TrendLabels> {
     }
     final result = await _fetch(range);
     if (range != _range) return;
-    result.fold((f) => _set(state.copyWith(isLoading: false, error: f)),
+    result.fold((f) => _set(_get().copyWith(isLoading: false, error: f)),
         (data) => _set(ProgressState(data: data)));
   }
 
-  void reset() {
-    _range = null;
-    state = const ProgressState(isLoading: true);
-  }
-
-  void _set(ProgressState<T> value) {
-    state = value;
-    _notify();
-  }
+  /// Forgets the range, so the next load starts from a blank chart.
+  void reset() => _range = null;
 }

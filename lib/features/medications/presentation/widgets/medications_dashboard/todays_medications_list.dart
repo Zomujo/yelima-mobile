@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import '../../../../../core/constants/app_images.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
@@ -14,15 +15,15 @@ import '../../../domain/medication_failures.dart';
 import '../../medication_failure_message.dart';
 
 /// Today's doses for the selected section, tappable to confirm.
-class TodaysMedicationsList extends StatelessWidget {
-  final MedicationController controller;
-
-  const TodaysMedicationsList({super.key, required this.controller});
+class TodaysMedicationsList extends ConsumerWidget {
+  const TodaysMedicationsList({super.key});
 
   /// Confirms [med]; an early tap gets a gentle note rather than an error.
-  Future<void> _confirm(BuildContext context, MedicationEntity med) async {
+  Future<void> _confirm(
+      BuildContext context, WidgetRef ref, MedicationEntity med) async {
     final l10n = context.l10n;
-    final result = await controller.confirm(med);
+    final result =
+        await ref.read(medicationControllerProvider.notifier).confirm(med);
     if (!context.mounted) return;
     result.fold((failure) {
       final text = failure.medicationMessage(l10n) ?? '';
@@ -33,8 +34,9 @@ class TodaysMedicationsList extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final meds = controller.state.doses[controller.state.section];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(medicationControllerProvider);
+    final meds = state.doses[state.section];
     if (meds == null) {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
@@ -70,7 +72,7 @@ class TodaysMedicationsList extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: GestureDetector(
-              onTap: () => _confirm(context, med),
+              onTap: () => _confirm(context, ref, med),
               child: MedicationCard(
                 name: med.name,
                 dosage: med.dosage,
@@ -79,9 +81,8 @@ class TodaysMedicationsList extends StatelessWidget {
                 isTaken: med.taken,
                 isOverdue: !med.taken && canConfirm,
                 isEarly: !med.taken && !canConfirm,
-                isConfirming:
-                    controller.state.confirmingMedicationIds.contains(med.id),
-                onConfirm: () => _confirm(context, med),
+                isConfirming: state.confirmingMedicationIds.contains(med.id),
+                onConfirm: () => _confirm(context, ref, med),
               ),
             ),
           );

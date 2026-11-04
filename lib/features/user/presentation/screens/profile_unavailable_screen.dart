@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../auth/presentation/widgets/auth_layout.dart';
 import '../../../auth/presentation/widgets/logout_flow.dart';
-import '../controllers/user_controller.dart';
+import '../../user_providers.dart';
 
 /// Shown when a signed-in user's profile couldn't be loaded: retry or log out, never registration.
-class ProfileUnavailableScreen extends StatelessWidget {
+class ProfileUnavailableScreen extends ConsumerWidget {
   const ProfileUnavailableScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final user = context.watch<UserController>();
+    final isLoading =
+        ref.watch(userControllerProvider.select((s) => s.isLoading));
     return AuthLayout(
       title: l10n.profileUnavailableTitle,
       subtitle: l10n.profileUnavailableBody,
@@ -25,8 +26,8 @@ class ProfileUnavailableScreen extends StatelessWidget {
           children: [
             AppButton(
               text: l10n.tryAgain,
-              isLoading: user.state.isLoading,
-              onPressed: user.retryProfile,
+              isLoading: isLoading,
+              onPressed: ref.read(userControllerProvider.notifier).retryProfile,
             ),
             const SizedBox(height: 12),
             TextButton(

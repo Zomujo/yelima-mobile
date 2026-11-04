@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/managers/audio_player_manager.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/core_providers.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../domain/repositories/ai_chat_repository.dart';
+import '../../../chat_providers.dart';
 
 /// A voice note: download, play and waveform.
-class AudioMessageBubble extends StatefulWidget {
+class AudioMessageBubble extends ConsumerStatefulWidget {
   final String audioUrl;
   final bool isUser;
   final String durationString;
@@ -26,10 +27,10 @@ class AudioMessageBubble extends StatefulWidget {
   });
 
   @override
-  State<AudioMessageBubble> createState() => _AudioMessageBubbleState();
+  ConsumerState<AudioMessageBubble> createState() => _AudioMessageBubbleState();
 }
 
-class _AudioMessageBubbleState extends State<AudioMessageBubble> {
+class _AudioMessageBubbleState extends ConsumerState<AudioMessageBubble> {
   late PlayerController _playerController;
   late AudioPlayerManager _playerManager;
 
@@ -44,7 +45,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
   @override
   void initState() {
     super.initState();
-    _playerManager = context.read<AudioPlayerManager>();
+    _playerManager = ref.read(audioPlayerManagerProvider);
     _playerController = PlayerController();
 
     _checkInitialState();
@@ -62,7 +63,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     _playerManager.register(_playerController);
 
     final cachedPath =
-        await context.read<AiChatRepository>().cachedAudioPath(_ids);
+        await ref.read(aiChatRepositoryProvider).cachedAudioPath(_ids);
 
     if (cachedPath != null) {
       _localPath = cachedPath;
@@ -149,8 +150,8 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
       _isDownloading = true;
     });
 
-    final path = (await context
-            .read<AiChatRepository>()
+    final path = (await ref
+            .read(aiChatRepositoryProvider)
             .downloadAudio(widget.audioUrl, _ids))
         .toNullable();
     if (path != null) {

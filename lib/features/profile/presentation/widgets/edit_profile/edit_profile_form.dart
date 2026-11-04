@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/forms/app_dropdown.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
-import '../../../../user/presentation/controllers/user_controller.dart';
+import '../../../../user/user_providers.dart';
 import '../../controllers/edit_profile_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// Name and gender fields of the edit-profile screen.
-class EditProfileForm extends StatefulWidget {
+class EditProfileForm extends ConsumerStatefulWidget {
   const EditProfileForm({super.key});
 
   @override
-  State<EditProfileForm> createState() => _EditProfileFormState();
+  ConsumerState<EditProfileForm> createState() => _EditProfileFormState();
 }
 
-class _EditProfileFormState extends State<EditProfileForm> {
+class _EditProfileFormState extends ConsumerState<EditProfileForm> {
   late final TextEditingController _firstNameController;
   late final TextEditingController _lastNameController;
   late final TextEditingController _emailController;
@@ -24,27 +24,21 @@ class _EditProfileFormState extends State<EditProfileForm> {
   @override
   void initState() {
     super.initState();
-    final controller = context.read<EditProfileController>();
-    final user = context.read<UserController>().userEntity;
+    final form = ref.read(editProfileControllerProvider);
+    final user = ref.read(userControllerProvider).userEntity;
 
-    _firstNameController =
-        TextEditingController(text: controller.state.firstName);
-    _lastNameController =
-        TextEditingController(text: controller.state.lastName);
+    _firstNameController = TextEditingController(text: form.firstName);
+    _lastNameController = TextEditingController(text: form.lastName);
     _emailController = TextEditingController(text: user?.email ?? '');
 
-    _firstNameController.addListener(() {
-      context
-          .read<EditProfileController>()
-          .updateForm(firstName: _firstNameController.text);
-    });
-
-    _lastNameController.addListener(() {
-      context
-          .read<EditProfileController>()
-          .updateForm(lastName: _lastNameController.text);
-    });
+    _firstNameController.addListener(
+        () => _form.updateForm(firstName: _firstNameController.text));
+    _lastNameController.addListener(
+        () => _form.updateForm(lastName: _lastNameController.text));
   }
+
+  EditProfileController get _form =>
+      ref.read(editProfileControllerProvider.notifier);
 
   @override
   void dispose() {
@@ -60,6 +54,8 @@ class _EditProfileFormState extends State<EditProfileForm> {
 
   @override
   Widget build(BuildContext context) {
+    final gender =
+        ref.watch(editProfileControllerProvider.select((s) => s.gender));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -85,20 +81,13 @@ class _EditProfileFormState extends State<EditProfileForm> {
           color: const Color(0xFF6A7282),
         ),
         const SizedBox(height: 8),
-        Selector<EditProfileController, String?>(
-          selector: (context, controller) => controller.state.gender,
-          builder: (context, gender, child) {
-            return AppDropdown<String>(
-              value: gender,
-              hintText: context.l10n.selectGender,
-              // Stored in English like registration; only the label is translated.
-              items: const ['Male', 'Female', 'Other'],
-              itemLabelBuilder: context.l10n.genderName,
-              onChanged: (value) {
-                context.read<EditProfileController>().updateForm(gender: value);
-              },
-            );
-          },
+        AppDropdown<String>(
+          value: gender,
+          hintText: context.l10n.selectGender,
+          // Stored in English like registration; only the label is translated.
+          items: const ['Male', 'Female', 'Other'],
+          itemLabelBuilder: context.l10n.genderName,
+          onChanged: (value) => _form.updateForm(gender: value),
         ),
         const SizedBox(height: 24),
         AppFormField(

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:get_it/get_it.dart';
 
 import '../services/fcm_token_service.dart';
 import '../utils/logger.dart';
@@ -13,6 +12,9 @@ import '../utils/logger.dart';
 class TokenManager {
   static final TokenManager _instance = TokenManager._internal();
   factory TokenManager() => _instance;
+
+  /// Sends a refreshed push token to the server; set by [FCMTokenService].
+  void Function()? onFcmTokenRefreshed;
   TokenManager._internal();
 
   String? _cachedAuthToken;
@@ -107,11 +109,7 @@ class TokenManager {
       await _secureStorage.write(key: "cached_fcm_token", value: newToken);
 
       try {
-        if (GetIt.instance.isRegistered<FCMTokenService>()) {
-          GetIt.instance<FCMTokenService>()
-              .registerFCMToken()
-              .catchError((_) {});
-        }
+        onFcmTokenRefreshed?.call();
       } catch (_) {}
     });
 

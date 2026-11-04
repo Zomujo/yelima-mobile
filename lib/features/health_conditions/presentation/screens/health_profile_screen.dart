@@ -2,22 +2,22 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
-import '../../../user/presentation/controllers/user_controller.dart';
+import '../../../user/user_providers.dart';
 import '../widgets/health_profile_card.dart';
 import '../widgets/health_expansion_card.dart';
 import '../widgets/health_info_card.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// The patient's details and chronic conditions.
-class HealthProfileScreen extends StatelessWidget {
+class HealthProfileScreen extends ConsumerWidget {
   const HealthProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = context.watch<UserController>().userEntity;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userControllerProvider).userEntity;
 
     return Scaffold(
       backgroundColor: AppColors.offWhite,

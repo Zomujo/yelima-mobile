@@ -178,4 +178,211 @@ class __$ProgressStateCopyWithImpl<T, $Res>
   }
 }
 
+/// @nodoc
+mixin _$ProgressCharts {
+  ProgressState<BPTrend> get bpTrendState;
+  ProgressState<VitalTrend> get glucoseTrendState;
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ProgressChartsCopyWith<ProgressCharts> get copyWith =>
+      _$ProgressChartsCopyWithImpl<ProgressCharts>(
+          this as ProgressCharts, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ProgressCharts &&
+            (identical(other.bpTrendState, bpTrendState) ||
+                other.bpTrendState == bpTrendState) &&
+            (identical(other.glucoseTrendState, glucoseTrendState) ||
+                other.glucoseTrendState == glucoseTrendState));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, bpTrendState, glucoseTrendState);
+
+  @override
+  String toString() {
+    return 'ProgressCharts(bpTrendState: $bpTrendState, glucoseTrendState: $glucoseTrendState)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $ProgressChartsCopyWith<$Res> {
+  factory $ProgressChartsCopyWith(
+          ProgressCharts value, $Res Function(ProgressCharts) _then) =
+      _$ProgressChartsCopyWithImpl;
+  @useResult
+  $Res call(
+      {ProgressState<BPTrend> bpTrendState,
+      ProgressState<VitalTrend> glucoseTrendState});
+
+  $ProgressStateCopyWith<BPTrend, $Res> get bpTrendState;
+  $ProgressStateCopyWith<VitalTrend, $Res> get glucoseTrendState;
+}
+
+/// @nodoc
+class _$ProgressChartsCopyWithImpl<$Res>
+    implements $ProgressChartsCopyWith<$Res> {
+  _$ProgressChartsCopyWithImpl(this._self, this._then);
+
+  final ProgressCharts _self;
+  final $Res Function(ProgressCharts) _then;
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? bpTrendState = null,
+    Object? glucoseTrendState = null,
+  }) {
+    return _then(_self.copyWith(
+      bpTrendState: null == bpTrendState
+          ? _self.bpTrendState
+          : bpTrendState // ignore: cast_nullable_to_non_nullable
+              as ProgressState<BPTrend>,
+      glucoseTrendState: null == glucoseTrendState
+          ? _self.glucoseTrendState
+          : glucoseTrendState // ignore: cast_nullable_to_non_nullable
+              as ProgressState<VitalTrend>,
+    ));
+  }
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProgressStateCopyWith<BPTrend, $Res> get bpTrendState {
+    return $ProgressStateCopyWith<BPTrend, $Res>(_self.bpTrendState, (value) {
+      return _then(_self.copyWith(bpTrendState: value));
+    });
+  }
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProgressStateCopyWith<VitalTrend, $Res> get glucoseTrendState {
+    return $ProgressStateCopyWith<VitalTrend, $Res>(_self.glucoseTrendState,
+        (value) {
+      return _then(_self.copyWith(glucoseTrendState: value));
+    });
+  }
+}
+
+/// @nodoc
+
+class _ProgressCharts implements ProgressCharts {
+  const _ProgressCharts(
+      {this.bpTrendState = const ProgressState(isLoading: true),
+      this.glucoseTrendState = const ProgressState(isLoading: true)});
+
+  @override
+  @JsonKey()
+  final ProgressState<BPTrend> bpTrendState;
+  @override
+  @JsonKey()
+  final ProgressState<VitalTrend> glucoseTrendState;
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ProgressChartsCopyWith<_ProgressCharts> get copyWith =>
+      __$ProgressChartsCopyWithImpl<_ProgressCharts>(this, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _ProgressCharts &&
+            (identical(other.bpTrendState, bpTrendState) ||
+                other.bpTrendState == bpTrendState) &&
+            (identical(other.glucoseTrendState, glucoseTrendState) ||
+                other.glucoseTrendState == glucoseTrendState));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, bpTrendState, glucoseTrendState);
+
+  @override
+  String toString() {
+    return 'ProgressCharts(bpTrendState: $bpTrendState, glucoseTrendState: $glucoseTrendState)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$ProgressChartsCopyWith<$Res>
+    implements $ProgressChartsCopyWith<$Res> {
+  factory _$ProgressChartsCopyWith(
+          _ProgressCharts value, $Res Function(_ProgressCharts) _then) =
+      __$ProgressChartsCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {ProgressState<BPTrend> bpTrendState,
+      ProgressState<VitalTrend> glucoseTrendState});
+
+  @override
+  $ProgressStateCopyWith<BPTrend, $Res> get bpTrendState;
+  @override
+  $ProgressStateCopyWith<VitalTrend, $Res> get glucoseTrendState;
+}
+
+/// @nodoc
+class __$ProgressChartsCopyWithImpl<$Res>
+    implements _$ProgressChartsCopyWith<$Res> {
+  __$ProgressChartsCopyWithImpl(this._self, this._then);
+
+  final _ProgressCharts _self;
+  final $Res Function(_ProgressCharts) _then;
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? bpTrendState = null,
+    Object? glucoseTrendState = null,
+  }) {
+    return _then(_ProgressCharts(
+      bpTrendState: null == bpTrendState
+          ? _self.bpTrendState
+          : bpTrendState // ignore: cast_nullable_to_non_nullable
+              as ProgressState<BPTrend>,
+      glucoseTrendState: null == glucoseTrendState
+          ? _self.glucoseTrendState
+          : glucoseTrendState // ignore: cast_nullable_to_non_nullable
+              as ProgressState<VitalTrend>,
+    ));
+  }
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProgressStateCopyWith<BPTrend, $Res> get bpTrendState {
+    return $ProgressStateCopyWith<BPTrend, $Res>(_self.bpTrendState, (value) {
+      return _then(_self.copyWith(bpTrendState: value));
+    });
+  }
+
+  /// Create a copy of ProgressCharts
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProgressStateCopyWith<VitalTrend, $Res> get glucoseTrendState {
+    return $ProgressStateCopyWith<VitalTrend, $Res>(_self.glucoseTrendState,
+        (value) {
+      return _then(_self.copyWith(glucoseTrendState: value));
+    });
+  }
+}
+
 // dart format on

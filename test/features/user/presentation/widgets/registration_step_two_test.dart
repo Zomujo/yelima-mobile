@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yelima/features/user/presentation/controllers/user_state.dart';
 import 'package:yelima/features/user/presentation/controllers/user_controller.dart';
 import 'package:yelima/features/user/presentation/widgets/registration/registration_step_two.dart';
 
 import '../../../../helpers/pump_app.dart';
 
-class MockUserController extends Mock implements UserController {}
+class MockUserController extends Notifier<UserState>
+    with Mock
+    implements UserController {
+  @override
+  UserState build() => const UserState();
+}
 
 void main() {
   late MockUserController users;
@@ -19,14 +25,13 @@ void main() {
   setUp(() {
     continued = false;
     users = MockUserController();
-    when(() => users.userEntity).thenReturn(null);
     when(() => users.updateDob(any())).thenAnswer((_) async => right(null));
   });
 
   Future<void> enterAge(WidgetTester tester, String age) async {
     await tester.pumpApp(
       RegistrationStepTwo(onBack: () {}, onContinue: () => continued = true),
-      providers: [ChangeNotifierProvider<UserController>.value(value: users)],
+      overrides: [userControllerProvider.overrideWith(() => users)],
     );
     await tester.tap(find.text('Enter age instead'));
     await tester.pump();

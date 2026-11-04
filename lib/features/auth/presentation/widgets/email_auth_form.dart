@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/router/route_paths.dart';
@@ -9,10 +9,10 @@ import '../../../../core/utils/validators.dart';
 import '../../../../shared/utils/run_with_loader.dart';
 import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
-import '../controllers/auth_controller.dart';
+import '../../auth_providers.dart';
 
 /// Email and password fields that sign in or create an account.
-class EmailAuthForm extends StatefulWidget {
+class EmailAuthForm extends ConsumerStatefulWidget {
   const EmailAuthForm(
       {super.key, required this.isSignUp, required this.isLoading});
 
@@ -20,10 +20,10 @@ class EmailAuthForm extends StatefulWidget {
   final bool isLoading;
 
   @override
-  State<EmailAuthForm> createState() => _EmailAuthFormState();
+  ConsumerState<EmailAuthForm> createState() => _EmailAuthFormState();
 }
 
-class _EmailAuthFormState extends State<EmailAuthForm> {
+class _EmailAuthFormState extends ConsumerState<EmailAuthForm> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _isValid = false;
@@ -46,7 +46,7 @@ class _EmailAuthFormState extends State<EmailAuthForm> {
 
   void _submit() {
     FocusScope.of(context).unfocus();
-    final auth = context.read<AuthController>();
+    final auth = ref.read(authControllerProvider.notifier);
     final email = _email.text.trim();
     runWithLoader(context,
         message: widget.isSignUp

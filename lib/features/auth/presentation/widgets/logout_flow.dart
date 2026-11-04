@@ -1,6 +1,6 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/router/router.dart';
@@ -8,7 +8,7 @@ import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/loaders/global_async_loader.dart';
 import '../../../../shared/widgets/modals/app_modal.dart';
-import '../controllers/auth_controller.dart';
+import '../../auth_providers.dart';
 import 'package:yelima/shared/utils/app_snackbar.dart';
 
 /// What the user picked in the "changes not sent" warning.
@@ -16,7 +16,8 @@ enum UnsyncedChoice { tryAgain, logOutAnyway, cancel }
 
 /// Logs out after trying to send queued changes, warning first if any would be lost.
 Future<void> logOutWithSyncCheck(BuildContext context) async {
-  final auth = context.read<AuthController>();
+  final auth = ProviderScope.containerOf(context, listen: false)
+      .read(authControllerProvider.notifier);
   final l10n = context.l10n;
   // The caller (often a modal) may be gone by the time sync finishes.
   BuildContext host() => rootNavigatorKey.currentContext ?? context;
