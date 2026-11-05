@@ -1,5 +1,10 @@
 part of 'medication_repository_impl.dart';
 
+/// Told how far the server's week differs from the phone's: decided days that
+/// disagree, and server rate minus phone rate.
+typedef AdherenceDriftReporter = void Function(
+    {required int days, required int rateDiff});
+
 /// Adherence and history: the server's numbers when online and nothing is unsent,
 /// otherwise the phone works them out the same way.
 mixin _MedicationAdherence {
@@ -9,7 +14,12 @@ mixin _MedicationAdherence {
   SessionEpoch get session;
   RecentFetches get recent;
 
+  AdherenceDriftReporter? get onAdherenceDrift;
+
   static const _weekly = 'global_weekly';
+
+  /// The week the phone last worked out, until the server's answer replaces it.
+  MedicationAdherence? _phoneWeek;
 
   AdherenceDao get _adherence => db.adherenceDao;
 
@@ -55,6 +65,7 @@ mixin _MedicationAdherence {
                   await remoteDataSource.getAdherence(showWeekdays: true);
               session.ensure(epoch);
               await _saveWeek(result);
+              _reportDrift(result);
               recent.markFetched(_weekly);
               return result;
             } catch (e) {
@@ -68,7 +79,7 @@ mixin _MedicationAdherence {
     final now = clock.now();
     final rows = await db.medicationsDao.getAllMedications();
     final today = rows.where((r) => MedicationMapper.isDueToday(r, now));
-    await _saveWeek(WeekAdherence.compute(
+    await _saveWeek(_phoneWeek = WeekAdherence.compute(
       saved: await _savedDays(),
       scheduledToday: today.length,
       takenToday: today.where((r) => MedicationMapper.toEntity(r).taken).length,
@@ -77,6 +88,24 @@ mixin _MedicationAdherence {
       lastRate: (await _adherence.getGlobalAdherenceRate(_weekly))?.rate ?? 0,
     ));
     return getCachedAdherence();
+  }
+
+  /// Reports when the server's week differs from the phone's, so a rule that
+  /// drifted between the two shows up in analytics.
+  void _reportDrift(MedicationAdherence server) {
+    final phone = _phoneWeek;
+    _phoneWeek = null;
+    if (phone == null) return;
+    String day(DateTime t) => AppDateFormats.yyyyMMdd.format(t);
+    final mine = {for (final d in phone.days) day(d.takenAt): d.taken};
+    final days = server.days.where((d) {
+      final own = mine[day(d.takenAt)];
+      return d.taken != null && own != null && own != d.taken;
+    }).length;
+    final rateDiff = (server.rate - phone.rate).round();
+    if (days > 0 || rateDiff != 0) {
+      onAdherenceDrift?.call(days: days, rateDiff: rateDiff);
+    }
   }
 
   Future<void> _saveWeek(MedicationAdherence week) =>

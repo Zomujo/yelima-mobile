@@ -46,7 +46,11 @@ class MedicationRepositoryImpl
     required this.session,
     required this.l10n,
     RecentFetches? recent,
+    this.onAdherenceDrift,
   }) : recent = recent ?? RecentFetches(window: Duration.zero);
+
+  @override
+  final AdherenceDriftReporter? onAdherenceDrift;
 
   /// Skips a download made in the last minute.
   @override
@@ -114,7 +118,8 @@ class MedicationRepositoryImpl
             .where((m) => m.section == section.key)
             .firstOrNull;
         // Online the server's month rate arrives in a moment; a guess would flicker.
-        final estimate = !await connectivityService.isConnected;
+        // The last known state, so saving a dose never waits on the network.
+        final estimate = !connectivityService.lastKnownOnline;
         // The local "taken" state and its queued sync are saved together or not at all.
         await db.transaction(() async {
           if (row != null) {
@@ -242,6 +247,8 @@ class MedicationRepositoryImpl
           await _queue(id, 'deleteMedication', const {});
         });
         await _reminders.cancel(id);
+        // The server stops counting its doses from today; so does the week here.
+        await _workOutHere();
         mutationSyncManager.triggerSync();
       });
 

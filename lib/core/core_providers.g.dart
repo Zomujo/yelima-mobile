@@ -138,7 +138,7 @@ final sessionEpochProvider = Provider<SessionEpoch>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SessionEpochRef = ProviderRef<SessionEpoch>;
-String _$apiClientHash() => r'aa1a5bea2c116d5c3cc71ef41788c87db0fcbfcf';
+String _$apiClientHash() => r'6eed3fef80226ab67710ee5df7b3cc2985a0b139';
 
 /// The API client.
 ///
@@ -247,6 +247,24 @@ final connectivityProvider = Provider<ConnectivityService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ConnectivityRef = ProviderRef<ConnectivityService>;
+String _$onlineHash() => r'de40306de0da48b8e99bdfa7e67a41b6a0eec87f';
+
+/// Whether the phone is online, for screens that change when it isn't.
+///
+/// Copied from [online].
+@ProviderFor(online)
+final onlineProvider = StreamProvider<bool>.internal(
+  online,
+  name: r'onlineProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$onlineHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef OnlineRef = StreamProviderRef<bool>;
 String _$fileServiceHash() => r'6d94df07e33d7d25eb737e51f4395bfaa63a5ae9';
 
 /// Local file access.
@@ -303,7 +321,7 @@ final notificationServiceProvider = Provider<NotificationService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef NotificationServiceRef = ProviderRef<NotificationService>;
-String _$fcmTokenServiceHash() => r'b8fab58db13c7100de6c4014e78ff98d07c0eb79';
+String _$fcmTokenServiceHash() => r'1f7e2962de6f1ead02022f389aa44118d1f5cc3f';
 
 /// Registers this phone's push token with the server.
 ///

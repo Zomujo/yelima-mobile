@@ -38,11 +38,20 @@ class FakeConnectivity implements ConnectivityService {
   Future<bool> get isConnected async => online;
 
   @override
-  Future<bool> get hasNetworkInterface async => online;
+  bool get lastKnownOnline => online;
 
   @override
   Stream<bool> get onConnectivityChanged => _changes.stream;
 
   @override
-  Stream<bool> get onNetworkInterfaceChanged => _changes.stream;
+  void sawReply() {}
+
+  @override
+  void sawNetworkError() {}
+
+  @override
+  void pause() {}
+
+  @override
+  void resume() {}
 }

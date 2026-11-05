@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/core_providers.dart';
 import '../../core/extensions/l10n_extension.dart';
+import '../../core/services/monitoring_service.dart';
 import 'data/datasources/medication_remote_datasource.dart';
 import 'data/datasources/medication_remote_mutation_source.dart';
 import 'data/repositories/medication_repository_impl.dart';
@@ -29,6 +30,9 @@ MedicationRepository medicationRepository(Ref ref) => MedicationRepositoryImpl(
       session: ref.watch(sessionEpochProvider),
       l10n: () => l10nFor(ref.read(localeControllerProvider)),
       recent: ref.watch(recentFetchesProvider),
+      onAdherenceDrift: ({required days, required rateDiff}) =>
+          MonitoringService.instance
+              .logAdherenceDrift(days: days, rateDiff: rateDiff),
     );
 
 /// The medicine list used for search suggestions.

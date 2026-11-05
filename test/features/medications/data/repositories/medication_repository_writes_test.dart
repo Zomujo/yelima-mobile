@@ -15,9 +15,11 @@ import 'package:yelima/core/services/session_epoch.dart';
 import 'package:yelima/features/medications/domain/models/medication_detail_model.dart';
 import 'package:yelima/core/services/recent_fetches.dart';
 import 'package:yelima/features/medications/data/datasources/medication_remote_datasource.dart';
+import 'package:yelima/features/medications/data/models/medication_adherence_model.dart';
 import 'package:yelima/features/medications/data/models/medication_list_response_model.dart';
 import 'package:yelima/features/medications/data/models/medication_model.dart';
 import 'package:yelima/features/medications/data/repositories/medication_repository_impl.dart';
+import 'package:yelima/features/medications/domain/entities/medication_adherence.dart';
 import 'package:yelima/features/medications/domain/entities/medication_form.dart';
 import 'package:yelima/features/medications/domain/entities/medication_section.dart';
 import 'package:yelima/features/medications/domain/medication_failures.dart';
@@ -63,7 +65,9 @@ void main() {
   );
 
   MedicationRepositoryImpl repoWith(AppDatabase db,
-      {bool online = false, RecentFetches? recent}) {
+      {bool online = false,
+      RecentFetches? recent,
+      AdherenceDriftReporter? onDrift}) {
     final sync = MockSync();
     when(() => sync.triggerSync()).thenAnswer((_) async {});
     return MedicationRepositoryImpl(
@@ -75,6 +79,7 @@ void main() {
       session: SessionEpoch(),
       l10n: () => lookupAppLocalizations(const Locale('en')),
       recent: recent,
+      onAdherenceDrift: onDrift,
     );
   }
 
@@ -278,6 +283,47 @@ void main() {
       expect(week.days.first.taken, isTrue);
       expect(
           (week.days.first.takenDoses, week.days.first.scheduledDoses), (2, 2));
+    });
+
+    test('O5: a medicine deleted offline stops counting today at once',
+        () async {
+      await withClock(
+          Clock.fixed(monday), () => repoWith(db).deleteMedication('b'));
+
+      final week = await withClock(
+          Clock.fixed(monday), () => repoWith(db).getCachedAdherence());
+      expect(
+          (week.days.first.takenDoses, week.days.first.scheduledDoses), (1, 1));
+      expect(week.days[1].scheduledDoses, 1, reason: "tomorrow's plan");
+    });
+
+    test("the server's week is compared with the phone's, to catch drift",
+        () async {
+      final reports = <(int, int)>[];
+      final repo = repoWith(db,
+          online: true,
+          onDrift: ({required days, required rateDiff}) =>
+              reports.add((days, rateDiff)));
+      final at = Clock.fixed(DateTime(2026, 11, 2, 20, 5));
+      await withClock(
+          at, () => repo.confirmDose('b', MedicationSection.evening));
+      final phone = await withClock(at, repo.getCachedAdherence);
+      await db.delete(db.pendingMutations).go(); // the dose has synced
+
+      // The server disagrees about Monday and the rate.
+      when(() => remote.getAdherence(showWeekdays: true)).thenAnswer((_) async =>
+          MedicationAdherenceModel(rate: phone.rate + 3, days: [
+            for (final d in phone.days)
+              d.takenAt.day == 2
+                  ? AdherenceDay(taken: false, takenAt: d.takenAt)
+                  : d,
+          ]));
+      await withClock(at, repo.getAdherence);
+      expect(reports, [(1, 3)]);
+
+      // A second answer has no phone week to compare with.
+      await withClock(at, repo.getAdherence);
+      expect(reports, hasLength(1));
     });
   });
 

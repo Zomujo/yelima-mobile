@@ -93,6 +93,13 @@ class MonitoringService implements SessionLifecycleHandler {
         parameters: {'count': count, 'reason': reason},
       );
 
+  /// Counts weeks where the server's adherence differed from the phone's (no health values, only the difference).
+  Future<void> logAdherenceDrift({required int days, required int rateDiff}) =>
+      logEvent(
+        name: 'adherence_drift',
+        parameters: {'days': days, 'rate_diff': rateDiff},
+      );
+
   /// Logs a login event.
   Future<void> logLogin({required String loginMethod}) async {
     try {

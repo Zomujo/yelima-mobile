@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../services/session_expiry.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
+import 'interceptors/reachability_interceptor.dart';
+import '../services/connectivity_service.dart';
 import '../exceptions/exceptions.dart';
 
 typedef JSON = Map<String, dynamic>;
@@ -21,7 +23,11 @@ class APIClient {
 
   late final Dio _dio;
 
-  APIClient({required String baseUrl, SessionExpiry? sessionExpiry}) {
+  APIClient({
+    required String baseUrl,
+    SessionExpiry? sessionExpiry,
+    ConnectivityService? connectivity,
+  }) {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -36,6 +42,7 @@ class APIClient {
 
     _dio.interceptors.addAll([
       LoggingInterceptor(),
+      if (connectivity != null) ReachabilityInterceptor(connectivity),
       AuthInterceptor(dio: _dio, sessionExpiry: sessionExpiry),
     ]);
   }

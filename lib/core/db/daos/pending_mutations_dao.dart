@@ -21,6 +21,13 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
   /// The signed-in user; new items are tagged with it. Set by the sync manager.
   String? owner;
 
+  /// Oldest first. Times are stored to the second, so changes made in the same
+  /// second keep the order they were queued in (rowid).
+  static final _oldestFirst = <OrderClauseGenerator<$PendingMutationsTable>>[
+    (t) => OrderingTerm.asc(t.createdAt),
+    (t) => OrderingTerm.asc(t.rowId),
+  ];
+
   /// Items still waiting to sync for the current owner (or untagged), oldest first.
   Future<List<PendingMutation>> getAllPendingMutations() {
     return (select(pendingMutations)
@@ -30,7 +37,7 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
                   (owner == null
                       ? const Constant(true)
                       : t.ownerUid.equals(owner!))))
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+          ..orderBy(_oldestFirst))
         .get();
   }
 
@@ -58,7 +65,7 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
   Future<List<PendingMutation>> getFailedMutations() {
     return (select(pendingMutations)
           ..where((t) => t.retryCount.isBiggerOrEqualValue(maxTries))
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+          ..orderBy(_oldestFirst))
         .get();
   }
 
@@ -66,7 +73,7 @@ class PendingMutationsDao extends DatabaseAccessor<AppDatabase>
   Stream<List<PendingMutation>> watchFailedMutations() =>
       (select(pendingMutations)
             ..where((t) => t.retryCount.isBiggerOrEqualValue(maxTries))
-            ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+            ..orderBy(_oldestFirst))
           .watch();
 
   /// Live count of items waiting to sync, for the "changes waiting" badge.

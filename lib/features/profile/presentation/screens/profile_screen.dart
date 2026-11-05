@@ -7,7 +7,6 @@ import '../../../../shared/widgets/layout/options_block.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../auth/presentation/widgets/logout_modal.dart';
-import '../../../../core/services/connectivity_service.dart';
 import '../../../../shared/utils/app_snackbar.dart';
 import '../widgets/profile/profile_avatar.dart';
 import '../widgets/language_picker_modal.dart';
@@ -64,32 +63,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       key: AppTutorialKeys.profileAvatarKey,
                     ),
                     const SizedBox(height: 40),
-                    StreamBuilder<bool>(
-                        stream: ConnectivityService().onNetworkInterfaceChanged,
-                        initialData: true,
-                        builder: (context, snapshot) {
-                          final isOnline = snapshot.data ?? true;
-                          return OptionsBlock(
-                            key: AppTutorialKeys.profilePersonalOptionsKey,
-                            title: context.l10n.personal,
-                            blockItems: [
-                              OptionBlockItem(
-                                label: context.l10n.editProfile,
-                                icon: Iconsax.profile_circle,
-                                onTap: isOnline
-                                    ? () => context.push(RoutePaths.editProfile)
-                                    : () => AppSnackBar.showError(context,
-                                        message:
-                                            context.l10n.onlineToEditProfile),
-                              ),
-                              OptionBlockItem(
-                                label: context.l10n.settings,
-                                icon: Iconsax.setting_2,
-                                onTap: () => context.push(RoutePaths.settings),
-                              ),
-                            ],
-                          );
-                        }),
+                    Consumer(builder: (context, ref, _) {
+                      final isOnline =
+                          ref.watch(onlineProvider).valueOrNull ?? true;
+                      return OptionsBlock(
+                        key: AppTutorialKeys.profilePersonalOptionsKey,
+                        title: context.l10n.personal,
+                        blockItems: [
+                          OptionBlockItem(
+                            label: context.l10n.editProfile,
+                            icon: Iconsax.profile_circle,
+                            onTap: isOnline
+                                ? () => context.push(RoutePaths.editProfile)
+                                : () => AppSnackBar.showError(context,
+                                    message: context.l10n.onlineToEditProfile),
+                          ),
+                          OptionBlockItem(
+                            label: context.l10n.settings,
+                            icon: Iconsax.setting_2,
+                            onTap: () => context.push(RoutePaths.settings),
+                          ),
+                        ],
+                      );
+                    }),
                     OptionsBlock(
                       key: AppTutorialKeys.profileHealthSummaryOptionsKey,
                       title: context.l10n.healthSummary,

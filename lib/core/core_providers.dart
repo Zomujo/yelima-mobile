@@ -69,7 +69,8 @@ SessionEpoch sessionEpoch(Ref ref) => SessionEpoch()
 @Riverpod(keepAlive: true)
 APIClient apiClient(Ref ref) => APIClient(
     baseUrl: AppConfig.instance.apiBaseUrl,
-    sessionExpiry: ref.watch(sessionExpiryProvider));
+    sessionExpiry: ref.watch(sessionExpiryProvider),
+    connectivity: ref.watch(connectivityProvider));
 
 /// The encrypted local database.
 @Riverpod(keepAlive: true)
@@ -92,6 +93,11 @@ MedicationsDao medicationsDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 ConnectivityService connectivity(Ref ref) => ConnectivityService();
 
+/// Whether the phone is online, for screens that change when it isn't.
+@Riverpod(keepAlive: true)
+Stream<bool> online(Ref ref) =>
+    ref.watch(connectivityProvider).onConnectivityChanged;
+
 /// Local file access.
 @Riverpod(keepAlive: true)
 FileService fileService(Ref ref) => FileServiceImpl();
@@ -102,12 +108,13 @@ AppStartupService appStartup(Ref ref) => AppStartupService();
 
 /// Local notifications and reminders.
 @Riverpod(keepAlive: true)
-NotificationService notificationService(Ref ref) => NotificationService.instance;
+NotificationService notificationService(Ref ref) =>
+    NotificationService.instance;
 
 /// Registers this phone's push token with the server.
 @Riverpod(keepAlive: true)
 FCMTokenService fcmTokenService(Ref ref) =>
-    FCMTokenService(ref.watch(apiClientProvider), ref.watch(connectivityProvider));
+    FCMTokenService(ref.watch(apiClientProvider));
 
 /// Wipes the local database on logout.
 @Riverpod(keepAlive: true)
@@ -115,8 +122,8 @@ DatabaseLifecycleHandler databaseLifecycleHandler(Ref ref) =>
     DatabaseLifecycleHandler(ref.watch(appDatabaseProvider),
         onDiscarded: (n) =>
             MonitoringService.instance.logDiscardedChanges(n, reason: 'logout'))
-      ..also((h) =>
-          ref.watch(sessionLifecycleProvider).register(h, priority: 10));
+      ..also(
+          (h) => ref.watch(sessionLifecycleProvider).register(h, priority: 10));
 
 /// Registers and removes the push token with the session.
 @Riverpod(keepAlive: true)
@@ -152,8 +159,8 @@ MutationSyncManager mutationSyncManager(Ref ref) => MutationSyncManager(
       connectivityService: ref.watch(connectivityProvider),
       db: ref.watch(appDatabaseProvider),
     )
-      ..onDiscarded = ((n) =>
-          MonitoringService.instance.logDiscardedChanges(n, reason: 'other_user'))
+      ..onDiscarded = ((n) => MonitoringService.instance
+          .logDiscardedChanges(n, reason: 'other_user'))
       ..init()
       ..also(
           (s) => ref.watch(sessionLifecycleProvider).register(s, priority: 80));
@@ -176,7 +183,8 @@ RecentFetches recentFetches(Ref ref) => RecentFetches(
 
 /// Creates the core services that must exist before the first session.
 void setUpCore(ProviderContainer c) {
-  c.read(sessionLifecycleProvider)
+  c
+      .read(sessionLifecycleProvider)
       .register(MonitoringService.instance, priority: 5);
   c
     ..read(sessionEpochProvider)

@@ -20,8 +20,7 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp>
-    with WidgetsBindingObserver {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   late final GoRouter _router;
 
   @override
@@ -38,7 +37,11 @@ class _MyAppState extends ConsumerState<MyApp>
   /// offline reaches the server well inside its 48 h window.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      ref.read(connectivityProvider).pause();
+    }
     if (state == AppLifecycleState.resumed) {
+      ref.read(connectivityProvider).resume();
       // Coming back to the app always shows fresh data.
       ref.read(recentFetchesProvider).clear();
       ref.read(dayChangesProvider).check();

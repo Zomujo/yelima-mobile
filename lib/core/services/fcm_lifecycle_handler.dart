@@ -25,6 +25,8 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
   StreamSubscription? _connectivitySub;
   bool _registrationSucceeded = false;
   bool _isSessionActive = false;
+  // Bumped per session, so a late attempt from the last one changes nothing.
+  int _session = 0;
 
   @override
   String get serviceName => 'FCMLifecycleHandler';
@@ -32,8 +34,9 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
   @override
   Future<void> onSessionStarted(String userId) async {
     _isSessionActive = true;
+    _session++;
     _registrationSucceeded = false;
-    _attemptRegistration();
+    _attemptRegistration(fresh: true);
 
     _connectivitySub?.cancel();
     _connectivitySub =
@@ -44,16 +47,18 @@ class FCMLifecycleHandler implements SessionLifecycleHandler {
     });
   }
 
-  Future<void> _attemptRegistration() async {
-    if (!_isSessionActive) return;
+  Future<void> _attemptRegistration({bool fresh = false}) async {
+    final session = _session;
+    bool current() => _isSessionActive && session == _session;
+    if (!current()) return;
     try {
-      await _tokenService().registerFCMToken();
-      if (!_isSessionActive) return;
+      await _tokenService().registerFCMToken(fresh: fresh);
+      if (!current()) return;
       await _notifications.subscribeToTopic('yelima');
-      if (!_isSessionActive) return;
+      if (!current()) return;
       _registrationSucceeded = true;
     } catch (e) {
-      _registrationSucceeded = false;
+      if (current()) _registrationSucceeded = false;
     }
   }
 
