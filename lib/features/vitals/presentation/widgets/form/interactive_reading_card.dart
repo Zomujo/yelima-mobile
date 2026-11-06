@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yelima/core/theme/app_motion.dart';
 import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
 import 'package:yelima/features/vitals/presentation/widgets/displays/reading_display_card.dart';
 import 'package:yelima/features/vitals/presentation/widgets/displays/blood_pressure_display.dart';
@@ -18,7 +19,7 @@ class InteractiveReadingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(readingLoggingControllerProvider);
     if (state.isInitializing) {
-      return ReadingDisplayCard(
+      return const ReadingDisplayCard(
         child: AppShimmer.box(
           width: double.infinity,
           height: 100,
@@ -56,14 +57,23 @@ class InteractiveReadingCard extends ConsumerWidget {
             );
           }
         },
-        child: state.kind == VitalKind.bloodPressure
-            ? BloodPressureDisplay(
-                systolic: state.systolic.toString(),
-                diastolic: state.diastolic.toString(),
-              )
-            : SugarDisplay(
-                sugarLevel: state.sugarLevel.toStringAsFixed(1),
-              ),
+        // Cross-fades only when the type changes, not as the value changes.
+        child: AnimatedSwitcher(
+          duration:
+              AppMotion.duration(context, AppMotion.medium),
+          switchInCurve: AppMotion.enter,
+          switchOutCurve: AppMotion.exit,
+          child: state.kind == VitalKind.bloodPressure
+              ? BloodPressureDisplay(
+                  key: const ValueKey(VitalKind.bloodPressure),
+                  systolic: state.systolic.toString(),
+                  diastolic: state.diastolic.toString(),
+                )
+              : SugarDisplay(
+                  key: const ValueKey(VitalKind.bloodSugar),
+                  sugarLevel: state.sugarLevel.toStringAsFixed(1),
+                ),
+        ),
       ),
     );
   }

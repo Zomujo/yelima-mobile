@@ -29,6 +29,7 @@ import '../../shared/screens/not_found_screen.dart';
 import 'package:yelima/features/home/presentation/screens/main_scaffold.dart';
 import '../config/features.dart';
 import 'route_paths.dart';
+import '../theme/app_motion.dart';
 import '../../shared/screens/unsynced_changes_screen.dart';
 import '../../features/auth/presentation/screens/session_expired_screen.dart';
 import '../../features/user/presentation/screens/profile_unavailable_screen.dart';
@@ -49,12 +50,31 @@ final shellNavigatorKey = GlobalKey<NavigatorState>();
 GoRoute _page(String path, Widget screen, {GoRouterRedirect? redirect}) =>
     GoRoute(path: path, redirect: redirect, builder: (_, __) => screen);
 
-/// A bottom-bar tab: switches without a page animation.
+/// A form opened like a sheet: it slides up instead of in from the side.
+GoRoute _sheet(String path, Widget screen) => GoRoute(
+    path: path,
+    pageBuilder: (_, state) => MaterialPage(
+        key: state.pageKey, fullscreenDialog: true, child: screen));
+
+/// A bottom-bar tab: a quick cross-fade, no sliding.
 GoRoute _tab(String path, Widget screen, {GoRouterRedirect? redirect}) =>
     GoRoute(
-        path: path,
-        redirect: redirect,
-        pageBuilder: (_, __) => NoTransitionPage(child: screen));
+      path: path,
+      redirect: redirect,
+      pageBuilder: (_, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: screen,
+        transitionDuration: AppMotion.quick,
+        reverseTransitionDuration: AppMotion.quick,
+        transitionsBuilder: (context, animation, _, child) =>
+            AppMotion.reduced(context)
+                ? child
+                : FadeTransition(
+                    opacity: CurvedAnimation(
+                        parent: animation, curve: AppMotion.enter),
+                    child: child),
+      ),
+    );
 
 class _Ping extends ChangeNotifier {
   void call() => notifyListeners();
@@ -113,7 +133,7 @@ GoRouter appRouter(Ref ref) {
       _page(RoutePaths.sessionExpired, const SessionExpiredScreen()),
       _page(RoutePaths.registration, const RegistrationScreen()),
       _page(RoutePaths.medications, const MedicationsScreen()),
-      _page(RoutePaths.addMedication, const AddMedicationScreen()),
+      _sheet(RoutePaths.addMedication, const AddMedicationScreen()),
       GoRoute(
         path: RoutePaths.medicineDetails,
         builder: (_, state) =>
@@ -122,7 +142,7 @@ GoRouter appRouter(Ref ref) {
       _page(RoutePaths.progress, const ProgressScreen()),
       _page(RoutePaths.aiChat, const AiChatScreen(),
           redirect: _whileChatHidden),
-      _page(RoutePaths.editProfile, const EditProfileScreen()),
+      _sheet(RoutePaths.editProfile, const EditProfileScreen()),
       _page(RoutePaths.settings, const SettingsScreen()),
       _page(RoutePaths.healthProfile, const HealthProfileScreen()),
       _page(RoutePaths.symptoms, const AllSymptomsScreen()),

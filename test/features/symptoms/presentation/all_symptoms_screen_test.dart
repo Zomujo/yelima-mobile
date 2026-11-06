@@ -9,6 +9,7 @@ import 'package:yelima/features/symptoms/domain/repositories/symptoms_repository
 import 'package:yelima/features/symptoms/presentation/screens/all_symptoms_screen.dart';
 import 'package:yelima/features/symptoms/symptoms_providers.dart';
 import 'package:yelima/shared/widgets/layout/app_shimmer.dart';
+import 'package:yelima/shared/widgets/motion/entrance.dart';
 
 import '../../../helpers/pump_app.dart';
 
@@ -56,5 +57,59 @@ void main() {
     expect(find.text('Headache'), findsOneWidget);
     expect(find.byType(AppShimmer), findsNothing);
     server.complete(right(null));
+    await tester.pumpAndSettle(); // lets the list's entrance finish
+  });
+
+  group('a symptom arriving at the top', () {
+    final old = SymptomEntity(
+        id: 'a', description: 'Headache', onsetDate: DateTime(2026, 11, 1, 9));
+    late StreamController<List<SymptomEntity>> rows;
+
+    Future<void> openLive(WidgetTester tester) async {
+      rows = StreamController();
+      addTearDown(rows.close);
+      when(() => repo.refresh(force: any(named: 'force')))
+          .thenAnswer((_) async => right(null));
+      when(() => repo.watchSymptoms()).thenAnswer((_) => rows.stream);
+      await tester.pumpApp(const AllSymptomsScreen(),
+          overrides: [symptomsRepositoryProvider.overrideWithValue(repo)]);
+      rows.add([old]);
+      await tester.pumpAndSettle();
+    }
+
+    Finder slidingIn(String text) => find.ancestor(
+        of: find.text(text),
+        matching: find.byWidgetPredicate((w) => w is Entrance && w.rise < 0));
+
+    testWidgets('a new report slides in, the others stay put', (tester) async {
+      await openLive(tester);
+
+      rows.add([
+        old,
+        SymptomEntity(
+            id: 'temp_1',
+            description: 'Dizzy',
+            onsetDate: DateTime(2026, 11, 1, 10)),
+      ]);
+      await tester.pump(); // the stream's event
+      await tester.pump(); // the frame it causes
+
+      expect(slidingIn('Dizzy'), findsOneWidget);
+      expect(slidingIn('Headache'), findsNothing);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets("the server's copy of a symptom doesn't slide in again",
+        (tester) async {
+      await openLive(tester);
+
+      rows.add([
+        SymptomEntity(
+            id: 'server-a', description: 'Headache', onsetDate: old.onsetDate),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(slidingIn('Headache'), findsNothing);
+    });
   });
 }

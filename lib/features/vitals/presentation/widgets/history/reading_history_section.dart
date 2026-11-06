@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:clock/clock.dart';
+import 'package:yelima/features/vitals/domain/entities/vital_history_entity.dart';
+import 'package:yelima/shared/widgets/motion/entrance.dart';
 
-/// The saved readings, five per page.
+/// The saved readings, five per page; a new one slides in at the top.
 class ReadingHistorySection extends ConsumerStatefulWidget {
   const ReadingHistorySection({super.key});
 
@@ -22,8 +24,22 @@ class _ReadingHistorySectionState extends ConsumerState<ReadingHistorySection> {
   int _currentPage = 1;
   final int _pageSize = 5;
 
+  /// The reading that just arrived at the top, which slides in once.
+  String? _arrivedId;
+
+  /// Marks a new, newer first reading (a fresh save), not a reorder or resync.
+  void _onHistory(
+      List<VitalHistoryEntity>? old, List<VitalHistoryEntity>? now) {
+    final (was, top) = (old?.firstOrNull, now?.firstOrNull);
+    if (was == null || top == null || top.id == was.id) return;
+    final (a, b) = (was.recordedAt, top.recordedAt);
+    if (a != null && b != null && b.isAfter(a)) _arrivedId = top.id;
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<List<VitalHistoryEntity>?>(
+        readingLoggingControllerProvider.select((s) => s.history), _onHistory);
     final vitals =
         ref.watch(readingLoggingControllerProvider.select((s) => s.history)) ??
             const [];
@@ -80,12 +96,19 @@ class _ReadingHistorySectionState extends ConsumerState<ReadingHistorySection> {
                     ? context.l10n.bpShort
                     : context.l10n.sugar;
 
-                return ReadingHistoryItem(
+                final item = ReadingHistoryItem(
                   date: dateStr,
                   vitalName: vitalName,
                   vitalValue: "${vital.value} ${vital.unit}",
                   severity: vital.grade,
                 );
+                if (vital.id != _arrivedId) return item;
+                // Drops in from under the page bar, once.
+                return Entrance(
+                    key: ValueKey(vital.id),
+                    rise: -12,
+                    playOnce: 'reading/${vital.id}',
+                    child: item);
               },
               childCount: displayVitals.length,
             ),

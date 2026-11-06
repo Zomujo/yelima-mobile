@@ -103,7 +103,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: AppColors.offWhite,
+        statusBarColor: Colors.transparent,
         systemNavigationBarColor: AppColors.offWhite,
       ),
       child: Scaffold(

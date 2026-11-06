@@ -53,11 +53,12 @@ class _Trend<T extends TrendLabels> {
   Future<void> load(ChartDateRange range) async {
     if (range != _range || _get().data == null) {
       _range = range;
-      _set(const ProgressState(isLoading: true));
       final cached = (await _cached(range)).toNullable();
-      if (cached != null && cached.labels.isNotEmpty) {
-        _set(ProgressState(data: cached));
-      }
+      if (range != _range) return;
+      // Straight from the old chart to the cached one, so the lines can ease across.
+      _set(cached != null && cached.labels.isNotEmpty
+          ? ProgressState(data: cached)
+          : const ProgressState(isLoading: true));
     }
     final result = await _fetch(range);
     if (range != _range) return;

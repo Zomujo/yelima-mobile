@@ -1,57 +1,23 @@
 import 'package:flutter/material.dart';
 
-/// A shimmering placeholder while content loads.
-class AppShimmer extends StatefulWidget {
-  final Widget child;
-  final bool enabled;
-  final Color? baseColor;
-  final Color? highlightColor;
-  final Duration duration;
+import '../../../core/theme/app_motion.dart';
 
-  const AppShimmer({
+/// A grey placeholder box with a light sweeping across it while content loads.
+///
+/// The sweep is the box's own gradient, not a mask over a child: a mask needs
+/// an off-screen pass per box on every frame, which stalls older phones when a
+/// list of placeholders is showing.
+class AppShimmer extends StatefulWidget {
+  const AppShimmer.box({
     super.key,
-    required this.child,
-    this.enabled = true,
-    this.baseColor,
-    this.highlightColor,
-    this.duration = const Duration(milliseconds: 1500),
+    this.width,
+    this.height,
+    this.borderRadius = 8,
   });
 
-  /// Factory for a rectangular shimmer box.
-  factory AppShimmer.box({
-    double? width,
-    double? height,
-    double borderRadius = 8,
-    bool enabled = true,
-  }) =>
-      AppShimmer(
-        enabled: enabled,
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(borderRadius),
-          ),
-        ),
-      );
-
-  /// Factory for a circular shimmer.
-  factory AppShimmer.circle({
-    double size = 40,
-    bool enabled = true,
-  }) =>
-      AppShimmer(
-        enabled: enabled,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-        ),
-      );
+  final double? width;
+  final double? height;
+  final double borderRadius;
 
   @override
   State<AppShimmer> createState() => _AppShimmerState();
@@ -59,14 +25,9 @@ class AppShimmer extends StatefulWidget {
 
 class _AppShimmerState extends State<AppShimmer>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration)
-      ..repeat();
-  }
+  late final _controller = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1500))
+    ..repeat();
 
   @override
   void dispose() {
@@ -76,51 +37,34 @@ class _AppShimmerState extends State<AppShimmer>
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.enabled) return widget.child;
-
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final baseColor =
-        widget.baseColor ?? (isDark ? Colors.grey[800]! : Colors.grey[300]!);
-    final highlightColor = widget.highlightColor ??
-        (isDark ? Colors.grey[700]! : Colors.grey[100]!);
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final highlight = isDark ? Colors.grey[700]! : Colors.grey[100]!;
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _controller,
-        builder: (context, child) {
-          return ShaderMask(
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (bounds) {
-              return LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  baseColor,
-                  highlightColor,
-                  baseColor,
-                ],
-                stops: const [
-                  0.1,
-                  0.3,
-                  0.4,
-                ],
-                transform: _SlidingGradientTransform(offset: _controller.value),
-              ).createShader(bounds);
-            },
-            child: widget.child,
-          );
-        },
+        builder: (context, _) => Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [base, highlight, base],
+              stops: const [0.1, 0.3, 0.4],
+              transform: _SlidingGradientTransform(_controller.value),
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
+/// Moves the gradient across the box as [offset] goes from 0 to 1.
 class _SlidingGradientTransform extends GradientTransform {
-  const _SlidingGradientTransform({
-    required this.offset,
-  });
+  const _SlidingGradientTransform(this.offset);
 
   final double offset;
 
@@ -147,8 +91,12 @@ class ShimmerLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: isLoading ? shimmer : child,
+      duration: AppMotion.duration(context, AppMotion.medium),
+      switchInCurve: AppMotion.enter,
+      switchOutCurve: AppMotion.exit,
+      // Keyed on the flag so it cross-fades even when both are the same type.
+      child: KeyedSubtree(
+          key: ValueKey(isLoading), child: isLoading ? shimmer : child),
     );
   }
 }

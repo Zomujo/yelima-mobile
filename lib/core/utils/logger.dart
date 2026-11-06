@@ -38,12 +38,16 @@ const Map<LogType, LogConfig> logConfigs = {
   LogType.debug: LogConfig(_AnsiColors.magenta, '🐛', 'DEBUG'),
 };
 
+/// Whether logs print: debug builds, plus profile builds made for watching
+/// (`--dart-define=PERF_WATCH=true`). Never in release.
+const kLogsOn = kDebugMode || bool.fromEnvironment('PERF_WATCH');
+
 /// Coloured debug logging; silent in release builds.
 class AppLogger {
   AppLogger._();
 
   static void log(String? message, {LogType type = LogType.info}) {
-    if (!kDebugMode) return;
+    if (!kLogsOn) return;
 
     final config = logConfigs[type]!;
     final color = config.color;
@@ -77,7 +81,7 @@ $color╚$divider╝${_AnsiColors.reset}''';
     String? title,
     LogType type = LogType.warning,
   }) {
-    if (!kDebugMode) return;
+    if (!kLogsOn) return;
 
     final config = logConfigs[type]!;
     final color = config.color;

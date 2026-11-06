@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/forms/app_dropdown.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
+import '../../../../../shared/widgets/motion/entrance.dart';
 import '../../../../user/user_providers.dart';
 import '../../controllers/edit_profile_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
@@ -56,9 +57,11 @@ class _EditProfileFormState extends ConsumerState<EditProfileForm> {
   Widget build(BuildContext context) {
     final gender =
         ref.watch(editProfileControllerProvider.select((s) => s.gender));
+    // Starts after the screen's avatar, which is item 0.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      spacing: 24,
+      children: Entrance.staggered(startAt: 1, [
         AppFormField(
           label: context.l10n.firstName,
           hintText: context.l10n.enterFirstName,
@@ -66,7 +69,6 @@ class _EditProfileFormState extends ConsumerState<EditProfileForm> {
           validator: _required,
           autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
-        const SizedBox(height: 24),
         AppFormField(
           label: context.l10n.lastName,
           hintText: context.l10n.enterLastName,
@@ -74,22 +76,25 @@ class _EditProfileFormState extends ConsumerState<EditProfileForm> {
           validator: _required,
           autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
-        const SizedBox(height: 24),
-        AppText.labelLarge(
-          context.l10n.gender,
-          fontWeight: FontWeight.w400,
-          color: const Color(0xFF6A7282),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 8,
+          children: [
+            AppText.labelLarge(
+              context.l10n.gender,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF6A7282),
+            ),
+            AppDropdown<String>(
+              value: gender,
+              hintText: context.l10n.selectGender,
+              // Stored in English like registration; only the label is translated.
+              items: const ['Male', 'Female', 'Other'],
+              itemLabelBuilder: context.l10n.genderName,
+              onChanged: (value) => _form.updateForm(gender: value),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        AppDropdown<String>(
-          value: gender,
-          hintText: context.l10n.selectGender,
-          // Stored in English like registration; only the label is translated.
-          items: const ['Male', 'Female', 'Other'],
-          itemLabelBuilder: context.l10n.genderName,
-          onChanged: (value) => _form.updateForm(gender: value),
-        ),
-        const SizedBox(height: 24),
         AppFormField(
           label: context.l10n.emailAddress,
           hintText: context.l10n.enterEmail,
@@ -98,7 +103,7 @@ class _EditProfileFormState extends ConsumerState<EditProfileForm> {
           keyboardType: TextInputType.emailAddress,
           helperText: context.l10n.emailCannotBeChanged,
         ),
-      ],
+      ]),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
+import '../../../../../shared/widgets/motion/entrance.dart';
 import '../metric_card.dart';
 import '../medication_adherence_card.dart';
 import 'critical_health_banner.dart';
@@ -46,13 +47,17 @@ class HomeMetricsSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ...banners,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: AppText.labelLarge(
-            context.l10n.lastReadings,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textGrey,
-            letterSpacing: 1.2,
+        Entrance(
+          index: 1,
+          playOnce: 'home/readings',
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: AppText.labelLarge(
+              context.l10n.lastReadings,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textGrey,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
         Padding(
@@ -61,21 +66,29 @@ class HomeMetricsSection extends ConsumerWidget {
             key: AppTutorialKeys.homeMetricsKey,
             children: [
               Expanded(
-                child: MetricCard(
-                  title: context.l10n.bloodPressure,
-                  mainValue: bpMain,
-                  subValue: bpSub,
-                  unit: 'mmHg',
-                  isLoading: isLoading,
+                child: Entrance(
+                  index: 1,
+                  playOnce: 'home/bp',
+                  child: MetricCard(
+                    title: context.l10n.bloodPressure,
+                    mainValue: bpMain,
+                    subValue: bpSub,
+                    unit: 'mmHg',
+                    isLoading: isLoading,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: MetricCard(
-                  title: context.l10n.bloodGlucose,
-                  mainValue: bg,
-                  unit: 'mmol/L',
-                  isLoading: isLoading,
+                child: Entrance(
+                  index: 1,
+                  playOnce: 'home/sugar',
+                  child: MetricCard(
+                    title: context.l10n.bloodGlucose,
+                    mainValue: bg,
+                    unit: 'mmol/L',
+                    isLoading: isLoading,
+                  ),
                 ),
               ),
             ],
@@ -84,13 +97,18 @@ class HomeMetricsSection extends ConsumerWidget {
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: MedicationAdherenceCard(
+          // The tour key sits on the entrance, so its box is measured in place.
+          child: Entrance(
             key: AppTutorialKeys.homeAdherenceKey,
-            percentage: adherence,
-            message: adherence >= 0.8
-                ? context.l10n.adherenceGreat
-                : context.l10n.adherenceImprove,
-            isLoading: isLoading || state.adherence == null,
+            index: 2,
+            playOnce: 'home/adherence',
+            child: MedicationAdherenceCard(
+              percentage: adherence,
+              message: adherence >= 0.8
+                  ? context.l10n.adherenceGreat
+                  : context.l10n.adherenceImprove,
+              isLoading: isLoading || state.adherence == null,
+            ),
           ),
         ),
       ],

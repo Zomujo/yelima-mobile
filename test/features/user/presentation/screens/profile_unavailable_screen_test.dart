@@ -36,13 +36,16 @@ void main() {
     when(() => auth.signOut()).thenAnswer((_) async => true);
   });
 
-  Future<void> pumpScreen(WidgetTester tester) => tester.pumpApp(
-        const ProfileUnavailableScreen(),
-        overrides: [
-          userControllerProvider.overrideWith(() => users),
-          authControllerProvider.overrideWith(() => auth),
-        ],
-      );
+  Future<void> pumpScreen(WidgetTester tester) async {
+    await tester.pumpApp(
+      const ProfileUnavailableScreen(),
+      overrides: [
+        userControllerProvider.overrideWith(() => users),
+        authControllerProvider.overrideWith(() => auth),
+      ],
+    );
+    await tester.pumpAndSettle(); // let the entrance finish
+  }
 
   testWidgets('explains the problem and retries the profile', (tester) async {
     await pumpScreen(tester);

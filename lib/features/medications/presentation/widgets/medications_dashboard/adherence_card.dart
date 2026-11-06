@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../../core/theme/app_motion.dart';
+import '../../../../../shared/widgets/motion/count_up.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_adherence.dart';
@@ -54,13 +57,16 @@ class AdherenceCard extends StatelessWidget {
             context.l10n.thisWeeksAdherence,
             color: Colors.white,
           ),
-          Text(
-            '$rate%',
-            style: const TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              height: 1.1,
+          CountUp(
+            value: rate.toDouble(),
+            builder: (_, value) => Text(
+              '${value.toInt()}%',
+              style: const TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                height: 1.1,
+              ),
             ),
           ),
           AppText.bodyMedium(
@@ -72,25 +78,50 @@ class AdherenceCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: dayWidgets.isNotEmpty
-                ? dayWidgets.take(7).toList()
-                : _buildDefaultDays(),
+            children: [
+              for (final (i, day)
+                  in (dayWidgets.isNotEmpty ? dayWidgets.take(7) : _week)
+                      .indexed)
+                _PopIn(index: i, child: day),
+            ],
           ),
         ],
       ),
     );
   }
 
-  List<Widget> _buildDefaultDays() {
-    return [
-      const _DayCircle('M', status: DayStatus.future),
-      const _DayCircle('T', status: DayStatus.future),
-      const _DayCircle('W', status: DayStatus.future),
-      const _DayCircle('T', status: DayStatus.future),
-      const _DayCircle('F', status: DayStatus.future),
-      const _DayCircle('S', status: DayStatus.future),
-      const _DayCircle('S', status: DayStatus.future),
-    ];
+  static const _week = [
+    _DayCircle('M', status: DayStatus.future),
+    _DayCircle('T', status: DayStatus.future),
+    _DayCircle('W', status: DayStatus.future),
+    _DayCircle('T', status: DayStatus.future),
+    _DayCircle('F', status: DayStatus.future),
+    _DayCircle('S', status: DayStatus.future),
+    _DayCircle('S', status: DayStatus.future),
+  ];
+}
+
+/// Fades and grows [child] in, after the days before it.
+class _PopIn extends StatelessWidget {
+  const _PopIn({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppMotion.reduced(context)) return child;
+    final delay = AppMotion.stagger * index;
+    return child
+        .animate()
+        .fadeIn(
+            delay: delay, duration: AppMotion.medium, curve: AppMotion.enter)
+        .scaleXY(
+            delay: delay,
+            begin: 0.8,
+            end: 1,
+            duration: AppMotion.medium,
+            curve: AppMotion.enter);
   }
 }
 

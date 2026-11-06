@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../layout/app_text.dart';
+import '../motion/fade_switch.dart';
 
 /// The app's text field: label above, optional required star, helper text below.
 /// With [isPassword] it hides the text and adds a show/hide button.
@@ -119,10 +121,14 @@ class _AppFormFieldState extends State<AppFormField> {
                     : Icon(w.prefixIcon, color: AppColors.slate400, size: 20)),
             suffixIcon: w.isPassword
                 ? IconButton(
-                    icon: Icon(
-                        _hidden ? Icons.visibility_off : Icons.visibility,
-                        color: AppColors.slate400,
-                        size: 20),
+                    icon: FadeSwitch(
+                      id: _hidden,
+                      duration: AppMotion.quick,
+                      child: Icon(
+                          _hidden ? Icons.visibility_off : Icons.visibility,
+                          color: AppColors.slate400,
+                          size: 20),
+                    ),
                     onPressed: () => setState(() => _hidden = !_hidden),
                   )
                 : w.suffixIcon,

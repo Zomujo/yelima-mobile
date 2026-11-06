@@ -2,6 +2,7 @@ import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
+import '../../../../../shared/widgets/motion/pressable.dart';
 import '../../../domain/entities/medication_entity.dart';
 
 /// A medication in the all-medicines list; opens its details.
@@ -15,7 +16,8 @@ class MedicineHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Pressable(
+        child: Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -53,6 +55,6 @@ class MedicineHistoryCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }

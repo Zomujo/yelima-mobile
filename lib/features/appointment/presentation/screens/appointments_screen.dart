@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_motion.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../domain/entities/appointment_entity.dart';
@@ -26,8 +28,11 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(appointmentControllerProvider.notifier).initialize();
-        AppTutorialService.showAppointmentsTutorial(context);
       }
+    });
+    // Once the lists have risen into place, so the spotlight lands on them.
+    Future.delayed(AppMotion.slow + AppMotion.stagger * 2, () {
+      if (mounted) AppTutorialService.showAppointmentsTutorial(context);
     });
   }
 
@@ -58,39 +63,33 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
           return ListView(
             padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
             children: [
-              AppText.labelLarge(
-                context.l10n.appointmentsDescription,
-                color: const Color(0xFF6F7683),
-                fontWeight: FontWeight.w200,
-              ),
-              const SizedBox(height: 32),
-              AppText.labelMedium(
-                context.l10n.comingUp,
-                color: AppColors.textGrey,
-                letterSpacing: 1.5,
-              ),
-              const SizedBox(height: 16),
-              PaginatedAppointmentList(
-                key: AppTutorialKeys.appointmentListKey,
-                state: upcomingState,
-                isPast: false,
-                emptyMessage: context.l10n.noUpcomingAppointments,
-                filter: AppointmentFilter.upcoming,
-              ),
-              const SizedBox(height: 32),
-              AppText.labelMedium(
-                context.l10n.pastVisits,
-                color: AppColors.textGrey,
-                letterSpacing: 1.5,
-              ),
-              const SizedBox(height: 16),
-              PaginatedAppointmentList(
-                key: AppTutorialKeys.appointmentPastListKey,
-                state: pastState,
-                isPast: true,
-                emptyMessage: context.l10n.noPastAppointments,
-                filter: AppointmentFilter.past,
-              ),
+              ...Entrance.staggered(playOnce: 'appointments', [
+                AppText.labelLarge(
+                  context.l10n.appointmentsDescription,
+                  color: const Color(0xFF6F7683),
+                  fontWeight: FontWeight.w200,
+                ),
+                _Section(
+                  title: context.l10n.comingUp,
+                  list: PaginatedAppointmentList(
+                    key: AppTutorialKeys.appointmentListKey,
+                    state: upcomingState,
+                    isPast: false,
+                    emptyMessage: context.l10n.noUpcomingAppointments,
+                    filter: AppointmentFilter.upcoming,
+                  ),
+                ),
+                _Section(
+                  title: context.l10n.pastVisits,
+                  list: PaginatedAppointmentList(
+                    key: AppTutorialKeys.appointmentPastListKey,
+                    state: pastState,
+                    isPast: true,
+                    emptyMessage: context.l10n.noPastAppointments,
+                    filter: AppointmentFilter.past,
+                  ),
+                ),
+              ]),
               SizedBox(height: AppSizes.bottomNavClearance(context)),
             ],
           );
@@ -98,4 +97,29 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
       ),
     );
   }
+}
+
+/// A list's heading over the list, with room above.
+class _Section extends StatelessWidget {
+  const _Section({required this.title, required this.list});
+
+  final String title;
+  final Widget list;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppText.labelMedium(
+              title,
+              color: AppColors.textGrey,
+              letterSpacing: 1.5,
+            ),
+            const SizedBox(height: 16),
+            list,
+          ],
+        ),
+      );
 }

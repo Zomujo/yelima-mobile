@@ -7,6 +7,7 @@ import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_section.dart';
 import '../../controllers/medicine_details_form_controller.dart';
 import '../../medication_section_label.dart';
+import '../../../../../shared/widgets/motion/fade_switch.dart';
 import '../medication_form/dose_schedule_editor.dart';
 
 /// The dose times: a summary, or the editor in edit mode.
@@ -30,23 +31,29 @@ class MedicineDetailsScheduleSection extends ConsumerWidget {
         AppText.titleMedium(l10n.dosingSchedule,
             fontWeight: FontWeight.bold, color: AppColors.slate800),
         const SizedBox(height: 24),
-        if (state.isEditing)
-          DoseScheduleEditor(
-              slots: slots, onChanged: ref.read(_form.notifier).setSlot)
-        else if (scheduled.isEmpty)
-          AppText.bodyMedium(l10n.noScheduleConfigured,
-              color: AppColors.slate400)
-        else
-          for (final section in scheduled) ...[
-            AppText.bodyLarge(section.label(l10n),
-                fontWeight: FontWeight.bold, color: AppColors.slate800),
-            const SizedBox(height: 8),
-            AppText.bodyMedium(
-                '${slots[section]!.time.format(context)} | '
-                '${slots[section]!.quantity} ${state.form.unit}(s)',
-                color: AppColors.slate600),
-            const SizedBox(height: 24),
-          ],
+        FadeSwitch(
+          child: switch ((state.isEditing, scheduled.isEmpty)) {
+            (true, _) => DoseScheduleEditor(
+                slots: slots, onChanged: ref.read(_form.notifier).setSlot),
+            (_, true) => AppText.bodyMedium(l10n.noScheduleConfigured,
+                color: AppColors.slate400),
+            _ => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final section in scheduled) ...[
+                    AppText.bodyLarge(section.label(l10n),
+                        fontWeight: FontWeight.bold, color: AppColors.slate800),
+                    const SizedBox(height: 8),
+                    AppText.bodyMedium(
+                        '${slots[section]!.time.format(context)} | '
+                        '${slots[section]!.quantity} ${state.form.unit}(s)',
+                        color: AppColors.slate600),
+                    const SizedBox(height: 24),
+                  ],
+                ],
+              ),
+          },
+        ),
       ],
     );
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:yelima/shared/widgets/layout/tinted_svg.dart';
 import 'package:yelima/core/constants/app_decoration.dart';
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
@@ -55,10 +55,7 @@ class AppointmentCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(12),
-                child: SvgPicture.asset(
-                  iconAsset,
-                  colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                ),
+                child: TintedSvg(iconAsset, color: iconColor),
               ),
               const SizedBox(width: 16),
               Expanded(

@@ -1,30 +1,22 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
-import '../../../../shared/widgets/layout/options_block.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/router/route_paths.dart';
-import '../../../auth/presentation/widgets/logout_modal.dart';
-import '../../../../shared/utils/app_snackbar.dart';
 import '../widgets/profile/profile_avatar.dart';
-import '../widgets/language_picker_modal.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/core_providers.dart';
+import '../widgets/profile/profile_options.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_service.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 
 /// The profile tab: patient details and account options.
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
@@ -59,77 +51,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ProfileAvatar(
-                      key: AppTutorialKeys.profileAvatarKey,
-                    ),
+                    ProfileAvatar(key: AppTutorialKeys.profileAvatarKey),
                     const SizedBox(height: 40),
-                    Consumer(builder: (context, ref, _) {
-                      final isOnline =
-                          ref.watch(onlineProvider).valueOrNull ?? true;
-                      return OptionsBlock(
-                        key: AppTutorialKeys.profilePersonalOptionsKey,
-                        title: context.l10n.personal,
-                        blockItems: [
-                          OptionBlockItem(
-                            label: context.l10n.editProfile,
-                            icon: Iconsax.profile_circle,
-                            onTap: isOnline
-                                ? () => context.push(RoutePaths.editProfile)
-                                : () => AppSnackBar.showError(context,
-                                    message: context.l10n.onlineToEditProfile),
-                          ),
-                          OptionBlockItem(
-                            label: context.l10n.settings,
-                            icon: Iconsax.setting_2,
-                            onTap: () => context.push(RoutePaths.settings),
-                          ),
-                        ],
-                      );
-                    }),
-                    OptionsBlock(
-                      key: AppTutorialKeys.profileHealthSummaryOptionsKey,
-                      title: context.l10n.healthSummary,
-                      blockItems: [
-                        OptionBlockItem(
-                          label: context.l10n.conditions,
-                          icon: Iconsax.health,
-                          onTap: () => context.push(RoutePaths.healthProfile),
-                        ),
-                      ],
-                    ),
-                    OptionsBlock(
-                      key: AppTutorialKeys.profileLanguageOptionsKey,
-                      title: context.l10n.language,
-                      blockItems: [
-                        OptionBlockItem(
-                          label: context.l10n.languageName(ref
-                                  .watch(localeControllerProvider)
-                                  ?.languageCode ??
-                              'en'),
-                          icon: Iconsax.language_square,
-                          trailing: const Icon(Icons.arrow_forward_ios,
-                              size: 16, color: AppColors.slate500),
-                          onTap: () {
-                            LanguagePickerModal.show(context);
-                          },
-                        ),
-                      ],
-                    ),
-                    OptionsBlock(
-                      key: AppTutorialKeys.profileSystemOptionsKey,
-                      title: context.l10n.system,
-                      blockItems: [
-                        OptionBlockItem(
-                          label: context.l10n.logOut,
-                          icon: Iconsax.logout,
-                          iconColor: Colors.red,
-                          labelColor: Colors.red,
-                          onTap: () {
-                            LogoutModal.show(context);
-                          },
-                        ),
-                      ],
-                    ),
+                    const ProfileOptions(),
                     SizedBox(height: AppSizes.bottomNavClearance(context)),
                   ],
                 ),

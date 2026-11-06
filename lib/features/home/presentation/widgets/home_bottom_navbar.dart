@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:yelima/shared/widgets/layout/tinted_svg.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/constants/app_images.dart';
 import '../../../../core/config/features.dart';
 import '../../../../core/constants/app_decoration.dart';
@@ -126,23 +127,39 @@ class _NavItemButton extends ConsumerWidget {
                       : AssetImage(item.assetPath.toString()),
                 ),
               )
-            : item.assetPath is IconData
-                ? Icon(
-                    item.assetPath as IconData,
-                    size: 28,
-                    color: isActive ? AppColors.primary : AppColors.textGrey,
-                  )
-                : SvgPicture.asset(
-                    item.assetPath is AssetImage
-                        ? (item.assetPath as AssetImage).assetName
-                        : item.assetPath.toString(),
-                    width: 28,
-                    height: 28,
-                    colorFilter: ColorFilter.mode(
-                      isActive ? AppColors.primary : AppColors.textGrey,
-                      BlendMode.srcIn,
-                    ),
-                  ),
+            : _NavIcon(item: item, isActive: isActive),
+      ),
+    );
+  }
+}
+
+/// A tab icon that grows a little and eases to the brand colour when active.
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({required this.item, required this.isActive});
+
+  final HomeBottomNavItem item;
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = AppMotion.reduced(context);
+    final path = item.assetPath;
+    return AnimatedScale(
+      scale: isActive ? 1.12 : 1,
+      duration: reduced ? Duration.zero : AppMotion.quick,
+      curve: AppMotion.enter,
+      child: TweenAnimationBuilder<Color?>(
+        tween:
+            ColorTween(end: isActive ? AppColors.primary : AppColors.textGrey),
+        duration: reduced ? Duration.zero : AppMotion.medium,
+        curve: AppMotion.move,
+        builder: (context, color, _) => path is IconData
+            ? Icon(path, size: 28, color: color)
+            : TintedSvg(
+                path is AssetImage ? path.assetName : path.toString(),
+                color: color!,
+                size: 28,
+              ),
       ),
     );
   }

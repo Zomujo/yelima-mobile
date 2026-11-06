@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/extensions/l10n_extension.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import 'app_text.dart';
 
 /// One summary pill for unsynced changes; failed ones take priority. Hidden when there are none.
@@ -30,23 +31,63 @@ class PendingChangesBadge extends StatelessWidget {
         builder: (context, waitingSnap) {
           final failedCount = failedSnap.data ?? 0;
           final waitingCount = waitingSnap.data ?? 0;
-          if (failedCount > 0) {
-            return _Pill(
-              icon: Icons.error_outline,
-              color: Colors.red.shade700,
-              label: context.l10n.changesFailed(failedCount),
-              onTap: onTap,
-            );
-          }
-          if (waitingCount > 0) {
-            return _Pill(
-              icon: Icons.cloud_upload_outlined,
-              color: AppColors.textGrey,
-              label: context.l10n.changesWaiting(waitingCount),
-            );
-          }
-          return const SizedBox.shrink();
+          // Keyed by kind, so a new count updates in place and only showing,
+          // hiding or swapping the pill animates.
+          return _Reveal(
+            child: failedCount > 0
+                ? _Pill(
+                    key: const ValueKey('failed'),
+                    icon: Icons.error_outline,
+                    color: Colors.red.shade700,
+                    label: context.l10n.changesFailed(failedCount),
+                    onTap: onTap,
+                  )
+                : waitingCount > 0
+                    ? _Pill(
+                        key: const ValueKey('waiting'),
+                        icon: Icons.cloud_upload_outlined,
+                        color: AppColors.textGrey,
+                        label: context.l10n.changesWaiting(waitingCount),
+                      )
+                    : const SizedBox.shrink(),
+          );
         },
+      ),
+    );
+  }
+}
+
+/// Fades and slides [child] in and out, easing the space it takes.
+class _Reveal extends StatelessWidget {
+  const _Reveal({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final duration =
+        AppMotion.duration(context, AppMotion.medium);
+    return AnimatedSize(
+      duration: duration,
+      curve: AppMotion.move,
+      alignment: AlignmentDirectional.topStart,
+      child: AnimatedSwitcher(
+        duration: duration,
+        switchInCurve: AppMotion.enter,
+        switchOutCurve: AppMotion.exit,
+        layoutBuilder: (current, previous) => Stack(
+          alignment: AlignmentDirectional.topStart,
+          children: [...previous, if (current != null) current],
+        ),
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0, -0.3), end: Offset.zero)
+                .animate(animation),
+            child: child,
+          ),
+        ),
+        child: child,
       ),
     );
   }
@@ -54,7 +95,8 @@ class PendingChangesBadge extends StatelessWidget {
 
 class _Pill extends StatelessWidget {
   const _Pill(
-      {required this.icon,
+      {super.key,
+      required this.icon,
       required this.color,
       required this.label,
       this.onTap});

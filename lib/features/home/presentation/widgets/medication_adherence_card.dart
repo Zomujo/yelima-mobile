@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
+import '../../../../shared/widgets/motion/count_up.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 
 /// Medication adherence over the last 7 days, on home.
@@ -47,12 +48,16 @@ class MedicationAdherenceCard extends StatelessWidget {
                 ],
               ),
               if (isLoading)
-                AppShimmer.box(width: 48, height: 24)
+                const AppShimmer.box(width: 48, height: 24)
               else
-                AppText.titleMedium(
-                  '${(percentage * 100).toInt()}%',
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.emerald500,
+                CountUp(
+                  value: percentage,
+                  playOnce: 'count/home/adherence',
+                  builder: (_, value) => AppText.titleMedium(
+                    '${(value * 100).toInt()}%',
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.emerald500,
+                  ),
                 ),
             ],
           ),
@@ -60,18 +65,22 @@ class MedicationAdherenceCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: isLoading
-                ? AppShimmer.box(height: 8, width: double.infinity)
-                : LinearProgressIndicator(
+                ? const AppShimmer.box(height: 8, width: double.infinity)
+                : CountUp(
                     value: percentage,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey.shade200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.emerald500),
+                    playOnce: 'count/home/adherenceBar',
+                    builder: (_, value) => LinearProgressIndicator(
+                      value: value,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppColors.emerald500),
+                    ),
                   ),
           ),
           const SizedBox(height: 6),
           if (isLoading)
-            AppShimmer.box(height: 16, width: 200)
+            const AppShimmer.box(height: 16, width: 200)
           else
             AppText.labelMedium(
               message,

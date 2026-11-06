@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/core/constants/app_decoration.dart';
 import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/theme/app_motion.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 
-/// One reading type to choose from.
+/// One reading type to choose from; its border and icon ease in when chosen.
 class LogTypeCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -22,7 +23,11 @@ class LogTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final duration =
+        AppMotion.duration(context, AppMotion.medium);
+    return AnimatedContainer(
+      duration: duration,
+      curve: AppMotion.move,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -44,7 +49,12 @@ class LogTypeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: 24),
+          TweenAnimationBuilder<Color?>(
+            tween: ColorTween(end: iconColor),
+            duration: duration,
+            curve: AppMotion.move,
+            builder: (_, color, __) => Icon(icon, color: color, size: 24),
+          ),
           const SizedBox(height: 8),
           AppText.titleSmall(
             title,

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../core/theme/app_motion.dart';
 import 'nice_step.dart';
 
 /// The scrollable line chart both trends are drawn with.
@@ -246,6 +247,9 @@ class _BaseVitalGraphState extends State<BaseVitalGraph> {
                 ...widget.getExtraLinesOnTouch!(showingTooltipOnX!),
             ],
           ),
+          // Eases from the old range's lines to the new one's.
+          duration: AppMotion.duration(context, AppMotion.slow),
+          curve: AppMotion.enter,
         ),
       ),
     );

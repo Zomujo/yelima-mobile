@@ -1,6 +1,8 @@
-import 'package:yelima/core/theme/app_colors.dart';
-import 'dart:ui';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_motion.dart';
+
+export 'modal_container.dart';
 
 /// Where an overlay modal sits.
 enum ModalAlignment {
@@ -23,7 +25,7 @@ class OverlayModal extends StatefulWidget {
     super.key,
     required this.child,
     required this.isDismissible,
-    required this.animationDuration,
+    this.animationDuration = AppMotion.medium,
     required this.onDismiss,
     this.alignment = ModalAlignment.center,
     this.confirmDismiss,
@@ -35,46 +37,33 @@ class OverlayModal extends StatefulWidget {
 
 class _OverlayModalState extends State<OverlayModal>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<Offset> _slideAnimation;
+  late final _controller =
+      AnimationController(duration: widget.animationDuration, vsync: this);
+  late final _progress = CurvedAnimation(
+      parent: _controller,
+      curve: AppMotion.enter,
+      reverseCurve: AppMotion.exit);
+  late final _scale = Tween(begin: 0.95, end: 1.0).animate(_progress);
+  late final _slide =
+      Tween(begin: const Offset(0, 1), end: Offset.zero).animate(_progress);
+  bool _shown = false;
+  bool _isDismissing = false;
 
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: widget.animationDuration,
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: widget.alignment == ModalAlignment.bottomCenter
-          ? const Offset(0, 1)
-          : Offset.zero,
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
-
-    _animationController.forward();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_shown) return;
+    _shown = true;
+    // With animations off, open in the end state at once.
+    AppMotion.reduced(context) ? _controller.value = 1 : _controller.forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _progress.dispose();
+    _controller.dispose();
     super.dispose();
   }
-
-  bool _isDismissing = false;
 
   void _dismiss() async {
     if (_isDismissing) return;
@@ -84,178 +73,59 @@ class _OverlayModalState extends State<OverlayModal>
     if (!mounted) return;
     setState(() => _isDismissing = !keep);
     if (keep) return;
-    await _animationController.reverse();
+    if (!AppMotion.reduced(context)) await _controller.reverse();
     widget.onDismiss();
   }
 
   @override
   Widget build(BuildContext context) {
+    final bottom = widget.alignment == ModalAlignment.bottomCenter;
+    final faded = FadeTransition(opacity: _progress, child: widget.child);
     return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return BackButtonListener(
-            onBackButtonPressed: () async {
-              if (widget.isDismissible) {
-                _dismiss();
-              }
-              return true; // Consume the back button event while modal is active
-            },
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: GestureDetector(
-                    onTap: widget.isDismissible ? _dismiss : null,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                      child: Container(
-                        color: Colors.black
-                            .withValues(alpha: 0.5 * _fadeAnimation.value),
-                      ),
-                    ),
-                  ),
-                ),
-                AnimatedPadding(
-                  padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).viewInsets.bottom),
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOut,
-                  child: Align(
-                    alignment: widget.alignment == ModalAlignment.bottomCenter
-                        ? Alignment.bottomCenter
-                        : Alignment.center,
-                    child: _buildModalContent(),
-                  ),
-                ),
-              ],
-            ),
-          );
+      child: BackButtonListener(
+        onBackButtonPressed: () async {
+          if (widget.isDismissible) _dismiss();
+          return true; // Consume the back button event while modal is active
         },
-      ),
-    );
-  }
-
-  Widget _buildModalContent() {
-    if (widget.alignment == ModalAlignment.bottomCenter) {
-      return SlideTransition(
-        position: _slideAnimation,
-        child: Opacity(opacity: _fadeAnimation.value, child: widget.child),
-      );
-    } else {
-      return Transform.scale(
-        scale: _scaleAnimation.value,
-        child: Opacity(opacity: _fadeAnimation.value, child: widget.child),
-      );
-    }
-  }
-}
-
-/// The card a modal's content sits in.
-class ModalContainer extends StatelessWidget {
-  final Widget? child;
-  final String? title;
-  final double? width;
-  final double? height;
-  final EdgeInsetsGeometry? padding;
-  final bool showCloseButton;
-  final VoidCallback? onClose;
-  final bool isBottomSheet;
-  final Color? backgroundColor;
-
-  const ModalContainer({
-    super.key,
-    this.child,
-    this.title,
-    this.width,
-    this.height,
-    this.padding,
-    this.showCloseButton = true,
-    this.onClose,
-    this.isBottomSheet = false,
-    this.backgroundColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        width: width ??
-            (isBottomSheet
-                ? double.infinity
-                : MediaQuery.of(context).size.width * 0.85),
-        height: height,
-        margin: isBottomSheet ? EdgeInsets.zero : const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: backgroundColor ?? Colors.white,
-          borderRadius: isBottomSheet
-              ? const BorderRadius.vertical(top: Radius.circular(32))
-              : BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 40,
-              spreadRadius: 0,
-              offset: const Offset(0, 10),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: widget.isDismissible ? _dismiss : null,
+                child: _Barrier(progress: _progress),
+              ),
+            ),
+            AnimatedPadding(
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              duration: AppMotion.quick,
+              curve: AppMotion.enter,
+              child: Align(
+                alignment: bottom ? Alignment.bottomCenter : Alignment.center,
+                child: bottom
+                    ? SlideTransition(position: _slide, child: faded)
+                    : ScaleTransition(scale: _scale, child: faded),
+              ),
             ),
           ],
         ),
-        child: SafeArea(
-          top: false,
-          bottom: isBottomSheet,
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (title != null || showCloseButton)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (title != null)
-                        Expanded(
-                          child: Text(
-                            title!,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                              fontFamily:
-                                  'ProductSans', // using standard app font
-                            ),
-                          ),
-                        )
-                      else
-                        const Spacer(),
-                      if (showCloseButton)
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: AppColors.slate100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.close,
-                                size: 20, color: AppColors.slate500),
-                            constraints: const BoxConstraints(
-                                minWidth: 36, minHeight: 36),
-                            padding: EdgeInsets.zero,
-                            onPressed:
-                                onClose ?? () => Navigator.of(context).pop(),
-                          ),
-                        ),
-                    ],
-                  ),
-                if ((title != null || showCloseButton) && child != null)
-                  const SizedBox(height: 16),
-                if (child != null) child!,
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
+}
+
+/// The dimmed backdrop, fading in with [progress].
+///
+/// No blur: re-blurring the whole screen every frame (while the modal moves
+/// or the keyboard opens) made older phones drop frames.
+class _Barrier extends AnimatedWidget {
+  const _Barrier({required Animation<double> progress})
+      : super(listenable: progress);
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+      color: Colors.black
+          .withValues(alpha: 0.55 * (listenable as Animation<double>).value));
 }
 
 /// Shows [child] as a dialog over a clear barrier; tapping outside returns [dismissValue].
@@ -267,7 +137,6 @@ Future<T?> showAppDialog<T>(BuildContext context, Widget child,
       useSafeArea: false,
       builder: (context) => OverlayModal(
         isDismissible: true,
-        animationDuration: const Duration(milliseconds: 300),
         onDismiss: () => Navigator.of(context).pop(dismissValue),
         child: child,
       ),

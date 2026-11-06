@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../utils/logger.dart';
+
 /// Logs requests and responses in debug builds, with secrets hidden.
 class LoggingInterceptor extends Interceptor {
   static final _secret =
@@ -19,7 +21,7 @@ class LoggingInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (kDebugMode) {
+    if (kLogsOn) {
       debugPrint('🚀 [API] REQUEST[${options.method}] => PATH: ${options.uri}');
       debugPrint('Headers: ${redact(options.headers)}');
       debugPrint('Body: ${redact(options.data)}');
@@ -29,7 +31,7 @@ class LoggingInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if (kDebugMode) {
+    if (kLogsOn) {
       debugPrint(
           '✅ [API] RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.uri}');
       debugPrint('Data: ${redact(response.data)}');
@@ -45,7 +47,7 @@ class LoggingInterceptor extends Interceptor {
     final isExpectedAuthError =
         err.response?.statusCode == 401 || err.response?.statusCode == 404;
 
-    if (kDebugMode && !(isFcmEndpoint && isExpectedAuthError)) {
+    if (kLogsOn && !(isFcmEndpoint && isExpectedAuthError)) {
       debugPrint(
           '❌ [API] ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
       debugPrint('Message: ${err.message}');

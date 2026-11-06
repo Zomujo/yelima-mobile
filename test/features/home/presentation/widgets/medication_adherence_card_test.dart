@@ -8,6 +8,7 @@ void main() {
       (tester) async {
     await tester.pumpApp(
         const MedicationAdherenceCard(percentage: 0.75, message: 'Keep going'));
+    await tester.pumpAndSettle(); // the rate counts up first
 
     expect(find.text('Medication adherence'), findsOneWidget);
     expect(find.text('Last 7 days'), findsOneWidget);

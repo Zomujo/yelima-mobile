@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../controllers/progress_controller.dart';
 import '../widgets/duration_selector.dart';
 import '../widgets/blood_glucose_section.dart';
@@ -27,8 +29,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _load(_range);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load(_range));
+    // Once the cards have risen into place, so the spotlight lands on them.
+    Future.delayed(AppMotion.slow + AppMotion.stagger * 4, () {
       if (mounted) AppTutorialService.showProgressTutorial(context);
     });
   }
@@ -54,31 +57,41 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         backgroundColor: Colors.transparent,
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        children: [
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+        children: Entrance.staggered([
           AppText.labelMedium(
             '${_rangeLabel(context)} • ${context.l10n.updatedToday}',
             color: AppColors.textGrey,
           ),
-          const SizedBox(height: 16),
-          DurationSelector(
-            range: _range,
-            onChanged: (range) {
-              setState(() => _range = range);
-              _load(range);
+          Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            child: DurationSelector(
+              range: _range,
+              onChanged: (range) {
+                setState(() => _range = range);
+                _load(range);
+              },
+            ),
+          ),
+          // Always in the list, so the cards below keep their place in it.
+          AnimatedSwitcher(
+            duration:
+                AppMotion.duration(context, AppMotion.medium),
+            child: switch (note) {
+              final n? when n.trim().isNotEmpty =>
+                ProgressNoteBanner(key: ValueKey(n), note: n),
+              _ => const SizedBox.shrink(),
             },
           ),
-          const SizedBox(height: 24),
-          if (note != null && note.trim().isNotEmpty)
-            ProgressNoteBanner(note: note),
           BloodPressureSection(
             key: AppTutorialKeys.progressGraphKey,
             durationLabel: _rangeLabel(context),
           ),
-          const SizedBox(height: 24),
-          BloodGlucoseSection(durationLabel: _rangeLabel(context)),
-          const SizedBox(height: 24),
-        ],
+          Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: BloodGlucoseSection(durationLabel: _rangeLabel(context)),
+          ),
+        ]),
       ),
     );
   }

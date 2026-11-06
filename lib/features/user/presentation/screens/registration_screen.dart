@@ -1,4 +1,5 @@
 import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/theme/app_motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,7 +23,7 @@ class RegistrationScreen extends ConsumerStatefulWidget {
 
 class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   late final PageController _pageController;
-  late final ValueNotifier<int> _currentPage;
+  late int _page;
 
   @override
   void initState() {
@@ -33,84 +34,66 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             RegistrationStatus.personalDetails;
 
     /// Clamp initial page to 0-3 range to prevent out-of-bounds error.
-    final initialPage = status.index.clamp(0, 3);
-    _currentPage = ValueNotifier<int>(initialPage);
-    _pageController = PageController(initialPage: initialPage);
+    _page = status.index.clamp(0, 3);
+    _pageController = PageController(initialPage: _page);
   }
 
-  void _nextStep() {
-    final page = (_pageController.page ?? 0).toInt();
-
-    if (page < 3) {
-      _pageController.nextPage(
-        curve: Curves.easeOutExpo,
-        duration: const Duration(milliseconds: 300),
-      );
-      _currentPage.value = page + 1;
-      return;
-    }
-
-    /// Done with registration.
-    context.go(RoutePaths.home);
+  /// Slides to [page]: in from the right going forward, from the left going back.
+  void _goTo(int page) {
+    setState(() => _page = page);
+    if (AppMotion.reduced(context)) return _pageController.jumpToPage(page);
+    _pageController.animateToPage(page,
+        duration: AppMotion.slow, curve: AppMotion.enter);
   }
 
-  void _previousStep() async {
-    final page = (_pageController.page ?? 0).toInt();
+  void _nextStep() =>
+      // After the last step registration is done.
+      _page < 3 ? _goTo(_page + 1) : context.go(RoutePaths.home);
 
-    if (page > 0) {
-      _pageController.previousPage(
-        curve: Curves.easeOutExpo,
-        duration: const Duration(milliseconds: 300),
-      );
-      _currentPage.value = page - 1;
-      return;
-    }
-
-    /// Sign out and return to sign up if on the first step.
-    await logOutWithSyncCheck(context);
-  }
+  void _previousStep() => _goTo(_page - 1);
 
   @override
   void dispose() {
     _pageController.dispose();
-    _currentPage.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.offWhite,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ValueListenableBuilder<int>(
-              valueListenable: _currentPage,
-              builder: (context, currentPage, _) {
-                return RegistrationAppBar(
-                  currentStep: currentPage + 1,
-                  totalSteps: 4,
-                  onClose: () => logOutWithSyncCheck(context),
-                );
-              },
-            ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  RegistrationStepOne(onContinue: _nextStep),
-                  RegistrationStepTwo(
-                      onBack: _previousStep, onContinue: _nextStep),
-                  RegistrationStepThree(
-                      onBack: _previousStep, onContinue: _nextStep),
-                  RegistrationStepFour(
-                      onBack: _previousStep, onContinue: _nextStep),
-                ],
+    // Android back goes to the previous step; on step 1 it leaves the app as before.
+    return PopScope(
+      canPop: _page == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _previousStep();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.offWhite,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              RegistrationAppBar(
+                currentStep: _page + 1,
+                totalSteps: 4,
+                onClose: () => logOutWithSyncCheck(context),
               ),
-            ),
-          ],
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    RegistrationStepOne(onContinue: _nextStep),
+                    RegistrationStepTwo(
+                        onBack: _previousStep, onContinue: _nextStep),
+                    RegistrationStepThree(
+                        onBack: _previousStep, onContinue: _nextStep),
+                    RegistrationStepFour(
+                        onBack: _previousStep, onContinue: _nextStep),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import '../../../../shared/utils/failure_message.dart';
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../../auth_providers.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/logout_flow.dart';
@@ -68,8 +69,12 @@ class _SessionExpiredScreenState extends ConsumerState<SessionExpiredScreen> {
               const SizedBox(height: 16),
             ],
             if (_error != null) ...[
-              Text(_error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Entrance(
+                rise: 8,
+                child: Text(_error!,
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
               const SizedBox(height: 12),
             ],
             AppButton(

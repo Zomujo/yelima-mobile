@@ -19,7 +19,7 @@ void main() {
     expect(find.text('Wait'), findsOneWidget);
 
     GlobalAsyncLoader.hide();
-    await tester.pump();
+    await tester.pumpAndSettle(); // it fades out first
     expect(find.text('Wait'), findsNothing);
   });
 
@@ -34,7 +34,7 @@ void main() {
     expect(find.text('Wait'), findsOneWidget);
 
     GlobalAsyncLoader.hide();
-    await tester.pump();
+    await tester.pumpAndSettle(); // it fades out first
     expect(find.text('Wait'), findsNothing);
   });
 

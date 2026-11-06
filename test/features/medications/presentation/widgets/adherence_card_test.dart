@@ -27,10 +27,12 @@ void main() {
           AdherenceDay(taken: null, takenAt: DateTime(2026, 10, 25)),
         ]),
       ));
+      await tester.pumpAndSettle(); // days pop in one after another
 
       expect(find.byIcon(Icons.check), findsOneWidget);
       expect(find.byIcon(Icons.close), findsOneWidget);
       expect(find.text('1/2'), findsOneWidget);
+      expect(find.text('80%'), findsOneWidget);
     });
   });
 
@@ -44,6 +46,7 @@ void main() {
             scheduledDoses: 0),
       ]),
     ));
+    await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.close), findsNothing);
   });

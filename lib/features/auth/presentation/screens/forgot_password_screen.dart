@@ -9,6 +9,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../shared/utils/run_with_loader.dart';
 import '../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../../auth_providers.dart';
 import '../widgets/auth_layout.dart';
 
@@ -57,11 +58,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       title: l10n.resetPassword,
       subtitle: l10n.resetPasswordSubtitle,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 8),
+          spacing: 24,
+          children: Entrance.staggered(startAt: AuthLayout.firstItem, [
             AppFormField(
               controller: _email,
               label: l10n.emailLabel,
@@ -71,23 +72,24 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (v) => Validators.email(v, l10n),
             ),
-            const SizedBox(height: 32),
-            AppButton(
-              text: l10n.sendResetLink,
-              isDisabled: !_isValid,
-              onPressed: _isValid ? _send : null,
-              width: double.infinity,
-              height: 56,
-              backgroundColor: AppColors.primary,
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: AppButton(
+                text: l10n.sendResetLink,
+                isDisabled: !_isValid,
+                onPressed: _isValid ? _send : null,
+                width: double.infinity,
+                height: 56,
+                backgroundColor: AppColors.primary,
+              ),
             ),
-            const SizedBox(height: 24),
             TextButton(
               onPressed: () => context.go(RoutePaths.signIn),
               child: Text(l10n.backToSignIn,
                   style: const TextStyle(
                       color: AppColors.slate500, fontWeight: FontWeight.w500)),
             ),
-          ],
+          ]),
         ),
       ),
     );

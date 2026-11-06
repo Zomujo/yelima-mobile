@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../../../../shared/utils/run_with_loader.dart';
 import '../../../user/user_providers.dart';
 import '../controllers/edit_profile_controller.dart';
@@ -31,13 +32,16 @@ class EditProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                  child: UserAvatar(
-                      user: ref.watch(userControllerProvider).userEntity)),
+              Entrance(
+                child: Center(
+                    child: UserAvatar(
+                        user: ref.watch(userControllerProvider).userEntity)),
+              ),
               const SizedBox(height: 48),
               const EditProfileForm(),
               const SizedBox(height: 32),
-              const _SaveButton(),
+              // After the avatar and the form's four fields.
+              const Entrance(index: 5, child: _SaveButton()),
             ],
           ),
         ),

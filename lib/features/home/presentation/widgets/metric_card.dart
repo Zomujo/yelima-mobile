@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
+import '../../../../shared/widgets/motion/pressable.dart';
+import 'counting_text.dart';
 
 /// One home metric: title, value and its grade.
 class MetricCard extends StatelessWidget {
@@ -24,7 +26,7 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final card = GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -42,18 +44,26 @@ class MetricCard extends StatelessWidget {
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   if (isLoading)
-                    AppShimmer.box(width: 80, height: 32)
+                    const AppShimmer.box(width: 80, height: 32)
                   else ...[
-                    AppText.headlineMedium(
+                    CountingText(
                       mainValue,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.slate800,
+                      playOnce: 'count/home/$title',
+                      builder: (text) => AppText.headlineMedium(
+                        text,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.slate800,
+                      ),
                     ),
                     if (subValue != null)
-                      AppText.titleMedium(
+                      CountingText(
                         subValue!,
-                        fontWeight: FontWeight.normal,
-                        color: AppColors.textGrey,
+                        playOnce: 'count/home/$title/sub',
+                        builder: (text) => AppText.titleMedium(
+                          text,
+                          fontWeight: FontWeight.normal,
+                          color: AppColors.textGrey,
+                        ),
                       ),
                   ],
                 ],
@@ -72,5 +82,7 @@ class MetricCard extends StatelessWidget {
             ],
           ),
         ));
+    // Only a card that does something on tap reacts to the press.
+    return onTap == null ? card : Pressable(child: card);
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/extensions/l10n_extension.dart';
+import '../../../core/theme/app_motion.dart';
 
 /// A full-screen loader with a message, shown over everything.
 class GlobalAsyncLoader extends StatelessWidget {
@@ -50,6 +51,7 @@ class GlobalAsyncLoader extends StatelessWidget {
 
   static OverlayEntry? _overlayEntry;
   static OverlayState? _overlay;
+  static GlobalKey<_FadeInOutState>? _fade;
 
   /// Shows the loader over the whole app, once.
   static void show(BuildContext context, {String? message}) {
@@ -58,17 +60,71 @@ class GlobalAsyncLoader extends StatelessWidget {
     // even when [context] is the navigator itself.
     final overlay = Navigator.of(context, rootNavigator: true).overlay;
     if (overlay == null) return;
+    final fade = GlobalKey<_FadeInOutState>();
     _overlay = overlay;
-    _overlayEntry =
-        OverlayEntry(builder: (_) => GlobalAsyncLoader(message: message));
+    _fade = fade;
+    _overlayEntry = OverlayEntry(
+        builder: (_) =>
+            _FadeInOut(key: fade, child: GlobalAsyncLoader(message: message)));
     overlay.insert(_overlayEntry!);
   }
 
-  /// Removes the loader if it is showing.
+  /// Fades the loader out and removes it, if it is showing.
   static void hide() {
+    final entry = _overlayEntry;
+    final fade = _fade?.currentState;
     // If the overlay itself was torn down, the entry went with it.
-    if (_overlay?.mounted ?? false) _overlayEntry?.remove();
+    final mounted = _overlay?.mounted ?? false;
     _overlayEntry = null;
     _overlay = null;
+    _fade = null;
+    if (entry == null || !mounted) return;
+    fade == null ? entry.remove() : fade.fadeOut(entry.remove);
   }
+}
+
+/// Fades the loader in when it appears, and out before it goes.
+class _FadeInOut extends StatefulWidget {
+  const _FadeInOut({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<_FadeInOut> createState() => _FadeInOutState();
+}
+
+class _FadeInOutState extends State<_FadeInOut>
+    with SingleTickerProviderStateMixin {
+  late final _controller =
+      AnimationController(vsync: this, duration: AppMotion.quick);
+  bool _leaving = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_controller.isDismissed && !_leaving) {
+      AppMotion.reduced(context)
+          ? _controller.value = 1
+          : _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Fades out, then calls [done]; taps go through to the app meanwhile.
+  void fadeOut(VoidCallback done) {
+    if (AppMotion.reduced(context)) return done();
+    setState(() => _leaving = true);
+    _controller.reverse().then((_) => done());
+  }
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        ignoring: _leaving,
+        child: FadeTransition(opacity: _controller, child: widget.child),
+      );
 }

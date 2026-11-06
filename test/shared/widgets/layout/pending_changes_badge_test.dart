@@ -20,10 +20,10 @@ void main() {
     await failed.close();
   });
 
-  /// Delivers stream events, then rebuilds.
+  /// Delivers stream events, then lets the badge finish easing in or out.
   Future<void> settle(WidgetTester tester) async {
     await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
   }
 
   Future<void> pumpBadge(WidgetTester tester, {VoidCallback? onTap}) =>

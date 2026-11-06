@@ -10,6 +10,7 @@ import '../../../../shared/widgets/forms/unsaved_changes_guard.dart';
 import '../../../../shared/widgets/layout/app_button.dart';
 import '../../../../shared/widgets/layout/app_header.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../../medications_providers.dart';
 import '../controllers/add_medication_form_controller.dart';
 import '../medication_failure_message.dart';
@@ -65,23 +66,22 @@ class AddMedicationScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppText.titleMedium(l10n.medicationDetails,
-                    fontWeight: FontWeight.bold, color: AppColors.slate800),
+                Entrance(
+                  child: AppText.titleMedium(l10n.medicationDetails,
+                      fontWeight: FontWeight.bold, color: AppColors.slate800),
+                ),
                 const SizedBox(height: 16),
-                const MedicationSearchField(),
+                const Entrance(index: 1, child: MedicationSearchField()),
                 const SizedBox(height: 24),
-                const MedicationFormFields(),
+                const Entrance(index: 2, child: MedicationFormFields()),
                 const SizedBox(height: 40),
-                const Divider(color: AppColors.slate200),
-                const SizedBox(height: 32),
-                AppText.titleLarge(l10n.dosingSchedule,
-                    fontWeight: FontWeight.bold, color: AppColors.slate800),
-                const SizedBox(height: 8),
-                AppText.bodyMedium(l10n.selectWhenAndHowMuch,
-                    color: AppColors.slate500),
+                const Entrance(index: 3, child: _ScheduleHeading()),
                 const SizedBox(height: 24),
-                DoseScheduleEditor(
-                    slots: state.form.slots, onChanged: form.setSlot),
+                Entrance(
+                  index: 4,
+                  child: DoseScheduleEditor(
+                      slots: state.form.slots, onChanged: form.setSlot),
+                ),
               ],
             ),
           ),
@@ -100,6 +100,28 @@ class AddMedicationScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The divider and title above the dose times.
+class _ScheduleHeading extends StatelessWidget {
+  const _ScheduleHeading();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(color: AppColors.slate200),
+        const SizedBox(height: 32),
+        AppText.titleLarge(l10n.dosingSchedule,
+            fontWeight: FontWeight.bold, color: AppColors.slate800),
+        const SizedBox(height: 8),
+        AppText.bodyMedium(l10n.selectWhenAndHowMuch,
+            color: AppColors.slate500),
+      ],
     );
   }
 }

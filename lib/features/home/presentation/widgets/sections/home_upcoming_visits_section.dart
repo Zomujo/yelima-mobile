@@ -3,6 +3,7 @@ import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
+import 'package:yelima/shared/widgets/motion/entrance.dart';
 import 'package:yelima/features/appointment/presentation/controllers/appointment_controller.dart';
 import '../next_clinic_visit_card.dart';
 import 'package:yelima/shared/utils/failure_message.dart';
@@ -35,10 +36,15 @@ class HomeUpcomingVisitsSection extends ConsumerWidget {
           final formattedTime =
               AppDateFormats.timeShort.format(nearest.appointmentDate);
 
-          return NextClinicVisitCard(
-            date: formattedDate,
-            time: formattedTime,
-            location: nearest.hostPersonnel.facility.name,
+          // Mounts when the visit loads, so it eases in then, once per run.
+          return Entrance(
+            index: 3,
+            playOnce: 'home/visit',
+            child: NextClinicVisitCard(
+              date: formattedDate,
+              time: formattedTime,
+              location: nearest.hostPersonnel.facility.name,
+            ),
           );
         },
       ),

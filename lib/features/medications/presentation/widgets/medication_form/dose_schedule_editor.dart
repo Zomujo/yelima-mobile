@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/extensions/l10n_extension.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_motion.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../domain/entities/medication_section.dart';
 import '../../states/medication_form_state.dart';
 import '../../medication_section_label.dart';
+import '../../../../../shared/widgets/motion/fade_switch.dart';
 
 /// Changes one section's dose; the form controller's `setSlot` fits.
 typedef SlotChange = void Function(MedicationSection section,
@@ -42,6 +44,52 @@ typedef _SlotChange = void Function(
 
 class _DoseToggle extends StatelessWidget {
   const _DoseToggle(
+      {required this.section, required this.slot, required this.onChanged});
+
+  final MedicationSection section;
+  final DoseSlot slot;
+  final _SlotChange onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: AppMotion.duration(context, AppMotion.medium),
+      curve: AppMotion.move,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: slot.enabled ? AppColors.orange300 : AppColors.slate200,
+          width: slot.enabled ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          SwitchListTile(
+            title: AppText.titleMedium(section.label(context.l10n),
+                fontWeight: FontWeight.bold, color: AppColors.slate800),
+            value: slot.enabled,
+            onChanged: (v) => onChanged(enabled: v),
+            activeColor: AppColors.orange300,
+            inactiveThumbColor: AppColors.orange300,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+          FadeSwitch(
+            child: slot.enabled
+                ? _DoseDetails(
+                    section: section, slot: slot, onChanged: onChanged)
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Time and quantity of an enabled dose section.
+class _DoseDetails extends StatelessWidget {
+  const _DoseDetails(
       {required this.section, required this.slot, required this.onChanged});
 
   final MedicationSection section;
@@ -85,82 +133,59 @@ class _DoseToggle extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: AppColors.slate200),
     );
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: slot.enabled ? AppColors.orange300 : AppColors.slate200,
-          width: slot.enabled ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          SwitchListTile(
-            title: AppText.titleMedium(section.label(context.l10n),
-                fontWeight: FontWeight.bold, color: AppColors.slate800),
-            value: slot.enabled,
-            onChanged: (v) => onChanged(enabled: v),
-            activeColor: AppColors.orange300,
-            inactiveThumbColor: AppColors.orange300,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-          if (slot.enabled) ...[
-            const Divider(height: 1, color: AppColors.slate200),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _pickTime(context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: boxDecoration,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.access_time,
-                                color: AppColors.slate400, size: 18),
-                            const SizedBox(width: 8),
-                            AppText.bodyMedium(slot.time.format(context),
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.slate800),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Container(
+    return Column(
+      children: [
+        const Divider(height: 1, color: AppColors.slate200),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => _pickTime(context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
                     decoration: boxDecoration,
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove,
-                              size: 18, color: AppColors.slate500),
-                          onPressed: slot.quantity > 1
-                              ? () => onChanged(quantity: slot.quantity - 1)
-                              : null,
-                        ),
-                        AppText.bodyLarge('${slot.quantity}',
-                            fontWeight: FontWeight.bold),
-                        IconButton(
-                          icon: const Icon(Icons.add,
-                              size: 18, color: AppColors.slate500),
-                          onPressed: () =>
-                              onChanged(quantity: slot.quantity + 1),
-                        ),
+                        const Icon(Icons.access_time,
+                            color: AppColors.slate400, size: 18),
+                        const SizedBox(width: 8),
+                        AppText.bodyMedium(slot.time.format(context),
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.slate800),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ],
-      ),
+              const SizedBox(width: 16),
+              Container(
+                decoration: boxDecoration,
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove,
+                          size: 18, color: AppColors.slate500),
+                      onPressed: slot.quantity > 1
+                          ? () => onChanged(quantity: slot.quantity - 1)
+                          : null,
+                    ),
+                    AppText.bodyLarge('${slot.quantity}',
+                        fontWeight: FontWeight.bold),
+                    IconButton(
+                      icon: const Icon(Icons.add,
+                          size: 18, color: AppColors.slate500),
+                      onPressed: () => onChanged(quantity: slot.quantity + 1),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

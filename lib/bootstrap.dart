@@ -18,6 +18,7 @@ import 'core/failures/guard.dart';
 import 'core/services/monitoring_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/screen_privacy.dart';
+import 'core/services/frame_watcher.dart';
 import 'core/utils/time_zone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 
@@ -55,11 +56,13 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
 
   // Pass all uncaught framework errors to Crashlytics.
   FlutterError.onError = (errorDetails) {
+    FlutterError.presentError(errorDetails); // Also show it in the device log.
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
   };
 
   // Pass all uncaught asynchronous errors to Crashlytics.
   PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Uncaught error: $error\n$stack'); // Silent in release.
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
@@ -71,6 +74,7 @@ Future<void> bootstrap(FirebaseOptions? firebaseOptions,
       '🚀 Bootstrapping ${AppConfig.instance.appName} [${AppConfig.instance.flavor.name}]...');
 
   runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
+  FrameWatcher.start();
 
   // Prod only, so dev builds can still be screenshotted for testing.
   if (AppConfig.instance.isProd) {

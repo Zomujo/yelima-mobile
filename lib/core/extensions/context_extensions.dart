@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../shared/widgets/modals/app_modal.dart';
+import '../theme/app_motion.dart';
 
 /// The one modal shown through [ContextExtensions.showModal], if any.
 OverlayEntry? _currentModalOverlay;
@@ -19,7 +20,7 @@ extension ContextExtensions on BuildContext {
       builder: (context) => OverlayModal(
         isDismissible: isDismissible,
         animationDuration:
-            animationDuration ?? const Duration(milliseconds: 300),
+            animationDuration ?? AppMotion.medium,
         onDismiss: removeModal,
         alignment: alignment ?? ModalAlignment.center,
         child: child,

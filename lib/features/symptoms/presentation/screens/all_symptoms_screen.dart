@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:yelima/core/utils/app_date_formats.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../../core/extensions/l10n_extension.dart';
 import 'package:yelima/features/symptoms/presentation/widgets/report_symptom_modal.dart';
 import '../controllers/symptoms_controller.dart';
-import '../widgets/symptom_card.dart';
+import '../../domain/entities/symptom_entity.dart';
+import '../widgets/symptom_day_group.dart';
 
 /// Every reported symptom, grouped by day, with Add.
 class AllSymptomsScreen extends ConsumerStatefulWidget {
@@ -19,6 +20,25 @@ class AllSymptomsScreen extends ConsumerStatefulWidget {
 }
 
 class _AllSymptomsScreenState extends ConsumerState<AllSymptomsScreen> {
+  /// Set after the list's first frame; rows built later (by scrolling) skip the stagger.
+  bool _listShown = false;
+
+  /// The symptom just reported, which slides in at the top once.
+  String? _arrivedId;
+
+  /// Marks a new, newer symptom (a fresh report), not the server's copy of one.
+  void _onSymptoms(List<SymptomEntity>? old, List<SymptomEntity>? now) {
+    final (was, top) = (_newest(old), _newest(now));
+    if (was != null && top != null && top.onsetDate.isAfter(was.onsetDate)) {
+      _arrivedId = top.id;
+    }
+  }
+
+  static SymptomEntity? _newest(List<SymptomEntity>? list) =>
+      (list == null || list.isEmpty)
+          ? null
+          : list.reduce((a, b) => b.onsetDate.isAfter(a.onsetDate) ? b : a);
+
   @override
   void initState() {
     super.initState();
@@ -29,9 +49,14 @@ class _AllSymptomsScreenState extends ConsumerState<AllSymptomsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<List<SymptomEntity>?>(
+        symptomsControllerProvider.select((s) => s.symptoms), _onSymptoms);
     final state = ref.watch(symptomsControllerProvider);
     final symptoms = state.symptoms;
     final byDay = state.byDay;
+    if (!_listShown && byDay.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _listShown = true);
+    }
 
     return Scaffold(
         body: Container(
@@ -92,26 +117,14 @@ class _AllSymptomsScreenState extends ConsumerState<AllSymptomsScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           itemCount: byDay.length,
                           itemBuilder: (context, index) {
-                            final (day, symptomsList) = byDay[index];
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 8, top: 16),
-                                  child: AppText.bodyMedium(
-                                    context.l10n.dayLabel(day),
-                                    color: AppColors.textGrey,
-                                  ),
-                                ),
-                                ...symptomsList.map((symptom) {
-                                  return SymptomCard(
-                                      content: symptom.description,
-                                      time: AppDateFormats.timeShort
-                                          .format(symptom.onsetDate.toLocal()));
-                                }),
-                              ],
+                            final (day, list) = byDay[index];
+                            return Entrance(
+                              index: index,
+                              enabled: !_listShown,
+                              child: SymptomDayGroup(
+                                  day: day,
+                                  symptoms: list,
+                                  arrivedId: _arrivedId),
                             );
                           },
                         ),
@@ -131,15 +144,15 @@ class _SymptomsShimmer extends StatelessWidget {
   Widget build(BuildContext context) => ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         itemCount: 3,
-        itemBuilder: (context, index) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+        itemBuilder: (context, index) => const Padding(
+          padding: EdgeInsets.only(bottom: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppShimmer.box(width: 100, height: 16),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               AppShimmer.box(height: 64, borderRadius: 16),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               AppShimmer.box(height: 64, borderRadius: 16),
             ],
           ),

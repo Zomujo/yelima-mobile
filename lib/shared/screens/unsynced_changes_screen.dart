@@ -9,6 +9,7 @@ import '../../core/utils/app_date_formats.dart';
 import '../widgets/layout/app_header.dart';
 import '../widgets/layout/app_scaffold.dart';
 import '../widgets/layout/app_text.dart';
+import '../widgets/motion/entrance.dart';
 
 /// Lists changes that couldn't sync, with Retry and Discard for each.
 class UnsyncedChangesScreen extends StatefulWidget {
@@ -53,16 +54,23 @@ class _UnsyncedChangesScreenState extends State<UnsyncedChangesScreen> {
         builder: (context, snap) {
           final changes = snap.data ?? const [];
           if (changes.isEmpty) {
-            return Center(child: AppText.bodyLarge(l10n.allChangesSynced));
+            return Center(
+                child: Entrance(
+                    rise: 8, child: AppText.bodyLarge(l10n.allChangesSynced)));
           }
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 16),
             itemCount: changes.length,
             separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, i) => _ChangeTile(
-              change: changes[i],
-              onRetry: () => widget.sync.retryFailed(changes[i].id),
-              onDiscard: () => _discard(changes[i]),
+            // Keyed by change, so a row scrolled back into view doesn't replay.
+            itemBuilder: (context, i) => Entrance(
+              index: i,
+              playOnce: 'unsynced/${changes[i].id}',
+              child: _ChangeTile(
+                change: changes[i],
+                onRetry: () => widget.sync.retryFailed(changes[i].id),
+                onDiscard: () => _discard(changes[i]),
+              ),
             ),
           );
         },

@@ -59,8 +59,8 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        // Status bar (top)
-        statusBarColor: AppColors.globalBackground,
+        // Status bar (top): see-through, so each screen's background runs behind it.
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
         // Navigation bar (bottom)

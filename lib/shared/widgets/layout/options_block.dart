@@ -1,5 +1,6 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import '../motion/pressable.dart';
 import 'app_text.dart';
 
 /// One row in an [OptionsBlock].
@@ -75,37 +76,40 @@ class _OptionBlockTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: option.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                option.icon,
-                color: option.iconColor ?? AppColors.slate500,
-                size: 24,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: AppText.bodyLarge(
-                  option.label,
-                  color: option.labelColor ?? AppColors.slate800,
+    return Pressable(
+      scale: 0.98,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: option.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  option.icon,
+                  color: option.iconColor ?? AppColors.slate500,
+                  size: 24,
                 ),
-              ),
-              const SizedBox(width: 16),
-              option.trailing ??
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: option.iconColor ?? AppColors.slate900,
-                    size: 20,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: AppText.bodyLarge(
+                    option.label,
+                    color: option.labelColor ?? AppColors.slate800,
                   ),
-            ],
+                ),
+                const SizedBox(width: 16),
+                option.trailing ??
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: option.iconColor ?? AppColors.slate900,
+                      size: 20,
+                    ),
+              ],
+            ),
           ),
         ),
       ),

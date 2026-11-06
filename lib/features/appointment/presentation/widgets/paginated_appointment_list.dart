@@ -1,8 +1,9 @@
 import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/theme/app_motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:yelima/shared/widgets/layout/tinted_svg.dart';
 import '../../../../core/constants/app_images.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/app_shimmer.dart';
@@ -13,7 +14,8 @@ import '../../domain/entities/appointment_entity.dart';
 import '../../../../shared/widgets/layout/page_navigator.dart';
 import '../../../../shared/utils/failure_message.dart';
 
-/// One appointment list with loading, empty and page controls.
+/// One appointment list with loading, empty and page controls; what replaces
+/// the shimmer (or a new page) fades in.
 class PaginatedAppointmentList extends StatelessWidget {
   final PaginatedAppointmentState state;
   final bool isPast;
@@ -30,12 +32,39 @@ class PaginatedAppointmentList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final view = state.isLoading
+        ? 'loading'
+        : state.items.isNotEmpty
+            ? 'page ${state.page}'
+            : state.error != null
+                ? 'error'
+                : 'empty';
+    return AnimatedSwitcher(
+      duration: AppMotion.duration(context, AppMotion.medium),
+      switchInCurve: AppMotion.enter,
+      // Only the new view, faded in: the old one goes at once, so nothing stacks.
+      layoutBuilder: (current, _) => current ?? const SizedBox.shrink(),
+      child: _ListBody(key: ValueKey(view), list: this),
+    );
+  }
+}
+
+/// The shimmer, error, empty note, or the cards and page controls.
+class _ListBody extends StatelessWidget {
+  const _ListBody({super.key, required this.list});
+
+  final PaginatedAppointmentList list;
+
+  @override
+  Widget build(BuildContext context) {
+    final PaginatedAppointmentList(:state, :isPast, :emptyMessage, :filter) =
+        list;
     if (state.isLoading) {
       return Column(
         children: List.generate(
           2,
-          (index) => Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
+          (index) => const Padding(
+            padding: EdgeInsets.only(bottom: 16.0),
             child: AppShimmer.box(
               height: 120,
               width: double.infinity,
@@ -59,14 +88,10 @@ class PaginatedAppointmentList extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SvgPicture.asset(
+              TintedSvg(
                 AppImages.appointmentIcon.assetName,
-                width: 52,
-                height: 52,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.slate300,
-                  BlendMode.srcIn,
-                ),
+                color: AppColors.slate300,
+                size: 52,
               ),
               const SizedBox(height: 16),
               AppText.bodyMedium(

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification accent colour: the app's primary orange (AppColors.primary). -->
+    <color name="notification_color">#F9B678</color>
+</resources>

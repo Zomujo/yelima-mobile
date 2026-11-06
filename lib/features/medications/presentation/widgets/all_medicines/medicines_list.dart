@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_images.dart';
 import '../../../../../shared/widgets/layout/app_shimmer.dart';
 import '../../../../../shared/widgets/layout/app_empty_state.dart';
+import '../../../../../shared/widgets/motion/entrance.dart';
 import '../../../../../shared/utils/app_snackbar.dart';
 import '../../controllers/all_medicines_controller.dart';
 import 'medicine_history_card.dart';
@@ -10,12 +11,24 @@ import 'delete_medication_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/utils/failure_message.dart';
 
-/// The medication list with swipe-to-delete.
-class MedicinesList extends ConsumerWidget {
+/// The medication list with swipe-to-delete; the first rows ease in.
+class MedicinesList extends ConsumerStatefulWidget {
   const MedicinesList({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MedicinesList> createState() => _MedicinesListState();
+}
+
+class _MedicinesListState extends ConsumerState<MedicinesList> {
+  // Only the rows on the first screen stagger in.
+  static const _staggered = 8;
+  static var _visits = 0;
+
+  // One key per visit, so rows scrolled away and back don't replay.
+  final _visit = 'allMedicines/${_visits++}';
+
+  @override
+  Widget build(BuildContext context) {
     final medications = ref.watch(allMedicinesControllerProvider);
     if (medications == null) {
       return ListView.separated(
@@ -23,7 +36,7 @@ class MedicinesList extends ConsumerWidget {
         itemCount: 5,
         separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
-          return AppShimmer.box(
+          return const AppShimmer.box(
             height: 120,
             width: double.infinity,
             borderRadius: 16,
@@ -44,7 +57,7 @@ class MedicinesList extends ConsumerWidget {
       itemCount: medications.length,
       itemBuilder: (context, index) {
         final medication = medications[index];
-        return Padding(
+        final row = Padding(
           padding: const EdgeInsets.only(bottom: 16.0),
           child: Dismissible(
             key: Key(medication.id),
@@ -81,6 +94,9 @@ class MedicinesList extends ConsumerWidget {
             ),
           ),
         );
+        return index < _staggered
+            ? Entrance(index: index, playOnce: '$_visit/$index', child: row)
+            : row;
       },
     );
   }

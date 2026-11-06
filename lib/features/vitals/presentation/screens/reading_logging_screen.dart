@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/theme/app_motion.dart';
+import 'package:yelima/shared/widgets/motion/entrance.dart';
 import 'package:yelima/shared/widgets/layout/app_header.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/features/vitals/presentation/widgets/form/reading_logging_form.dart';
@@ -19,13 +21,15 @@ class ReadingLoggingScreen extends ConsumerStatefulWidget {
 }
 
 class _ReadingLoggingScreenState extends ConsumerState<ReadingLoggingScreen> {
+  // Keeps the form (and its entrance) alive when the layout swaps in the history.
+  final _formKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        AppTutorialService.showLogReadingTutorial(context);
-      }
+    // Once the form has risen into place, so the spotlight lands on it.
+    Future.delayed(AppMotion.slow + AppMotion.stagger * 4, () {
+      if (mounted) AppTutorialService.showLogReadingTutorial(context);
     });
   }
 
@@ -50,11 +54,11 @@ class _ReadingLoggingScreenState extends ConsumerState<ReadingLoggingScreen> {
                         readingLoggingControllerProvider
                             .select((s) => s.history?.isNotEmpty ?? false));
                     if (!hasHistory) {
-                      return const Padding(
-                        padding: EdgeInsets.only(
+                      return Padding(
+                        padding: const EdgeInsets.only(
                             left: 24, right: 24, top: 16, bottom: 40),
                         child: SingleChildScrollView(
-                          child: ReadingLoggingForm(),
+                          child: ReadingLoggingForm(key: _formKey),
                         ),
                       );
                     }
@@ -62,16 +66,20 @@ class _ReadingLoggingScreenState extends ConsumerState<ReadingLoggingScreen> {
                     return NestedScrollView(
                       headerSliverBuilder: (context, innerBoxIsScrolled) {
                         return [
-                          const SliverPadding(
-                            padding: EdgeInsets.only(
+                          SliverPadding(
+                            padding: const EdgeInsets.only(
                                 left: 24, right: 24, top: 16, bottom: 40),
                             sliver: SliverToBoxAdapter(
-                              child: ReadingLoggingForm(),
+                              child: ReadingLoggingForm(key: _formKey),
                             ),
                           ),
                         ];
                       },
-                      body: const ReadingHistorySection(),
+                      body: const Entrance(
+                        index: 4,
+                        playOnce: 'logReading/history',
+                        child: ReadingHistorySection(),
+                      ),
                     );
                   },
                 ),

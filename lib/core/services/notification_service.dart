@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../theme/app_colors.dart';
 import '../utils/logger.dart';
 import '../../firebase_options.dart';
 import '../utils/time_zone.dart';
@@ -56,7 +57,7 @@ class NotificationService {
 
       await _localNotifications.initialize(
         const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          android: AndroidInitializationSettings('@drawable/ic_notification'),
           iOS: DarwinInitializationSettings(
             requestAlertPermission: false,
             requestBadgePermission: false,
@@ -159,6 +160,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'high_importance_channel',
           'General',
+          color: AppColors.primary,
           styleInformation: BigTextStyleInformation(body),
         ),
         iOS: const DarwinNotificationDetails(
@@ -223,6 +225,7 @@ class NotificationService {
           android: AndroidNotificationDetails(
             'medication_reminders',
             'Medication Reminders',
+            color: AppColors.primary,
             importance: Importance.max,
             priority: Priority.high,
             visibility: NotificationVisibility.private,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:yelima/shared/widgets/layout/app_button.dart';
 import '../../core/router/route_paths.dart';
 import '../widgets/layout/app_scaffold.dart';
+import '../widgets/motion/entrance.dart';
 
 /// Shown for an unknown route.
 class NotFoundScreen extends StatelessWidget {
@@ -13,21 +14,24 @@ class NotFoundScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(
-              context.l10n.pageNotFound,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 24),
-            AppButton(
-              text: context.l10n.goHome,
-              onPressed: () => context.go(RoutePaths.home),
-            ),
-          ],
+        child: Entrance(
+          rise: 8,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                context.l10n.pageNotFound,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 24),
+              AppButton(
+                text: context.l10n.goHome,
+                onPressed: () => context.go(RoutePaths.home),
+              ),
+            ],
+          ),
         ),
       ),
     );

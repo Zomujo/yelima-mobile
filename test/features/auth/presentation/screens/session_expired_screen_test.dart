@@ -31,6 +31,7 @@ void main() {
       const SessionExpiredScreen(),
       overrides: [authControllerProvider.overrideWith(() => auth)],
     );
+    await tester.pumpAndSettle(); // let the entrance finish
   }
 
   testWidgets('an email user signs in again with their password',
@@ -67,7 +68,7 @@ void main() {
     await pumpScreen(tester, password: true);
 
     await tester.tap(find.text('Sign in again'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('The email or password is wrong.'), findsOneWidget);
   });

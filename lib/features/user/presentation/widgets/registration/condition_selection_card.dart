@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yelima/shared/widgets/layout/app_text.dart';
 import 'package:yelima/core/theme/app_colors.dart';
+import 'package:yelima/core/theme/app_motion.dart';
 
 /// A selectable card for one health condition.
 class ConditionSelectionCard extends StatelessWidget {
@@ -19,9 +20,13 @@ class ConditionSelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final duration =
+        AppMotion.duration(context, AppMotion.medium);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: duration,
+        curve: AppMotion.move,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -59,25 +64,50 @@ class ConditionSelectionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color:
-                      isSelected ? AppColors.primaryGreen : AppColors.slate200,
-                  width: 2,
-                ),
-                color: isSelected ? AppColors.primaryGreen : Colors.transparent,
-              ),
-              child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : const Icon(Icons.check,
-                      size: 16, color: AppColors.slate200),
-            ),
+            _CheckCircle(isSelected: isSelected, duration: duration),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The round tick: fills green and its white check grows in when selected.
+class _CheckCircle extends StatelessWidget {
+  const _CheckCircle({required this.isSelected, required this.duration});
+
+  final bool isSelected;
+  final Duration duration;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected ? AppColors.primaryGreen : AppColors.slate200;
+    return AnimatedContainer(
+      duration: duration,
+      curve: AppMotion.move,
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: 2),
+        color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Icon(Icons.check, size: 16, color: AppColors.slate200),
+          AnimatedScale(
+            scale: isSelected ? 1 : 0.5,
+            duration: duration,
+            curve: AppMotion.enter,
+            child: AnimatedOpacity(
+              opacity: isSelected ? 1 : 0,
+              duration: duration,
+              curve: AppMotion.enter,
+              child: const Icon(Icons.check, size: 16, color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }

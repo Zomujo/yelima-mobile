@@ -47,7 +47,7 @@ class MedicineDetailsHeaderCard extends ConsumerWidget {
                 child: AppText.bodyMedium(
                     state.historyError!.message(context.l10n) ?? ''))
           else if (history == null)
-            AppShimmer.box(
+            const AppShimmer.box(
                 height: 200, width: double.infinity, borderRadius: 16)
           else
             AdherenceCalendar(

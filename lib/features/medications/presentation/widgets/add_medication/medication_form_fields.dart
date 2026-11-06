@@ -6,6 +6,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/forms/app_form_field.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../controllers/add_medication_form_controller.dart';
+import '../../../../../shared/widgets/motion/fade_switch.dart';
 import '../medication_form/unit_picker.dart';
 
 /// Dosage (with suggestions for a picked medication), unit and notes.
@@ -30,25 +31,30 @@ class MedicationFormFields extends ConsumerWidget {
           validator: (v) =>
               v == null || v.trim().isEmpty ? l10n.requiredField : null,
         ),
-        if (suggestions.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          // The chip for the typed dosage lights up as the text changes.
-          ListenableBuilder(
-            listenable: controller.dosageController,
-            builder: (_, __) => Wrap(
-              spacing: 8,
-              children: [
-                for (final dosage in suggestions)
-                  _DosageChip(
-                    dosage: dosage,
-                    selected: controller.dosageController.text == dosage,
-                    onSelected: (on) =>
-                        controller.selectDosage(on ? dosage : null),
+        FadeSwitch(
+          child: suggestions.isEmpty
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  // The chip for the typed dosage lights up as the text changes.
+                  child: ListenableBuilder(
+                    listenable: controller.dosageController,
+                    builder: (_, __) => Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final dosage in suggestions)
+                          _DosageChip(
+                            dosage: dosage,
+                            selected:
+                                controller.dosageController.text == dosage,
+                            onSelected: (on) =>
+                                controller.selectDosage(on ? dosage : null),
+                          ),
+                      ],
+                    ),
                   ),
-              ],
-            ),
-          ),
-        ],
+                ),
+        ),
         const SizedBox(height: 24),
         AppText.titleMedium(l10n.medicationFormUnit,
             fontWeight: FontWeight.bold, color: AppColors.slate800),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'app_theme_extension.dart';
+import 'app_page_transitions.dart';
 
 /// The app's Material theme.
 class AppTheme {
@@ -10,6 +11,11 @@ class AppTheme {
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: AppPageTransitionsBuilder(),
+        // iOS keeps its native slide, so swipe-to-go-back still works.
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      }),
       brightness: Brightness.light,
       fontFamily: 'ProductSans',
       fontFamilyFallback: const ['NotoSans'],

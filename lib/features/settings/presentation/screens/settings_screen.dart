@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../shared/widgets/layout/app_text.dart';
 import '../../../../shared/widgets/layout/options_block.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 import '../../../../core/utils/legal_links.dart';
 import '../widgets/delete_account_modal.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
@@ -38,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+            children: Entrance.staggered([
               OptionsBlock(
                 title: context.l10n.legal,
                 blockItems: [
@@ -64,7 +65,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ],
+            ]),
           ),
         ),
       ),

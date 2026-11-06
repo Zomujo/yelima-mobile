@@ -17,6 +17,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/core_providers.dart';
 import '../../../../shared/widgets/layout/pending_changes_badge.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
 
 /// The home tab: greeting, metrics, next step and upcoming visits.
 class HomeScreen extends ConsumerStatefulWidget {
@@ -65,15 +66,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding:
                 EdgeInsets.only(bottom: AppSizes.bottomNavClearance(context)),
             children: [
-              HomeHeader(
-                date: formattedDate,
-                greeting: greetingName.isNotEmpty
-                    ? context.l10n.welcomeName(greetingName)
-                    : context.l10n.welcome,
-                status: PendingChangesBadge(
-                  waiting: _waiting,
-                  failed: _failed,
-                  onTap: () => context.push(RoutePaths.unsyncedChanges),
+              Entrance(
+                playOnce: 'home/header',
+                child: HomeHeader(
+                  date: formattedDate,
+                  greeting: greetingName.isNotEmpty
+                      ? context.l10n.welcomeName(greetingName)
+                      : context.l10n.welcome,
+                  status: PendingChangesBadge(
+                    waiting: _waiting,
+                    failed: _failed,
+                    onTap: () => context.push(RoutePaths.unsyncedChanges),
+                  ),
                 ),
               ),
               const HomeMetricsSection(),

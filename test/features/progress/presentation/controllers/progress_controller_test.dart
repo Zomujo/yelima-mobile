@@ -91,6 +91,22 @@ void main() {
     expect(charts().bpTrendState.data, month);
   });
 
+  test('switching to a cached range never blanks the chart', () async {
+    const month = BPTrend(
+        labels: ['2026-10-01T10:00:00Z'], systolic: [130], diastolic: [85]);
+    when(() => repo.getCachedBPTrend(ChartDateRange.thisMonth))
+        .thenAnswer((_) async => right(month));
+    await controller().load(today);
+    final shown = <BPTrend?>[];
+    container.listen(progressControllerProvider.select((s) => s.bpTrendState),
+        (_, s) => shown.add(s.data));
+
+    await controller().load(ChartDateRange.thisMonth);
+
+    expect(shown, isNot(contains(null)));
+    expect(shown.first, month);
+  });
+
   test('signing out clears both charts', () async {
     await controller().load(today);
 

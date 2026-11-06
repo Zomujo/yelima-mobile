@@ -27,7 +27,6 @@ class ReportSymptomModal extends ConsumerStatefulWidget {
       useSafeArea: false,
       builder: (context) => OverlayModal(
         isDismissible: true,
-        animationDuration: const Duration(milliseconds: 300),
         onDismiss: () => Navigator.of(context).pop(),
         confirmDismiss: () => canClose(context, text),
         child: ReportSymptomModal(text: text),
@@ -91,40 +90,14 @@ class _ReportSymptomModalState extends ConsumerState<ReportSymptomModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: AppText.headlineSmall(
-                  context.l10n.reportSymptom,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.slate800,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.slate100,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.close,
-                      size: 20, color: AppColors.slate500),
-                  constraints:
-                      const BoxConstraints(minWidth: 36, minHeight: 36),
-                  padding: EdgeInsets.zero,
-                  onPressed: _isLoading ? null : _close,
-                ),
-              ),
-            ],
+          _Header(onClose: _isLoading ? null : _close),
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 20),
+            child: AppText.bodyMedium(
+              context.l10n.describeHowYouAreFeeling,
+              color: AppColors.textGrey,
+            ),
           ),
-          const SizedBox(height: 12),
-          AppText.bodyMedium(
-            context.l10n.describeHowYouAreFeeling,
-            color: AppColors.textGrey,
-          ),
-          const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFF8F9FA),
@@ -153,24 +126,62 @@ class _ReportSymptomModalState extends ConsumerState<ReportSymptomModal> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _controller,
-            builder: (context, value, child) {
-              final isValid = value.text.trim().length > 5;
-              return AppButton(
-                text:
-                    _isLoading ? context.l10n.submitting : context.l10n.submit,
-                isDisabled: !isValid || _isLoading,
-                onPressed: (isValid && !_isLoading) ? _sendRequest : null,
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                borderRadius: 24,
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _controller,
+              builder: (context, value, child) {
+                final isValid = value.text.trim().length > 5;
+                return AppButton(
+                  text: _isLoading
+                      ? context.l10n.submitting
+                      : context.l10n.submit,
+                  isDisabled: !isValid || _isLoading,
+                  onPressed: (isValid && !_isLoading) ? _sendRequest : null,
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  borderRadius: 24,
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// "Report symptom" and the close button.
+class _Header extends StatelessWidget {
+  const _Header({required this.onClose});
+
+  /// Null while sending, which disables the button.
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: AppText.headlineSmall(
+              context.l10n.reportSymptom,
+              fontWeight: FontWeight.bold,
+              color: AppColors.slate800,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.slate100,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon:
+                  const Icon(Icons.close, size: 20, color: AppColors.slate500),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              padding: EdgeInsets.zero,
+              onPressed: onClose,
+            ),
+          ),
+        ],
+      );
 }

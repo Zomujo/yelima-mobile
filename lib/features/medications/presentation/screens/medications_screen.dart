@@ -87,7 +87,7 @@ class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
                         width: double.infinity,
                         child: ShimmerLoading(
                           isLoading: adherence == null,
-                          shimmer: AppShimmer.box(
+                          shimmer: const AppShimmer.box(
                               width: double.infinity, height: 150),
                           child: AdherenceCard(adherence: adherence),
                         ),

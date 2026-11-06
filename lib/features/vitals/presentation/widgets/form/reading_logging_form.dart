@@ -6,12 +6,13 @@ import 'package:yelima/features/vitals/presentation/widgets/form/reading_day_sel
 import 'package:yelima/features/vitals/presentation/widgets/form/reading_save_button.dart';
 import 'package:yelima/shared/widgets/modals/custom_calendar_modal.dart';
 import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
+import 'package:yelima/shared/widgets/motion/entrance.dart';
 import 'package:yelima/features/vitals/presentation/controllers/reading_logging_controller.dart';
 import 'package:yelima/features/onboarding/presentation/tutorials/app_tutorial_keys.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import 'package:yelima/features/vitals/domain/entities/reading_form.dart';
 
-/// Type, value, day and Save for a new reading.
+/// Type, value, day and Save for a new reading; rises in the first time it shows.
 class ReadingLoggingForm extends ConsumerWidget {
   const ReadingLoggingForm({super.key});
 
@@ -24,32 +25,37 @@ class ReadingLoggingForm extends ConsumerWidget {
         ref.read(readingLoggingControllerProvider.notifier);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ReadingTypeSelector(
-          key: AppTutorialKeys.logReadingTypeKey,
-          selectedIndex: kind.index,
-          onTypeSelected: (i) => controller().setKind(VitalKind.values[i]),
+      children: Entrance.staggered(playOnce: 'logReading', [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ReadingTypeSelector(
+              key: AppTutorialKeys.logReadingTypeKey,
+              selectedIndex: kind.index,
+              onTypeSelected: (i) => controller().setKind(VitalKind.values[i]),
+            ),
+            if (kind == VitalKind.bloodSugar) ...[
+              const SizedBox(height: 16),
+              AppDropdown<String>(
+                value: vitalSubType,
+                hintText: context.l10n.measurementContext,
+                items: const ['fasting', 'postprandial', 'random'],
+                itemLabelBuilder: (val) => switch (val) {
+                  'fasting' => context.l10n.fasting,
+                  'postprandial' => context.l10n.postMeal,
+                  'random' => context.l10n.randomReading,
+                  _ => val,
+                },
+                onChanged: (value) => controller().setVitalSubType(value),
+              ),
+            ],
+          ],
         ),
-        if (kind == VitalKind.bloodSugar) ...[
-          const SizedBox(height: 16),
-          AppDropdown<String>(
-            value: vitalSubType,
-            hintText: context.l10n.measurementContext,
-            items: const ['fasting', 'postprandial', 'random'],
-            itemLabelBuilder: (val) => switch (val) {
-              'fasting' => context.l10n.fasting,
-              'postprandial' => context.l10n.postMeal,
-              'random' => context.l10n.randomReading,
-              _ => val,
-            },
-            onChanged: (value) => controller().setVitalSubType(value),
-          ),
-        ],
-        const SizedBox(height: 24),
-        InteractiveReadingCard(
-          key: AppTutorialKeys.logReadingInputKey,
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child:
+              InteractiveReadingCard(key: AppTutorialKeys.logReadingInputKey),
         ),
-        const SizedBox(height: 24),
         ReadingDaySelector(
           key: AppTutorialKeys.logReadingDateKey,
           selectedDate: selectedDate,
@@ -60,11 +66,11 @@ class ReadingLoggingForm extends ConsumerWidget {
             if (picked != null) notifier.setSelectedDate(picked);
           },
         ),
-        const SizedBox(height: 32),
-        ReadingSaveButton(
-          key: AppTutorialKeys.logReadingSaveKey,
+        Padding(
+          padding: const EdgeInsets.only(top: 32),
+          child: ReadingSaveButton(key: AppTutorialKeys.logReadingSaveKey),
         ),
-      ],
+      ]),
     );
   }
 }

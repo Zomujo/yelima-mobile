@@ -16,6 +16,7 @@ void main() {
       (tester) async {
     await tester
         .pumpApp(const SingleChildScrollView(child: HomeNextStepSection()));
+    await tester.pumpAndSettle(); // let the cards' entrance finish
 
     expect(find.byType(DailyCheckInCard), findsNothing);
   });

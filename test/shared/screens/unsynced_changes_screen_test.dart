@@ -43,7 +43,7 @@ void main() {
     await tester.pumpApp(UnsyncedChangesScreen(sync: sync));
     failed.add(items);
     await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle(); // the rows' entrance
   }
 
   testWidgets('says everything was sent when nothing failed', (tester) async {

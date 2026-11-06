@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
 import '../../../../../shared/widgets/layout/app_text.dart';
 import '../../../../../shared/utils/failure_message.dart';
+import '../../../../../shared/widgets/motion/entrance.dart';
 import '../../controllers/medicine_details_form_controller.dart';
+import '../../../../../shared/widgets/motion/fade_switch.dart';
 import 'delete_medicine_button.dart';
 import 'medicine_details_header_card.dart';
 import 'medicine_details_form_fields.dart';
@@ -43,17 +45,32 @@ class MedicineDetailsBody extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MedicineDetailsHeaderCard(medicationId: medicationId),
+          Entrance(
+              child: MedicineDetailsHeaderCard(medicationId: medicationId)),
           const SizedBox(height: 32),
-          const Divider(color: AppColors.slate200, height: 1),
+          const Entrance(
+              index: 1, child: Divider(color: AppColors.slate200, height: 1)),
           const SizedBox(height: 24),
-          MedicineDetailsFormFields(medicationId: medicationId),
+          Entrance(
+              index: 1,
+              child: MedicineDetailsFormFields(medicationId: medicationId)),
           const SizedBox(height: 32),
-          MedicineDetailsScheduleSection(medicationId: medicationId),
-          if (!state.isEditing) ...[
-            const SizedBox(height: 40),
-            DeleteMedicineButton(medicationId: medicationId),
-          ],
+          Entrance(
+              index: 2,
+              child:
+                  MedicineDetailsScheduleSection(medicationId: medicationId)),
+          Entrance(
+            index: 3,
+            // Delete is hidden while editing.
+            child: FadeSwitch(
+              child: state.isEditing
+                  ? const SizedBox(width: double.infinity)
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 40),
+                      child: DeleteMedicineButton(medicationId: medicationId),
+                    ),
+            ),
+          ),
         ],
       ),
     );

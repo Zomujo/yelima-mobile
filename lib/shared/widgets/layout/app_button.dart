@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
+import '../../../core/theme/app_motion.dart';
+import '../motion/pressable.dart';
 
 /// Button styles.
 enum AppButtonVariant { filled, outlined, text }
@@ -64,7 +68,8 @@ class AppButton extends StatelessWidget {
               strokeWidth: 2.5,
               valueColor: AlwaysStoppedAnimation<Color>(onPrimaryColor),
             ),
-          ),
+          ).animate().fadeIn(duration: AppMotion.quick).scaleXY(
+              begin: 0.6, duration: AppMotion.medium, curve: AppMotion.enter),
           const SizedBox(width: 12),
         ] else if (prefixIcon != null) ...[
           prefixIcon!,
@@ -156,10 +161,7 @@ class AppButton extends StatelessWidget {
         break;
     }
 
-    return SizedBox(
-      width: width,
-      height: height,
-      child: button,
-    );
+    final sized = SizedBox(width: width, height: height, child: button);
+    return _isEffectivelyDisabled ? sized : Pressable(child: sized);
   }
 }

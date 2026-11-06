@@ -1,5 +1,6 @@
 import 'package:yelima/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:yelima/core/theme/app_motion.dart';
 
 /// Close button, progress bar and "step X of Y" badge.
 class RegistrationAppBar extends StatelessWidget
@@ -43,22 +44,11 @@ class RegistrationAppBar extends StatelessWidget
             const SizedBox(width: 16),
             Expanded(
               child: Row(
-                children: List.generate(totalSteps, (index) {
-                  final isCompleted = index < currentStep;
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(
-                          right: index == totalSteps - 1 ? 0 : 8),
-                      decoration: BoxDecoration(
-                        color: isCompleted
-                            ? AppColors.orange300
-                            : AppColors.slate200,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  );
-                }),
+                spacing: 8,
+                children: [
+                  for (var i = 0; i < totalSteps; i++)
+                    Expanded(child: _Segment(filled: i < currentStep)),
+                ],
               ),
             ),
             const SizedBox(width: 16),
@@ -85,4 +75,31 @@ class RegistrationAppBar extends StatelessWidget
 
   @override
   Size get preferredSize => const Size.fromHeight(56);
+}
+
+/// One piece of the progress bar; its orange fill grows in from the left.
+class _Segment extends StatelessWidget {
+  const _Segment({required this.filled});
+
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(2);
+    return Container(
+      height: 4,
+      decoration:
+          BoxDecoration(color: AppColors.slate200, borderRadius: radius),
+      child: AnimatedFractionallySizedBox(
+        duration: AppMotion.duration(context, AppMotion.slow),
+        curve: AppMotion.move,
+        alignment: Alignment.centerLeft,
+        widthFactor: filled ? 1 : 0,
+        child: DecoratedBox(
+          decoration:
+              BoxDecoration(color: AppColors.orange300, borderRadius: radius),
+        ),
+      ),
+    );
+  }
 }
