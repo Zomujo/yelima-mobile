@@ -25,7 +25,7 @@ final redirectRefreshProvider = Provider<Listenable>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef RedirectRefreshRef = ProviderRef<Listenable>;
-String _$appRouterHash() => r'17ac241bd525eee426d46fdbf11ecbd5d674dadf';
+String _$appRouterHash() => r'17d315885b8b265185aaadb3380789a24965c961';
 
 /// The app's routes and redirect rules.
 ///

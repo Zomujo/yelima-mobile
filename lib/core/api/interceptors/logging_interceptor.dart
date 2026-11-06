@@ -1,20 +1,28 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-/// Logs requests and responses in debug builds.
+/// Logs requests and responses in debug builds, with secrets hidden.
 class LoggingInterceptor extends Interceptor {
-  Map<String, dynamic> _redactedHeaders(Map<String, dynamic> headers) {
-    final copy = Map<String, dynamic>.from(headers);
-    if (copy.containsKey('Authorization')) copy['Authorization'] = '[REDACTED]';
-    return copy;
-  }
+  static final _secret =
+      RegExp('authorization|token|password|secret', caseSensitive: false);
+
+  /// [data] with every value under a secret-looking key replaced.
+  @visibleForTesting
+  static Object? redact(Object? data) => switch (data) {
+        Map() => {
+            for (final MapEntry(:key, :value) in data.entries)
+              key: _secret.hasMatch('$key') ? '[REDACTED]' : redact(value),
+          },
+        List() => [for (final item in data) redact(item)],
+        _ => data,
+      };
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
       debugPrint('🚀 [API] REQUEST[${options.method}] => PATH: ${options.uri}');
-      debugPrint('Headers: ${_redactedHeaders(options.headers)}');
-      debugPrint('Body: ${options.data}');
+      debugPrint('Headers: ${redact(options.headers)}');
+      debugPrint('Body: ${redact(options.data)}');
     }
     return super.onRequest(options, handler);
   }
@@ -24,7 +32,7 @@ class LoggingInterceptor extends Interceptor {
     if (kDebugMode) {
       debugPrint(
           '✅ [API] RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.uri}');
-      debugPrint('Data: ${response.data}');
+      debugPrint('Data: ${redact(response.data)}');
     }
     return super.onResponse(response, handler);
   }
@@ -41,11 +49,6 @@ class LoggingInterceptor extends Interceptor {
       debugPrint(
           '❌ [API] ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
       debugPrint('Message: ${err.message}');
-
-      // Placeholder for MonitoringService (Firebase Crashlytics, etc.)
-      if (err.response != null && err.response!.statusCode! >= 500) {
-        // MonitoringService.instance.recordError(err, err.stackTrace);
-      }
     }
 
     return super.onError(err, handler);

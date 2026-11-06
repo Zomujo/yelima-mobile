@@ -4,6 +4,8 @@ import 'package:clock/clock.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
+import '../utils/logger.dart';
+
 /// Whether the phone can reach the internet, now and as it changes.
 ///
 /// Online means a real request got through. The phone's own network flag is
@@ -146,6 +148,7 @@ class ConnectivityService {
     final changed = online != _online;
     _online = online;
     _answeredAt = clock.now();
+    if (changed) AppLogger.i('Connection: ${online ? 'online' : 'offline'}');
     if (changed && _status.hasListener) {
       _status.add(online);
       _schedule();

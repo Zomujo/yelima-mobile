@@ -85,9 +85,9 @@ class MutationSyncManager implements SessionLifecycleHandler {
         _connectivityService.onConnectivityChanged.listen((isConnected) {
       if (isConnected) {
         _debounceTimer?.cancel();
-        _debounceTimer = Timer(const Duration(seconds: 3), () {
-          debugPrint(
-              "Network connection stable for 3s. Starting mutation sync...");
+        // A short wait, in case the connection drops again straight away.
+        _debounceTimer = Timer(const Duration(seconds: 1), () {
+          debugPrint("Back online. Starting mutation sync...");
           triggerSync();
         });
       } else {

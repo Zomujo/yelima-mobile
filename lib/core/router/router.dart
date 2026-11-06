@@ -45,6 +45,17 @@ String? _whileChatHidden(BuildContext context, GoRouterState state) =>
 
 final shellNavigatorKey = GlobalKey<NavigatorState>();
 
+/// A full-screen route showing [screen].
+GoRoute _page(String path, Widget screen, {GoRouterRedirect? redirect}) =>
+    GoRoute(path: path, redirect: redirect, builder: (_, __) => screen);
+
+/// A bottom-bar tab: switches without a page animation.
+GoRoute _tab(String path, Widget screen, {GoRouterRedirect? redirect}) =>
+    GoRoute(
+        path: path,
+        redirect: redirect,
+        pageBuilder: (_, __) => NoTransitionPage(child: screen));
+
 class _Ping extends ChangeNotifier {
   void call() => notifyListeners();
 }
@@ -87,124 +98,44 @@ GoRouter appRouter(Ref ref) {
       ));
     },
     routes: [
-      GoRoute(
-        path: '/',
-        redirect: (context, state) => RoutePaths.home,
-      ),
-      GoRoute(
-        path: RoutePaths.splash,
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.welcome,
-        builder: (context, state) => const WelcomeScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.signIn,
-        builder: (context, state) => const AuthScreen(isSignUp: false),
-      ),
-      GoRoute(
-        path: RoutePaths.signUp,
-        builder: (context, state) => const AuthScreen(isSignUp: true),
-      ),
-      GoRoute(
-        path: RoutePaths.forgotPassword,
-        builder: (context, state) => const ForgotPasswordScreen(),
-      ),
+      GoRoute(path: '/', redirect: (_, __) => RoutePaths.home),
+      _page(RoutePaths.splash, const SplashScreen()),
+      _page(RoutePaths.welcome, const WelcomeScreen()),
+      _page(RoutePaths.signIn, const AuthScreen(isSignUp: false)),
+      _page(RoutePaths.signUp, const AuthScreen(isSignUp: true)),
+      _page(RoutePaths.forgotPassword, const ForgotPasswordScreen()),
       GoRoute(
         path: RoutePaths.unsyncedChanges,
-        builder: (context, state) =>
+        builder: (_, __) =>
             UnsyncedChangesScreen(sync: ref.read(mutationSyncManagerProvider)),
       ),
-      GoRoute(
-        path: RoutePaths.profileUnavailable,
-        builder: (context, state) => const ProfileUnavailableScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.sessionExpired,
-        builder: (context, state) => const SessionExpiredScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.registration,
-        builder: (context, state) => const RegistrationScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.medications,
-        builder: (context, state) => const MedicationsScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.addMedication,
-        builder: (context, state) => const AddMedicationScreen(),
-      ),
+      _page(RoutePaths.profileUnavailable, const ProfileUnavailableScreen()),
+      _page(RoutePaths.sessionExpired, const SessionExpiredScreen()),
+      _page(RoutePaths.registration, const RegistrationScreen()),
+      _page(RoutePaths.medications, const MedicationsScreen()),
+      _page(RoutePaths.addMedication, const AddMedicationScreen()),
       GoRoute(
         path: RoutePaths.medicineDetails,
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return MedicineDetailsScreen(medicationId: id);
-        },
+        builder: (_, state) =>
+            MedicineDetailsScreen(medicationId: state.pathParameters['id']!),
       ),
-      GoRoute(
-        path: RoutePaths.progress,
-        builder: (context, state) => const ProgressScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.aiChat,
-        redirect: _whileChatHidden,
-        builder: (context, state) => const AiChatScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.editProfile,
-        builder: (context, state) => const EditProfileScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.settings,
-        builder: (context, state) => const SettingsScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.healthProfile,
-        builder: (context, state) => const HealthProfileScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.symptoms,
-        builder: (context, state) => const AllSymptomsScreen(),
-      ),
+      _page(RoutePaths.progress, const ProgressScreen()),
+      _page(RoutePaths.aiChat, const AiChatScreen(),
+          redirect: _whileChatHidden),
+      _page(RoutePaths.editProfile, const EditProfileScreen()),
+      _page(RoutePaths.settings, const SettingsScreen()),
+      _page(RoutePaths.healthProfile, const HealthProfileScreen()),
+      _page(RoutePaths.symptoms, const AllSymptomsScreen()),
       ShellRoute(
         navigatorKey: shellNavigatorKey,
-        pageBuilder: (context, state, child) => NoTransitionPage(
-          child: MainScaffold(child: child),
-        ),
+        pageBuilder: (_, __, child) =>
+            NoTransitionPage(child: MainScaffold(child: child)),
         routes: [
-          GoRoute(
-            path: RoutePaths.home,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: HomeScreen(),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.chat,
-            redirect: _whileChatHidden,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ChatScreen(),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.readingLogging,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ReadingLoggingScreen(),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.appointments,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AppointmentsScreen(),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.profile,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProfileScreen(),
-            ),
-          ),
+          _tab(RoutePaths.home, const HomeScreen()),
+          _tab(RoutePaths.chat, const ChatScreen(), redirect: _whileChatHidden),
+          _tab(RoutePaths.readingLogging, const ReadingLoggingScreen()),
+          _tab(RoutePaths.appointments, const AppointmentsScreen()),
+          _tab(RoutePaths.profile, const ProfileScreen()),
         ],
       ),
     ],
