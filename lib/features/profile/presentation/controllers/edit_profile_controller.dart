@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/failures/app_failure.dart';
 import '../../../user/user_providers.dart';
 import '../states/edit_profile_state.dart';
+import '../../../../core/utils/names.dart';
 
 part 'edit_profile_controller.g.dart';
 
@@ -34,8 +35,8 @@ class EditProfileController extends _$EditProfileController {
     final first = (firstName ?? state.firstName);
     final last = (lastName ?? state.lastName);
     final g = gender ?? state.gender;
-    final changed = first.trim() != _initial.firstName ||
-        last.trim() != _initial.lastName ||
+    final changed = tidyName(first) != _initial.firstName ||
+        tidyName(last) != _initial.lastName ||
         g != _initial.gender;
     state = state.copyWith(
       firstName: first,
@@ -52,13 +53,13 @@ class EditProfileController extends _$EditProfileController {
   /// Saves the form.
   AsyncResult<void> saveProfile() async {
     final result = await ref.read(userControllerProvider.notifier).updateName(
-        firstName: state.firstName.trim(),
-        lastName: state.lastName.trim(),
+        firstName: tidyName(state.firstName),
+        lastName: tidyName(state.lastName),
         gender: state.gender);
     if (result.isRight() && !_disposed) {
       _initial = EditProfileState(
-          firstName: state.firstName.trim(),
-          lastName: state.lastName.trim(),
+          firstName: tidyName(state.firstName),
+          lastName: tidyName(state.lastName),
           gender: state.gender);
       state = state.copyWith(hasChanged: false, isButtonEnabled: false);
     }

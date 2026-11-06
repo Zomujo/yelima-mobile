@@ -8,6 +8,7 @@ import '../../../../../shared/widgets/motion/entrance.dart';
 import '../../../../user/user_providers.dart';
 import '../../controllers/edit_profile_controller.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/core/utils/names.dart';
 
 /// Name and gender fields of the edit-profile screen.
 class EditProfileForm extends ConsumerStatefulWidget {
@@ -66,6 +67,8 @@ class _EditProfileFormState extends ConsumerState<EditProfileForm> {
           label: context.l10n.firstName,
           hintText: context.l10n.enterFirstName,
           controller: _firstNameController,
+          textCapitalization: TextCapitalization.words,
+          inputFormatters: const [NameInputFormatter()],
           validator: _required,
           autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
@@ -73,6 +76,8 @@ class _EditProfileFormState extends ConsumerState<EditProfileForm> {
           label: context.l10n.lastName,
           hintText: context.l10n.enterLastName,
           controller: _lastNameController,
+          textCapitalization: TextCapitalization.words,
+          inputFormatters: const [NameInputFormatter()],
           validator: _required,
           autovalidateMode: AutovalidateMode.onUserInteraction,
         ),

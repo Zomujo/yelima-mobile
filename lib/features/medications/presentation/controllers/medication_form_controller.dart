@@ -107,9 +107,9 @@ mixin MedicationFormController {
 
   /// The form as entered.
   MedicationForm get form => MedicationForm(
-        name: name,
-        dosage: dosageController.text,
-        notes: notesController.text,
+        name: name.trim(),
+        dosage: dosageController.text.trim(),
+        notes: notesController.text.trim(),
         unit: fields.unit,
         doses: {
           for (final MapEntry(key: s, value: slot) in fields.slots.entries)

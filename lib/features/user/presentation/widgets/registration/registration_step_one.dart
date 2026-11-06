@@ -10,6 +10,7 @@ import 'package:yelima/shared/widgets/layout/step_layout.dart';
 import 'package:yelima/shared/widgets/forms/app_form_field.dart';
 import 'package:yelima/shared/widgets/forms/app_dropdown.dart';
 import 'package:yelima/core/extensions/l10n_extension.dart';
+import 'package:yelima/core/utils/names.dart';
 
 /// Registration step 1: name, phone and gender.
 class RegistrationStepOne extends ConsumerStatefulWidget {
@@ -75,8 +76,8 @@ class _RegistrationStepOneState extends ConsumerState<RegistrationStepOne> {
     final saved = await runWithLoader(context,
         message: context.l10n.savingDetails,
         action: () => users.updateBasicInfo(
-              firstName: _firstNameController.text.trim(),
-              lastName: _lastNameController.text.trim(),
+              firstName: tidyName(_firstNameController.text),
+              lastName: tidyName(_lastNameController.text),
               gender: _selectedGender!,
               phoneNumber: _ghanaPhone(_phoneController.text.trim()),
             ));
@@ -103,6 +104,7 @@ class _RegistrationStepOneState extends ConsumerState<RegistrationStepOne> {
             label: context.l10n.firstName,
             hintText: context.l10n.firstNameHint,
             textCapitalization: TextCapitalization.words,
+            inputFormatters: const [NameInputFormatter()],
           ),
           const SizedBox(height: 24),
           AppFormField(
@@ -110,6 +112,7 @@ class _RegistrationStepOneState extends ConsumerState<RegistrationStepOne> {
             label: context.l10n.lastName,
             hintText: context.l10n.lastNameHint,
             textCapitalization: TextCapitalization.words,
+            inputFormatters: const [NameInputFormatter()],
           ),
           const SizedBox(height: 24),
           AppFormField(
